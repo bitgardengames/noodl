@@ -3,6 +3,7 @@ local Theme = require("theme")
 local Localization = require("localization")
 local Easing = require("easing")
 local Timer = require("timer")
+local RenderLayers = require("renderlayers")
 
 local abs = math.abs
 local floor = math.floor
@@ -141,10 +142,79 @@ local BUTTON_BORDER_WIDTH = 3
 
 UI.buttonBorderWidth = BUTTON_BORDER_WIDTH
 
+local SnakeDraw = nil
+local sliderSnakeTrail = {}
+local sliderSnakeTrailCount = 0
+
+local function drawSnakeSliderHandle(handleX, handleY, handleRadius, trackX, config)
+        if not config then
+                return false
+        end
+
+        if config == true then
+                config = {}
+        elseif type(config) ~= "table" then
+                return false
+        end
+
+        if not SnakeDraw then
+                SnakeDraw = require("snakedraw")
+        end
+
+        local amplitude = config.amplitude or 0.7
+        local frequency = config.frequency or 2.3
+        local segments = max(3, config.segmentCount or 20)
+        local tailScale = config.tailLength or 2.6
+        local headOffset = config.headOffset or 0
+
+        local headX = handleX + headOffset * handleRadius
+        local availableLeft = headX - trackX
+        local maxTail = handleRadius * tailScale
+        local tailLength = min(maxTail, availableLeft + handleRadius * 0.85)
+        local totalLength = max(handleRadius * 0.75, tailLength + max(0, headOffset) * handleRadius)
+
+        for step = 0, segments do
+                local t = step / segments
+                local px = headX - t * totalLength
+                local wave = sin(t * pi * frequency)
+                local falloff = 1 - t * 0.55
+                local amp = handleRadius * amplitude * falloff
+                local py = handleY + wave * amp
+
+                local point = sliderSnakeTrail[step + 1]
+                if not point then
+                        point = {}
+                        sliderSnakeTrail[step + 1] = point
+                end
+
+                point.x = px
+                point.y = py
+                point.drawX = px
+                point.drawY = py
+        end
+
+        local newCount = segments + 1
+        for i = newCount + 1, sliderSnakeTrailCount do
+                sliderSnakeTrail[i] = nil
+        end
+        sliderSnakeTrailCount = newCount
+
+        local segmentSize = config.segmentSize or (handleRadius * (config.segmentScale or 1.2))
+        if not segmentSize or segmentSize <= 0 then
+                segmentSize = handleRadius * 1.2
+        end
+
+        RenderLayers:begin(love.graphics.getWidth(), love.graphics.getHeight())
+        SnakeDraw.run(sliderSnakeTrail, sliderSnakeTrailCount, segmentSize, 0, nil, 0, 0, nil, config)
+        RenderLayers:present()
+
+        return true
+end
+
 local function clamp01(value)
-	if value < 0 then return 0 end
-	if value > 1 then return 1 end
-	return value
+        if value < 0 then return 0 end
+        if value > 1 then return 1 end
+        return value
 end
 
 local function lerp(a, b, t)
@@ -815,15 +885,19 @@ function UI.drawSlider(id, x, y, w, value, opts)
 		love.graphics.rectangle("fill", trackX, trackY, trackW * sliderValue, trackHeight, trackHeight / 2, trackHeight / 2)
 	end
 
-	local handleX = trackX + trackW * sliderValue
-	local handleY = trackY + trackHeight / 2
-	setColor(opts.handleColor or UI.colors.text)
-	love.graphics.circle("fill", handleX, handleY, handleRadius)
+        local handleX = trackX + trackW * sliderValue
+        local handleY = trackY + trackHeight / 2
 
-	if opts.showValue ~= false then
-		local valueFont = UI.fonts[opts.valueFont or "small"]
-		if valueFont then
-			love.graphics.setFont(valueFont)
+        local drewSnake = drawSnakeSliderHandle(handleX, handleY, handleRadius, trackX, opts.snakeHandle)
+        if not drewSnake then
+                setColor(opts.handleColor or UI.colors.text)
+                love.graphics.circle("fill", handleX, handleY, handleRadius)
+        end
+
+        if opts.showValue ~= false then
+                local valueFont = UI.fonts[opts.valueFont or "small"]
+                if valueFont then
+                        love.graphics.setFont(valueFont)
 		end
 		setColor(opts.valueColor or UI.colors.subtleText)
 		local percentText = opts.valueText or string.format("%d%%", floor(sliderValue * 100 + 0.5))

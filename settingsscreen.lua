@@ -726,12 +726,13 @@ function SettingsScreen:draw()
 		elseif opt.type == "slider" and opt.slider then
 			local value = min(1, max(0, Settings[opt.slider] or 0))
 			if visible then
-				local trackX, trackY, trackW, trackH, handleRadius = UI.drawSlider(nil, btn.x, btn.y, btn.w, value, {
-					label = label,
-					focused = isFocused,
-					hovered = btn.hovered,
-					register = false,
-				})
+                                local trackX, trackY, trackW, trackH, handleRadius = UI.drawSlider(nil, btn.x, btn.y, btn.w, value, {
+                                        label = label,
+                                        focused = isFocused,
+                                        hovered = btn.hovered,
+                                        register = false,
+                                        snakeHandle = true,
+                                })
 
 				btn.sliderTrack = btn.sliderTrack or {}
 				btn.sliderTrack.x = trackX
