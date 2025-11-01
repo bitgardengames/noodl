@@ -505,15 +505,30 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
         local snakeBodyColor = Theme.snakeDefault or Theme.progressColor or {0.45, 0.85, 0.70, 1}
         local trackAlpha = isHovered and 0.82 or 0.68
         local trackRadius = max(8, trackWidth * 0.65)
+        local trackOutlineColor = Theme.panelBorder or Theme.borderColor
+        if trackOutlineColor then
+                trackOutlineColor = copyColor(trackOutlineColor)
+        else
+                trackOutlineColor = lightenColor(copyColor(baseTrackColor), 0.35)
+        end
 
         -- Track body
         setColor(withAlpha(baseTrackColor, trackAlpha))
         love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
 
+        -- Track outline for visibility
+        if trackOutlineColor then
+                trackOutlineColor[4] = (trackOutlineColor[4] or 1) * 0.95
+                setColor(trackOutlineColor)
+                love.graphics.setLineWidth(3)
+                love.graphics.rectangle("line", trackX, trackY, trackWidth, trackHeight, trackRadius)
+        end
+
         -- Snake thumb
         local thumbPadding = 2
         local thumbWidth = max(6, trackWidth - thumbPadding * 2 + 2)
-        local thumbX = trackX + thumbPadding
+        local thumbOffsetX = -2
+        local thumbX = trackX + thumbPadding + thumbOffsetX
         local hoverBoost = 0
         if scrollbarDrag.active then
                 hoverBoost = 0.35
