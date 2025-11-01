@@ -310,16 +310,29 @@ end
 local function resolveBackButtonY(sw, sh, layout)
         local menuLayout = UI.getMenuLayout(sw, sh)
         local buttonHeight = UI.spacing.buttonHeight or 0
+        local spacing = UI.spacing.buttonSpacing or UI.spacing.sectionSpacing or 0
         local marginBottom = menuLayout.marginBottom or 0
-        local bottomY = menuLayout.bottomY or (sh - marginBottom)
-        local y = bottomY - buttonHeight
 
-        if layout and layout.viewportBottom then
-                local spacing = UI.spacing.buttonSpacing or UI.spacing.sectionSpacing or 0
-                y = max(y, layout.viewportBottom + spacing * 0.5)
+        local y = sh - buttonHeight - spacing
+        local safeBottom = (menuLayout.bottomY or (sh - marginBottom)) - buttonHeight
+        if safeBottom then
+                y = max(y, safeBottom)
         end
 
-        local maxY = sh - buttonHeight - marginBottom
+        if layout then
+                local panelBottom
+                if layout.panelY and layout.panelHeight then
+                        panelBottom = layout.panelY + layout.panelHeight
+                elseif layout.viewportBottom then
+                        panelBottom = layout.viewportBottom
+                end
+
+                if panelBottom then
+                        y = max(y, panelBottom + spacing)
+                end
+        end
+
+        local maxY = sh - buttonHeight
         if y > maxY then
                 y = maxY
         end
@@ -332,20 +345,23 @@ local function applyBackButtonLayout(layout, sw, sh)
 		return
 	end
 
-	local buttonWidth = UI.spacing.buttonWidth or 0
-	local buttonHeight = UI.spacing.buttonHeight or 0
-	local x = sw / 2 - buttonWidth / 2
-	local y = resolveBackButtonY(sw, sh, layout)
+        local buttonWidth = UI.spacing.buttonWidth or 0
+        local buttonHeight = UI.spacing.buttonHeight or 0
+        local x = sw / 2 - buttonWidth / 2
+        local y = resolveBackButtonY(sw, sh, layout)
 
-	for _, btn in buttonList:iter() do
-		if btn.id == "achievementsBack" then
-			btn.x = x
-			btn.y = y
-			btn.w = buttonWidth
-			btn.h = buttonHeight
-			break
-		end
-	end
+        for _, btn in buttonList:iter() do
+                if btn.id == "achievementsBack" then
+                        btn.x = x
+                        btn.y = y
+                        btn.w = buttonWidth
+                        btn.h = buttonHeight
+                        if layout then
+                                layout.backButtonY = y
+                        end
+                        break
+                end
+        end
 end
 
 local function formatAchievementRewards(rewards)
@@ -594,12 +610,38 @@ local function computeLayout(sw, sh)
 	layout.viewportBottom = max(layout.startY, viewportBottom)
 	layout.viewportHeight = max(0, layout.viewportBottom - layout.startY)
 
-	layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
-	layout.scissorTop = max(menuLayout.marginTop or 0, layout.startY - SCROLL_SCISSOR_TOP_PADDING)
-	layout.scissorBottom = layout.viewportBottom
-	layout.scissorHeight = max(0, layout.scissorBottom - layout.scissorTop)
+        layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
+        layout.scissorTop = max(menuLayout.marginTop or 0, layout.startY - SCROLL_SCISSOR_TOP_PADDING)
+        layout.scissorBottom = layout.viewportBottom
+        layout.scissorHeight = max(0, layout.scissorBottom - layout.scissorTop)
 
-	return layout
+        layout.backButtonY = resolveBackButtonY(sw, sh, layout)
+
+        if layout.backButtonY then
+                local spacingOffset = buttonSpacing * 0.5
+                local maxViewportBottom = sh - bottomMargin
+
+                for _ = 1, 3 do
+                        local desiredBottom = min(maxViewportBottom, layout.backButtonY - spacingOffset)
+
+                        if desiredBottom ~= layout.viewportBottom then
+                                layout.viewportBottom = max(layout.startY, desiredBottom)
+                                layout.viewportHeight = max(0, layout.viewportBottom - layout.startY)
+                                layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
+                                layout.scissorBottom = layout.viewportBottom
+                                layout.scissorHeight = max(0, layout.scissorBottom - layout.scissorTop)
+                        end
+
+                        local adjustedBackY = resolveBackButtonY(sw, sh, layout)
+                        if adjustedBackY == layout.backButtonY then
+                                break
+                        end
+
+                        layout.backButtonY = adjustedBackY
+                end
+        end
+
+        return layout
 end
 
 local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isHovered, isThumbHovered)
