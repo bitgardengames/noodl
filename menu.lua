@@ -741,9 +741,11 @@ function Menu:draw()
 	local versionInset = 15
 	local versionY = sh - versionHeight - versionInset
 	local versionX = versionInset
-	setColorWithAlpha(Theme.textColor, 0.6)
-	love.graphics.print(Localization:get("menu.version"), versionX, versionY)
-	love.graphics.setColor(Theme.textColor)
+        setColorWithAlpha(Theme.shadowColor, 0.6)
+        love.graphics.print(Localization:get("menu.version"), versionX + 1, versionY + 1)
+        setColorWithAlpha(Theme.textColor, 0.6)
+        love.graphics.print(Localization:get("menu.version"), versionX, versionY)
+        love.graphics.setColor(Theme.textColor)
 
 	if dailyChallenge and dailyChallengeAnim > 0 then
 		local alpha = min(1, dailyChallengeAnim)
@@ -826,31 +828,39 @@ function Menu:draw()
 		local textY = panelY + padding
 
 		love.graphics.setFont(headerFont)
-		setColorWithAlpha(Theme.shadowColor, alpha)
-		love.graphics.print(headerText, textX + 2, textY + 2)
-		setColorWithAlpha(Theme.textColor, alpha)
-		love.graphics.print(headerText, textX, textY)
+                setColorWithAlpha(Theme.shadowColor, alpha)
+                love.graphics.print(headerText, textX + 1, textY + 1)
+                setColorWithAlpha(Theme.textColor, alpha)
+                love.graphics.print(headerText, textX, textY)
 
-		textY = textY + headerFont:getHeight() + 6
+                textY = textY + headerFont:getHeight() + 6
 
-		love.graphics.setFont(titleFont)
-		love.graphics.print(titleText, textX, textY)
+                love.graphics.setFont(titleFont)
+                setColorWithAlpha(Theme.shadowColor, alpha)
+                love.graphics.print(titleText, textX + 1, textY + 1)
+                setColorWithAlpha(Theme.textColor, alpha)
+                love.graphics.print(titleText, textX, textY)
 
-		textY = textY + titleFont:getHeight() + 10
+                textY = textY + titleFont:getHeight() + 10
 
-		love.graphics.setFont(bodyFont)
-		love.graphics.printf(descriptionText, textX, textY, panelWidth - padding * 2)
+                love.graphics.setFont(bodyFont)
+                setColorWithAlpha(Theme.shadowColor, alpha)
+                love.graphics.printf(descriptionText, textX + 1, textY + 1, panelWidth - padding * 2)
+                setColorWithAlpha(Theme.textColor, alpha)
+                love.graphics.printf(descriptionText, textX, textY, panelWidth - padding * 2)
 
-		textY = textY + descHeight
+                textY = textY + descHeight
 
                 if streakText then
                         textY = textY + 8
                         love.graphics.setFont(progressFont)
+                        local streakColor = Theme.textColor
                         if dailyPanelEntry and dailyPanelEntry.currentStreak > 0 and not dailyChallenge.completed then
-                                setColorWithAlpha(Theme.warningColor or Theme.accentTextColor, alpha)
-                        else
-                                setColorWithAlpha(Theme.textColor, alpha)
+                                streakColor = Theme.warningColor or Theme.accentTextColor or Theme.textColor
                         end
+                        setColorWithAlpha(Theme.shadowColor, alpha)
+                        love.graphics.printf(streakText, textX + 1, textY + 1, panelWidth - padding * 2)
+                        setColorWithAlpha(streakColor, alpha)
                         love.graphics.printf(streakText, textX, textY, panelWidth - padding * 2)
                         textY = textY + streakHeight
                         setColorWithAlpha(Theme.textColor, alpha)
@@ -861,9 +871,12 @@ function Menu:draw()
                         love.graphics.setFont(progressFont)
 
                         if progressText then
+                                setColorWithAlpha(Theme.shadowColor, alpha)
+                                love.graphics.print(progressText, textX + 1, textY + 1)
+                                setColorWithAlpha(Theme.textColor, alpha)
                                 love.graphics.print(progressText, textX, textY)
-				textY = textY + progressFont:getHeight() + 6
-			end
+                                textY = textY + progressFont:getHeight() + 6
+                        end
 
 			local barHeight = 14
 			local barWidth = panelWidth - padding * 2
