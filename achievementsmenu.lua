@@ -10,7 +10,6 @@ local SnakeUtils = require("snakeutils")
 local Face = require("face")
 local Shaders = require("shaders")
 local SnakeCosmetics = require("snakecosmetics")
-local MathUtil = require("mathutil")
 
 local floor = math.floor
 local max = math.max
@@ -141,7 +140,14 @@ local function updateHeldDpad(dt)
 	end
 end
 
-local clamp01 = MathUtil.clamp01
+local function clamp01(value)
+	if value < 0 then
+		return 0
+	elseif value > 1 then
+		return 1
+	end
+	return value
+end
 
 local function lightenColor(color, amount)
 	if not color then

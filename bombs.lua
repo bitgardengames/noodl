@@ -3,7 +3,6 @@ local SnakeUtils = require("snakeutils")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Particles = require("particles")
-local MathUtil = require("mathutil")
 
 local min = math.min
 local max = math.max
@@ -83,7 +82,11 @@ local function distanceSquared(ax, ay, bx, by)
 	return dx * dx + dy * dy
 end
 
-local clamp01 = MathUtil.clamp01
+local function clamp01(value)
+	if value <= 0 then return 0 end
+	if value >= 1 then return 1 end
+	return value
+end
 
 local function spawnFuseSparks(bomb)
 	if not bomb then return end

@@ -5,7 +5,6 @@ local Rocks = require("rocks")
 local Particles = require("particles")
 local Audio = require("audio")
 local Timer = require("timer")
-local MathUtil = require("mathutil")
 
 local max = math.max
 local min = math.min
@@ -42,7 +41,15 @@ local DART_BODY_COLOR = {0.70, 0.68, 0.60, 1.0}
 local DART_TIP_COLOR = {0.82, 0.86, 0.90, 1.0}
 local DART_TAIL_COLOR = {0.42, 0.68, 0.64, 1.0}
 
-local clamp01 = MathUtil.clamp01
+local function clamp01(value)
+        if value <= 0 then
+                return 0
+        end
+        if value >= 1 then
+                return 1
+        end
+        return value
+end
 
 local function releaseOccupancy(emitter)
         if not emitter then

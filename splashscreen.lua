@@ -44,13 +44,13 @@ function SplashScreen:leave()
 end
 
 local function drawBackground(color, width, height)
-        if color then
-                love.graphics.setColor(color)
-        else
-                love.graphics.setColor(0, 0, 0, 1)
-        end
+	if not color then
+		love.graphics.clear(0, 0, 0, 1)
+		return
+	end
 
-        love.graphics.rectangle("fill", 0, 0, width, height)
+	love.graphics.setColor(color)
+	love.graphics.rectangle("fill", 0, 0, width, height)
 end
 
 local function drawLogo(image, width, height)

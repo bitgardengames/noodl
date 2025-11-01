@@ -5,7 +5,6 @@ local Rocks = require("rocks")
 local Audio = require("audio")
 local Easing = require("easing")
 local Timer = require("timer")
-local MathUtil = require("mathutil")
 
 local abs = math.abs
 local floor = math.floor
@@ -71,7 +70,15 @@ local function copyColor(color, alpha)
 	return {r, g, b, a}
 end
 
-local clamp01 = MathUtil.clamp01
+local function clamp01(value)
+	if value < 0 then
+		return 0
+	end
+	if value > 1 then
+		return 1
+	end
+	return value
+end
 
 local function getRelativeLuminance(color)
 	if not color then
@@ -277,7 +284,15 @@ local function getFacingFromPosition(dir, col, row)
 	return 1
 end
 
-local clamp = MathUtil.clamp
+local function clamp(value, minimum, maximum)
+	if minimum and value < minimum then
+		return minimum
+	end
+	if maximum and value > maximum then
+		return maximum
+	end
+	return value
+end
 
 local function applyDurationModifiers(base, mult, flat, minimum)
 	if not base then

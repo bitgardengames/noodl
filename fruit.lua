@@ -3,7 +3,6 @@ local SnakeUtils = require("snakeutils")
 local Theme = require("theme")
 local Arena = require("arena")
 local RenderLayers = require("renderlayers")
-local MathUtil = require("mathutil")
 
 local max = math.max
 local min = math.min
@@ -183,20 +182,6 @@ local lastCollectedMeta = nil
 local idleSparkles = {}
 local drawList = {}
 
-local function drawFruitShadows(list, count)
-        for i = 1, count do
-                local data = list[i]
-                drawFruitShadow(data)
-        end
-end
-
-local function drawFruitMainBatch(list, count)
-        for i = 1, count do
-                local data = list[i]
-                drawFruitMain(data)
-        end
-end
-
 local function copyColor(color)
 	if not color then
 		return {1, 1, 1, 1}
@@ -211,7 +196,7 @@ local function copyColor(color)
 end
 
 -- Easing
-local clamp = MathUtil.clamp
+local function clamp(a, lo, hi) if a < lo then return lo elseif a > hi then return hi else return a end end
 
 local function easeOutQuad(t)  return 1 - (1 - t)^2 end
 -- Helpers
@@ -698,8 +683,19 @@ function Fruit:draw()
         end
 
         local list = drawList
-        RenderLayers:queue("shadows", RenderLayers:acquireCommand(drawFruitShadows, list, drawCount))
-        RenderLayers:queue("main", RenderLayers:acquireCommand(drawFruitMainBatch, list, drawCount))
+        RenderLayers:withLayer("shadows", function()
+                for i = 1, drawCount do
+                        local data = list[i]
+                        drawFruitShadow(data)
+                end
+        end)
+
+        RenderLayers:withLayer("main", function()
+                for i = 1, drawCount do
+                        local data = list[i]
+                        drawFruitMain(data)
+                end
+        end)
 end
 
 -- Queries

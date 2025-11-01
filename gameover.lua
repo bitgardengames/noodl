@@ -12,7 +12,6 @@ local Shaders = require("shaders")
 local Upgrades = require("upgrades")
 local Shop = require("shop")
 local Timer = require("timer")
-local MathUtil = require("mathutil")
 
 local abs = math.abs
 local floor = math.floor
@@ -404,7 +403,14 @@ local function easeOutBack(t)
 	return 1 + c3 * (progress * progress * progress) + c1 * (progress * progress)
 end
 
-local clamp = MathUtil.clamp
+local function clamp(value, minimum, maximum)
+	if value < minimum then
+		return minimum
+	elseif value > maximum then
+		return maximum
+	end
+	return value
+end
 
 local function easeOutQuad(t)
 	local inv = 1 - t

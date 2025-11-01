@@ -38,7 +38,6 @@ local TransitionManager = require("transitionmanager")
 local GameInput = require("gameinput")
 local ModuleUtil = require("moduleutil")
 local RenderLayers = require("renderlayers")
-local MathUtil = require("mathutil")
 local Timer = require("timer")
 local ceil = math.ceil
 local floor = math.floor
@@ -125,7 +124,14 @@ local function easeOutCubic(t)
         return 1 - inv * inv * inv
 end
 
-local clamp = MathUtil.clamp
+local function clamp(value, minimum, maximum)
+        if value < minimum then
+                return minimum
+        elseif value > maximum then
+                return maximum
+        end
+        return value
+end
 
 local function circleSegments(radius)
         return clamp(ceil(radius / 6), 12, 48)
@@ -1643,11 +1649,13 @@ function Game:setupFloor(floorNum)
 end
 
 function Game:draw()
+        love.graphics.clear()
+
         if Arena.drawBackdrop then
                 Arena:drawBackdrop(self.screenWidth, self.screenHeight)
-        else
-                love.graphics.setColor(Theme.bgColor)
-                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+	else
+		love.graphics.setColor(Theme.bgColor)
+		love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 		love.graphics.setColor(1, 1, 1, 1)
 	end
 

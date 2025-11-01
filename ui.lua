@@ -3,7 +3,6 @@ local Theme = require("theme")
 local Localization = require("localization")
 local Easing = require("easing")
 local Timer = require("timer")
-local MathUtil = require("mathutil")
 
 local abs = math.abs
 local floor = math.floor
@@ -142,7 +141,11 @@ local BUTTON_BORDER_WIDTH = 2
 
 UI.buttonBorderWidth = BUTTON_BORDER_WIDTH
 
-local clamp01 = MathUtil.clamp01
+local function clamp01(value)
+	if value < 0 then return 0 end
+	if value > 1 then return 1 end
+	return value
+end
 
 local function lerp(a, b, t)
 	return a + (b - a) * t

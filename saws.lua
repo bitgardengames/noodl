@@ -35,30 +35,9 @@ local SHADOW_OFFSET = 3
 local SHADOW_ALPHA = 0.35
 local STENCIL_EXTENT = 999
 
-local function queueLayerDraw(layerName, fn, ...)
-        RenderLayers:queue(layerName, RenderLayers:acquireCommand(fn, ...))
-end
-
-local shadowClipParams = {
-        anchorX = 0,
-        trackTop = 0,
-        trackWidth = 0,
-        outer = 0,
-}
-
-local function drawSawShadowClipRectangle()
-        love.graphics.rectangle(
-                "fill",
-                shadowClipParams.anchorX - TRACK_LENGTH / 2 - shadowClipParams.outer,
-                shadowClipParams.trackTop,
-                shadowClipParams.trackWidth,
-                STENCIL_EXTENT
-        )
-end
-
 local sawStencilState = {
-        dir = nil,
-        side = nil,
+	dir = nil,
+	side = nil,
 	x = 0,
 	y = 0,
 	radius = 0,
@@ -670,89 +649,17 @@ local function getSawCenter(saw)
 end
 
 local function getVerticalSinkDirection(saw)
-        if not saw then
-                return 1
-        end
+	if not saw then
+		return 1
+	end
 
-        if saw.side == "left" then
-                return -1
-        elseif saw.side == "right" then
-                return 1
-        end
+	if saw.side == "left" then
+		return -1
+	elseif saw.side == "right" then
+		return 1
+	end
 
-        return 1
-end
-
-local function drawSawShadowLayer(saw, px, py, anchorX, anchorY, offsetX, offsetY, sinkVisualProgress, sinkOffset, sinkScale, rotation, points, outer)
-        love.graphics.push()
-
-        local shadowBaseX = (px or anchorX)
-        local shadowBaseY = (py or anchorY)
-        local shadowSinkOffset = offsetY
-        local applyShadowClip = false
-
-        if saw.dir == "horizontal" then
-                shadowSinkOffset = SINK_OFFSET - sinkOffset
-                shadowClipParams.anchorX = anchorX
-                shadowClipParams.trackTop = anchorY - 5
-                shadowClipParams.trackWidth = TRACK_LENGTH + outer * 2
-                shadowClipParams.outer = outer
-                love.graphics.stencil(drawSawShadowClipRectangle, "replace", 1)
-                love.graphics.setStencilTest("equal", 1)
-                applyShadowClip = true
-        else
-                if offsetX > 0 then
-                        shadowBaseX = shadowBaseX + offsetX
-                end
-        end
-
-        if shadowSinkOffset and shadowSinkOffset ~= 0 then
-                shadowBaseY = shadowBaseY + shadowSinkOffset
-        end
-
-        love.graphics.translate(shadowBaseX + SHADOW_OFFSET, shadowBaseY + SHADOW_OFFSET)
-        love.graphics.rotate(rotation)
-        love.graphics.scale(sinkScale, sinkScale)
-
-        local alpha = SHADOW_ALPHA * (1 - 0.4 * sinkVisualProgress)
-        love.graphics.setColor(0, 0, 0, alpha)
-        love.graphics.polygon("fill", points)
-
-        if applyShadowClip then
-                love.graphics.setStencilTest()
-        end
-
-        love.graphics.pop()
-end
-
-local function drawSawEmberEffects(dir, glowX, glowY, radius, phase, trailLength, trailColor, glowColor, pulse)
-        local trailAlpha = (trailColor[4] or 1)
-        love.graphics.setColor(trailColor[1], trailColor[2], trailColor[3], trailAlpha)
-        if dir == "horizontal" then
-                local height = radius * (0.95 + 0.18 * sin(phase * 2.6))
-                love.graphics.rectangle("fill", glowX - trailLength * 0.5, glowY - height * 0.5, trailLength, height)
-        else
-                local width = radius * (0.95 + 0.18 * cos(phase * 2.4))
-                love.graphics.rectangle("fill", glowX - width * 0.5, glowY - trailLength * 0.5, width, trailLength)
-        end
-
-        local outerAlpha = (glowColor[4] or 1) * 0.6
-        love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha)
-        love.graphics.setLineWidth(2)
-        love.graphics.circle("line", glowX, glowY, radius * (1.18 + 0.12 * pulse))
-
-        love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha * 0.6)
-        love.graphics.circle("line", glowX, glowY, radius * (0.88 + 0.1 * sin(phase * 4.4 + 0.8)))
-        love.graphics.setLineWidth(1)
-end
-
-local function drawSawGildedGlow(glowX, glowY, glowRadius)
-        love.graphics.setColor(1.0, 0.82, 0.32, 0.28)
-        love.graphics.circle("fill", glowX, glowY, glowRadius)
-        love.graphics.setColor(1.0, 0.95, 0.72, 0.55)
-        love.graphics.setLineWidth(2)
-        love.graphics.circle("line", glowX, glowY, glowRadius * 0.75)
-        love.graphics.setLineWidth(1)
+	return 1
 end
 
 local function getSawCollisionCenter(saw)
@@ -1172,25 +1079,62 @@ function Saws:draw()
 		if (saw.scaleX ~= nil and saw.scaleX <= 0) or (saw.scaleY ~= nil and saw.scaleY <= 0) then
 			isBladeHidden = true
 		end
-                if not isBladeHidden and #points >= 6 then
-                        queueLayerDraw(
-                                "shadows",
-                                drawSawShadowLayer,
-                                saw,
-                                px,
-                                py,
-                                anchorX,
-                                anchorY,
-                                offsetX,
-                                offsetY,
-                                sinkVisualProgress,
-                                sinkOffset,
-                                sinkScale,
-                                rotation,
-                                points,
-                                outer
-                        )
-                end
+		if not isBladeHidden and #points >= 6 then
+			RenderLayers:withLayer("shadows", function()
+				love.graphics.push()
+
+				local shadowBaseX = (px or anchorX)
+				local shadowBaseY = (py or anchorY)
+				local shadowSinkOffset = offsetY
+				local applyShadowClip = false
+
+				if saw.dir == "horizontal" then
+					-- When the saw sinks into the track, the shadow should shrink upwards
+					-- instead of following the blade down. Move the base upward based on the
+					-- sink progress so the clipped result visually tightens towards the slot.
+					shadowSinkOffset = SINK_OFFSET - sinkOffset
+					local trackTop = anchorY - 5
+					local trackWidth = TRACK_LENGTH + outer * 2
+
+					love.graphics.stencil(function()
+						love.graphics.rectangle(
+						"fill",
+						anchorX - TRACK_LENGTH / 2 - outer,
+						trackTop,
+						trackWidth,
+						STENCIL_EXTENT
+						)
+					end, "replace", 1)
+					love.graphics.setStencilTest("equal", 1)
+					applyShadowClip = true
+				else
+					if offsetX > 0 then
+						shadowBaseX = shadowBaseX + offsetX
+					end
+				end
+
+				if shadowSinkOffset and shadowSinkOffset ~= 0 then
+					shadowBaseY = shadowBaseY + shadowSinkOffset
+				end
+
+				local shadowOffsetX = SHADOW_OFFSET
+				local shadowOffsetY = SHADOW_OFFSET
+
+				love.graphics.translate(shadowBaseX + shadowOffsetX, shadowBaseY + shadowOffsetY)
+				love.graphics.rotate(rotation)
+				love.graphics.scale(sinkScale, sinkScale)
+
+				local alpha = SHADOW_ALPHA * (1 - 0.4 * sinkVisualProgress)
+				love.graphics.setColor(0, 0, 0, alpha)
+				love.graphics.polygon("fill", points)
+
+				if applyShadowClip then
+					love.graphics.setStencilTest()
+				end
+
+				love.graphics.pop()
+			end)
+		end
 
 		-- Stencil: clip saw into the track (adjust direction for left/right mounted saws)
 		sawStencilState.dir = saw.dir
@@ -1274,37 +1218,50 @@ function Saws:draw()
 		-- Reset stencil
 		love.graphics.setStencilTest()
 
-                if saw.ember then
-                        local glowX = (px or anchorX) + offsetX
-                        local glowY = (py or anchorY) + offsetY
-                        local radius = (saw.radius or SAW_RADIUS)
-                        local phase = saw.emberTrailPhase or 0
-                        local trailLength = TRACK_LENGTH * 0.55
-                        local trailColor = saw.emberTrailColor or {1.0, 0.32, 0.08, 0.2}
-                        local glowColor = saw.emberGlowColor or {1.0, 0.62, 0.22, 0.4}
-                        local pulse = 0.9 + 0.08 * math.sin(phase * 3.1)
+		if saw.ember then
+			local glowX = (px or anchorX) + offsetX
+			local glowY = (py or anchorY) + offsetY
+			local radius = (saw.radius or SAW_RADIUS)
+			local phase = saw.emberTrailPhase or 0
+			local trailLength = TRACK_LENGTH * 0.55
+			local trailColor = saw.emberTrailColor or {1.0, 0.32, 0.08, 0.2}
+			local glowColor = saw.emberGlowColor or {1.0, 0.62, 0.22, 0.4}
+			local pulse = 0.9 + 0.08 * math.sin(phase * 3.1)
 
-                        queueLayerDraw(
-                                "effects",
-                                drawSawEmberEffects,
-                                saw.dir,
-                                glowX,
-                                glowY,
-                                radius,
-                                phase,
-                                trailLength,
-                                trailColor,
-                                glowColor,
-                                pulse
-                        )
-                end
+			RenderLayers:withLayer("effects", function()
+				local trailAlpha = (trailColor[4] or 1)
+				love.graphics.setColor(trailColor[1], trailColor[2], trailColor[3], trailAlpha)
+				if saw.dir == "horizontal" then
+					local height = radius * (0.95 + 0.18 * math.sin(phase * 2.6))
+					love.graphics.rectangle("fill", glowX - trailLength * 0.5, glowY - height * 0.5, trailLength, height)
+				else
+					local width = radius * (0.95 + 0.18 * math.cos(phase * 2.4))
+					love.graphics.rectangle("fill", glowX - width * 0.5, glowY - trailLength * 0.5, width, trailLength)
+				end
 
-                if saw.gilded then
-                        local glowX = (px or anchorX) + offsetX
-                        local glowY = (py or anchorY) + offsetY
-                        local glowRadius = (saw.radius or SAW_RADIUS) * 1.4
-                        queueLayerDraw("effects", drawSawGildedGlow, glowX, glowY, glowRadius)
-                end
+				local outerAlpha = (glowColor[4] or 1) * 0.6
+				love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha)
+				love.graphics.setLineWidth(2)
+				love.graphics.circle("line", glowX, glowY, radius * (1.18 + 0.12 * pulse))
+
+				love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha * 0.6)
+				love.graphics.circle("line", glowX, glowY, radius * (0.88 + 0.1 * math.sin(phase * 4.4 + 0.8)))
+				love.graphics.setLineWidth(1)
+			end)
+		end
+
+		if saw.gilded then
+			local glowX = (px or anchorX) + offsetX
+			local glowY = (py or anchorY) + offsetY
+			local glowRadius = (saw.radius or SAW_RADIUS) * 1.4
+			RenderLayers:withLayer("effects", function()
+				love.graphics.setColor(1.0, 0.82, 0.32, 0.28)
+				love.graphics.circle("fill", glowX, glowY, glowRadius)
+				love.graphics.setColor(1.0, 0.95, 0.72, 0.55)
+				love.graphics.setLineWidth(2)
+				love.graphics.circle("line", glowX, glowY, glowRadius * 0.75)
+			end)
+		end
 
 		love.graphics.setColor(1, 1, 1, 1)
 		love.graphics.setLineWidth(1)

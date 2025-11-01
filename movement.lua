@@ -11,7 +11,6 @@ local Upgrades = require("upgrades")
 local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 local Achievements = require("achievements")
-local MathUtil = require("mathutil")
 
 local abs = math.abs
 local max = math.max
@@ -346,7 +345,15 @@ local function rerouteAlongWall(headX, headY, left, right, top, bottom)
 	return clampedX, clampedY
 end
 
-local clamp = MathUtil.clamp
+local function clamp(value, min, max)
+	if min and value < min then
+		return min
+	end
+	if max and value > max then
+		return max
+	end
+	return value
+end
 
 local function portalThroughWall(headX, headY)
 	if not (Upgrades and Upgrades.getEffect and Upgrades:getEffect("wallPortal")) then
