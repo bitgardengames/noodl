@@ -1030,14 +1030,9 @@ function AchievementsMenu:draw()
 	love.graphics.push()
 	love.graphics.translate(0, scrollOffset)
 
-	local y = startY
-	for _, block in ipairs(displayBlocks) do
-		local categoryLabel = Localization:get("achievements.categories." .. block.id)
-		love.graphics.setFont(UI.fonts.heading or UI.fonts.button)
-		setColor(withAlpha(subtleTextColor, (subtleTextColor[4] or 1) * 0.85))
-		love.graphics.printf(categoryLabel, 0, y - 32, sw, "center")
-
-		for _, ach in ipairs(block.achievements) do
+        local y = startY
+        for _, block in ipairs(displayBlocks) do
+                for _, ach in ipairs(block.achievements) do
 			local unlocked = ach.unlocked
 			local goal = ach.goal or 0
 			local hiddenLocked = ach.hidden and not unlocked

@@ -235,16 +235,10 @@ local english = {
 			back_to_menu = "Back to Menu",
 			popup_heading = "${title} Unlocked!",
 			popup_message = "${title}: ${description}",
-			categories = {
-				progress = "Milestones",
-				depth = "Descent",
-				skill = "Skill",
-				collection = "Collection",
-			},
-			progress = {
-				label = "${current}/${goal}",
-				unlocked = "Completed",
-			},
+                        progress = {
+                                label = "${current}/${goal}",
+                                unlocked = "Completed",
+                        },
 			summary = {
 				unlocked = "${unlocked}/${total} unlocked",
 				completion = "${percent}% complete",
