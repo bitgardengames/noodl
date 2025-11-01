@@ -3,6 +3,7 @@ local RenderLayers = require("renderlayers")
 
 local max = math.max
 local pi = math.pi
+local sqrt = math.sqrt
 
 local atan2 = math.atan2 or function(y, x)
 	return math.atan(y, x)
@@ -34,8 +35,43 @@ local SPEED_VARIANCE = 20
 local SCALE_MIN = 0.6
 local SCALE_VARIANCE = 0.8
 
+local particleSprite
+local particleSpriteHalfSize = 0.5
+
+local function ensureParticleSprite()
+        if particleSprite then
+                return particleSprite
+        end
+
+        local size = 32
+        local halfSize = (size - 1) * 0.5
+        local imageData = love.image.newImageData(size, size)
+
+        for y = 0, size - 1 do
+                for x = 0, size - 1 do
+                        local dx = (x - halfSize) / halfSize
+                        local dy = (y - halfSize) / halfSize
+                        local distance = sqrt(dx * dx + dy * dy)
+                        local alpha = max(0, 1 - distance)
+                        imageData:setPixel(x, y, 1, 1, 1, alpha)
+                end
+        end
+
+        particleSprite = love.graphics.newImage(imageData)
+        particleSprite:setFilter("linear", "linear")
+        particleSpriteHalfSize = particleSprite:getWidth() * 0.5
+
+        return particleSprite
+end
+
 local function drawParticleBatch(particles)
         local count = particles.count
+        if count == 0 then
+                return
+        end
+
+        local sprite = ensureParticleSprite()
+        local spriteWidth = particleSpriteHalfSize * 2
         for i = 1, count do
                 local normAge = particles.normAge[i]
                 if normAge == nil then
@@ -45,7 +81,8 @@ local function drawParticleBatch(particles)
 
                 local currentSize = particles.baseSize[i] * (0.8 + normAge * 0.6)
                 love.graphics.setColor(particles.r[i], particles.g[i], particles.b[i], particles.alpha[i])
-                love.graphics.circle("fill", particles.x[i], particles.y[i], currentSize)
+                local scale = (currentSize * 2) / spriteWidth
+                love.graphics.draw(sprite, particles.x[i], particles.y[i], 0, scale, scale, particleSpriteHalfSize, particleSpriteHalfSize)
         end
 
         love.graphics.setColor(1, 1, 1, 1)
