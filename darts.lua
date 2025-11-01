@@ -499,34 +499,71 @@ function Darts:getEmitters()
         return copies
 end
 
+function Darts:getEmitterArray()
+        return emitters
+end
+
 function Darts:getEmitterCount()
         return #emitters
 end
 
-function Darts:iterateEmitters(callback)
+function Darts:iterateEmitters(callback, context)
+        if type(callback) == "table" then
+                local spec = callback
+                callback = spec.callback
+                context = spec.context
+        end
+
         if type(callback) ~= "function" then
                 return
         end
 
-        for index = 1, #emitters do
-                local result = callback(emitters[index], index)
-                if result ~= nil then
-                        return result
+        if context ~= nil then
+                for index = 1, #emitters do
+                        local result = callback(context, emitters[index], index)
+                        if result ~= nil then
+                                return result
+                        end
+                end
+        else
+                for index = 1, #emitters do
+                        local result = callback(emitters[index], index)
+                        if result ~= nil then
+                                return result
+                        end
                 end
         end
 end
 
-function Darts:iterateShots(callback)
+function Darts:iterateShots(callback, context)
+        if type(callback) == "table" then
+                local spec = callback
+                callback = spec.callback
+                context = spec.context
+        end
+
         if type(callback) ~= "function" then
                 return
         end
 
-        for index = 1, #emitters do
-                local emitter = emitters[index]
-                if emitter and emitter.state == "firing" and emitter.shotRect then
-                        local result = callback(emitter, emitter.shotRect, index)
-                        if result ~= nil then
-                                return result
+        if context ~= nil then
+                for index = 1, #emitters do
+                        local emitter = emitters[index]
+                        if emitter and emitter.state == "firing" and emitter.shotRect then
+                                local result = callback(context, emitter, emitter.shotRect, index)
+                                if result ~= nil then
+                                        return result
+                                end
+                        end
+                end
+        else
+                for index = 1, #emitters do
+                        local emitter = emitters[index]
+                        if emitter and emitter.state == "firing" and emitter.shotRect then
+                                local result = callback(emitter, emitter.shotRect, index)
+                                if result ~= nil then
+                                        return result
+                                end
                         end
                 end
         end
