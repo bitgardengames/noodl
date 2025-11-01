@@ -465,42 +465,145 @@ local function toPercent(value)
 end
 
 local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isHovered, isThumbHovered)
-	love.graphics.push("all")
+        love.graphics.push("all")
 
-	local baseTrackColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-	local trackAlpha = isHovered and 0.75 or 0.6
-	local trackRadius = max(6, trackWidth * 0.5)
+        local baseTrackColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+        local snakeBodyColor = Theme.snakeDefault or Theme.progressColor or {0.45, 0.85, 0.70, 1}
+        local trackAlpha = isHovered and 0.82 or 0.68
+        local trackRadius = max(8, trackWidth * 0.65)
 
-	setColor(withAlpha(baseTrackColor, trackAlpha))
-	love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
+        -- Track body
+        setColor(withAlpha(baseTrackColor, trackAlpha))
+        love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
 
-	local trackOutline = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
-	setColor(trackOutline, isHovered and 0.85 or 0.6)
-	love.graphics.setLineWidth(1.5)
-	love.graphics.rectangle("line", trackX, trackY, trackWidth, trackHeight, trackRadius)
+        -- Subtle snake-scale pattern inside the track
+        local scaleInset = 2
+        local scaleWidth = max(0, trackWidth - scaleInset * 2)
+        if scaleWidth > 0 then
+                local scaleHeight = 10
+                local scaleCenterX = trackX + trackWidth * 0.5
+                for offset = trackY, trackY + trackHeight, scaleHeight do
+                        local progress = (offset - trackY) / scaleHeight
+                        local stripeColor
+                        if progress % 2 < 1 then
+                                stripeColor = withAlpha(lightenColor(snakeBodyColor, 0.18), 0.20)
+                        else
+                                stripeColor = withAlpha(darkenColor(snakeBodyColor, 0.18), 0.16)
+                        end
+                        setColor(stripeColor)
+                        love.graphics.ellipse(
+                                "fill",
+                                scaleCenterX,
+                                min(offset + scaleHeight * 0.5, trackY + trackHeight - scaleHeight * 0.2),
+                                scaleWidth * 0.5,
+                                scaleHeight * 0.45
+                        )
+                end
+        end
 
-	local thumbColor = Theme.highlightColor or {0.9, 0.9, 0.9, 1}
-	if scrollbarDrag.active then
-		thumbColor = lightenColor(thumbColor, 0.3)
-	elseif isThumbHovered then
-		thumbColor = lightenColor(thumbColor, 0.2)
-	elseif isHovered then
-		thumbColor = lightenColor(thumbColor, 0.1)
-	end
+        -- Track border highlight
+        local trackOutline = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
+        setColor(trackOutline, isHovered and 0.9 or 0.65)
+        love.graphics.setLineWidth(1.6)
+        love.graphics.rectangle("line", trackX, trackY, trackWidth, trackHeight, trackRadius)
 
-	local thumbPadding = 2
-	local thumbRadius = max(6, (trackWidth - thumbPadding * 2) * 0.5)
-	setColor(thumbColor)
-	love.graphics.rectangle(
-		"fill",
-		trackX + thumbPadding,
-		thumbY,
-		trackWidth - thumbPadding * 2,
-		thumbHeight,
-		thumbRadius
-	)
+        -- Snake thumb
+        local thumbPadding = 2
+        local thumbWidth = max(6, trackWidth - thumbPadding * 2)
+        local thumbX = trackX + thumbPadding
+        local bodyColor = snakeBodyColor
+        if scrollbarDrag.active then
+                bodyColor = lightenColor(bodyColor, 0.35)
+        elseif isThumbHovered then
+                bodyColor = lightenColor(bodyColor, 0.25)
+        elseif isHovered then
+                bodyColor = lightenColor(bodyColor, 0.15)
+        end
 
-	love.graphics.pop()
+        local shadowColor = withAlpha(darkenColor(bodyColor, 0.55), 0.5)
+        setColor(shadowColor)
+        love.graphics.rectangle("fill", thumbX + 1, thumbY + 3, thumbWidth, thumbHeight, thumbWidth * 0.5)
+
+        local headHeight = min(thumbWidth * 0.9, thumbHeight * 0.42)
+        local tailHeight = min(thumbWidth * 0.55, thumbHeight * 0.28)
+        local headCenterY = thumbY + headHeight * 0.45
+        local tailStartY = thumbY + thumbHeight - tailHeight * 0.6
+        local bodyTop = thumbY + headHeight * 0.55
+        local bodyBottom = max(bodyTop, tailStartY)
+        local bodyHeight = max(0, bodyBottom - bodyTop)
+
+        setColor(bodyColor)
+        love.graphics.ellipse("fill", thumbX + thumbWidth * 0.5, headCenterY, thumbWidth * 0.5, headHeight * 0.5)
+        if bodyHeight > 0 then
+                love.graphics.rectangle("fill", thumbX, bodyTop, thumbWidth, bodyHeight, thumbWidth * 0.45)
+        end
+        love.graphics.polygon(
+                "fill",
+                thumbX + thumbWidth * 0.15,
+                bodyBottom,
+                thumbX + thumbWidth * 0.85,
+                bodyBottom,
+                thumbX + thumbWidth * 0.5,
+                min(thumbY + thumbHeight, bodyBottom + tailHeight)
+        )
+
+        -- Snake belly highlight
+        local bellyWidth = thumbWidth * 0.6
+        local bellyX = thumbX + (thumbWidth - bellyWidth) * 0.5
+        local bellyTop = bodyTop + 4
+        local bellyBottom = min(bodyBottom - 2, thumbY + thumbHeight - tailHeight * 0.3)
+        if bellyBottom > bellyTop then
+                setColor(withAlpha(lightenColor(bodyColor, 0.45), 0.9))
+                love.graphics.rectangle("fill", bellyX, bellyTop, bellyWidth, bellyBottom - bellyTop, bellyWidth * 0.45)
+
+                local stripeColor = withAlpha(darkenColor(bodyColor, 0.35), 0.55)
+                local stripeSpacing = 9
+                local stripeInset = bellyWidth * 0.12
+                for y = bellyTop + 3, bellyBottom - 3, stripeSpacing do
+                        setColor(stripeColor)
+                        love.graphics.rectangle(
+                                "fill",
+                                bellyX + stripeInset,
+                                y,
+                                bellyWidth - stripeInset * 2,
+                                2,
+                                bellyWidth * 0.35
+                        )
+                end
+        end
+
+        -- Eyes to sell the snake silhouette
+        local eyeColor = Theme.textColor or {0.88, 0.88, 0.92, 1}
+        local pupilColor = Theme.bgColor or {0.12, 0.12, 0.14, 1}
+        local eyeRadius = max(1.2, thumbWidth * 0.08)
+        local pupilRadius = eyeRadius * 0.45
+        local eyeOffsetX = thumbWidth * 0.28
+        local eyeY = thumbY + headHeight * 0.35
+        setColor(withAlpha(eyeColor, 0.95))
+        love.graphics.circle("fill", thumbX + thumbWidth * 0.5 - eyeOffsetX, eyeY, eyeRadius)
+        love.graphics.circle("fill", thumbX + thumbWidth * 0.5 + eyeOffsetX, eyeY, eyeRadius)
+        setColor(withAlpha(pupilColor, 0.9))
+        love.graphics.circle("fill", thumbX + thumbWidth * 0.5 - eyeOffsetX + pupilRadius * 0.3, eyeY, pupilRadius)
+        love.graphics.circle("fill", thumbX + thumbWidth * 0.5 + eyeOffsetX - pupilRadius * 0.3, eyeY, pupilRadius)
+
+        -- Outline around the snake thumb for readability
+        setColor(withAlpha(darkenColor(bodyColor, 0.55), 0.9))
+        love.graphics.setLineWidth(2)
+        love.graphics.ellipse("line", thumbX + thumbWidth * 0.5, headCenterY, thumbWidth * 0.5, headHeight * 0.5)
+        if bodyHeight > 0 then
+                love.graphics.rectangle("line", thumbX, bodyTop, thumbWidth, bodyHeight, thumbWidth * 0.45)
+        end
+        love.graphics.polygon(
+                "line",
+                thumbX + thumbWidth * 0.15,
+                bodyBottom,
+                thumbX + thumbWidth * 0.85,
+                bodyBottom,
+                thumbX + thumbWidth * 0.5,
+                min(thumbY + thumbHeight, bodyBottom + tailHeight)
+        )
+
+        love.graphics.pop()
 end
 
 local function computeLayout(sw, sh)
