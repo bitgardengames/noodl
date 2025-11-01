@@ -3,7 +3,7 @@ local SnakeUtils = require("snakeutils")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Particles = require("particles")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local min = math.min
 local max = math.max

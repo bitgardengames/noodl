@@ -5,7 +5,7 @@ local Rocks = require("rocks")
 local Particles = require("particles")
 local Audio = require("audio")
 local Timer = require("timer")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local max = math.max
 local min = math.min
