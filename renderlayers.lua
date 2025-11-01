@@ -26,7 +26,7 @@ local workQueue = {}
 local queueReadIndex = 1
 local reusableCommandPool = {}
 local reusableCommandPoolSize = 0
-local table_unpack = table.unpack
+local table_unpack = table.unpack or unpack
 local canvasWidth = 0
 local canvasHeight = 0
 
