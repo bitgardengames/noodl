@@ -1126,8 +1126,10 @@ function AchievementsMenu:draw()
 				setColor(darkenColor(cardBase, 0.45))
 				love.graphics.rectangle("fill", barX, barY, barW, barH, 6)
 
-				setColor(progressColor)
-				love.graphics.rectangle("fill", barX, barY, barW * ratio, barH, 6)
+                                if ratio > 0 then
+                                        setColor(progressColor)
+                                        love.graphics.rectangle("fill", barX, barY, barW * ratio, barH, 6)
+                                end
 
 				local progressLabel = Achievements:getProgressLabel(ach)
 				if progressLabel then
