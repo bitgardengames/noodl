@@ -1195,7 +1195,10 @@ function AchievementsMenu:draw()
 	setColor(progressColor)
 	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
 
-	love.graphics.push("all")
+        local baseShadowOffset = UI.shadowOffset or 0
+        local panelShadowOffset = max(0, baseShadowOffset - 3)
+
+        love.graphics.push("all")
         UI.drawPanel(panelX, panelY, panelWidth, panelHeight, {
                 radius = 28,
                 fill = panelColor,
@@ -1205,8 +1208,9 @@ function AchievementsMenu:draw()
                 highlightColor = highlightColor,
                 highlightAlpha = 1,
                 shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.9),
+                shadowOffset = panelShadowOffset,
         })
-	love.graphics.pop()
+        love.graphics.pop()
 
 	local scissorTop = layout.scissorTop
 	local scissorBottom = layout.scissorBottom
@@ -1238,7 +1242,7 @@ function AchievementsMenu:draw()
 
                         local borderTint = {0, 0, 0, 1}
 
-			love.graphics.push("all")
+                        love.graphics.push("all")
                         UI.drawPanel(x, cardY, cardWidth, cardHeight, {
                                 radius = 18,
                                 fill = cardBase,
@@ -1247,6 +1251,7 @@ function AchievementsMenu:draw()
                                 highlightColor = highlightColor,
                                 highlightAlpha = unlocked and 1 or 0.8,
                                 shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.3) * 0.9),
+                                shadowOffset = panelShadowOffset,
                         })
 			love.graphics.pop()
 
