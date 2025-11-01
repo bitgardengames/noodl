@@ -190,19 +190,34 @@ local function lightenColor(color, amount, out)
 end
 
 local function darkenColor(color, amount, out)
-	local target = out or {}
-	if not color then
-		target[1], target[2], target[3], target[4] = 0, 0, 0, 1
-		return target
-	end
+        local target = out or {}
+        if not color then
+                target[1], target[2], target[3], target[4] = 0, 0, 0, 1
+                return target
+        end
 
-	local a = color[4] or 1
-	target[1] = color[1] * amount
-	target[2] = color[2] * amount
-	target[3] = color[3] * amount
-	target[4] = a
+        local a = color[4] or 1
+        target[1] = color[1] * amount
+        target[2] = color[2] * amount
+        target[3] = color[3] * amount
+        target[4] = a
 
-	return target
+        return target
+end
+
+local function drawAlignedBorder(mode, x, y, w, h, radius, borderWidth)
+        local drawX, drawY, drawW, drawH = x, y, w, h
+        if borderWidth and borderWidth > 0 then
+                local remainder = borderWidth % 2
+                if abs(remainder - 1) < 1e-6 then
+                        drawX = drawX + 0.5
+                        drawY = drawY + 0.5
+                        drawW = max(drawW - 1, 0)
+                        drawH = max(drawH - 1, 0)
+                end
+        end
+
+        love.graphics.rectangle(mode, drawX, drawY, drawW, drawH, radius, radius)
 end
 
 local function setColor(color, alphaMultiplier)
@@ -668,21 +683,30 @@ function UI.drawPanel(x, y, w, h, opts)
 		end
 	end
 
-	if opts.border ~= false then
-		local borderColor = opts.borderColor or UI.colors.border or UI.colors.panelBorder
-		setColor(borderColor, alphaMultiplier)
-		love.graphics.setLineWidth(borderWidth)
-		love.graphics.rectangle("line", x, y, w, h, radius, radius)
-		love.graphics.setLineWidth(1)
-	end
+        if opts.border ~= false then
+                local borderColor = opts.borderColor or UI.colors.border or UI.colors.panelBorder
+                setColor(borderColor, alphaMultiplier)
+                love.graphics.setLineWidth(borderWidth)
+                drawAlignedBorder("line", x, y, w, h, radius, borderWidth)
+                love.graphics.setLineWidth(1)
+        end
 
 	if opts.focused then
 		local focusRadius = radius + (opts.focusRadiusOffset or 4)
 		local focusPadding = opts.focusPadding or 3
 		local focusColor = opts.focusColor or UI.colors.highlight or UI.colors.border
 		setColor(focusColor, opts.focusAlpha or 1.1)
-		love.graphics.setLineWidth(opts.focusWidth or 3)
-		love.graphics.rectangle("line", x - focusPadding, y - focusPadding, w + focusPadding * 2, h + focusPadding * 2, focusRadius, focusRadius)
+		local focusWidth = opts.focusWidth or 3
+		love.graphics.setLineWidth(focusWidth)
+		drawAlignedBorder(
+			"line",
+			x - focusPadding,
+			y - focusPadding,
+			w + focusPadding * 2,
+			h + focusPadding * 2,
+			focusRadius,
+			focusWidth
+		)
 		love.graphics.setLineWidth(1)
 	end
 end
@@ -938,7 +962,7 @@ function UI.drawButton(id)
 	if hasBorder then
 		setColor(UI.colors.border)
 		love.graphics.setLineWidth(borderWidth)
-		love.graphics.rectangle("line", b.x, b.y + yOffset, b.w, b.h, radius, radius)
+		drawAlignedBorder("line", b.x, b.y + yOffset, b.w, b.h, radius, borderWidth)
 	end
 
 	if btn.focused then
@@ -948,8 +972,9 @@ function UI.drawButton(id)
 			local padding = 3
 			local focusColor = UI.colors.highlight or UI.colors.border
 			setColor(focusColor, 0.8 + 0.4 * focusStrength)
-			love.graphics.setLineWidth(3)
-			love.graphics.rectangle("line", b.x - padding, b.y + yOffset - padding, b.w + padding * 2, b.h + padding * 2, focusRadius, focusRadius)
+			local focusLineWidth = 3
+			love.graphics.setLineWidth(focusLineWidth)
+			drawAlignedBorder("line", b.x - padding, b.y + yOffset - padding, b.w + padding * 2, b.h + padding * 2, focusRadius, focusLineWidth)
 		end
 	end
 
@@ -959,7 +984,7 @@ function UI.drawButton(id)
 		love.graphics.setBlendMode("add", "alphamultiply")
 		love.graphics.setColor(1, 1, 1, 0.16 * glowStrength)
 		love.graphics.setLineWidth(2)
-		love.graphics.rectangle("line", b.x + 2, b.y + yOffset + 2, b.w - 4, b.h - 4, radius - 2, radius - 2)
+		drawAlignedBorder("line", b.x + 2, b.y + yOffset + 2, b.w - 4, b.h - 4, radius - 2, 2)
 		love.graphics.setBlendMode(prevMode, prevAlphaMode)
 	end
 
