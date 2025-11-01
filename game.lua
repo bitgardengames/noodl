@@ -1649,13 +1649,11 @@ function Game:setupFloor(floorNum)
 end
 
 function Game:draw()
-        love.graphics.clear()
-
         if Arena.drawBackdrop then
                 Arena:drawBackdrop(self.screenWidth, self.screenHeight)
-	else
-		love.graphics.setColor(Theme.bgColor)
-		love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+        else
+                love.graphics.setColor(Theme.bgColor)
+                love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 		love.graphics.setColor(1, 1, 1, 1)
 	end
 
