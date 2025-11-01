@@ -12,7 +12,7 @@ local Shaders = require("shaders")
 local Upgrades = require("upgrades")
 local Shop = require("shop")
 local Timer = require("timer")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local abs = math.abs
 local floor = math.floor

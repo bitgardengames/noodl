@@ -1,5 +1,5 @@
 local RenderLayers = require("renderlayers")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local floor = math.floor
 

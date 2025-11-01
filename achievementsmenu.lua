@@ -10,7 +10,7 @@ local SnakeUtils = require("snakeutils")
 local Face = require("face")
 local Shaders = require("shaders")
 local SnakeCosmetics = require("snakecosmetics")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local floor = math.floor
 local max = math.max

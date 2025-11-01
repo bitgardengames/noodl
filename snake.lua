@@ -13,7 +13,7 @@ local Score = require("score")
 local SnakeCosmetics = require("snakecosmetics")
 local FloatingText = require("floatingtext")
 local Face = require("face")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local abs = math.abs
 local floor = math.floor

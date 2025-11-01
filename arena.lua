@@ -4,7 +4,7 @@ local Shaders = require("shaders")
 local RenderLayers = require("renderlayers")
 local SharedCanvas = require("sharedcanvas")
 local Timer = require("timer")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local abs = math.abs
 local ceil = math.ceil

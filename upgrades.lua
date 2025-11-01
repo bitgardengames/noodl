@@ -15,7 +15,7 @@ local UpgradeHelpers = require("upgradehelpers")
 local DataSchemas = require("dataschemas")
 local UpgradeVisuals = require("upgradevisuals")
 local Bombs = require("bombs")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local floor = math.floor
 local max = math.max

@@ -1,7 +1,7 @@
 local Screen = require("screen")
 local Theme = require("theme")
 local UI = require("ui")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local max = math.max
 local min = math.min

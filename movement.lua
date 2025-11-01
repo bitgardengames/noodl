@@ -11,7 +11,7 @@ local Upgrades = require("upgrades")
 local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 local Achievements = require("achievements")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local abs = math.abs
 local max = math.max

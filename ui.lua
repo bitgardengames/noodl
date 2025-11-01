@@ -3,7 +3,7 @@ local Theme = require("theme")
 local Localization = require("localization")
 local Easing = require("easing")
 local Timer = require("timer")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local abs = math.abs
 local floor = math.floor

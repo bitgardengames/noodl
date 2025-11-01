@@ -3,7 +3,7 @@ local SnakeUtils = require("snakeutils")
 local Theme = require("theme")
 local Arena = require("arena")
 local RenderLayers = require("renderlayers")
-local MathUtil = require("noodl.mathutil")
+local MathUtil = require("mathutil")
 
 local max = math.max
 local min = math.min
