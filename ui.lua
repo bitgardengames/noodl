@@ -143,8 +143,8 @@ local BUTTON_BORDER_WIDTH = 3
 UI.buttonBorderWidth = BUTTON_BORDER_WIDTH
 
 local SnakeDraw = nil
-local sliderSnakeTrail = {}
-local sliderSnakeTrailCount = 0
+local snakeTrailBuffer = {}
+local snakeTrailCount = 0
 
 local function drawSnakeSliderHandle(handleX, handleY, handleRadius, trackX, config)
         if not config then
@@ -181,10 +181,10 @@ local function drawSnakeSliderHandle(handleX, handleY, handleRadius, trackX, con
                 local amp = handleRadius * amplitude * falloff
                 local py = handleY + wave * amp
 
-                local point = sliderSnakeTrail[step + 1]
+                local point = snakeTrailBuffer[step + 1]
                 if not point then
                         point = {}
-                        sliderSnakeTrail[step + 1] = point
+                        snakeTrailBuffer[step + 1] = point
                 end
 
                 point.x = px
@@ -194,10 +194,10 @@ local function drawSnakeSliderHandle(handleX, handleY, handleRadius, trackX, con
         end
 
         local newCount = segments + 1
-        for i = newCount + 1, sliderSnakeTrailCount do
-                sliderSnakeTrail[i] = nil
+        for i = newCount + 1, snakeTrailCount do
+                snakeTrailBuffer[i] = nil
         end
-        sliderSnakeTrailCount = newCount
+        snakeTrailCount = newCount
 
         local segmentSize = config.segmentSize or (handleRadius * (config.segmentScale or 1.2))
         if not segmentSize or segmentSize <= 0 then
@@ -205,7 +205,97 @@ local function drawSnakeSliderHandle(handleX, handleY, handleRadius, trackX, con
         end
 
         RenderLayers:begin(love.graphics.getWidth(), love.graphics.getHeight())
-        SnakeDraw.run(sliderSnakeTrail, sliderSnakeTrailCount, segmentSize, 0, nil, 0, 0, nil, config)
+        SnakeDraw.run(snakeTrailBuffer, snakeTrailCount, segmentSize, 0, nil, 0, 0, nil, config)
+        RenderLayers:present()
+
+        return true
+end
+
+local function drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, config)
+        if not config then
+                return false
+        end
+
+        if config == true then
+                config = {}
+        elseif type(config) ~= "table" then
+                return false
+        end
+
+        if thumbWidth <= 0 or thumbHeight <= 0 then
+                return false
+        end
+
+        if not SnakeDraw then
+                SnakeDraw = require("snakedraw")
+        end
+
+        local amplitude = max(0, config.amplitude or 0.65)
+        local frequency = config.frequency or 2.1
+        local segments = max(3, config.segmentCount or 24)
+        local falloff = config.falloff or 0.6
+        local phase = config.phase or 0
+        local headOffset = config.headOffset or 0
+        local lengthScale = config.lengthScale or config.tailLength or 1
+        local allowOverflow = not not config.allowOverflow
+
+        local headY = thumbY + headOffset * thumbHeight
+        local totalLength = thumbHeight * lengthScale
+        if not allowOverflow then
+                totalLength = min(totalLength, thumbHeight)
+        end
+        totalLength = max(thumbHeight * 0.7, totalLength)
+
+        local thumbBottom = thumbY + thumbHeight
+        local tailEnd = headY + totalLength
+        if not allowOverflow and tailEnd > thumbBottom then
+                local overshoot = tailEnd - thumbBottom
+                headY = headY - overshoot
+                if headY < thumbY then
+                        headY = thumbY
+                        totalLength = thumbBottom - headY
+                        if totalLength <= 0 then
+                                return false
+                        end
+                end
+        end
+
+        local centerX = thumbX + thumbWidth * 0.5 + (config.offsetX or 0)
+        local halfWidth = thumbWidth * 0.5
+
+        for step = 0, segments do
+                local t = step / segments
+                local wave = sin(t * pi * frequency + phase)
+                local waveFalloff = max(0, 1 - t * falloff)
+                local amp = halfWidth * amplitude * waveFalloff
+                local px = centerX + wave * amp
+                local py = headY + totalLength * t
+
+                local point = snakeTrailBuffer[step + 1]
+                if not point then
+                        point = {}
+                        snakeTrailBuffer[step + 1] = point
+                end
+
+                point.x = px
+                point.y = py
+                point.drawX = px
+                point.drawY = py
+        end
+
+        local newCount = segments + 1
+        for i = newCount + 1, snakeTrailCount do
+                snakeTrailBuffer[i] = nil
+        end
+        snakeTrailCount = newCount
+
+        local segmentSize = config.segmentSize or (thumbWidth * (config.segmentScale or 1.05))
+        if not segmentSize or segmentSize <= 0 then
+                segmentSize = max(thumbWidth * 0.9, 6)
+        end
+
+        RenderLayers:begin(love.graphics.getWidth(), love.graphics.getHeight())
+        SnakeDraw.run(snakeTrailBuffer, snakeTrailCount, segmentSize, 0, nil, 0, 0, nil, config)
         RenderLayers:present()
 
         return true
@@ -904,9 +994,13 @@ function UI.drawSlider(id, x, y, w, value, opts)
 		love.graphics.printf(percentText, trackX, trackY - (valueFont and valueFont:getHeight() or 14) - 6, trackW, "right")
 	end
 
-	love.graphics.setLineWidth(1)
+        love.graphics.setLineWidth(1)
 
-	return trackX, trackY, trackW, trackHeight, handleRadius
+        return trackX, trackY, trackW, trackHeight, handleRadius
+end
+
+function UI.drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, config)
+        return drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, config)
 end
 
 -- Easing
