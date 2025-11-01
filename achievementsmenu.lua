@@ -40,7 +40,7 @@ local SCROLL_SPEED = 60
 local BASE_PANEL_PADDING_X = 48
 local BASE_PANEL_PADDING_Y = 56
 local MIN_SCROLLBAR_INSET = 16
-local SCROLLBAR_TRACK_WIDTH = 24
+local SCROLLBAR_TRACK_WIDTH = 28
 
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
@@ -533,10 +533,15 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
                 falloff = 0.4,
                 lengthScale = 1,
                 paletteOverride = paletteOverride,
+                flipVertical = true,
                 drawFace = true,
         })
 
         if not snakeDrawn then
+                love.graphics.push()
+                love.graphics.translate(0, 2 * thumbY + thumbHeight)
+                love.graphics.scale(1, -1)
+
                 local headHeight = min(thumbWidth * 0.9, thumbHeight * 0.42)
                 local tailHeight = min(thumbWidth * 0.55, thumbHeight * 0.28)
                 local headCenterY = thumbY + headHeight * 0.45
@@ -615,6 +620,8 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
                         thumbX + thumbWidth * 0.5,
                         min(thumbY + thumbHeight, bodyBottom + tailHeight)
                 )
+
+                love.graphics.pop()
         end
 
         love.graphics.pop()
