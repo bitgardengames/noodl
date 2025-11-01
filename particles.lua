@@ -52,7 +52,7 @@ local function ensureParticleSprite()
                         local dx = (x - halfSize) / halfSize
                         local dy = (y - halfSize) / halfSize
                         local distance = sqrt(dx * dx + dy * dy)
-                        local alpha = max(0, 1 - distance)
+                        local alpha = distance <= 1 and 1 or 0
                         imageData:setPixel(x, y, 1, 1, 1, alpha)
                 end
         end
