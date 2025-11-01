@@ -1166,7 +1166,10 @@ function AchievementsMenu:draw()
 	local summaryProgressHeight = layout.summaryProgressHeight
 	local summaryLineHeight = layout.summaryLineHeight or UI.fonts.achieve:getHeight()
 
-	love.graphics.push("all")
+        local summaryShadowOffset = UI.shadowOffset or 0
+        summaryShadowOffset = max(0, summaryShadowOffset - 2)
+
+        love.graphics.push("all")
         UI.drawPanel(summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, {
                 radius = 24,
                 fill = panelColor,
@@ -1176,6 +1179,7 @@ function AchievementsMenu:draw()
                 highlightColor = highlightColor,
                 highlightAlpha = 1,
                 shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
+                shadowOffset = summaryShadowOffset,
         })
 
         love.graphics.pop()
