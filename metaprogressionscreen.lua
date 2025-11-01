@@ -328,27 +328,95 @@ local tabs = {
 	},
 }
 
-local BACKGROUND_EFFECT_TYPE = "metaFlux"
+local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
 local backgroundEffectCache = {}
 local backgroundEffect = nil
 
+local function copyColor(color)
+        if not color then
+                return {0, 0, 0, 1}
+        end
+
+        return {
+                color[1] or 0,
+                color[2] or 0,
+                color[3] or 0,
+                color[4] == nil and 1 or color[4],
+        }
+end
+
+local function lightenColor(color, factor)
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r + (1 - r) * factor,
+                g + (1 - g) * factor,
+                b + (1 - b) * factor,
+                a * (0.65 + factor * 0.35),
+        }
+end
+
+local function darkenColor(color, factor)
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r * (1 - factor),
+                g * (1 - factor),
+                b * (1 - factor),
+                a,
+        }
+end
+
+local function withAlpha(color, alpha)
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {r, g, b, a * alpha}
+end
+
 local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		return
-	end
+        local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+        if not effect then
+                backgroundEffect = nil
+                return
+        end
 
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.6
+        local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+        effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
 
-	Shaders.configure(effect, {
-		bgColor = Theme.bgColor,
-		primaryColor = Theme.progressColor,
-		secondaryColor = Theme.accentTextColor,
-	})
+        local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
+        baseColor = darkenColor(baseColor, 0.15)
+        baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-	backgroundEffect = effect
+        local accentSeed = copyColor(Theme.progressColor or Theme.borderColor or {0.35, 0.3, 0.5, 1})
+        local accentColor = lightenColor(copyColor(accentSeed), 0.18)
+        accentColor[4] = 1
+
+        local pulseSeed = Theme.accentTextColor or Theme.highlightColor or accentSeed
+        local pulseColor = lightenColor(copyColor(pulseSeed), 0.26)
+        pulseColor[4] = 1
+
+        Shaders.configure(effect, {
+                bgColor = baseColor,
+                accentColor = accentColor,
+                pulseColor = pulseColor,
+        })
+
+        effect.vignetteOverlay = {
+                color = withAlpha(lightenColor(copyColor(accentSeed), 0.05), 0.28),
+                alpha = 0.28,
+                steps = 3,
+                thickness = nil,
+        }
+
+        backgroundEffect = effect
 end
 
 local function drawBackground(sw, sh)
