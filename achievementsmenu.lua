@@ -5,8 +5,6 @@ local Theme = require("theme")
 local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
-local SnakeDraw = require("snakedraw")
-local SnakeUtils = require("snakeutils")
 local Face = require("face")
 local Shaders = require("shaders")
 local SnakeCosmetics = require("snakecosmetics")
@@ -42,7 +40,7 @@ local SCROLL_SPEED = 60
 local BASE_PANEL_PADDING_X = 48
 local BASE_PANEL_PADDING_Y = 56
 local MIN_SCROLLBAR_INSET = 16
-local SCROLLBAR_TRACK_WIDTH = (SnakeUtils.SEGMENT_SIZE or 24) + 12
+local SCROLLBAR_TRACK_WIDTH = 14
 
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
@@ -53,6 +51,22 @@ local minScrollOffset = 0
 local viewportHeight = 0
 local contentHeight = 0
 local DPAD_SCROLL_AMOUNT = CARD_SPACING
+
+local scrollbarState = {
+        visible = false,
+        trackX = 0,
+        trackY = 0,
+        trackWidth = 0,
+        trackHeight = 0,
+        thumbY = 0,
+        thumbHeight = 0,
+        scrollRange = 0,
+}
+
+local scrollbarDrag = {
+        active = false,
+        grabOffset = 0,
+}
 
 local heldDpadButton = nil
 local heldDpadAction = nil
@@ -103,6 +117,16 @@ local function darkenColor(color, factor)
                 b * (1 - factor),
                 a,
         }
+end
+
+local function clamp(value, minValue, maxValue)
+        if value < minValue then
+                return minValue
+        elseif value > maxValue then
+                return maxValue
+        end
+
+        return value
 end
 
 local function withAlpha(color, alpha)
@@ -440,34 +464,43 @@ local function toPercent(value)
 	return floor(value * 100 + 0.5)
 end
 
-local function buildThumbSnakeTrail(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight)
-	local segmentSize = SnakeUtils.SEGMENT_SIZE
-	local halfSegment = segmentSize * 0.5
-	local trackCenterX = trackX + trackWidth * 0.5
-	local trackTop = trackY + halfSegment
-	local trackBottom = trackY + trackHeight - halfSegment
-	local topY = max(trackTop, min(trackBottom, thumbY + halfSegment))
-	local bottomY = min(trackBottom, max(trackTop, thumbY + thumbHeight - halfSegment))
+local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isHovered, isThumbHovered)
+	love.graphics.push("all")
 
-	if bottomY < topY then
-		local midpoint = (topY + bottomY) * 0.5
-		bottomY = midpoint
-		topY = midpoint
+	local baseTrackColor = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+	local trackAlpha = isHovered and 0.75 or 0.6
+	local trackRadius = max(6, trackWidth * 0.5)
+
+	setColor(withAlpha(baseTrackColor, trackAlpha))
+	love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
+
+	local trackOutline = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
+	setColor(trackOutline, isHovered and 0.85 or 0.6)
+	love.graphics.setLineWidth(1.5)
+	love.graphics.rectangle("line", trackX, trackY, trackWidth, trackHeight, trackRadius)
+
+	local thumbColor = Theme.highlightColor or {0.9, 0.9, 0.9, 1}
+	if scrollbarDrag.active then
+		thumbColor = lightenColor(thumbColor, 0.3)
+	elseif isThumbHovered then
+		thumbColor = lightenColor(thumbColor, 0.2)
+	elseif isHovered then
+		thumbColor = lightenColor(thumbColor, 0.1)
 	end
 
-	local trail = {}
-	trail[#trail + 1] = {x = trackCenterX, y = bottomY}
+	local thumbPadding = 2
+	local thumbRadius = max(6, (trackWidth - thumbPadding * 2) * 0.5)
+	setColor(thumbColor)
+	love.graphics.rectangle(
+		"fill",
+		trackX + thumbPadding,
+		thumbY,
+		trackWidth - thumbPadding * 2,
+		thumbHeight,
+		thumbRadius
+	)
 
-	local spacing = SnakeUtils.SEGMENT_SPACING or segmentSize
-	local y = bottomY - spacing
-	while y > topY do
-		trail[#trail + 1] = {x = trackCenterX, y = y}
-		y = y - spacing
-	end
-
-	trail[#trail + 1] = {x = trackCenterX, y = topY}
-
-	return trail, segmentSize
+	love.graphics.pop()
 end
 
 local function computeLayout(sw, sh)
@@ -644,89 +677,10 @@ local function computeLayout(sw, sh)
         return layout
 end
 
-local function drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isHovered, isThumbHovered)
-	local trail, segmentSize = buildThumbSnakeTrail(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight)
-	if #trail < 2 then
-		return
-	end
-
-	local snakeR, snakeG, snakeB = unpack(Theme.snakeDefault)
-	local highlightColor = Theme.highlightColor or {1, 1, 1, 0.1}
-	local trackBase = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-	local trackColor = lightenColor(trackBase, isHovered and 0.45 or 0.35)
-	local trackAlpha = (trackColor[4] or 1) * (isHovered and 0.75 or 0.55)
-
-	love.graphics.push("all")
-
-	local trackRadius = max(8, segmentSize * 0.55)
-	love.graphics.setColor(trackColor[1], trackColor[2], trackColor[3], trackAlpha)
-	love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
-
-	local trackOutline = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
-	local outlineAlpha = (trackOutline[4] or 1) * (isHovered and 0.9 or 0.55)
-	love.graphics.setColor(trackOutline[1], trackOutline[2], trackOutline[3], outlineAlpha)
-	love.graphics.setLineWidth(2)
-	love.graphics.rectangle("line", trackX, trackY, trackWidth, trackHeight, trackRadius)
-
-	local thumbHighlight = highlightColor
-	if isThumbHovered then
-		thumbHighlight = lightenColor(highlightColor, 0.35)
-	elseif isHovered then
-		thumbHighlight = lightenColor(highlightColor, 0.18)
-	end
-
-	local hr = thumbHighlight[1] or snakeR
-	local hg = thumbHighlight[2] or snakeG
-	local hb = thumbHighlight[3] or snakeB
-	local ha = thumbHighlight[4] or 0.12
-	if isThumbHovered then
-		ha = min(1, ha + 0.28)
-	elseif isHovered then
-		ha = min(1, ha + 0.15)
-	end
-
-	local highlightInsetX = max(4, (trackWidth - segmentSize) * 0.35)
-	local highlightInsetY = max(6, segmentSize * 0.45)
-	local highlightX = trackX + highlightInsetX
-	local highlightY = thumbY + highlightInsetY
-	local highlightW = max(0, trackWidth - highlightInsetX * 2)
-	local highlightH = max(0, thumbHeight - highlightInsetY * 2)
-	love.graphics.setColor(hr, hg, hb, ha)
-	love.graphics.rectangle("fill", highlightX, highlightY, highlightW, highlightH, segmentSize * 0.45)
-
-	local outlinePad = max(10, segmentSize)
-	local scissorX = trackX - outlinePad
-	local scissorY = trackY - outlinePad
-	local scissorW = trackWidth + outlinePad * 2
-	local scissorH = trackHeight + outlinePad * 2
-	love.graphics.setScissor(scissorX, scissorY, scissorW, scissorH)
-
-	love.graphics.setColor(1, 1, 1, 1)
-	SnakeDraw.run(trail, #trail, segmentSize, nil, nil, nil, nil, nil)
-
-	local head = trail[#trail]
-	if head then
-		local headRadius = segmentSize * 0.32
-		local eyeOffset = headRadius * 0.55
-		local eyeRadius = max(1, headRadius * 0.22)
-
-		love.graphics.setColor(1, 1, 1, 0.9)
-		love.graphics.circle("fill", head.x - eyeOffset, head.y - eyeRadius * 0.4, eyeRadius)
-		love.graphics.circle("fill", head.x + eyeOffset, head.y - eyeRadius * 0.4, eyeRadius)
-
-		love.graphics.setColor(0.05, 0.05, 0.05, 0.85)
-		love.graphics.circle("fill", head.x - eyeOffset, head.y - eyeRadius * 0.3, eyeRadius * 0.45)
-		love.graphics.circle("fill", head.x + eyeOffset, head.y - eyeRadius * 0.3, eyeRadius * 0.45)
-	end
-
-	love.graphics.setScissor()
-	love.graphics.pop()
-end
-
 local function updateScrollBounds(sw, sh, layout)
-	layout = layout or computeLayout(sw, sh)
+        layout = layout or computeLayout(sw, sh)
 
-	viewportHeight = layout.viewportHeight
+        viewportHeight = layout.viewportHeight
 
 	local y = layout.startY
 	local maxBottom = layout.startY
@@ -752,13 +706,58 @@ local function updateScrollBounds(sw, sh, layout)
 		scrollOffset = 0
 	end
 
-	return layout
+        return layout
+end
+
+local function setScrollOffset(newOffset)
+        if newOffset > 0 then
+                newOffset = 0
+        elseif newOffset < minScrollOffset then
+                newOffset = minScrollOffset
+        end
+
+        if newOffset == scrollOffset then
+                return
+        end
+
+        scrollOffset = newOffset
+end
+
+local function setScrollProgress(progress)
+        progress = clamp(progress or 0, 0, 1)
+
+        local range = -minScrollOffset
+        if range <= 0 then
+                setScrollOffset(0)
+                return
+        end
+
+        setScrollOffset(-range * progress)
+end
+
+local function applyScrollbarThumbPosition(thumbY)
+        if not scrollbarState.visible then
+                return
+        end
+
+        local trackTop = scrollbarState.trackY
+        local travel = max(0, scrollbarState.trackHeight - scrollbarState.thumbHeight)
+        local clampedThumbY = clamp(thumbY, trackTop, trackTop + travel)
+        scrollbarState.thumbY = clampedThumbY
+
+        if travel <= 0 then
+                setScrollProgress(0)
+                return
+        end
+
+        local progress = (clampedThumbY - trackTop) / travel
+        setScrollProgress(progress)
 end
 
 local function scrollBy(amount)
-	if amount == 0 then
-		return
-	end
+        if amount == 0 then
+                return
+        end
 
 	scrollOffset = scrollOffset + amount
 
@@ -859,11 +858,15 @@ function AchievementsMenu:enter()
 
 	local sw, sh = Screen:get()
 
-	configureBackgroundEffect()
+        configureBackgroundEffect()
 
-	scrollOffset = 0
-	minScrollOffset = 0
-	resetAnalogDirections()
+        scrollOffset = 0
+        minScrollOffset = 0
+        scrollbarState.visible = false
+        scrollbarState.scrollRange = 0
+        scrollbarDrag.active = false
+        scrollbarDrag.grabOffset = 0
+        resetAnalogDirections()
 
 	Face:set("idle")
 
@@ -920,6 +923,14 @@ end
 function AchievementsMenu:update(dt)
         local mx, my = UI.refreshCursor()
         buttonList:updateHover(mx, my)
+        if scrollbarDrag.active then
+                if not scrollbarState.visible or not love.mouse.isDown(1) then
+                        scrollbarDrag.active = false
+                        scrollbarDrag.grabOffset = 0
+                else
+                        applyScrollbarThumbPosition(my - scrollbarDrag.grabOffset)
+                end
+        end
         Face:update(dt)
         updateHeldDpad(dt)
 end
@@ -1143,26 +1154,49 @@ function AchievementsMenu:draw()
 	love.graphics.pop()
 	love.graphics.setScissor()
 
-	if contentHeight > viewportHeight then
-		local trackWidth = SCROLLBAR_TRACK_WIDTH
-		local trackInset = max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
+        if contentHeight > viewportHeight then
+                local trackWidth = SCROLLBAR_TRACK_WIDTH
+                local trackInset = max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
                 local trackX = panelX + panelWidth + trackInset
                 local trackY = panelY
                 local trackHeight = layout.panelHeight
 
-		local scrollRange = -minScrollOffset
-		local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
+                local scrollRange = -minScrollOffset
+                local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
 
-		local minThumbHeight = 36
-		local thumbHeight = max(minThumbHeight, viewportHeight * (viewportHeight / contentHeight))
-		thumbHeight = min(thumbHeight, trackHeight)
-		local thumbY = trackY + (trackHeight - thumbHeight) * scrollProgress
+                local minThumbHeight = 36
+                local thumbHeight = max(minThumbHeight, viewportHeight * (viewportHeight / contentHeight))
+                thumbHeight = min(thumbHeight, trackHeight)
+                local thumbTravel = max(0, trackHeight - thumbHeight)
+                local thumbY = trackY + thumbTravel * scrollProgress
 
                 local mx, my = UI.getCursorPosition()
                 local isOverScrollbar = mx >= trackX and mx <= trackX + trackWidth and my >= trackY and my <= trackY + trackHeight
                 local isOverThumb = isOverScrollbar and my >= thumbY and my <= thumbY + thumbHeight
 
-                drawThumbSnake(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isOverScrollbar, isOverThumb)
+                scrollbarState.visible = true
+                scrollbarState.trackX = trackX
+                scrollbarState.trackY = trackY
+                scrollbarState.trackWidth = trackWidth
+                scrollbarState.trackHeight = trackHeight
+                scrollbarState.thumbY = thumbY
+                scrollbarState.thumbHeight = thumbHeight
+                scrollbarState.scrollRange = scrollRange
+
+                drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isOverScrollbar, isOverThumb or scrollbarDrag.active)
+        else
+                scrollbarState.visible = false
+                scrollbarState.scrollRange = 0
+                scrollbarState.trackX = 0
+                scrollbarState.trackY = 0
+                scrollbarState.trackWidth = 0
+                scrollbarState.trackHeight = 0
+                scrollbarState.thumbHeight = 0
+                scrollbarState.thumbY = 0
+                if scrollbarDrag.active then
+                        scrollbarDrag.active = false
+                        scrollbarDrag.grabOffset = 0
+                end
         end
 
 	for _, btn in buttonList:iter() do
@@ -1175,12 +1209,47 @@ function AchievementsMenu:draw()
 end
 
 function AchievementsMenu:mousepressed(x, y, button)
-	buttonList:mousepressed(x, y, button)
+        if button == 1 and scrollbarState.visible then
+                local trackX = scrollbarState.trackX
+                local trackY = scrollbarState.trackY
+                local trackWidth = scrollbarState.trackWidth
+                local trackHeight = scrollbarState.trackHeight
+
+                if x >= trackX and x <= trackX + trackWidth and y >= trackY and y <= trackY + trackHeight then
+                        local thumbTop = scrollbarState.thumbY
+                        local thumbHeight = scrollbarState.thumbHeight
+                        local thumbBottom = thumbTop + thumbHeight
+
+                        if y >= thumbTop and y <= thumbBottom then
+                                scrollbarDrag.active = true
+                                scrollbarDrag.grabOffset = y - thumbTop
+                        else
+                                local travel = max(0, trackHeight - thumbHeight)
+                                if travel > 0 then
+                                        local targetThumbY = clamp(y - thumbHeight * 0.5, trackY, trackY + travel)
+                                        scrollbarDrag.active = true
+                                        scrollbarDrag.grabOffset = y - targetThumbY
+                                        applyScrollbarThumbPosition(targetThumbY)
+                                else
+                                        setScrollProgress(0)
+                                end
+                        end
+
+                        return
+                end
+        end
+
+        buttonList:mousepressed(x, y, button)
 end
 
 function AchievementsMenu:mousereleased(x, y, button)
-	local action = buttonList:mousereleased(x, y, button)
-	return action
+        if button == 1 and scrollbarDrag.active then
+                scrollbarDrag.active = false
+                scrollbarDrag.grabOffset = 0
+        end
+
+        local action = buttonList:mousereleased(x, y, button)
+        return action
 end
 
 function AchievementsMenu:wheelmoved(dx, dy)
