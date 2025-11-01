@@ -32,7 +32,6 @@ local SUMMARY_HIGHLIGHT_INSET = 16
 local CARD_SPACING = 140
 local CARD_WIDTH = 600
 local CARD_HEIGHT = 118
-local CATEGORY_SPACING = 40
 -- Allow extra headroom in the scroll scissor so the category headers drawn
 -- slightly above the first card remain visible when at the top of the list.
 local SCROLL_SCISSOR_TOP_PADDING = 64
@@ -818,7 +817,6 @@ local function updateScrollBounds(sw, sh, layout)
 					y = y + CARD_SPACING
 				end
 			end
-			y = y + CATEGORY_SPACING
 		end
 	end
 
@@ -1087,9 +1085,8 @@ function AchievementsMenu:draw()
 	local spacing = CARD_SPACING
 	local cardWidth = layout.cardWidth
 	local cardHeight = CARD_HEIGHT
-	local categorySpacing = CATEGORY_SPACING
 
-	local listX = layout.listX
+        local listX = layout.listX
 	local panelPaddingX = layout.panelPaddingX
 	local panelPaddingY = layout.panelPaddingY
 	local panelX = layout.panelX
@@ -1271,9 +1268,7 @@ function AchievementsMenu:draw()
 			end
 
 			y = y + spacing
-		end
-
-		y = y + categorySpacing
+                end
 	end
 
 	love.graphics.pop()
