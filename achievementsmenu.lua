@@ -31,7 +31,7 @@ local SUMMARY_PANEL_GAP_MIN = 24
 local SUMMARY_HIGHLIGHT_INSET = 16
 local CARD_SPACING = 140
 local CARD_WIDTH = 600
-local CARD_HEIGHT = 118
+local CARD_HEIGHT = 120
 -- Allow extra headroom in the scroll scissor so the category headers drawn
 -- slightly above the first card remain visible when at the top of the list.
 local SCROLL_SCISSOR_TOP_PADDING = 64
@@ -290,17 +290,52 @@ local function withAlpha(color, alpha)
 end
 
 local function setColor(color, alphaOverride)
-	if not color then
-		love.graphics.setColor(1, 1, 1, alphaOverride or 1)
-		return
-	end
+        if not color then
+                love.graphics.setColor(1, 1, 1, alphaOverride or 1)
+                return
+        end
 
-	love.graphics.setColor(
-		color[1] or 1,
-		color[2] or 1,
-		color[3] or 1,
-		alphaOverride or color[4] or 1
-	)
+        love.graphics.setColor(
+                color[1] or 1,
+                color[2] or 1,
+                color[3] or 1,
+                alphaOverride or color[4] or 1
+        )
+end
+
+local function printfWithShadow(text, x, y, limit, align, color, shadowColor)
+        if not text or text == "" then
+                return
+        end
+
+        local baseR = 1
+        local baseG = 1
+        local baseB = 1
+        local baseA = 1
+        if color then
+                baseR = color[1] or 1
+                baseG = color[2] or 1
+                baseB = color[3] or 1
+                baseA = color[4] or 1
+        end
+
+        local shadow = shadowColor
+        if shadow then
+                shadow = {
+                        shadow[1] or 0,
+                        shadow[2] or 0,
+                        shadow[3] or 0,
+                        shadow[4] or (baseA * 0.7),
+                }
+        else
+                shadow = {0, 0, 0, baseA * 0.7}
+        end
+
+        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4])
+        love.graphics.printf(text, x + 1, y + 1, limit, align or "left")
+
+        love.graphics.setColor(baseR, baseG, baseB, baseA)
+        love.graphics.printf(text, x, y, limit, align or "left")
 end
 
 local function joinWithConjunction(items)
@@ -1078,8 +1113,7 @@ function AchievementsMenu:draw()
 	local colors = UI.colors or {}
 	local titleColor = colors.text or Theme.textColor or {1, 1, 1, 1}
 	local subtleTextColor = colors.subtleText or withAlpha(titleColor, (titleColor[4] or 1) * 0.8)
-	setColor(titleColor)
-	love.graphics.printf(Localization:get("achievements.title"), 0, layout.titleY, sw, "center")
+        printfWithShadow(Localization:get("achievements.title"), 0, layout.titleY, sw, "center", titleColor)
 
 	local startY = layout.startY
 	local spacing = CARD_SPACING
@@ -1131,9 +1165,8 @@ function AchievementsMenu:draw()
 	local achieveFont = UI.fonts.achieve
 
 	love.graphics.setFont(achieveFont)
-	setColor(titleColor)
-	love.graphics.printf(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left")
-	love.graphics.printf(completionLabel, summaryTextX, summaryTextY, summaryTextWidth, "right")
+        printfWithShadow(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left", titleColor)
+        printfWithShadow(completionLabel, summaryTextX, summaryTextY, summaryTextWidth, "right", titleColor)
 
 	local progressBarY = layout.summaryProgressY
 	setColor(darkenColor(panelColor, 0.4))
@@ -1223,14 +1256,12 @@ function AchievementsMenu:draw()
 				descriptionText = Localization:get(ach.descriptionKey)
 			end
 
-			love.graphics.setFont(UI.fonts.achieve)
-			setColor(titleColor)
-			love.graphics.printf(titleText, textX, cardY + 10, cardWidth - 110, "left")
+                        love.graphics.setFont(UI.fonts.achieve)
+                        printfWithShadow(titleText, textX, cardY + 12, cardWidth - 110, "left", titleColor)
 
-			love.graphics.setFont(UI.fonts.body)
-			setColor(subtleTextColor)
-			local textWidth = cardWidth - 110
-			love.graphics.printf(descriptionText, textX, cardY + 38, textWidth, "left")
+                        love.graphics.setFont(UI.fonts.body)
+                        local textWidth = cardWidth - 110
+                        printfWithShadow(descriptionText, textX, cardY + 40, textWidth, "left", subtleTextColor)
 
 			local rewardText = nil
 			if not hiddenLocked then
@@ -1242,10 +1273,10 @@ function AchievementsMenu:draw()
 			local barY = cardY + cardHeight - 24
 
 			if rewardText and rewardText ~= "" then
-				love.graphics.setFont(UI.fonts.small)
-				setColor(withAlpha(subtleTextColor, (subtleTextColor[4] or 1) * 0.85))
-				local rewardY = barY - (hasProgress and 36 or 24)
-				love.graphics.printf(rewardText, textX, rewardY, textWidth, "left")
+                                love.graphics.setFont(UI.fonts.small)
+                                local rewardColor = withAlpha(subtleTextColor, (subtleTextColor[4] or 1) * 0.85)
+                                local rewardY = barY - (hasProgress and 36 or 24)
+                                printfWithShadow(rewardText, textX, rewardY, textWidth, "left", rewardColor)
 			end
 
 			if hasProgress then
@@ -1261,10 +1292,10 @@ function AchievementsMenu:draw()
 
 				local progressLabel = Achievements:getProgressLabel(ach)
 				if progressLabel then
-					love.graphics.setFont(UI.fonts.small)
-					setColor(withAlpha(titleColor, (titleColor[4] or 1) * 0.9))
-					love.graphics.printf(progressLabel, barX, barY - 18, barW, "right")
-				end
+                                        love.graphics.setFont(UI.fonts.small)
+                                        local progressColor = withAlpha(titleColor, (titleColor[4] or 1) * 0.9)
+                                        printfWithShadow(progressLabel, barX, barY - 18, barW, "right", progressColor)
+                                end
 			end
 
 			y = y + spacing
