@@ -13,6 +13,7 @@ local Score = require("score")
 local SnakeCosmetics = require("snakecosmetics")
 local FloatingText = require("floatingtext")
 local Face = require("face")
+local MathUtil = require("noodl.mathutil")
 
 local abs = math.abs
 local floor = math.floor
@@ -4151,9 +4152,7 @@ local function isSawCutPointExposed(saw, sx, sy, px, py)
 	return projection >= -tolerance
 end
 
-local function clamp01(value)
-	return max(0, min(1, value or 0))
-end
+local clamp01 = MathUtil.clamp01
 
 local function scaleColorAlpha(color, scale)
 	local r = 1

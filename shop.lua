@@ -7,6 +7,7 @@ local Theme = require("theme")
 local Shaders = require("shaders")
 local Floors = require("floors")
 local Timer = require("timer")
+local MathUtil = require("noodl.mathutil")
 local abs = math.abs
 local ceil = math.ceil
 local cos = math.cos
@@ -882,15 +883,7 @@ rarityStyles = {
 	},
 }
 
-local function clamp01(value)
-	if value < 0 then
-		return 0
-	elseif value > 1 then
-		return 1
-	end
-
-	return value
-end
+local clamp01 = MathUtil.clamp01
 
 local function wrap01(value)
 	value = value - floor(value)

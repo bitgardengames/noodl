@@ -3,6 +3,7 @@ local SnakeUtils = require("snakeutils")
 local Theme = require("theme")
 local Arena = require("arena")
 local RenderLayers = require("renderlayers")
+local MathUtil = require("noodl.mathutil")
 
 local max = math.max
 local min = math.min
@@ -210,7 +211,7 @@ local function copyColor(color)
 end
 
 -- Easing
-local function clamp(a, lo, hi) if a < lo then return lo elseif a > hi then return hi else return a end end
+local clamp = MathUtil.clamp
 
 local function easeOutQuad(t)  return 1 - (1 - t)^2 end
 -- Helpers

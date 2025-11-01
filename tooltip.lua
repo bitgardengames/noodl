@@ -1,6 +1,7 @@
 local Screen = require("screen")
 local Theme = require("theme")
 local UI = require("ui")
+local MathUtil = require("noodl.mathutil")
 
 local max = math.max
 local min = math.min
@@ -165,15 +166,7 @@ local function computeWrap(font, text, maxWidth)
 	return width, lines
 end
 
-local function clamp(value, minValue, maxValue)
-	if value < minValue then
-		return minValue
-	end
-	if value > maxValue then
-		return maxValue
-	end
-	return value
-end
+local clamp = MathUtil.clamp
 
 function Tooltip:draw()
 	local alpha = self.alpha

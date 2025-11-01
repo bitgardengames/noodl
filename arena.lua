@@ -4,6 +4,7 @@ local Shaders = require("shaders")
 local RenderLayers = require("renderlayers")
 local SharedCanvas = require("sharedcanvas")
 local Timer = require("timer")
+local MathUtil = require("noodl.mathutil")
 
 local abs = math.abs
 local ceil = math.ceil
@@ -157,27 +158,8 @@ local function mixChannel(base, target, amount)
 	return base + (target - base) * amount
 end
 
-local function clamp01(value)
-	if value < 0 then
-		return 0
-	end
-	if value > 1 then
-		return 1
-	end
-	return value
-end
-
-local function clamp(value, minimum, maximum)
-	if minimum ~= nil and value < minimum then
-		return minimum
-	end
-
-	if maximum ~= nil and value > maximum then
-		return maximum
-	end
-
-	return value
-end
+local clamp = MathUtil.clamp
+local clamp01 = MathUtil.clamp01
 
 local function copyColor(color, defaultAlpha)
 	if not color then
