@@ -19,7 +19,11 @@ local layerClearedThisFrame = {}
 local layerUsedThisFrame = {}
 local layerPresent = {}
 local layerOrder = {}
+local layerOrderIndex = {}
 local queuedDraws = {}
+local layerInWorkQueue = {}
+local workQueue = {}
+local queueReadIndex = 1
 local reusableCommandPool = {}
 local reusableCommandPoolSize = 0
 local table_unpack = table.unpack
@@ -40,6 +44,7 @@ local function ensureLayerTables(name)
         if not layerPresent[name] then
                 layerPresent[name] = true
                 layerOrder[#layerOrder + 1] = name
+                layerOrderIndex[name] = #layerOrder
         end
 
         if layerClearedThisFrame[name] == nil then
@@ -71,14 +76,22 @@ local function resetLayerState()
         end
         layerOrder = {}
         layerPresent = {}
+        layerOrderIndex = {}
+        workQueue = {}
 
         for name in pairs(layerClearedThisFrame) do
                 layerClearedThisFrame[name] = false
-	end
+        end
 
-	for name in pairs(layerUsedThisFrame) do
-		layerUsedThisFrame[name] = false
-	end
+        for name in pairs(layerUsedThisFrame) do
+                layerUsedThisFrame[name] = false
+        end
+
+        for name in pairs(layerInWorkQueue) do
+                layerInWorkQueue[name] = false
+        end
+
+        queueReadIndex = 1
 
 	for _, name in ipairs(DEFAULT_LAYER_ORDER) do
 		ensureLayerTables(name)
@@ -160,6 +173,36 @@ local function normalizeCommand(layerName, command)
         return nil
 end
 
+local function enqueueLayer(layerName)
+        if layerInWorkQueue[layerName] then
+                return
+        end
+
+        layerInWorkQueue[layerName] = true
+
+        local targetIndex = layerOrderIndex[layerName] or math.huge
+        local insertPos = #workQueue + 1
+        local startIndex = queueReadIndex
+
+        if startIndex < 1 then
+                startIndex = 1
+        end
+
+        for i = #workQueue, startIndex, -1 do
+                local queuedLayer = workQueue[i]
+                local queuedIndex = layerOrderIndex[queuedLayer] or math.huge
+
+                if targetIndex >= queuedIndex then
+                        insertPos = i + 1
+                        break
+                else
+                        insertPos = i
+                end
+        end
+
+        table.insert(workQueue, insertPos, layerName)
+end
+
 function RenderLayers:queue(layerName, drawCommand)
         local command = normalizeCommand(layerName, drawCommand)
 
@@ -171,6 +214,8 @@ function RenderLayers:queue(layerName, drawCommand)
 
         local entries = queuedDraws[layerName]
         entries[#entries + 1] = command
+
+        enqueueLayer(layerName)
 end
 
 function RenderLayers:withLayer(layerName, drawFunc)
@@ -178,81 +223,75 @@ function RenderLayers:withLayer(layerName, drawFunc)
 end
 
 local function processQueuedDraws()
-	local passes = 0
-	local maxPasses = 16
+        queueReadIndex = 1
 
-	while true do
-		local processedAny = false
+        while queueReadIndex <= #workQueue do
+                local layerName = workQueue[queueReadIndex]
+                queueReadIndex = queueReadIndex + 1
+                layerInWorkQueue[layerName] = false
 
-		for _, layerName in ipairs(layerOrder) do
-			local draws = queuedDraws[layerName]
-			if draws and #draws > 0 then
-				processedAny = true
+                local draws = queuedDraws[layerName]
+                if draws and #draws > 0 then
+                        local canvas, replaced = ensureCanvas(layerName, canvasWidth, canvasHeight)
+                        if replaced then
+                                layerClearedThisFrame[layerName] = false
+                        end
 
-				local canvas, replaced = ensureCanvas(layerName, canvasWidth, canvasHeight)
-				if replaced then
-					layerClearedThisFrame[layerName] = false
-				end
+                        love.graphics.push("all")
+                        love.graphics.setCanvas({canvas, stencil = true})
 
-				love.graphics.push("all")
-				love.graphics.setCanvas({canvas, stencil = true})
+                        if not layerClearedThisFrame[layerName] then
+                                love.graphics.clear(0, 0, 0, 0)
+                                layerClearedThisFrame[layerName] = true
+                        end
 
-				if not layerClearedThisFrame[layerName] then
-					love.graphics.clear(0, 0, 0, 0)
-					layerClearedThisFrame[layerName] = true
-				end
+                        local i = 1
+                        while i <= #draws do
+                                local entry = draws[i]
+                                local entryType = type(entry)
 
-                                local i = 1
-                                while i <= #draws do
-                                        local entry = draws[i]
-                                        local entryType = type(entry)
-
-                                        if entryType == "function" then
-                                                entry()
-                                        elseif entryType == "table" then
-                                                local fn = entry.fn or entry[1]
-                                                if fn then
-                                                        local argStart = entry.argStart
-                                                        if argStart then
-                                                                local argEnd = entry.argEnd or entry.argCount or entry._length or #entry
-                                                                fn(table_unpack(entry, argStart, argEnd))
+                                if entryType == "function" then
+                                        entry()
+                                elseif entryType == "table" then
+                                        local fn = entry.fn or entry[1]
+                                        if fn then
+                                                local argStart = entry.argStart
+                                                if argStart then
+                                                        local argEnd = entry.argEnd or entry.argCount or entry._length or #entry
+                                                        fn(table_unpack(entry, argStart, argEnd))
+                                                else
+                                                        local argCount = entry.argCount or entry._length or #entry
+                                                        if entry.args then
+                                                                local args = entry.args
+                                                                local argsCount = entry.argCount or #args
+                                                                fn(table_unpack(args, 1, argsCount))
+                                                        elseif argCount > 1 then
+                                                                fn(table_unpack(entry, 2, argCount))
                                                         else
-                                                                local argCount = entry.argCount or entry._length or #entry
-                                                                if entry.args then
-                                                                        local args = entry.args
-                                                                        local argsCount = entry.argCount or #args
-                                                                        fn(table_unpack(args, 1, argsCount))
-                                                                elseif argCount > 1 then
-                                                                        fn(table_unpack(entry, 2, argCount))
-                                                                else
-                                                                        fn()
-                                                                end
+                                                                fn()
                                                         end
                                                 end
-
-                                                releaseCommandTable(entry)
                                         end
 
-                                        draws[i] = nil
-                                        i = i + 1
+                                        releaseCommandTable(entry)
                                 end
 
-                                love.graphics.pop()
-
-                                layerUsedThisFrame[layerName] = true
-                                clearQueuedDrawEntries(draws)
+                                draws[i] = nil
+                                i = i + 1
                         end
+
+                        love.graphics.pop()
+
+                        layerUsedThisFrame[layerName] = true
+                        clearQueuedDrawEntries(draws)
                 end
+        end
 
-		if not processedAny then
-			break
-		end
+        for i = #workQueue, 1, -1 do
+                workQueue[i] = nil
+        end
 
-		passes = passes + 1
-		if passes >= maxPasses then
-			break
-		end
-	end
+        queueReadIndex = 1
 end
 
 local function drawLayers(offsetX, offsetY)
