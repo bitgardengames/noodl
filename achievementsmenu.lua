@@ -40,7 +40,7 @@ local SCROLL_SPEED = 60
 local BASE_PANEL_PADDING_X = 48
 local BASE_PANEL_PADDING_Y = 56
 local MIN_SCROLLBAR_INSET = 16
-local SCROLLBAR_TRACK_WIDTH = 14
+local SCROLLBAR_TRACK_WIDTH = 24
 
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
@@ -476,37 +476,6 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
         setColor(withAlpha(baseTrackColor, trackAlpha))
         love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
 
-        -- Subtle snake-scale pattern inside the track
-        local scaleInset = 2
-        local scaleWidth = max(0, trackWidth - scaleInset * 2)
-        if scaleWidth > 0 then
-                local scaleHeight = 10
-                local scaleCenterX = trackX + trackWidth * 0.5
-                for offset = trackY, trackY + trackHeight, scaleHeight do
-                        local progress = (offset - trackY) / scaleHeight
-                        local stripeColor
-                        if progress % 2 < 1 then
-                                stripeColor = withAlpha(lightenColor(snakeBodyColor, 0.18), 0.20)
-                        else
-                                stripeColor = withAlpha(darkenColor(snakeBodyColor, 0.18), 0.16)
-                        end
-                        setColor(stripeColor)
-                        love.graphics.ellipse(
-                                "fill",
-                                scaleCenterX,
-                                min(offset + scaleHeight * 0.5, trackY + trackHeight - scaleHeight * 0.2),
-                                scaleWidth * 0.5,
-                                scaleHeight * 0.45
-                        )
-                end
-        end
-
-        -- Track border highlight
-        local trackOutline = Theme.panelBorder or Theme.borderColor or {0.5, 0.6, 0.75, 1}
-        setColor(trackOutline, isHovered and 0.9 or 0.65)
-        love.graphics.setLineWidth(1.6)
-        love.graphics.rectangle("line", trackX, trackY, trackWidth, trackHeight, trackRadius)
-
         -- Snake thumb
         local thumbPadding = 2
         local thumbWidth = max(6, trackWidth - thumbPadding * 2)
@@ -557,11 +526,11 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
         love.graphics.rectangle("fill", thumbX + 1, thumbY + 3, thumbWidth, thumbHeight, thumbWidth * 0.5)
 
         local snakeDrawn = UI.drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, {
-                amplitude = 0.68,
-                frequency = 2.15,
-                segmentCount = 28,
+                amplitude = 0,
+                frequency = 1.2,
+                segmentCount = 18,
                 segmentScale = 0.95,
-                falloff = 0.65,
+                falloff = 0.4,
                 lengthScale = 1,
                 paletteOverride = paletteOverride,
                 drawFace = true,
