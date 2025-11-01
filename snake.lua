@@ -507,24 +507,101 @@ local function addSnakeBodyOccupancy(col, row)
 end
 
 local function removeSnakeBodyOccupancy(col, row)
-	if not (col and row) then
-		return
-	end
+        if not (col and row) then
+                return
+        end
 
-	local column = snakeBodyOccupancy[col]
-	if not column then
-		return
-	end
+        local column = snakeBodyOccupancy[col]
+        if not column then
+                return
+        end
 
-	local count = (column[row] or 0) - 1
-	if count <= 0 then
-		column[row] = nil
-		if not next(column) then
-			snakeBodyOccupancy[col] = nil
-		end
-	else
-		column[row] = count
-	end
+        local count = (column[row] or 0) - 1
+        if count <= 0 then
+                column[row] = nil
+                if not next(column) then
+                        snakeBodyOccupancy[col] = nil
+                end
+        else
+                column[row] = count
+        end
+end
+
+local function isSnakeBodyOccupyingAABB(minX, minY, maxX, maxY)
+        if not (minX and minY and maxX and maxY) then
+                return true
+        end
+
+        if not ensureOccupancyGrid() then
+                return true
+        end
+
+        if maxX < minX then
+                minX, maxX = maxX, minX
+        end
+
+        if maxY < minY then
+                minY, maxY = maxY, minY
+        end
+
+        local arena = Arena
+        if not arena then
+                return true
+        end
+
+        local tileSize = arena.tileSize or SEGMENT_SPACING or 1
+        if tileSize == 0 then
+                tileSize = 1
+        end
+
+        local offsetX = arena.x or 0
+        local offsetY = arena.y or 0
+        local cols = arena.cols or 0
+        local rows = arena.rows or 0
+
+        if cols <= 0 or rows <= 0 then
+                return true
+        end
+
+        local rawMinCol = floor(((minX - offsetX) / tileSize) + TILE_COORD_EPSILON) + 1
+        local rawMaxCol = floor(((maxX - offsetX) / tileSize) + TILE_COORD_EPSILON) + 1
+        local rawMinRow = floor(((minY - offsetY) / tileSize) + TILE_COORD_EPSILON) + 1
+        local rawMaxRow = floor(((maxY - offsetY) / tileSize) + TILE_COORD_EPSILON) + 1
+
+        local startCol = min(rawMinCol, rawMaxCol)
+        local endCol = max(rawMinCol, rawMaxCol)
+        local startRow = min(rawMinRow, rawMaxRow)
+        local endRow = max(rawMinRow, rawMaxRow)
+
+        if endCol < 1 or startCol > cols or endRow < 1 or startRow > rows then
+                return false
+        end
+
+        if startCol < 1 then
+                startCol = 1
+        end
+        if endCol > cols then
+                endCol = cols
+        end
+        if startRow < 1 then
+                startRow = 1
+        end
+        if endRow > rows then
+                endRow = rows
+        end
+
+        for col = startCol, endCol do
+                local column = snakeBodyOccupancy[col]
+                if column then
+                        for row = startRow, endRow do
+                                if (column[row] or 0) > 0 then
+                                        return true
+                                end
+                        end
+                end
+        end
+
+        return false
 end
 
 local function isCellOccupiedBySnakeBody(col, row)
@@ -4362,12 +4439,21 @@ function Snake:checkLaserBodyCollision()
 			return nil
 		end
 
-		local expandedX = rx - bodyRadius
-		local expandedY = ry - bodyRadius
-		local expandedW = rw + bodyRadius * 2
-		local expandedH = rh + bodyRadius * 2
+                local expandedX = rx - bodyRadius
+                local expandedY = ry - bodyRadius
+                local expandedW = rw + bodyRadius * 2
+                local expandedH = rh + bodyRadius * 2
 
-		local travelled = 0
+                if not isSnakeBodyOccupyingAABB(
+                        expandedX,
+                        expandedY,
+                        expandedX + expandedW,
+                        expandedY + expandedH
+                ) then
+                        return nil
+                end
+
+                local travelled = 0
 		local prevX, prevY = headX, headY
 
 		for index = 2, #trail do
@@ -4460,6 +4546,15 @@ function Snake:checkDartBodyCollision()
                 local expandedW = rw + bodyRadius * 2
                 local expandedH = rh + bodyRadius * 2
 
+                if not isSnakeBodyOccupyingAABB(
+                        expandedX,
+                        expandedY,
+                        expandedX + expandedW,
+                        expandedY + expandedH
+                ) then
+                        return nil
+                end
+
                 local travelled = 0
                 local prevX, prevY = headX, headY
 
@@ -4547,51 +4642,60 @@ function Snake:checkSawBodyCollision()
 		if isSawActive(saw) then
 			local sx, sy = getSawCenterPosition(saw)
 			if sx and sy then
-				local sawRadius = (saw.collisionRadius or saw.radius or 0)
-				local travelled = 0
-				local prevX, prevY = headX, headY
+                                local sawRadius = (saw.collisionRadius or saw.radius or 0)
+                                local combinedRadius = sawRadius + bodyRadius
 
-				for index = 2, #trail do
-					local segment = trail[index]
-					local cx = segment and (segment.drawX or segment.x)
-					local cy = segment and (segment.drawY or segment.y)
-					if cx and cy then
-						local dx = cx - prevX
-						local dy = cy - prevY
-						local segLen = sqrt(dx * dx + dy * dy)
-						local minX = min(prevX, cx) - bodyRadius
-						local minY = min(prevY, cy) - bodyRadius
-						local maxX = max(prevX, cx) + bodyRadius
-						local maxY = max(prevY, cy) + bodyRadius
-						local width = maxX - minX
-						local height = maxY - minY
+                                if combinedRadius > 0 and isSnakeBodyOccupyingAABB(
+                                        sx - combinedRadius,
+                                        sy - combinedRadius,
+                                        sx + combinedRadius,
+                                        sy + combinedRadius
+                                ) then
+                                        local travelled = 0
+                                        local prevX, prevY = headX, headY
 
-						if segLen > 1e-6 and (not (Saws and Saws.isCollisionCandidate) or Saws:isCollisionCandidate(saw, minX, minY, width, height)) then
-							local closestX, closestY, distSq, t = closestPointOnSegment(sx, sy, prevX, prevY, cx, cy)
-							local along = travelled + segLen * (t or 0)
-							if along > guardDistance then
-								local combined = sawRadius + bodyRadius
-								if distSq <= combined * combined and isSawCutPointExposed(saw, sx, sy, closestX, closestY) then
-									local handled = self:handleSawBodyCut({
-										index = index,
-										cutX = closestX,
-										cutY = closestY,
-										cutDistance = along,
-									})
-									if handled then
-										return true
-									end
-								end
-							end
-						end
+                                        for index = 2, #trail do
+                                                local segment = trail[index]
+                                                local cx = segment and (segment.drawX or segment.x)
+                                                local cy = segment and (segment.drawY or segment.y)
+                                                if cx and cy then
+                                                        local dx = cx - prevX
+                                                        local dy = cy - prevY
+                                                        local segLen = sqrt(dx * dx + dy * dy)
+                                                        local minX = min(prevX, cx) - bodyRadius
+                                                        local minY = min(prevY, cy) - bodyRadius
+                                                        local maxX = max(prevX, cx) + bodyRadius
+                                                        local maxY = max(prevY, cy) + bodyRadius
+                                                        local width = maxX - minX
+                                                        local height = maxY - minY
 
-						travelled = travelled + segLen
-						prevX, prevY = cx, cy
-					end
-				end
-			end
-		end
-	end
+                                                        if segLen > 1e-6 and (not (Saws and Saws.isCollisionCandidate) or Saws:isCollisionCandidate(saw, minX, minY, width, height)) then
+                                                                local closestX, closestY, distSq, t = closestPointOnSegment(sx, sy, prevX, prevY, cx, cy)
+                                                                local along = travelled + segLen * (t or 0)
+                                                                if along > guardDistance then
+                                                                        local combined = sawRadius + bodyRadius
+                                                                        if distSq <= combined * combined and isSawCutPointExposed(saw, sx, sy, closestX, closestY) then
+                                                                                local handled = self:handleSawBodyCut({
+                                                                                        index = index,
+                                                                                        cutX = closestX,
+                                                                                        cutY = closestY,
+                                                                                        cutDistance = along,
+                                                                                })
+                                                                                if handled then
+                                                                                        return true
+                                                                                end
+                                                                        end
+                                                                end
+                                                        end
+
+                                                        travelled = travelled + segLen
+                                                        prevX, prevY = cx, cy
+                                                end
+                                        end
+                                end
+                        end
+                end
+        end
 
 	return false
 end
