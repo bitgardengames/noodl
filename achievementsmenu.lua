@@ -40,7 +40,7 @@ local SCROLL_SPEED = 60
 local BASE_PANEL_PADDING_X = 48
 local BASE_PANEL_PADDING_Y = 56
 local MIN_SCROLLBAR_INSET = 16
-local SCROLLBAR_TRACK_WIDTH = 28
+local SCROLLBAR_TRACK_WIDTH = 30
 
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
@@ -478,7 +478,7 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 
         -- Snake thumb
         local thumbPadding = 2
-        local thumbWidth = max(6, trackWidth - thumbPadding * 2)
+        local thumbWidth = max(6, trackWidth - thumbPadding * 2 + 2)
         local thumbX = trackX + thumbPadding
         local hoverBoost = 0
         if scrollbarDrag.active then
@@ -535,6 +535,7 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
                 paletteOverride = paletteOverride,
                 flipVertical = true,
                 drawFace = true,
+                faceAtBottom = true,
         })
 
         if not snakeDrawn then
@@ -596,7 +597,7 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
                 local eyeRadius = max(1.2, thumbWidth * 0.08)
                 local pupilRadius = eyeRadius * 0.45
                 local eyeOffsetX = thumbWidth * 0.28
-                local eyeY = thumbY + headHeight * 0.35
+                local eyeY = thumbY + headHeight * 0.08
                 setColor(withAlpha(eyeColor, 0.95))
                 love.graphics.circle("fill", thumbX + thumbWidth * 0.5 - eyeOffsetX, eyeY, eyeRadius)
                 love.graphics.circle("fill", thumbX + thumbWidth * 0.5 + eyeOffsetX, eyeY, eyeRadius)
