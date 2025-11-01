@@ -121,19 +121,25 @@ local function configureBackgroundEffect()
         end
 
         local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-        effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
-
         local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
+        local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+        local accentColor = lightenColor(copyColor(coolAccent), 0.18)
+        accentColor[4] = 1
+
+        local pulseColor = lightenColor(copyColor(Theme.panelBorder or Theme.progressColor or accentColor), 0.26)
+        pulseColor[4] = 1
+
         baseColor = darkenColor(baseColor, 0.15)
         baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-        local accentSeed = copyColor(Theme.achieveColor or Theme.borderColor or Theme.progressColor or {0.35, 0.3, 0.5, 1})
-        local accentColor = lightenColor(copyColor(accentSeed), 0.18)
-        accentColor[4] = 1
+        local vignette = {
+                color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
+                alpha = 0.28,
+                steps = 3,
+                thickness = nil,
+        }
 
-        local pulseSeed = Theme.accentTextColor or Theme.progressColor or accentSeed
-        local pulseColor = lightenColor(copyColor(pulseSeed), 0.26)
-        pulseColor[4] = 1
+        effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
 
         Shaders.configure(effect, {
                 bgColor = baseColor,
@@ -141,13 +147,7 @@ local function configureBackgroundEffect()
                 pulseColor = pulseColor,
         })
 
-        effect.vignetteOverlay = {
-                color = withAlpha(lightenColor(copyColor(accentSeed), 0.05), 0.28),
-                alpha = 0.28,
-                steps = 3,
-                thickness = nil,
-        }
-
+        effect.vignetteOverlay = vignette
         backgroundEffect = effect
 end
 
