@@ -1291,7 +1291,18 @@ local function drawPlayfieldLayers(self, stateOverride)
 
         Death:applyShake()
 
-        RenderLayers:withLayer("main", drawMainLayer)
+        local needsMainStencil = false
+        if renderState == "descending" then
+                needsMainStencil = true
+        else
+                if Saws and Saws.needsStencil and Saws:needsStencil() then
+                        needsMainStencil = true
+                elseif Snake and Snake.needsStencil and Snake:needsStencil() then
+                        needsMainStencil = true
+                end
+        end
+
+        RenderLayers:withLayer("main", drawMainLayer, needsMainStencil)
 
         RenderLayers:present()
 

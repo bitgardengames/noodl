@@ -128,6 +128,10 @@ local function invalidateSawPointCache(saw)
         end
 end
 
+function Saws:needsStencil()
+        return current and #current > 0
+end
+
 local function emitDebugEvent(eventType, saw, payload)
         local callback = Saws and Saws.debugCallback
         if not callback then
@@ -1092,12 +1096,13 @@ function Saws:draw()
 		if (saw.scaleX ~= nil and saw.scaleX <= 0) or (saw.scaleY ~= nil and saw.scaleY <= 0) then
 			isBladeHidden = true
 		end
-		if not isBladeHidden and #points >= 6 then
-			RenderLayers:withLayer("shadows", function()
-				love.graphics.push()
+                if not isBladeHidden and #points >= 6 then
+                        local needsShadowStencil = (saw.dir == "horizontal")
+                        RenderLayers:withLayer("shadows", function()
+                                love.graphics.push()
 
-				local shadowBaseX = (px or anchorX)
-				local shadowBaseY = (py or anchorY)
+                                local shadowBaseX = (px or anchorX)
+                                local shadowBaseY = (py or anchorY)
 				local shadowSinkOffset = offsetY
 				local applyShadowClip = false
 
@@ -1145,9 +1150,9 @@ function Saws:draw()
 					love.graphics.setStencilTest()
 				end
 
-				love.graphics.pop()
-			end)
-		end
+                                love.graphics.pop()
+                        end, needsShadowStencil)
+                end
 
 		-- Stencil: clip saw into the track (adjust direction for left/right mounted saws)
 		sawStencilState.dir = saw.dir

@@ -124,6 +124,19 @@ local function markRecentlyVacatedCell(col, row)
         recentlyVacatedCount = index
 end
 
+function Snake:needsStencil()
+        local hole = descendingHole
+        if hole then
+                local radius = hole.radius or 0
+                local depth = hole.renderDepth or 0
+                if (radius > 0 or depth > 0) and not hole.fullyConsumed then
+                        return true
+                end
+        end
+
+        return false
+end
+
 local function wasRecentlyVacated(col, row)
         if recentlyVacatedGeneration == 0 or not (col and row) then
                 return false

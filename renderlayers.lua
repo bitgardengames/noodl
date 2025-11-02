@@ -17,6 +17,7 @@ local DEFAULT_LAYER_ORDER = {
 local canvases = {}
 local layerClearedThisFrame = {}
 local layerUsedThisFrame = {}
+local layerNeedsStencilThisFrame = {}
 local layerPresent = {}
 local layerOrder = {}
 local queuedDraws = {}
@@ -47,6 +48,10 @@ local function ensureLayerTables(name)
                 layerUsedThisFrame[name] = false
         end
 
+        if layerNeedsStencilThisFrame[name] == nil then
+                layerNeedsStencilThisFrame[name] = false
+        end
+
         if not queuedDraws[name] then
                 queuedDraws[name] = {}
         end
@@ -73,13 +78,17 @@ local function resetLayerState()
                 layerClearedThisFrame[name] = false
 	end
 
-	for name in pairs(layerUsedThisFrame) do
-		layerUsedThisFrame[name] = false
-	end
+        for name in pairs(layerUsedThisFrame) do
+                layerUsedThisFrame[name] = false
+        end
 
-	for _, name in ipairs(DEFAULT_LAYER_ORDER) do
-		ensureLayerTables(name)
-	end
+        for name in pairs(layerNeedsStencilThisFrame) do
+                layerNeedsStencilThisFrame[name] = false
+        end
+
+        for _, name in ipairs(DEFAULT_LAYER_ORDER) do
+                ensureLayerTables(name)
+        end
 end
 
 function RenderLayers:begin(width, height)
@@ -98,19 +107,35 @@ function RenderLayers:begin(width, height)
 	end
 end
 
-function RenderLayers:queue(layerName, drawFunc)
-	if not drawFunc then
-		return
-	end
+local function shouldEnableStencil(options)
+        if options == nil then
+                return false
+        end
 
-	ensureLayerTables(layerName)
+        if type(options) == "table" then
+                return not not options.stencil
+        end
 
-	local entries = queuedDraws[layerName]
-	entries[#entries + 1] = drawFunc
+        return not not options
 end
 
-function RenderLayers:withLayer(layerName, drawFunc)
-	self:queue(layerName, drawFunc)
+function RenderLayers:queue(layerName, drawFunc, options)
+        if not drawFunc then
+                return
+        end
+
+        ensureLayerTables(layerName)
+
+        if shouldEnableStencil(options) then
+                layerNeedsStencilThisFrame[layerName] = true
+        end
+
+        local entries = queuedDraws[layerName]
+        entries[#entries + 1] = drawFunc
+end
+
+function RenderLayers:withLayer(layerName, drawFunc, options)
+        self:queue(layerName, drawFunc, options)
 end
 
 local function processQueuedDraws()
@@ -130,13 +155,23 @@ local function processQueuedDraws()
 					layerClearedThisFrame[layerName] = false
 				end
 
-				love.graphics.push("all")
-				love.graphics.setCanvas({canvas, stencil = true})
+                                love.graphics.push("all")
 
-				if not layerClearedThisFrame[layerName] then
-					love.graphics.clear(0, 0, 0, 0)
-					layerClearedThisFrame[layerName] = true
-				end
+                                local enableStencil = layerNeedsStencilThisFrame[layerName]
+                                if enableStencil then
+                                        love.graphics.setCanvas({canvas, stencil = true})
+                                else
+                                        love.graphics.setCanvas(canvas)
+                                end
+
+                                if not layerClearedThisFrame[layerName] then
+                                        if enableStencil then
+                                                love.graphics.clear(0, 0, 0, 0, false, true)
+                                        else
+                                                love.graphics.clear(0, 0, 0, 0)
+                                        end
+                                        layerClearedThisFrame[layerName] = true
+                                end
 
 				local i = 1
 				while i <= #draws do
