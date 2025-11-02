@@ -4553,7 +4553,8 @@ function Snake:checkLaserBodyCollision()
 
                                         local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH)
                                         if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
-                                                beam.flashTimer = max(beam.flashTimer or 0, 1)
+                                                -- Leave the laser scorch effect but skip the usual hazard flash
+                                                -- response so the tail chop only highlights the snake itself.
                                                 beam.burnAlpha = 0.92
                                                 resetCollisionContext(context)
                                                 return true
@@ -4617,7 +4618,7 @@ function Snake:checkDartBodyCollision()
 
                                         local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH)
                                         if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
-                                                emitter.flashTimer = max(emitter.flashTimer or 0, 1)
+                                                -- Avoid triggering the dart emitter flash when only the tail is clipped.
                                                 resetCollisionContext(context)
                                                 return true
                                         end
