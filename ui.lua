@@ -960,13 +960,21 @@ function UI.drawSlider(id, x, y, w, value, opts)
 		focusAlpha = opts.focusAlpha,
 	})
 
-	local label = opts.label
-	if label then
-		UI.drawLabel(label, x + padding, y + padding, w - padding * 2, opts.labelAlign or "left", {
-			fontKey = opts.labelFont or "body",
-			color = opts.labelColor or UI.colors.text,
-		})
-	end
+        local label = opts.label
+        if label then
+                local labelOptions = {
+                        fontKey = opts.labelFont or "body",
+                        color = opts.labelColor or UI.colors.text,
+                        shadow = opts.labelShadow,
+                        dropShadow = opts.labelDropShadow,
+                        shadowOffset = opts.labelShadowOffset,
+                        shadowOffsetX = opts.labelShadowOffsetX,
+                        shadowOffsetY = opts.labelShadowOffsetY,
+                        shadowColor = opts.labelShadowColor,
+                        shadowAlpha = opts.labelShadowAlpha,
+                }
+                UI.drawLabel(label, x + padding, y + padding, w - padding * 2, opts.labelAlign or "left", labelOptions)
+        end
 
 	local sliderValue = clamp01(value or 0)
 	local trackX = x + padding
@@ -995,13 +1003,21 @@ function UI.drawSlider(id, x, y, w, value, opts)
 
         if opts.showValue ~= false then
                 local valueFont = UI.fonts[opts.valueFont or "small"]
-                if valueFont then
-                        love.graphics.setFont(valueFont)
-		end
-		setColor(opts.valueColor or UI.colors.subtleText)
-		local percentText = opts.valueText or string.format("%d%%", floor(sliderValue * 100 + 0.5))
-		love.graphics.printf(percentText, trackX, trackY - (valueFont and valueFont:getHeight() or 14) - 6, trackW, "right")
-	end
+                local percentText = opts.valueText or string.format("%d%%", floor(sliderValue * 100 + 0.5))
+                local valueTop = trackY - (valueFont and valueFont:getHeight() or 14) - 6
+                local valueOptions = {
+                        font = valueFont,
+                        color = opts.valueColor or UI.colors.subtleText,
+                        shadow = opts.valueShadow,
+                        dropShadow = opts.valueDropShadow,
+                        shadowOffset = opts.valueShadowOffset,
+                        shadowOffsetX = opts.valueShadowOffsetX,
+                        shadowOffsetY = opts.valueShadowOffsetY,
+                        shadowColor = opts.valueShadowColor,
+                        shadowAlpha = opts.valueShadowAlpha,
+                }
+                UI.drawLabel(percentText, trackX, valueTop, trackW, "right", valueOptions)
+        end
 
         love.graphics.setLineWidth(1)
 

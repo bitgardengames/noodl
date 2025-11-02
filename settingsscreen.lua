@@ -1026,11 +1026,19 @@ function SettingsScreen:draw()
         drawBackground(sw, sh)
 
         local panel = layout.panel
-        UI.drawPanel(panel.x, panel.y, panel.w, panel.h)
+        local panelShadowOffset = max(0, (UI.shadowOffset or 0) - 2)
+        UI.drawPanel(panel.x, panel.y, panel.w, panel.h, {
+                shadowOffset = panelShadowOffset,
+        })
 
 	local titleText = Localization:get("settings.title")
 	local headerY = UI.getHeaderY(sw, sh)
-	UI.drawLabel(titleText, 0, headerY, sw, "center", {fontKey = "title"})
+        UI.drawLabel(titleText, 0, headerY, sw, "center", {
+                fontKey = "title",
+                shadow = true,
+                shadowOffsetX = 1,
+                shadowOffsetY = 1,
+        })
 
 	self:updateButtonPositions()
 
@@ -1092,6 +1100,12 @@ function SettingsScreen:draw()
                                         hovered = btn.hovered,
                                         register = false,
                                         snakeHandle = true,
+                                        labelShadow = true,
+                                        labelShadowOffsetX = 1,
+                                        labelShadowOffsetY = 1,
+                                        valueShadow = true,
+                                        valueShadowOffsetX = 1,
+                                        valueShadowOffsetY = 1,
                                 })
 
                                 btn.sliderTrack = btn.sliderTrack or {}
@@ -1122,6 +1136,9 @@ function SettingsScreen:draw()
                                 UI.drawLabel(label, btn.x, textY, btn.w, "left", {
                                         font = font,
                                         color = headerColor,
+                                        shadow = true,
+                                        shadowOffsetX = 1,
+                                        shadowOffsetY = 1,
                                 })
 
                                 -- Decorative line removed for cleaner section headers
