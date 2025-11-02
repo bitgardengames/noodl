@@ -4962,9 +4962,8 @@ function Snake:draw()
 						end
 					end
 
-					drawOptions.tailHitFlash = tailHitFlash
-					drawOptions.tailHitFlashColor = TAIL_HIT_FLASH_COLOR
-					drawOptions.disableOverlay = true
+                                        drawOptions.tailHitFlash = tailHitFlash
+                                        drawOptions.tailHitFlashColor = TAIL_HIT_FLASH_COLOR
 				end
 
 		currentHeadOwner = self
