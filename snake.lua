@@ -58,6 +58,7 @@ local segmentSnapshotPool = {}
 local segmentSnapshotPoolCount = 0
 
 local newHeadSegments = {}
+local newHeadSegmentsMax = 0
 
 local headCellBuffer = {}
 local snakeBodyOccupancy = {}
@@ -3428,32 +3429,34 @@ function Snake:update(dt)
                 remaining = remaining - SAMPLE_STEP
         end
 
-	if bufferCount > 0 then
-		local existingCount = #trail
-		if existingCount > 0 then
-			for i = existingCount, 1, -1 do
-				trail[i + bufferCount] = trail[i]
-			end
-		end
-
-		for i = bufferCount, 1, -1 do
-			local destIndex = bufferCount - i + 1
-			trail[destIndex] = buffer[i]
-			buffer[i] = nil
-		end
-
-		local cleanupIndex = bufferCount + 1
-                while buffer[cleanupIndex] ~= nil do
-                        buffer[cleanupIndex] = nil
-                        cleanupIndex = cleanupIndex + 1
+        if bufferCount > 0 then
+                local existingCount = #trail
+                if existingCount > 0 then
+                        table.move(trail, 1, existingCount, bufferCount + 1)
                 end
 
+                if bufferCount > 1 then
+                        local half = floor(bufferCount * 0.5)
+                        for i = 1, half do
+                                local j = bufferCount - i + 1
+                                buffer[i], buffer[j] = buffer[j], buffer[i]
+                        end
+                end
+
+                table.move(buffer, 1, bufferCount, 1, trail)
+
                 head = trail[1]
-        else
-                local cleanupIndex = 1
-                while buffer[cleanupIndex] ~= nil do
-                        buffer[cleanupIndex] = nil
-                        cleanupIndex = cleanupIndex + 1
+        end
+
+        do
+                local previousMax = newHeadSegmentsMax
+                if bufferCount > previousMax then
+                        newHeadSegmentsMax = bufferCount
+                else
+                        for i = bufferCount + 1, previousMax do
+                                buffer[i] = nil
+                        end
+                        newHeadSegmentsMax = bufferCount
                 end
         end
 
