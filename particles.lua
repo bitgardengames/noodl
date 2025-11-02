@@ -4,6 +4,31 @@ local RenderLayers = require("renderlayers")
 local max = math.max
 local pi = math.pi
 
+local PARTICLE_SPRITE_SIZE = 16
+
+local particleSprite
+local particleSpriteRadius = PARTICLE_SPRITE_SIZE * 0.5
+local particleBatch
+
+local function ensureParticleSprite()
+        if particleSprite then
+                return
+        end
+
+        local canvas = love.graphics.newCanvas(PARTICLE_SPRITE_SIZE, PARTICLE_SPRITE_SIZE)
+        love.graphics.push("all")
+        love.graphics.setCanvas(canvas)
+        love.graphics.clear(0, 0, 0, 0)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.circle("fill", particleSpriteRadius, particleSpriteRadius, particleSpriteRadius)
+        love.graphics.pop()
+
+        canvas:setFilter("linear", "linear")
+
+        particleSprite = canvas
+        particleBatch = love.graphics.newSpriteBatch(particleSprite, 128)
+end
+
 local atan2 = math.atan2 or function(y, x)
 	return math.atan(y, x)
 end
@@ -222,7 +247,15 @@ function Particles:draw()
                 return
         end
 
+        ensureParticleSprite()
+
+        if count > particleBatch:getBufferSize() then
+                particleBatch:setBufferSize(count)
+        end
+
         RenderLayers:withLayer("overlay", function()
+                particleBatch:clear()
+
                 for i = 1, count do
                         local normAge = self.normAge[i]
                         if normAge == nil then
@@ -231,11 +264,15 @@ function Particles:draw()
                         end
 
                         local currentSize = self.baseSize[i] * (0.8 + normAge * 0.6)
-                        love.graphics.setColor(self.r[i], self.g[i], self.b[i], self.alpha[i])
-                        love.graphics.circle("fill", self.x[i], self.y[i], currentSize)
+                        local scale = currentSize / particleSpriteRadius
+
+                        particleBatch:setColor(self.r[i], self.g[i], self.b[i], self.alpha[i])
+                        particleBatch:add(self.x[i], self.y[i], 0, scale, scale, particleSpriteRadius, particleSpriteRadius)
                 end
 
+                particleBatch:setColor(1, 1, 1, 1)
                 love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(particleBatch)
         end)
 end
 
