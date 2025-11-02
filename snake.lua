@@ -4306,63 +4306,6 @@ local function buildSeveredPalette(fade)
 	}
 end
 
-local defaultBodyColor = {1, 1, 1, 1}
-local defaultOutlineColor = {0, 0, 0, 1}
-local tailHitFlashPalette = {
-	body = {0, 0, 0, 1},
-	outline = {0, 0, 0, 1},
-}
-local tailHitFlashOutlineTarget = {0, 0, 0, 1}
-
-local function mixIntoColor(out, from, target, t)
-	local blend = clamp01(t or 0)
-
-	local fr = (from and from[1]) or 0
-	local fg = (from and from[2]) or 0
-	local fb = (from and from[3]) or 0
-	local fa = (from and from[4])
-	if fa == nil then
-		fa = 1
-	end
-
-	local tr = (target and target[1]) or fr
-	local tg = (target and target[2]) or fg
-	local tb = (target and target[3]) or fb
-	local ta = (target and target[4])
-	if ta == nil then
-		ta = fa
-	end
-
-	out[1] = fr + (tr - fr) * blend
-	out[2] = fg + (tg - fg) * blend
-	out[3] = fb + (tb - fb) * blend
-	out[4] = fa + (ta - fa) * blend
-
-	return out
-end
-
-local function buildTailHitFlashPalette(intensity)
-	if not intensity or intensity <= 0 then
-		return nil
-	end
-
-	local palette = SnakeCosmetics and SnakeCosmetics:getPaletteForSkin() or nil
-	local bodyColor = palette and palette.body or (SnakeCosmetics and SnakeCosmetics.getBodyColor and SnakeCosmetics:getBodyColor()) or defaultBodyColor
-	local outlineColor = palette and palette.outline or (SnakeCosmetics and SnakeCosmetics.getOutlineColor and SnakeCosmetics:getOutlineColor()) or defaultOutlineColor
-
-	mixIntoColor(tailHitFlashPalette.body, bodyColor or defaultBodyColor, TAIL_HIT_FLASH_COLOR, intensity)
-
-	tailHitFlashOutlineTarget[1] = TAIL_HIT_FLASH_COLOR[1]
-	tailHitFlashOutlineTarget[2] = TAIL_HIT_FLASH_COLOR[2]
-	tailHitFlashOutlineTarget[3] = TAIL_HIT_FLASH_COLOR[3]
-	tailHitFlashOutlineTarget[4] = (outlineColor and outlineColor[4]) or 1
-	mixIntoColor(tailHitFlashPalette.outline, outlineColor or defaultOutlineColor, tailHitFlashOutlineTarget, intensity)
-
-	tailHitFlashPalette.overlay = nil
-
-	return tailHitFlashPalette
-end
-
 local function addSeveredTrail(pieceTrail, segmentEstimate)
 	if not pieceTrail or #pieceTrail <= 1 then
 		return
@@ -5005,24 +4948,24 @@ function Snake:draw()
 			drawOptions = shouldDrawFace
 		end
 
-		local flashPalette
-		if self.tailHitFlashTimer and self.tailHitFlashTimer > 0 then
-			local intensity = clamp01(self.tailHitFlashTimer / TAIL_HIT_FLASH_DURATION)
-			flashPalette = buildTailHitFlashPalette(intensity)
-		end
-
-		if flashPalette then
-			if type(drawOptions) ~= "table" then
-				drawOptions = {drawFace = drawOptions ~= false}
-			else
-				if drawOptions.drawFace == nil then
-					drawOptions.drawFace = true
+				local tailHitFlash
+				if self.tailHitFlashTimer and self.tailHitFlashTimer > 0 then
+					tailHitFlash = clamp01(self.tailHitFlashTimer / TAIL_HIT_FLASH_DURATION)
 				end
-			end
 
-			drawOptions.paletteOverride = flashPalette
-			drawOptions.overlayEffect = {}
-		end
+				if tailHitFlash and tailHitFlash > 0 then
+					if type(drawOptions) ~= "table" then
+						drawOptions = {drawFace = drawOptions ~= false}
+					else
+						if drawOptions.drawFace == nil then
+							drawOptions.drawFace = true
+						end
+					end
+
+					drawOptions.tailHitFlash = tailHitFlash
+					drawOptions.tailHitFlashColor = TAIL_HIT_FLASH_COLOR
+					drawOptions.disableOverlay = true
+				end
 
 		currentHeadOwner = self
 		SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getOwnerHead, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)

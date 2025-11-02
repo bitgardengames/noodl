@@ -24,6 +24,7 @@ local POP_DURATION   = 0.25
 local SHADOW_OFFSET  = 3
 local OUTLINE_SIZE   = 3
 local FRUIT_BULGE_SCALE = 1.25
+local defaultTailFlashColor = {1, 0, 0}
 
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
@@ -1382,6 +1383,23 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 	local outlineColor = paletteOutline or SnakeCosmetics:getOutlineColor()
 	local bodyR, bodyG, bodyB, bodyA = bodyColor[1] or 0, bodyColor[2] or 0, bodyColor[3] or 0, bodyColor[4] or 1
 	local outlineR, outlineG, outlineB, outlineA = outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1
+
+	local tailFlashIntensity = options and options.tailHitFlash
+	if tailFlashIntensity and tailFlashIntensity > 0 then
+		local blend = min(1, max(0, tailFlashIntensity))
+		local tailFlashColor = (options and options.tailHitFlashColor) or defaultTailFlashColor
+		local flashR = tailFlashColor[1] or 1
+		local flashG = tailFlashColor[2] or 0
+		local flashB = tailFlashColor[3] or 0
+
+		bodyR = bodyR + (flashR - bodyR) * blend
+		bodyG = bodyG + (flashG - bodyG) * blend
+		bodyB = bodyB + (flashB - bodyB) * blend
+
+		outlineR = outlineR + (flashR - outlineR) * blend
+		outlineG = outlineG + (flashG - outlineG) * blend
+		outlineB = outlineB + (flashB - outlineB) * blend
+	end
 	local bulgeRadius = half * FRUIT_BULGE_SCALE
 
 	local sharpCorners = options and options.sharpCorners
@@ -2758,7 +2776,12 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		end
 	end
 
-	local overlayEffect = (options and options.overlayEffect) or (palette and palette.overlay) or SnakeCosmetics:getOverlayEffect()
+	local overlayEffect
+	if options and options.disableOverlay then
+		overlayEffect = nil
+	else
+		overlayEffect = (options and options.overlayEffect) or (palette and palette.overlay) or SnakeCosmetics:getOverlayEffect()
+	end
 
 	local head = trail[1]
 
