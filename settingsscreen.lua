@@ -24,6 +24,7 @@ local ACHIEVEMENT_PANEL_PADDING_X = 48
 local ACHIEVEMENT_SCROLLBAR_TRACK_WIDTH = 28
 local ACHIEVEMENT_MIN_SCROLLBAR_INSET = 16
 local BACK_BUTTON_ID = "settingsBackButton"
+local BUTTON_CONTENT_INSET = 8
 
 local function applyAudioVolumes()
 	Audio:applyVolumes()
@@ -713,9 +714,9 @@ function SettingsScreen:enter()
 	lastNonMouseFocusIndex = nil
 
 	for i, opt in ipairs(options) do
-                local x = panelX + panelPaddingX
-		local y = startY
-		local w = selectionWidth
+                local x = panelX + panelPaddingX + BUTTON_CONTENT_INSET
+                local y = startY
+                local w = max(0, selectionWidth - BUTTON_CONTENT_INSET * 2)
 		local spacingAfter = spacing
 		local h
 
@@ -1123,13 +1124,7 @@ function SettingsScreen:draw()
                                         color = headerColor,
                                 })
 
-                                if fontHeight > 0 then
-                                        local lineY = min(btn.y + btn.h - 3, textY + fontHeight + 4)
-                                        local lineColor = UI.colors.highlight or {1, 1, 1, 0.4}
-                                        love.graphics.setColor(lineColor[1] or 1, lineColor[2] or 1, lineColor[3] or 1, (lineColor[4] or 1) * 0.45)
-                                        love.graphics.rectangle("fill", btn.x, lineY, btn.w, 2)
-                                        love.graphics.setColor(1, 1, 1, 1)
-                                end
+                                -- Decorative line removed for cleaner section headers
                         end
 
                 elseif opt.type == "cycle" and opt.setting then
