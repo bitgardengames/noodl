@@ -348,7 +348,7 @@ end
 function SettingsScreen:updateScrollBounds()
         local panel = layout.panel
         local panelPaddingY = layout.panelPaddingY or UI.spacing.panelPadding
-        viewportHeight = max(0, (panel and panel.h or 0) - panelPaddingY * 2)
+        viewportHeight = layout.viewportHeight or max(0, (panel and panel.h or 0) - panelPaddingY * 2)
         minScrollOffset = min(0, viewportHeight - contentHeight)
         scrollOffset = clampScroll(scrollOffset)
         self:updateButtonPositions()
@@ -669,6 +669,9 @@ function SettingsScreen:enter()
 
         local scrollbarX = panelX + panelWidth + scrollbarGap
 
+        local viewportHeight = max(0, panelHeight - panelPaddingY * 2)
+        local viewportTop = panelY + panelPaddingY
+
         layout.panel = {x = panelX, y = panelY, w = panelWidth, h = panelHeight}
         layout.panelX = panelX
         layout.panelY = panelY
@@ -676,13 +679,15 @@ function SettingsScreen:enter()
         layout.panelHeight = panelHeight
         layout.panelPaddingX = panelPaddingX
         layout.panelPaddingY = panelPaddingY
+        layout.viewportHeight = viewportHeight
+        layout.viewportTop = viewportTop
         layout.scrollbarGap = scrollbarGap
         layout.scrollbarTrackWidth = ACHIEVEMENT_SCROLLBAR_TRACK_WIDTH
         layout.scrollbar = {
                 x = scrollbarX,
-                y = panelY,
+                y = viewportTop,
                 width = ACHIEVEMENT_SCROLLBAR_TRACK_WIDTH,
-                height = panelHeight,
+                height = viewportHeight,
         }
         layout.totalWidth = totalWidth
         layout.viewportBottom = panelY + panelHeight
@@ -1171,11 +1176,12 @@ function SettingsScreen:draw()
 
         if contentHeight > viewportHeight and viewportHeight > 0 then
                 local panelPaddingX = layout.panelPaddingX or UI.spacing.panelPadding
+                local panelPaddingY = layout.panelPaddingY or UI.spacing.panelPadding
                 local trackWidth = layout.scrollbarTrackWidth or ACHIEVEMENT_SCROLLBAR_TRACK_WIDTH
                 local scrollbarGap = layout.scrollbarGap or max(ACHIEVEMENT_MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
                 local trackX = (layout.scrollbar and layout.scrollbar.x) or (panel.x + panel.w + scrollbarGap)
-                local trackY = panel.y
-                local trackHeight = panel.h
+                local trackY = layout.viewportTop or (panel.y + panelPaddingY)
+                local trackHeight = layout.viewportHeight or max(0, panel.h - panelPaddingY * 2)
 
                 local scrollRange = contentHeight - viewportHeight
                 local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
