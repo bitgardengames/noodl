@@ -117,7 +117,7 @@ package.loaded["renderlayers"] = {
 
 package.loaded["sharedcanvas"] = {
         ensureCanvas = function()
-                return {}, false
+                return {}, false, 0
         end,
 }
 

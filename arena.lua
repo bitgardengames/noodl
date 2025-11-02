@@ -17,6 +17,7 @@ local sqrt = math.sqrt
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
 local MAX_DIM_HIGHLIGHTS = 16
+local BORDER_CANVAS_MSAA = 4
 
 local dimLightingShader = nil
 
@@ -612,7 +613,7 @@ function Arena:drawDimLighting()
 		return
 	end
 
-	local canvas, replaced = SharedCanvas.ensureCanvas(state.canvas, love.graphics.getWidth(), love.graphics.getHeight())
+        local canvas, replaced = SharedCanvas.ensureCanvas(state.canvas, love.graphics.getWidth(), love.graphics.getHeight(), 0)
 	if not canvas then
 		return
 	end
@@ -1692,38 +1693,43 @@ function Arena:drawBorder()
 
 	local borderColor = Theme.arenaBorder
 	local colorHash = hashColor(borderColor)
-	local canvasWidth = love.graphics.getWidth()
-	local canvasHeight = love.graphics.getHeight()
-	local useCanvas = SharedCanvas.isMSAAEnabled()
+        local canvasWidth = love.graphics.getWidth()
+        local canvasHeight = love.graphics.getHeight()
+        local desiredBorderSamples = BORDER_CANVAS_MSAA or 0
 
-	local borderCanvas = nil
-	if useCanvas then
-		local canvas, replaced, samples = SharedCanvas.ensureCanvas(self.borderCanvas, canvasWidth, canvasHeight)
-		if SharedCanvas.isMSAAEnabled() then
-			if canvas ~= self.borderCanvas then
-				self.borderCanvas = canvas
-			end
-			borderCanvas = canvas
-			self._borderCanvasSamples = samples
-			if replaced then
-				self:invalidateBorderGeometry()
-			end
-		else
-			useCanvas = false
-			borderCanvas = nil
-		end
-	end
+        local borderCanvas = nil
+        if desiredBorderSamples >= 2 then
+                local canvas, replaced, samples = SharedCanvas.ensureCanvas(self.borderCanvas, canvasWidth, canvasHeight, desiredBorderSamples)
+                if samples >= 2 then
+                        if canvas ~= self.borderCanvas then
+                                self.borderCanvas = canvas
+                        end
+                        borderCanvas = canvas
+                        self._borderCanvasSamples = samples
+                        if replaced then
+                                self:invalidateBorderGeometry()
+                        end
+                elseif self.borderCanvas then
+                        self.borderCanvas = nil
+                        self._borderCanvasSamples = nil
+                        self:invalidateBorderGeometry()
+                else
+                        self._borderCanvasSamples = nil
+                end
+        elseif self.borderCanvas then
+                self.borderCanvas = nil
+                self._borderCanvasSamples = nil
+                self:invalidateBorderGeometry()
+        else
+                self._borderCanvasSamples = nil
+        end
 
-	if not useCanvas then
-		if self.borderCanvas then
-			self.borderCanvas = nil
-			self._borderCanvasSamples = nil
-			self:invalidateBorderGeometry()
-		end
-	end
+        if not borderCanvas then
+                self._borderCanvasSamples = nil
+        end
 
-	self._borderLastCanvasWidth = canvasWidth
-	self._borderLastCanvasHeight = canvasHeight
+        self._borderLastCanvasWidth = canvasWidth
+        self._borderLastCanvasHeight = canvasHeight
 
 	local bounds = self._borderLastBounds
 	local needsRebuild = self.borderDirty
