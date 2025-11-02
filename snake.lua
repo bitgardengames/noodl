@@ -53,6 +53,10 @@ local cellKeyStride = 0
 local segmentPool = {}
 local segmentPoolCount = 0
 
+local segmentSnapshot = {}
+local segmentSnapshotPool = {}
+local segmentSnapshotPoolCount = 0
+
 local newHeadSegments = {}
 
 local headCellBuffer = {}
@@ -4804,18 +4808,47 @@ function Snake:resetPosition()
 	self:load(screenW, screenH)
 end
 
+-- Returns a reusable snapshot of the snake trail. Callers must treat the
+-- returned data as read-only until the next frame.
 function Snake:getSegments()
-        local copy = {}
-        for i = 1, #trail do
+        local snapshot = segmentSnapshot
+        local previousCount = #snapshot
+        local count = #trail
+
+        for i = 1, count do
                 local seg = trail[i]
-                copy[i] = {
-                        drawX = seg.drawX,
-                        drawY = seg.drawY,
-                        dirX = seg.dirX,
-                        dirY = seg.dirY
-                }
+                local entry = snapshot[i]
+                if not entry then
+                        if segmentSnapshotPoolCount > 0 then
+                                entry = segmentSnapshotPool[segmentSnapshotPoolCount]
+                                segmentSnapshotPool[segmentSnapshotPoolCount] = nil
+                                segmentSnapshotPoolCount = segmentSnapshotPoolCount - 1
+                        else
+                                entry = {}
+                        end
+                        snapshot[i] = entry
+                end
+
+                entry.drawX = seg.drawX
+                entry.drawY = seg.drawY
+                entry.dirX = seg.dirX
+                entry.dirY = seg.dirY
         end
-        return copy
+
+        for i = count + 1, previousCount do
+                local entry = snapshot[i]
+                if entry then
+                        entry.drawX = nil
+                        entry.drawY = nil
+                        entry.dirX = nil
+                        entry.dirY = nil
+                        segmentSnapshotPoolCount = segmentSnapshotPoolCount + 1
+                        segmentSnapshotPool[segmentSnapshotPoolCount] = entry
+                        snapshot[i] = nil
+                end
+        end
+
+        return snapshot
 end
 
 function Snake:getTail()
