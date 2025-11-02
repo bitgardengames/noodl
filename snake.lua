@@ -558,6 +558,8 @@ local function removeSnakeBodyOccupancy(col, row)
 	end
 end
 
+local toCell
+
 local function isCellOccupiedBySnakeBody(col, row)
         if not (col and row) then
                 return false
@@ -1380,7 +1382,7 @@ end
 -- local speed = Snake:getSpeed()
 -- and then use `speed` for position updates. This gives upgrades an immediate effect.
 
-local function toCell(x, y)
+toCell = function(x, y)
 	if not (x and y) then
 		return nil, nil
 	end
