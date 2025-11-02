@@ -374,9 +374,10 @@ local function updateFeedbackState(self, dt)
 	state.panicTimer = max(0, (state.panicTimer or 0) - dt)
 	state.dangerPulseTimer = (state.dangerPulseTimer or 0) + dt
 
-	if (state.impactTimer or 0) <= 0 then
-		state.impactRipple = nil
-	end
+        if (state.impactTimer or 0) <= 0 then
+                state.impactRipple = nil
+                state.skipImpactFlash = nil
+        end
 
 	if (state.surgeTimer or 0) <= 0 then
 		state.surgeRipple = nil
@@ -412,25 +413,27 @@ local function drawFeedbackOverlay(self)
 	local impactDuration = state.impactDuration or 1
 	local impactPeak = state.impactPeak or 0
 
-	if impactTimer > 0 and impactPeak > 0 then
-		local progress = max(0, min(1, impactTimer / impactDuration))
-		local intensity = impactPeak * (progress ^ 0.7)
-		local age = 1 - progress
+        if impactTimer > 0 and impactPeak > 0 then
+                local progress = max(0, min(1, impactTimer / impactDuration))
+                local intensity = impactPeak * (progress ^ 0.7)
+                local age = 1 - progress
 
-		love.graphics.push("all")
-		love.graphics.setBlendMode("add")
-		love.graphics.setColor(1, 1, 1, 0.22 * intensity)
-		love.graphics.rectangle("fill", -12, -12, screenW + 24, screenH + 24)
+                love.graphics.push("all")
+                love.graphics.setBlendMode("add")
+                if not state.skipImpactFlash then
+                        love.graphics.setColor(1, 1, 1, 0.22 * intensity)
+                        love.graphics.rectangle("fill", -12, -12, screenW + 24, screenH + 24)
 
-		love.graphics.setColor(1, 0.78, 0.45, 0.32 * intensity)
-		local inset = 10 + intensity * 8
-		love.graphics.setLineWidth(3 + intensity * 6)
-		love.graphics.rectangle("line", inset, inset, screenW - inset * 2, screenH - inset * 2, 28, 28)
+                        love.graphics.setColor(1, 0.78, 0.45, 0.32 * intensity)
+                        local inset = 10 + intensity * 8
+                        love.graphics.setLineWidth(3 + intensity * 6)
+                        love.graphics.rectangle("line", inset, inset, screenW - inset * 2, screenH - inset * 2, 28, 28)
+                end
 
-		local ripple = state.impactRipple
-		if ripple then
-			local rx = ripple.x or screenW * 0.5
-			local ry = ripple.y or screenH * 0.5
+                local ripple = state.impactRipple
+                if ripple then
+                        local rx = ripple.x or screenW * 0.5
+                        local ry = ripple.y or screenH * 0.5
 			local baseRadius = ripple.baseRadius or 52
                         local color = ripple.color or DEFAULT_IMPACT_RIPPLE_COLOR
 			local ringRadius = baseRadius + easeOutExpo(age) * (140 + intensity * 80)
@@ -551,23 +554,30 @@ function Game:triggerImpactFeedback(strength, options)
 	state.impactDuration = duration
 	state.impactTimer = duration
 
-	local spike = 0.55 + strength * 0.65
-	state.impactPeak = min(1.25, max(state.impactPeak or 0, spike))
-	state.panicBurst = min(1.35, (state.panicBurst or 0) + 0.35 + strength * 0.4)
+        local spike = 0.55 + strength * 0.65
+        state.impactPeak = min(1.25, max(state.impactPeak or 0, spike))
+        state.panicBurst = min(1.35, (state.panicBurst or 0) + 0.35 + strength * 0.4)
 
-	local impactRipple = state.impactRipple or {}
-	local rx, ry = resolveFeedbackPosition(self, options)
-	impactRipple.x = rx
-	impactRipple.y = ry
-	impactRipple.baseRadius = (options and options.radius) or impactRipple.baseRadius or 54
-	impactRipple.color = cloneColor(options and options.color, DEFAULT_IMPACT_RIPPLE_COLOR, impactRipple.color)
+        local skipFlash = options and options.skipFlash
+        if skipFlash then
+                state.skipImpactFlash = true
+        else
+                state.skipImpactFlash = nil
+        end
+
+        local impactRipple = state.impactRipple or {}
+        local rx, ry = resolveFeedbackPosition(self, options)
+        impactRipple.x = rx
+        impactRipple.y = ry
+        impactRipple.baseRadius = (options and options.radius) or impactRipple.baseRadius or 54
+        impactRipple.color = cloneColor(options and options.color, DEFAULT_IMPACT_RIPPLE_COLOR, impactRipple.color)
 	state.impactRipple = impactRipple
 
 	local hitStopStrength = 0.3 + strength * 0.35
 	local hitStopDuration = 0.08 + strength * 0.08
 	self:applyHitStop(hitStopStrength, hitStopDuration)
 
-        if Shaders and Shaders.notify then
+        if not skipFlash and Shaders and Shaders.notify then
                 Shaders.notify("specialEvent", {
                         type = "danger",
                         strength = min(1.2, 0.45 + strength * 0.55),
@@ -610,6 +620,7 @@ function Game:triggerTailChopFeedback(cause, x, y)
                 y = y,
                 color = TAIL_CHOP_FEEDBACK_COLOR,
                 radius = 60,
+                skipFlash = true,
         }
 
         local strength = 0.42
