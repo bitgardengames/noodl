@@ -67,10 +67,6 @@ local function drawBackgroundLayer()
 end
 
 local function drawOverlayLayer()
-        if Arena.drawDimLighting then
-                Arena:drawDimLighting()
-        end
-
         if Arena.drawQueuedExit then
                 Arena:drawQueuedExit()
         end
