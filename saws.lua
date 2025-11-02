@@ -212,21 +212,33 @@ local function clampCol(col)
 	return max(1, min(Arena.cols, col))
 end
 
-local function addCell(target, seen, col, row)
-	if not (col and row) then
-		return
-	end
+local COLLISION_KEY_STRIDE_FALLBACK = 1024
 
-	col = clampCol(col)
-	row = clampRow(row)
+local function getCollisionKeyStride()
+        local rows = Arena and Arena.rows
+        if rows and rows > 0 then
+                return rows + 1
+        end
 
-	local key = tostring(col) .. ":" .. tostring(row)
-	if seen[key] then
-		return
-	end
+        return COLLISION_KEY_STRIDE_FALLBACK
+end
 
-	seen[key] = true
-	target[#target + 1] = {col, row}
+local function addCell(target, seen, col, row, stride)
+        if not (col and row) then
+                return
+        end
+
+        col = clampCol(col)
+        row = clampRow(row)
+
+        stride = stride or getCollisionKeyStride()
+        local key = col * stride + row
+        if seen[key] then
+                return
+        end
+
+        seen[key] = true
+        target[#target + 1] = {col, row}
 end
 
 local function clearTrackBounds(target)
@@ -254,7 +266,8 @@ local function buildCollisionCellsForSaw(saw)
 	end
 
 	local cells = {}
-	local seen = {}
+        local seen = {}
+        local stride = getCollisionKeyStride()
 	local trackMinX
 	local trackMaxX
 	local trackMinY
@@ -286,8 +299,8 @@ local function buildCollisionCellsForSaw(saw)
 		for i = 1, #trackCells do
 			local cell = trackCells[i]
 			local col, row = cell[1], cell[2]
-			addCell(cells, seen, col, row)
-			addCell(cells, seen, col, row + 1)
+                        addCell(cells, seen, col, row, stride)
+                        addCell(cells, seen, col, row + 1, stride)
 		end
 	else
 		local offsetDir
@@ -303,8 +316,8 @@ local function buildCollisionCellsForSaw(saw)
 		for i = 1, #trackCells do
 			local cell = trackCells[i]
 			local col, row = cell[1], cell[2]
-			addCell(cells, seen, col, row)
-			addCell(cells, seen, col + offsetDir, row)
+                        addCell(cells, seen, col, row, stride)
+                        addCell(cells, seen, col + offsetDir, row, stride)
 		end
 	end
 
