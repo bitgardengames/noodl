@@ -146,71 +146,6 @@ local SnakeDraw = nil
 local snakeTrailBuffer = {}
 local snakeTrailCount = 0
 
-local function drawSnakeSliderHandle(handleX, handleY, handleRadius, trackX, config)
-        if not config then
-                return false
-        end
-
-        if config == true then
-                config = {}
-        elseif type(config) ~= "table" then
-                return false
-        end
-
-        if not SnakeDraw then
-                SnakeDraw = require("snakedraw")
-        end
-
-        local amplitude = config.amplitude or 0.7
-        local frequency = config.frequency or 2.3
-        local segments = max(3, config.segmentCount or 20)
-        local tailScale = config.tailLength or 2.6
-        local headOffset = config.headOffset or 0
-
-        local headX = handleX + headOffset * handleRadius
-        local availableLeft = headX - trackX
-        local maxTail = handleRadius * tailScale
-        local tailLength = min(maxTail, availableLeft + handleRadius * 0.85)
-        local totalLength = max(handleRadius * 0.75, tailLength + max(0, headOffset) * handleRadius)
-
-        for step = 0, segments do
-                local t = step / segments
-                local px = headX - t * totalLength
-                local wave = sin(t * pi * frequency)
-                local falloff = 1 - t * 0.55
-                local amp = handleRadius * amplitude * falloff
-                local py = handleY + wave * amp
-
-                local point = snakeTrailBuffer[step + 1]
-                if not point then
-                        point = {}
-                        snakeTrailBuffer[step + 1] = point
-                end
-
-                point.x = px
-                point.y = py
-                point.drawX = px
-                point.drawY = py
-        end
-
-        local newCount = segments + 1
-        for i = newCount + 1, snakeTrailCount do
-                snakeTrailBuffer[i] = nil
-        end
-        snakeTrailCount = newCount
-
-        local segmentSize = config.segmentSize or (handleRadius * (config.segmentScale or 1.2))
-        if not segmentSize or segmentSize <= 0 then
-                segmentSize = handleRadius * 1.2
-        end
-
-        RenderLayers:begin(love.graphics.getWidth(), love.graphics.getHeight())
-        SnakeDraw.run(snakeTrailBuffer, snakeTrailCount, segmentSize, 0, nil, 0, 0, nil, config)
-        RenderLayers:present()
-
-        return true
-end
-
 local function drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, config)
         if not config then
                 return false
@@ -992,14 +927,17 @@ function UI.drawSlider(id, x, y, w, value, opts)
         local handleX = trackX + trackW * sliderValue
         local handleY = trackY + trackHeight / 2
 
-        local drewSnake = drawSnakeSliderHandle(handleX, handleY, handleRadius, trackX, opts.snakeHandle)
-        if not drewSnake then
-                setColor(opts.handleColor or UI.colors.text)
-                local prevLineWidth = love.graphics.getLineWidth()
-                love.graphics.setLineWidth(3)
-                love.graphics.circle("line", handleX, handleY, handleRadius)
-                love.graphics.setLineWidth(prevLineWidth or 1)
-        end
+        local handleFill = opts.handleColor or UI.colors.text
+        local handleOutline = opts.handleOutlineColor or UI.colors.border or UI.colors.panelBorder
+        local prevLineWidth = love.graphics.getLineWidth()
+
+        setColor(handleFill)
+        love.graphics.circle("fill", handleX, handleY, handleRadius)
+
+        love.graphics.setLineWidth(3)
+        setColor(handleOutline)
+        love.graphics.circle("line", handleX, handleY, handleRadius)
+        love.graphics.setLineWidth(prevLineWidth or 1)
 
         if opts.showValue ~= false then
                 local valueFont = UI.fonts[opts.valueFont or "small"]
