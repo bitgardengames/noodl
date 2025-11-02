@@ -1099,7 +1099,6 @@ function SettingsScreen:draw()
                                         focused = isFocused,
                                         hovered = btn.hovered,
                                         register = false,
-                                        snakeHandle = true,
                                         labelShadow = true,
                                         labelShadowOffsetX = 1,
                                         labelShadowOffsetY = 1,
