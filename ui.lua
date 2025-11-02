@@ -987,7 +987,10 @@ function UI.drawSlider(id, x, y, w, value, opts)
         local drewSnake = drawSnakeSliderHandle(handleX, handleY, handleRadius, trackX, opts.snakeHandle)
         if not drewSnake then
                 setColor(opts.handleColor or UI.colors.text)
-                love.graphics.circle("fill", handleX, handleY, handleRadius)
+                local prevLineWidth = love.graphics.getLineWidth()
+                love.graphics.setLineWidth(3)
+                love.graphics.circle("line", handleX, handleY, handleRadius)
+                love.graphics.setLineWidth(prevLineWidth or 1)
         end
 
         if opts.showValue ~= false then
