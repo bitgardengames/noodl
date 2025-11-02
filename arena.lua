@@ -18,7 +18,7 @@ local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
 local MAX_DIM_HIGHLIGHTS = 16
 local BORDER_CANVAS_MSAA = 4
-
+local ARENA_BORDER_TOLERANCE = 10 -- 6
 local dimLightingShader = nil
 
 do
@@ -907,8 +907,6 @@ function Arena:getTileFromWorld(x, y)
 
 	return col, row
 end
-
-local ARENA_BORDER_TOLERANCE = 6
 
 function Arena:isInside(x, y)
 	local inset = self.tileSize / 2
