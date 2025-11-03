@@ -22,16 +22,9 @@ local FloorSetup = {}
 
 local TRACK_LENGTH = 120
 local DEFAULT_SAW_RADIUS = 16
-local GILDED_SAW_COLOR = {1.0, 0.84, 0.34, 1}
 local EMBER_SAW_COLOR = {1.0, 0.47, 0.18, 1}
 local EMBER_SAW_TRAIL_COLOR = {1.0, 0.32, 0.08, 0.2}
 local EMBER_SAW_GLOW_COLOR = {1.0, 0.62, 0.22, 0.44}
-local GILDED_LASER_PALETTE = {
-	core = {1.0, 0.86, 0.32, 1},
-	glow = {1.0, 0.62, 0.24, 0.9},
-	rim = {1.0, 0.96, 0.72, 1},
-}
-
 local function applyPalette(palette)
 	if Theme.reset then
 		Theme.reset()
@@ -315,11 +308,6 @@ local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
 			options = specialOptions,
 		}
 	end
-
-	addSpecial(options.radiantCount, {
-		color = options.radiantColor or GILDED_SAW_COLOR,
-		gilded = true,
-	})
 
 	addSpecial(options.emberCount, {
 		color = options.emberColor or EMBER_SAW_COLOR,
@@ -618,29 +606,6 @@ local function buildLaserPlan(traitContext, halfTiles, trackLength, floorData)
 		end
 	end
 
-	local desiredRadiant = 0
-	if traitContext and traitContext.gildedObsessionExtraLasers then
-		desiredRadiant = max(0, floor((traitContext.gildedObsessionExtraLasers or 0) + 0.5))
-	end
-
-	local actualRadiant = min(desiredRadiant, #plan)
-	if actualRadiant > 0 then
-		for i = 0, actualRadiant - 1 do
-			local index = #plan - i
-			if index >= 1 then
-				local entry = plan[index]
-				entry.options = entry.options or {}
-				entry.options.firePalette = GILDED_LASER_PALETTE
-				entry.options.fireColor = nil
-				entry.options.gilded = true
-			end
-		end
-	end
-
-	if traitContext then
-		traitContext.gildedObsessionExtraLasers = actualRadiant
-	end
-
 	return plan, desired
 end
 
@@ -673,12 +638,8 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
         local dartPlan, desiredDarts = buildDartPlan(traitContext)
         local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
 
-	local radiantSaws = max(0, floor((traitContext.gildedObsessionExtraSaws or 0) + 0.5))
 	local emberSaws = max(0, floor((traitContext.contractOfCindersEmberSaws or 0) + 0.5))
-	local radiantLasers = max(0, floor((traitContext.gildedObsessionExtraLasers or 0) + 0.5))
-	traitContext.gildedObsessionExtraSaws = radiantSaws
 	traitContext.contractOfCindersEmberSaws = emberSaws
-	traitContext.gildedObsessionExtraLasers = radiantLasers
 
 	return {
 		numRocks = traitContext.rocks,
@@ -692,14 +653,12 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
 		spawnBuffer = spawnBuffer,
 		reservedSpawnBuffer = reservedSpawnBuffer,
 		spawnSafeCells = spawnSafeCells,
-                lasers = laserPlan,
-                laserCount = desiredLasers,
-                darts = dartPlan,
-                dartCount = desiredDarts,
-                radiantSawCount = radiantSaws,
-                emberSawCount = emberSaws,
-                radiantLaserCount = radiantLasers,
-        }
+		lasers = laserPlan,
+		laserCount = desiredLasers,
+		darts = dartPlan,
+		dartCount = desiredDarts,
+		emberSawCount = emberSaws,
+	}
 end
 
 function FloorSetup.prepare(floorNum, floorData)
@@ -743,45 +702,25 @@ function FloorSetup.finalizeContext(traitContext, spawnPlan)
 end
 
 function FloorSetup.spawnHazards(spawnPlan)
-	local gildedInfo
-	if Upgrades and Upgrades.consumeGildedObsessionHazards then
-		gildedInfo = Upgrades:consumeGildedObsessionHazards()
-	end
-
-	local radiantSawCount = 0
 	local emberSawCount = 0
-	local radiantLaserCount = 0
 	if spawnPlan then
-		radiantSawCount = spawnPlan.radiantSawCount or 0
 		emberSawCount = spawnPlan.emberSawCount or 0
-		radiantLaserCount = spawnPlan.radiantLaserCount or 0
-	end
-
-	if gildedInfo then
-		if radiantSawCount <= 0 then
-			radiantSawCount = gildedInfo.saws or 0
-		end
-		if radiantLaserCount <= 0 then
-			radiantLaserCount = gildedInfo.lasers or 0
-		end
 	end
 
 	spawnSaws(
-	spawnPlan.numSaws or 0,
-	spawnPlan.halfTiles,
-	spawnPlan.bladeRadius,
-	spawnPlan.spawnSafeCells,
-	{
-		radiantCount = radiantSawCount,
-		radiantColor = GILDED_SAW_COLOR,
-		emberCount = emberSawCount,
-		emberColor = EMBER_SAW_COLOR,
-		emberTrailColor = EMBER_SAW_TRAIL_COLOR,
-		emberGlowColor = EMBER_SAW_GLOW_COLOR,
-	}
+		spawnPlan.numSaws or 0,
+		spawnPlan.halfTiles,
+		spawnPlan.bladeRadius,
+		spawnPlan.spawnSafeCells,
+		{
+			emberCount = emberSawCount,
+			emberColor = EMBER_SAW_COLOR,
+			emberTrailColor = EMBER_SAW_TRAIL_COLOR,
+			emberGlowColor = EMBER_SAW_GLOW_COLOR,
+		}
 	)
-        spawnLasers(spawnPlan.lasers or {})
-        spawnDarts(spawnPlan.darts or {})
+	spawnLasers(spawnPlan.lasers or {})
+	spawnDarts(spawnPlan.darts or {})
 	spawnRocks(spawnPlan.numRocks or 0, spawnPlan.spawnSafeCells or spawnPlan.rockSafeZone or spawnPlan.safeZone)
 	Fruit:spawn(Snake:getSegments(), Rocks, spawnPlan.safeZone)
 	SnakeUtils.releaseCells(spawnPlan.reservedSafeZone)

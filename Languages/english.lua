@@ -573,10 +573,6 @@ local english = {
 				name = "Golden Debt",
 				description = "Shops offer +1 additional card each floor. Each card you purchase permanently increases the fruit goal to unlock the next exit by +1.",
 			},
-			gilded_obsession = {
-				name = "Gilded Obsession",
-				description = "Shops always contain a guaranteed Rare card. Each Rare purchase leaves a radiant laser or saw waiting on the next floor.",
-			},
 			gluttons_wake = {
 				name = "Glutton's Wake",
 				description = "Fruit award double score, but each one crystallizes into a rock when it leaves your tail.",
@@ -593,25 +589,13 @@ local english = {
 				name = "Fresh Supplies",
 				description = "Discard the current shop cards and restock with new ones.",
 			},
-			stone_census = {
-				name = "Stone Census",
-				description = "Each Economy upgrade reduces rock spawn chance by 7% (minimum 20%).",
-			},
 			guild_ledger = {
 				name = "Guild Ledger",
 				description = "Each shop slot reduces rock spawn chance by 3%.",
 			},
-			radiant_charter = {
-				name = "Radiant Charter",
-				description = "Each extra shop slot removes 1 laser (minimum 0) and adds 1 saw to floor generation.",
-			},
 			abyssal_catalyst = {
 				name = "Abyssal Catalyst",
 				description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
-			},
-			spectral_harvest = {
-				name = "Spectral Harvest",
-				description = "Once per floor, an echo collects the next fruit immediately after you do.",
 			},
 			tectonic_resolve = {
 				name = "Tectonic Resolve",
@@ -620,10 +604,6 @@ local english = {
 			titanblood_pact = {
 				name = "Titanblood Pact",
 				description = "Gain +1 shield, move 5% faster, and gain +1 extra growth per fruit.",
-			},
-			chronospiral_core = {
-				name = "Chronospiral Core",
-				description = "Travel speed is 25% slower.",
 			},
 			phoenix_echo = {
 				name = "Phoenix Echo",

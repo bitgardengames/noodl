@@ -898,8 +898,7 @@ function Saws:spawn(x, y, radius, teeth, dir, side, options)
         invalidateSawCache(saw)
         saw.collisionCells = buildCollisionCellsForSaw(saw)
         options = options or {}
-	saw.color = options.color or saw.color
-	saw.gilded = options.gilded or false
+saw.color = options.color or saw.color
 	saw.ember = options.ember or false
 	saw.emberTrailColor = options.emberTrailColor
 	saw.emberGlowColor = options.emberGlowColor
@@ -1265,19 +1264,6 @@ function Saws:draw()
 				love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha * 0.6)
 				love.graphics.circle("line", glowX, glowY, radius * (0.88 + 0.1 * math.sin(phase * 4.4 + 0.8)))
 				love.graphics.setLineWidth(1)
-			end)
-		end
-
-		if saw.gilded then
-			local glowX = (px or anchorX) + offsetX
-			local glowY = (py or anchorY) + offsetY
-			local glowRadius = (saw.radius or SAW_RADIUS) * 1.4
-			RenderLayers:withLayer("effects", function()
-				love.graphics.setColor(1.0, 0.82, 0.32, 0.28)
-				love.graphics.circle("fill", glowX, glowY, glowRadius)
-				love.graphics.setColor(1.0, 0.95, 0.72, 0.55)
-				love.graphics.setLineWidth(2)
-				love.graphics.circle("line", glowX, glowY, glowRadius * 0.75)
 			end)
 		end
 

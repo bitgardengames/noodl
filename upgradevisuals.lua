@@ -1144,101 +1144,6 @@ local function drawAbyssalCatalyst(effect, progress)
 	love.graphics.setLineWidth(1)
 end
 
-local function drawChronospiralCore(effect, progress)
-	local x, y = effect.x, effect.y
-	local innerRadius = effect.innerRadius or 12
-	local outerRadius = effect.outerRadius or 44
-	local spiralColor = effect.variantColor or effect.color or {0.68, 0.78, 1.0, 1}
-	local accentColor = effect.variantSecondaryColor or {0.82, 0.62, 1.0, 0.92}
-	local markerColor = effect.variantTertiaryColor or {1.0, 0.92, 0.64, 0.9}
-
-	local spiralAlpha = (spiralColor[4] or 1) * clamp01(1.06 - progress * 1.1)
-	if spiralAlpha <= 0 then
-		return
-	end
-
-
-	if effect.addBlend then
-		love.graphics.setBlendMode("add")
-		love.graphics.setColor(spiralColor[1], spiralColor[2], spiralColor[3], spiralAlpha * 0.3)
-		love.graphics.circle("fill", x, y, outerRadius * (0.7 + 0.18 * (1 - progress)), 48)
-		love.graphics.setBlendMode("alpha")
-	end
-
-	local armCount = (effect.variantData and effect.variantData.arms) or 3
-	local rotations = 1.5 + 0.4 * (1 - progress)
-	local rotation = (effect.rotation or 0) + progress * pi * 1.6
-	local spiralPoints = effect._chronospiralPoints
-	if not spiralPoints then
-		spiralPoints = {}
-		effect._chronospiralPoints = spiralPoints
-	end
-
-	for arm = 1, armCount do
-		local angleOffset = rotation + (arm - 1) * (pi * 2 / armCount)
-		local steps = 24
-		local points = spiralPoints
-		local previousLength = #points
-		local pointCount = 0
-		for step = 0, steps do
-			local t = step / steps
-			local eased = t ^ 0.82
-			local radius = innerRadius + (outerRadius - innerRadius) * eased
-			local angle = angleOffset + eased * rotations * pi * 2
-			angle = angle + sin(progress * pi * (3.4 + arm * 0.3) + t * 4) * 0.08
-			local index = pointCount + 1
-			points[index] = x + cos(angle) * radius
-			points[index + 1] = y + sin(angle) * radius
-			pointCount = pointCount + 2
-		end
-		for i = pointCount + 1, previousLength do
-			points[i] = nil
-		end
-
-		love.graphics.setLineWidth(innerRadius * (0.28 - 0.06 * (arm - 1) / armCount))
-		love.graphics.setColor(
-		spiralColor[1],
-		spiralColor[2],
-		spiralColor[3],
-		spiralAlpha * (0.8 - 0.1 * (arm - 1))
-		)
-		love.graphics.line(points)
-	end
-
-	local accentAlpha = (accentColor[4] or 1) * clamp01(1.05 - progress * 1.25) * spiralAlpha
-	if accentAlpha > 0 then
-		local ringRadius = innerRadius * (0.8 + 0.4 * sin(progress * pi * 4.2))
-		love.graphics.setLineWidth(innerRadius * 0.22)
-		love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], accentAlpha)
-		love.graphics.circle("line", x, y, ringRadius, 36)
-
-		love.graphics.setLineWidth(innerRadius * 0.16)
-		for index = 1, armCount do
-			local angle = rotation + index * (pi * 2 / armCount) + progress * pi * 2
-			local radius = innerRadius * (1.2 + 0.4 * sin(progress * pi * 3.2 + index))
-			love.graphics.arc("line", "open", x, y, radius, angle - pi * 0.25, angle + pi * 0.25, 24)
-		end
-	end
-
-	local markerAlpha = (markerColor[4] or 1) * clamp01(1 - progress * 1.1) * spiralAlpha
-	if markerAlpha > 0 then
-		local markerCount = max(6, armCount * 4)
-		local baseRadius = innerRadius + (outerRadius - innerRadius) * progress
-		for index = 1, markerCount do
-			local angle = rotation + index * (pi * 2 / markerCount) + progress * pi * 2.6
-			local radius = baseRadius + sin(progress * pi * 5 + index) * innerRadius * 0.25
-			local size = innerRadius * (0.16 + 0.04 * (index % 2))
-			love.graphics.setColor(
-			markerColor[1],
-			markerColor[2],
-			markerColor[3],
-			markerAlpha * (0.7 + 0.3 * sin(angle * 1.4))
-			)
-			love.graphics.circle("fill", x + cos(angle) * radius, y + sin(angle) * radius, size, 10)
-		end
-	end
-
-	love.graphics.setLineWidth(1)
 end
 
 local variantDrawers = {
@@ -1255,7 +1160,6 @@ local variantDrawers = {
 	guiding_compass = drawGuidingCompass,
 	resonant_shell = drawResonantShell,
 	abyssal_catalyst = drawAbyssalCatalyst,
-	chronospiral_core = drawChronospiralCore,
 }
 
 local function drawVariant(effect, progress)

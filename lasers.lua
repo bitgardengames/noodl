@@ -621,11 +621,6 @@ function Lasers:spawn(x, y, dir, options)
 		beam.baseCooldownMax = beam.baseCooldownMin
 	end
 
-	if options.gilded then
-		beam.gilded = true
-		beam.baseGlow = max(beam.baseGlow or 0, 0.45)
-	end
-
 	recalcBeamTiming(beam, true)
 
 	applyPaletteOverride(beam)
