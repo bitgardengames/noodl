@@ -66,6 +66,10 @@ local snakeBodySpatialIndex = {}
 local snakeBodySpatialIndexAvailable = false
 local segmentCandidateBuffer = {}
 local segmentCandidateLookup = {}
+local segmentCandidateCount = 0
+local segmentCandidateGeneration = 0
+
+local SEGMENT_CANDIDATE_GENERATION_RESET = 1000000000
 
 local recentlyVacatedCells = {}
 local recentlyVacatedLookup = {}
@@ -862,24 +866,28 @@ local function computeTileBoundsForRect(x, y, w, h)
 end
 
 local function resetSegmentCandidateBuffers()
-        for i = #segmentCandidateBuffer, 1, -1 do
-                segmentCandidateBuffer[i] = nil
+        segmentCandidateCount = 0
+        segmentCandidateGeneration = segmentCandidateGeneration + 1
+        if segmentCandidateGeneration >= SEGMENT_CANDIDATE_GENERATION_RESET then
+                segmentCandidateGeneration = 1
+                segmentCandidateLookup = {}
         end
-
-        wipeTable(segmentCandidateLookup)
 end
 
 local function collectSnakeSegmentCandidatesForRect(x, y, w, h)
         if not snakeBodySpatialIndexAvailable then
-                return nil, nil
+                return nil, 0, nil, segmentCandidateGeneration
         end
 
         resetSegmentCandidateBuffers()
 
         local minCol, maxCol, minRow, maxRow = computeTileBoundsForRect(x, y, w, h)
         if not (minCol and maxCol and minRow and maxRow) then
-                return segmentCandidateBuffer, segmentCandidateLookup
+                segmentCandidateBuffer[segmentCandidateCount + 1] = nil
+                return segmentCandidateBuffer, segmentCandidateCount, segmentCandidateLookup, segmentCandidateGeneration
         end
+
+        local generation = segmentCandidateGeneration
 
         for col = minCol, maxCol do
                 local column = snakeBodySpatialIndex[col]
@@ -889,9 +897,10 @@ local function collectSnakeSegmentCandidatesForRect(x, y, w, h)
                                 if entries then
                                         for i = 1, #entries do
                                                 local segment = entries[i]
-                                                if segment and not segmentCandidateLookup[segment] then
-                                                        segmentCandidateLookup[segment] = true
-                                                        segmentCandidateBuffer[#segmentCandidateBuffer + 1] = segment
+                                                if segment and segmentCandidateLookup[segment] ~= generation then
+                                                        segmentCandidateLookup[segment] = generation
+                                                        segmentCandidateCount = segmentCandidateCount + 1
+                                                        segmentCandidateBuffer[segmentCandidateCount] = segment
                                                 end
                                         end
                                 end
@@ -899,7 +908,9 @@ local function collectSnakeSegmentCandidatesForRect(x, y, w, h)
                 end
         end
 
-        return segmentCandidateBuffer, segmentCandidateLookup
+        segmentCandidateBuffer[segmentCandidateCount + 1] = nil
+
+        return segmentCandidateBuffer, segmentCandidateCount, segmentCandidateLookup, generation
 end
 
 local function collectSnakeSegmentCandidatesForCircle(cx, cy, radius)
@@ -4704,7 +4715,7 @@ local function resetCollisionContext(context)
         end
 end
 
-local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidateIndices, candidateLookup)
+local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidateIndices, candidateCount, candidateLookup, candidateGeneration)
         local trailRef = context.trail
         if not (trailRef and trailRef[1]) then
                 return nil
@@ -4717,11 +4728,11 @@ local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, ex
         end
 
         if not candidateLookup then
-                candidateIndices, candidateLookup = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
+                candidateIndices, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
         end
 
         local useCandidateFilter = candidateLookup ~= nil
-        if useCandidateFilter and (not candidateIndices or #candidateIndices == 0) then
+        if useCandidateFilter and (not candidateIndices or (candidateCount or 0) == 0) then
                 return nil
         end
 
@@ -4738,7 +4749,7 @@ local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, ex
                         local segLen = sqrt(dx * dx + dy * dy)
 
                         if segLen > 1e-6 then
-                                local shouldTest = not useCandidateFilter or candidateLookup[segment]
+                                local shouldTest = not useCandidateFilter or (candidateLookup[segment] == candidateGeneration)
                                 if shouldTest then
                                         local intersects, cutX, cutY, t = segmentRectIntersection(
                                                 prevX,
@@ -4773,7 +4784,7 @@ local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, ex
         return nil
 end
 
-local function evaluateTrailCircleCut(context, saw, centerX, centerY, combinedRadiusSq, candidateIndices, candidateLookup)
+local function evaluateTrailCircleCut(context, saw, centerX, centerY, combinedRadiusSq, candidateIndices, candidateCount, candidateLookup, candidateGeneration)
         local trailRef = context.trail
         if not (trailRef and trailRef[1]) then
                 return nil
@@ -4791,11 +4802,11 @@ local function evaluateTrailCircleCut(context, saw, centerX, centerY, combinedRa
         end
 
         if not candidateLookup then
-                candidateIndices, candidateLookup = collectSnakeSegmentCandidatesForCircle(centerX, centerY, radius)
+                candidateIndices, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForCircle(centerX, centerY, radius)
         end
 
         local useCandidateFilter = candidateLookup ~= nil
-        if useCandidateFilter and (not candidateIndices or #candidateIndices == 0) then
+        if useCandidateFilter and (not candidateIndices or (candidateCount or 0) == 0) then
                 return nil
         end
 
@@ -4813,7 +4824,7 @@ local function evaluateTrailCircleCut(context, saw, centerX, centerY, combinedRa
                         local segLen = sqrt(dx * dx + dy * dy)
 
                         if segLen > 1e-6 then
-                                local shouldTest = not useCandidateFilter or candidateLookup[segment]
+                                local shouldTest = not useCandidateFilter or (candidateLookup[segment] == candidateGeneration)
                                 if shouldTest then
                                         local candidate = true
                                         if Saws and Saws.isCollisionCandidate then
@@ -4897,8 +4908,8 @@ function Snake:checkLaserBodyCollision()
                                         local expandedW = rw + bodyRadius * 2
                                         local expandedH = rh + bodyRadius * 2
 
-                                        local candidates, candidateLookup = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
-                                        local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateLookup)
+                                        local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
+                                        local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateCount, candidateLookup, candidateGeneration)
                                         if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
                                                 -- Leave the laser scorch effect but skip the usual hazard flash
                                                 -- response so the tail chop only highlights the snake itself.
@@ -4963,8 +4974,8 @@ function Snake:checkDartBodyCollision()
                                         local expandedW = rw + bodyRadius * 2
                                         local expandedH = rh + bodyRadius * 2
 
-                                        local candidates, candidateLookup = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
-                                        local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateLookup)
+                                        local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
+                                        local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateCount, candidateLookup, candidateGeneration)
                                         if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
                                                 -- Avoid triggering the dart emitter flash when only the tail is clipped.
                                                 resetCollisionContext(context)
@@ -5022,8 +5033,8 @@ function Snake:checkSawBodyCollision()
                                 local sawRadius = (saw.collisionRadius or saw.radius or 0)
                                 local combined = sawRadius + bodyRadius
                                 if combined > 0 then
-                                        local candidates, candidateLookup = collectSnakeSegmentCandidatesForCircle(sx, sy, combined)
-                                        local cutEvent = evaluateTrailCircleCut(context, saw, sx, sy, combined * combined, candidates, candidateLookup)
+                                        local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForCircle(sx, sy, combined)
+                                        local cutEvent = evaluateTrailCircleCut(context, saw, sx, sy, combined * combined, candidates, candidateCount, candidateLookup, candidateGeneration)
                                         if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
                                                 resetCollisionContext(context)
                                                 return true
