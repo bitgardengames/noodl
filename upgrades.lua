@@ -1013,53 +1013,7 @@ local function updateGuildLedger(state)
 	state.effects.rockSpawnFlat = (state.effects.rockSpawnFlat or 0) - previous + newBonus
 end
 
-local function updateRadiantCharter(state)
-	if not state then return end
 
-	local perSlotLaser = state.counters and state.counters.radiantCharterLaserPerSlot or 0
-	local perSlotSaw = state.counters and state.counters.radiantCharterSawPerSlot or 0
-	if perSlotLaser == 0 and perSlotSaw == 0 then return end
-
-	local slots = 0
-	if state.effects then
-		slots = state.effects.shopSlots or 0
-	end
-
-	slots = max(0, floor(slots + 0.0001))
-
-	local previousLaser = state.counters.radiantCharterLaserBonus or 0
-	local previousSaw = state.counters.radiantCharterSawBonus or 0
-
-	local newLaser = -(perSlotLaser * slots)
-	local newSaw = perSlotSaw * slots
-
-	state.counters.radiantCharterLaserBonus = newLaser
-	state.counters.radiantCharterSawBonus = newSaw
-
-	state.effects.laserSpawnBonus = (state.effects.laserSpawnBonus or 0) - previousLaser + newLaser
-	state.effects.sawSpawnBonus = (state.effects.sawSpawnBonus or 0) - previousSaw + newSaw
-end
-
-local function updateStoneCensus(state)
-	if not state then return end
-
-	local perEconomy = state.counters and state.counters.stoneCensusReduction or 0
-	if perEconomy == 0 then return end
-
-	local previous = state.counters.stoneCensusMult or 1
-	if previous <= 0 then previous = 1 end
-
-	local effects = state.effects or {}
-	effects.rockSpawnMult = effects.rockSpawnMult or 1
-	effects.rockSpawnMult = effects.rockSpawnMult / previous
-
-	local economyCount = countUpgradesWithTag(state, "economy")
-	local newMult = max(0.2, 1 - perEconomy * economyCount)
-
-	state.counters.stoneCensusMult = newMult
-	effects.rockSpawnMult = effects.rockSpawnMult * newMult
-	state.effects = effects
-end
 
 local mapmakersCompassHazards = {
 	{
@@ -2225,50 +2179,6 @@ pool = {
 		end,
 	}),
 	register({
-		id = "gilded_obsession",
-		nameKey = "upgrades.gilded_obsession.name",
-		descKey = "upgrades.gilded_obsession.description",
-		rarity = "rare",
-		tags = {"economy", "risk", "hazard"},
-		onAcquire = function(state)
-			state.effects.shopGuaranteedRare = true
-			state.counters = state.counters or {}
-			state.counters.gildedObsessionPendingHazards = state.counters.gildedObsessionPendingHazards or {}
-
-			local celebrationOptions = {
-				color = {1.0, 0.84, 0.36, 1},
-				particleCount = 20,
-				particleSpeed = 140,
-				particleLife = 0.5,
-				textOffset = 44,
-				textScale = 1.12,
-			}
-			celebrateUpgrade(getUpgradeString("gilded_obsession", "name"), nil, celebrationOptions)
-		end,
-		handlers = {
-			upgradeAcquired = function(data, state)
-				if not state or getStacks(state, "gilded_obsession") <= 0 then return end
-				if not data or not data.upgrade or data.upgrade.rarity ~= "rare" then return end
-
-				state.counters = state.counters or {}
-				local pending = state.counters.gildedObsessionPendingHazards or {}
-				local hazardType = (love.math.random() < 0.5) and "laser" or "saw"
-				pending[#pending + 1] = {type = hazardType}
-				state.counters.gildedObsessionPendingHazards = pending
-
-				local activationLabel = getUpgradeString("gilded_obsession", "name")
-				celebrateUpgrade(activationLabel, data, {
-					color = {1.0, 0.84, 0.34, 1},
-					particleCount = 14,
-					particleSpeed = 120,
-					particleLife = 0.46,
-					textOffset = 40,
-					textScale = 1.08,
-				})
-			end,
-		},
-	}),
-	register({
 		id = "gluttons_wake",
 		nameKey = "upgrades.gluttons_wake.name",
 		descKey = "upgrades.gluttons_wake.description",
@@ -2530,37 +2440,6 @@ pool = {
 		weight = 0.6,
 	}),
 	register({
-		id = "stone_census",
-		nameKey = "upgrades.stone_census.name",
-		descKey = "upgrades.stone_census.description",
-		rarity = "common",
-		requiresTags = {"economy"},
-		tags = {"economy", "defense"},
-		onAcquire = function(state)
-			state.counters.stoneCensusReduction = 0.07
-			state.counters.stoneCensusMult = state.counters.stoneCensusMult or 1
-			updateStoneCensus(state)
-
-			if not state.counters.stoneCensusHandlerRegistered then
-				state.counters.stoneCensusHandlerRegistered = true
-				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
-					if not runState then return end
-					if getStacks(runState, "stone_census") <= 0 then return end
-					updateStoneCensus(runState)
-				end)
-			end
-
-			celebrateUpgrade(getUpgradeString("stone_census", "name"), nil, {
-				color = {0.85, 0.92, 1, 1},
-				particleCount = 16,
-				particleSpeed = 110,
-				particleLife = 0.4,
-				textOffset = 44,
-				textScale = 1.08,
-			})
-		end,
-	}),
-	register({
 		id = "guild_ledger",
 		nameKey = "upgrades.guild_ledger.name",
 		descKey = "upgrades.guild_ledger.description",
@@ -2587,39 +2466,6 @@ pool = {
 				particleLife = 0.42,
 				textOffset = 42,
 				textScale = 1.1,
-			})
-		end,
-	}),
-	register({
-		id = "radiant_charter",
-		nameKey = "upgrades.radiant_charter.name",
-		descKey = "upgrades.radiant_charter.description",
-		rarity = "uncommon",
-		requiresTags = {"economy"},
-		tags = {"economy", "defense"},
-		onAcquire = function(state)
-			state.counters = state.counters or {}
-			state.counters.radiantCharterLaserPerSlot = 1
-			state.counters.radiantCharterSawPerSlot = 1
-
-			updateRadiantCharter(state)
-
-			if not state.counters.radiantCharterHandlerRegistered then
-				state.counters.radiantCharterHandlerRegistered = true
-				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
-					if not runState then return end
-					if getStacks(runState, "radiant_charter") <= 0 then return end
-					updateRadiantCharter(runState)
-				end)
-			end
-
-			celebrateUpgrade(getUpgradeString("radiant_charter", "name"), nil, {
-				color = {0.82, 0.94, 1, 1},
-				particleCount = 18,
-				particleSpeed = 118,
-				particleLife = 0.44,
-				textOffset = 44,
-				textScale = 1.08,
 			})
 		end,
 	}),
@@ -2664,38 +2510,6 @@ pool = {
 		end,
 	}),
 	register({
-		id = "spectral_harvest",
-		nameKey = "upgrades.spectral_harvest.name",
-		descKey = "upgrades.spectral_harvest.description",
-		rarity = "epic",
-		tags = {"economy", "combo"},
-		onAcquire = function(state)
-			state.counters.spectralHarvestReady = true
-			Snake:setSpectralHarvestReady(true, {pulse = 0.8, instantIntensity = 0.45})
-		end,
-		handlers = {
-			floorStart = function(_, state)
-				state.counters.spectralHarvestReady = true
-				Snake:setSpectralHarvestReady(true, {pulse = 0.6})
-			end,
-			fruitCollected = function(_, state)
-				if not state.counters.spectralHarvestReady then return end
-				state.counters.spectralHarvestReady = false
-
-				Snake:triggerSpectralHarvest({flash = 1, echo = 1, instantIntensity = 0.55})
-
-				local Fruit = require("fruit")
-				local FruitEvents = require("fruitevents")
-				if not (Fruit and FruitEvents and FruitEvents.handleConsumption) then return end
-
-				local fx, fy = Fruit:getDrawPosition()
-				if not (fx and fy) then return end
-
-				FruitEvents.handleConsumption(fx, fy)
-			end,
-		},
-	}),
-	register({
 		id = "tectonic_resolve",
 		nameKey = "upgrades.tectonic_resolve.name",
 		descKey = "upgrades.tectonic_resolve.description",
@@ -2720,40 +2534,6 @@ pool = {
 			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
 			state.effects.titanbloodPact = (state.effects.titanbloodPact or 0) + 1
 			Snake:setTitanbloodStacks(state.effects.titanbloodPact)
-		end,
-	}),
-	register({
-		id = "chronospiral_core",
-		nameKey = "upgrades.chronospiral_core.name",
-		descKey = "upgrades.chronospiral_core.description",
-		rarity = "rare",
-		tags = {"mobility"},
-		unlockTag = "combo_mastery",
-		onAcquire = function(state)
-			Snake:addSpeedMultiplier(0.75)
-			state.effects.chronospiralCore = true
-
-			local celebrationOptions = {
-				color = {0.7, 0.76, 1.0, 1},
-				particleCount = 18,
-				particleSpeed = 120,
-				particleLife = 0.5,
-				textOffset = 46,
-				textScale = 1.1,
-				visual = {
-					variant = "chronospiral_core",
-					showBase = false,
-					life = 0.94,
-					innerRadius = 12,
-					outerRadius = 60,
-					addBlend = true,
-					color = {0.68, 0.78, 1.0, 1},
-					variantSecondaryColor = {0.82, 0.62, 1.0, 0.92},
-					variantTertiaryColor = {1.0, 0.92, 0.64, 0.9},
-				},
-			}
-			applySegmentPosition(celebrationOptions, 0.64)
-			celebrateUpgrade(getUpgradeString("chronospiral_core", "name"), nil, celebrationOptions)
 		end,
 	}),
 	register({
@@ -3305,43 +3085,11 @@ function Upgrades:modifyFloorContext(context)
 			state.counters.contractOfCindersActiveSaws = nil
 		end
 
-		local pending = state.counters.gildedObsessionPendingHazards
-		if pending and #pending > 0 then
-			context.saws = context.saws or 0
-			context.laserCount = context.laserCount or 0
-			local active = {saws = 0, lasers = 0}
-
-			for _, hazard in ipairs(pending) do
-				local hazardType = hazard and hazard.type or nil
-				if hazardType == "laser" then
-					context.laserCount = context.laserCount + 1
-					active.lasers = (active.lasers or 0) + 1
-				else
-					context.saws = context.saws + 1
-					active.saws = (active.saws or 0) + 1
-				end
-			end
-
-			state.counters.gildedObsessionActiveHazards = active
-			state.counters.gildedObsessionPendingHazards = {}
-			context.gildedObsessionExtraSaws = active.saws
-			context.gildedObsessionExtraLasers = active.lasers
-		end
 	end
 
 	return context
 end
 
-function Upgrades:consumeGildedObsessionHazards()
-	local state = self.runState
-	if not state or not state.counters then
-		return nil
-	end
-
-	local active = state.counters.gildedObsessionActiveHazards
-	state.counters.gildedObsessionActiveHazards = nil
-	return active
-end
 
 local function round(value)
 	if value >= 0 then
@@ -3565,7 +3313,6 @@ function Upgrades:applyPersistentEffects(rebaseline)
 		Snake.timeDilation = nil
 	end
 
-	Snake:setChronospiralActive(effects.chronospiralCore and true or false)
 
 	Snake:setAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
 

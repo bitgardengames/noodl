@@ -1071,7 +1071,6 @@ Snake.dash = nil
 Snake.timeDilation = nil
 Snake.chronoWard = nil
 Snake.hazardGraceTimer = 0
-Snake.chronospiral = nil
 Snake.abyssalCatalyst = nil
 Snake.phoenixEcho = nil
 Snake.eventHorizon = nil
@@ -1155,7 +1154,6 @@ function Snake:resetModifiers()
 	self.timeDilation = nil
 	self.adrenaline = nil
 	self.hazardGraceTimer = 0
-	self.chronospiral = nil
 	self.abyssalCatalyst = nil
 	self.phoenixEcho = nil
 	self.eventHorizon = nil
@@ -1164,7 +1162,6 @@ function Snake:resetModifiers()
 	self.temporalAnchor = nil
 	self.quickFangs = nil
 	self.zephyrCoils = nil
-	self.spectralHarvest = nil
 	self.stoneSkinVisual = nil
 	self.speedVisual = nil
 	self.diffractionBarrier = nil
@@ -1251,23 +1248,6 @@ function Snake:setDiffractionBarrierActive(active)
 	end
 end
 
-function Snake:setChronospiralActive(active)
-	if active then
-		local state = self.chronospiral
-		if not state then
-			state = {intensity = 0, target = 1, spin = 0}
-			self.chronospiral = state
-		end
-		state.target = 1
-		state.active = true
-	else
-		local state = self.chronospiral
-		if state then
-			state.target = 0
-			state.active = false
-		end
-	end
-end
 
 function Snake:setAbyssalCatalystStacks(count)
 	count = max(0, floor((count or 0) + 0.0001))
@@ -1337,50 +1317,7 @@ function Snake:setPhoenixEchoCharges(count, options)
 	end
 end
 
-function Snake:setSpectralHarvestReady(active, options)
-	options = options or {}
-	local state = self.spectralHarvest
 
-	if active then
-		if not state then
-			state = {intensity = 0, target = 0, time = 0, burst = 0, echo = 0}
-			self.spectralHarvest = state
-		end
-		state.ready = true
-		state.target = max(state.target or 0, 1)
-		if options.pulse then
-			state.burst = max(state.burst or 0, options.pulse)
-		end
-		if options.instantIntensity then
-			state.intensity = max(state.intensity or 0, options.instantIntensity)
-		end
-	elseif state then
-		state.ready = false
-		state.target = 0
-		if options.pulse then
-			state.burst = max(state.burst or 0, options.pulse)
-		end
-	elseif options and options.ensure then
-		self.spectralHarvest = {ready = false, intensity = 0, target = 0, time = 0, burst = 0, echo = 0}
-	end
-end
-
-function Snake:triggerSpectralHarvest(options)
-	options = options or {}
-	local state = self.spectralHarvest
-	if not state then
-		state = {intensity = 0, target = 0, time = 0, burst = 0, echo = 0}
-		self.spectralHarvest = state
-	end
-
-	state.ready = false
-	state.target = 0
-	state.burst = max(state.burst or 0, options.flash or 1)
-	state.echo = max(state.echo or 0, options.echo or 1)
-	if options.instantIntensity then
-		state.intensity = max(state.intensity or 0, options.instantIntensity)
-	end
-end
 
 function Snake:setEventHorizonActive(active)
 	if active then
@@ -2656,13 +2593,6 @@ local function collectUpgradeVisuals(self)
 		entry.cooldownTimer = dash.cooldownTimer or 0
 	end
 
-	local chronospiral = self.chronospiral
-	if chronospiral and ((chronospiral.intensity or 0) > 1e-3 or (chronospiral.target or 0) > 0) then
-		local entry = acquireEntry("chronospiral")
-		entry.intensity = chronospiral.intensity or 0
-		entry.spin = chronospiral.spin or 0
-	end
-
 	local abyssal = self.abyssalCatalyst
 	if abyssal and ((abyssal.intensity or 0) > 1e-3 or (abyssal.target or 0) > 0) then
 		local entry = acquireEntry("abyssalCatalyst")
@@ -2716,16 +2646,6 @@ local function collectUpgradeVisuals(self)
 		entry.flash = stoneSkin.flash or 0
 		entry.charges = stoneSkin.charges or 0
 		entry.time = stoneSkin.time or 0
-	end
-
-	local spectral = self.spectralHarvest
-	if spectral and (((spectral.intensity or 0) > 0.01) or (spectral.burst or 0) > 0 or (spectral.echo or 0) > 0 or spectral.ready) then
-		local entry = acquireEntry("spectralHarvest")
-		entry.intensity = spectral.intensity or 0
-		entry.burst = spectral.burst or 0
-		entry.echo = spectral.echo or 0
-		entry.ready = spectral.ready or false
-		entry.time = spectral.time or 0
 	end
 
 	local diffraction = self.diffractionBarrier
@@ -3340,20 +3260,6 @@ end
 function Snake:update(dt)
 	if isDead then return false, "dead", {fatal = true} end
 
-	if self.chronospiral then
-		local state = self.chronospiral
-		state.spin = (state.spin or 0) + dt
-		local intensity = state.intensity or 0
-		local target = state.target or 0
-		local rate = (state.active and 4.0 or 2.4)
-		local blend = min(1, dt * rate)
-		intensity = intensity + (target - intensity) * blend
-		state.intensity = intensity
-		if intensity < 0.005 and target <= 0 then
-			self.chronospiral = nil
-		end
-	end
-
 	if self.abyssalCatalyst then
 		local state = self.abyssalCatalyst
 		state.time = (state.time or 0) + dt
@@ -3473,21 +3379,6 @@ function Snake:update(dt)
 		stoneSkin.flash = max(0, (stoneSkin.flash or 0) - dt * 2.6)
 		if charges <= 0 and stoneSkin.intensity <= 0.02 and stoneSkin.flash <= 0.02 then
 			self.stoneSkinVisual = nil
-		end
-	end
-
-	local spectral = self.spectralHarvest
-	if spectral then
-		spectral.time = (spectral.time or 0) + dt
-		local target = spectral.target or ((spectral.ready and 1) or 0)
-		spectral.target = target
-		local blend = min(1, dt * 3.2)
-		local current = spectral.intensity or 0
-		spectral.intensity = current + (target - current) * blend
-		spectral.burst = max(0, (spectral.burst or 0) - dt * 1.8)
-		spectral.echo = max(0, (spectral.echo or 0) - dt * 0.9)
-		if not spectral.ready and spectral.target <= 0 and spectral.intensity <= 0.02 and spectral.burst <= 0.02 and spectral.echo <= 0.02 then
-			self.spectralHarvest = nil
 		end
 	end
 

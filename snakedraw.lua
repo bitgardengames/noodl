@@ -38,8 +38,6 @@ local stormBolt = {}
 local stormBoltCapacity = 0
 local stormBoltCenters = {}
 local stormBoltCenterCapacity = 0
-local chronospiralCoords = {}
-local chronospiralCoordCapacity = 0
 local titanSigilVertices = {0, 0, 0, 0, 0, 0, 0, 0}
 
 local function ensureBufferCapacity(buffer, capacity, needed)
@@ -1760,68 +1758,6 @@ local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
 	return
 end
 
-local function drawSpectralHarvestEcho(trail, SEGMENT_SIZE, data)
-	if not (trail and data) then return end
-	if #trail <= 0 then return end
-
-	local intensity = max(0, data.intensity or 0)
-	local burst = max(0, data.burst or 0)
-	local echo = max(0, data.echo or 0)
-	local ready = data.ready or false
-	if intensity <= 0.01 and burst <= 0.01 and echo <= 0.01 and not ready then return end
-
-	local time = data.time or Timer.getTime()
-	local coverage = min(#trail, 10 + floor((intensity + echo) * 8))
-
-	love.graphics.push("all")
-	love.graphics.setBlendMode("add")
-
-        local segmentVectors = buildSegmentVectors(trail)
-        for i = 1, coverage do
-                local nextIndex = min(#trail, i + 1)
-                local x1, y1, _, _, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
-                if x1 and y1 then
-                        if not dirX or not dirY or length < 1e-4 then
-                                dirX, dirY = 0, -1
-                                perpX, perpY = 1, 0
-                        elseif not (perpX and perpY) then
-                                perpX, perpY = -dirY, dirX
-                        end
-
-                        local progress = (i - 1) / max(coverage - 1, 1)
-                        local fade = 1 - progress * 0.6
-                        local wave = sin(time * 3.6 + i * 0.8) * SEGMENT_SIZE * 0.12
-                        local offset = SEGMENT_SIZE * (0.4 + 0.22 * intensity + 0.28 * echo * (1 - progress))
-                        local gx = x1 + perpX * (offset + wave)
-                        local gy = y1 + perpY * (offset - wave * 0.4)
-
-                        love.graphics.setColor(0.66, 0.9, 1.0, (0.16 + 0.26 * intensity) * fade)
-                        love.graphics.setLineWidth(1.4 + intensity * 1.1)
-                        love.graphics.circle("line", gx, gy, SEGMENT_SIZE * (0.28 + 0.08 * echo), 18)
-
-                        love.graphics.setColor(0.42, 0.72, 1.0, (0.1 + 0.22 * echo) * fade)
-                        love.graphics.circle("fill", gx, gy, SEGMENT_SIZE * (0.16 + 0.05 * echo), 14)
-                end
-        end
-
-	local head = trail[1]
-	local hx, hy = ptXY(head)
-	if hx and hy then
-		local haloAlpha = 0.18 + 0.28 * intensity + (ready and 0.12 or 0)
-		drawSoftGlow(hx, hy, SEGMENT_SIZE * (1.3 + 0.35 * intensity + 0.25 * echo), 0.58, 0.9, 1.0, haloAlpha)
-
-		if burst > 0 then
-			love.graphics.setColor(0.9, 0.96, 1.0, 0.32 * burst)
-			love.graphics.setLineWidth(2.2)
-			love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.45 + 0.55 * burst), 30)
-			love.graphics.setColor(0.62, 0.88, 1.0, 0.26 * burst)
-			love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.95 + 0.75 * burst), 36)
-		end
-	end
-
-	love.graphics.pop()
-end
-
 local function drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, data)
 	if not (hx and hy and SEGMENT_SIZE and data) then return end
 
@@ -2197,84 +2133,6 @@ local function drawTitanbloodSigils(trail, SEGMENT_SIZE, data)
 	love.graphics.pop()
 end
 
-local function drawChronospiralWake(trail, SEGMENT_SIZE, data)
-	if not (trail and data) then return end
-	if #trail < 2 then return end
-
-	local intensity = max(0, data.intensity or 0)
-	if intensity <= 0.01 then return end
-
-	local spin = data.spin or 0
-	local step = max(2, floor(#trail / 12))
-
-	love.graphics.push("all")
-	love.graphics.setBlendMode("add")
-
-        local segmentVectors = buildSegmentVectors(trail)
-
-        local wakeLineWidth = 1.2 + intensity * 1.2
-        love.graphics.setLineWidth(wakeLineWidth)
-
-        for i = 1, #trail, step do
-                local nextIndex = min(#trail, i + 1)
-                local px, py, _, _, dirX, dirY = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
-                if px and py then
-                        if not dirX or not dirY or (dirX == 0 and dirY == 0) then
-                                dirX, dirY = 0, -1
-                        end
-
-                        local angle = (atan2 and atan2(dirY, dirX)) or atan(dirY, dirX)
-                        local progress = (i - 1) / max(#trail - 1, 1)
-                        local baseRadius = SEGMENT_SIZE * (0.55 + 0.35 * intensity)
-                        local fade = 1 - progress * 0.65
-                        local swirl = spin * 1.25 + progress * pi * 1.6
-
-                        love.graphics.setColor(0.56, 0.82, 1.0, (0.14 + 0.28 * intensity) * fade)
-                        love.graphics.circle("line", px, py, baseRadius)
-
-                        love.graphics.setColor(0.84, 0.68, 1.0, (0.16 + 0.3 * intensity) * fade)
-                        love.graphics.arc("line", "open", px, py, baseRadius * 1.15, swirl, swirl + pi * 0.35)
-                        love.graphics.arc("line", "open", px, py, baseRadius * 0.85, swirl + pi, swirl + pi + pi * 0.3)
-
-                        love.graphics.push()
-                        love.graphics.translate(px, py)
-                        love.graphics.rotate(angle)
-                        local ribbon = baseRadius * (0.8 + 0.25 * sin(swirl * 1.4))
-                        love.graphics.setColor(0.46, 0.78, 1.0, (0.12 + 0.22 * intensity) * fade)
-                        love.graphics.rectangle("fill", -ribbon, -baseRadius * 0.22, ribbon * 2, baseRadius * 0.44)
-                        love.graphics.pop()
-                end
-        end
-
-	local pathStep = max(1, floor(#trail / 24))
-	local coords = chronospiralCoords
-	local maxPoints = floor((#trail - 1) / pathStep) + 1
-	local needed = maxPoints * 2
-	chronospiralCoordCapacity = ensureBufferCapacity(coords, chronospiralCoordCapacity, needed)
-	local used = 0
-	local jitterScale = SEGMENT_SIZE * 0.2 * intensity
-	for i = 1, #trail, pathStep do
-		local seg = trail[i]
-		local px, py = ptXY(seg)
-		if px and py then
-			local jitter = sin(spin * 2.0 + i * 0.33) * jitterScale
-			used = used + 1
-			coords[used] = px + jitter
-			used = used + 1
-			coords[used] = py - jitter * 0.4
-		end
-	end
-
-	trimBuffer(coords, used, chronospiralCoordCapacity)
-
-	if used >= 4 then
-		love.graphics.setColor(0.52, 0.86, 1.0, 0.1 + 0.18 * intensity)
-		love.graphics.setLineWidth(SEGMENT_SIZE * (0.12 + 0.05 * intensity))
-		love.graphics.line(coords, 1, used)
-	end
-
-	love.graphics.pop()
-end
 
 local function drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, data)
 	if not (trail and data) then return end
@@ -3003,10 +2861,6 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 					drawQuickFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.quickFangs)
 				end
 
-				if upgradeVisuals and upgradeVisuals.spectralHarvest then
-					drawSpectralHarvestEcho(trail, SEGMENT_SIZE, upgradeVisuals.spectralHarvest)
-				end
-
 				if upgradeVisuals and upgradeVisuals.zephyrCoils then
 					drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
 				end
@@ -3039,10 +2893,6 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 
 				if upgradeVisuals and upgradeVisuals.stormchaser then
 					drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
-				end
-
-				if upgradeVisuals and upgradeVisuals.chronospiral then
-					drawChronospiralWake(trail, SEGMENT_SIZE, upgradeVisuals.chronospiral)
 				end
 
 				if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
