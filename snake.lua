@@ -347,20 +347,27 @@ local function acquireSegment()
 end
 
 local function releaseSegment(segment)
-	if not segment then
-		return
-	end
+        if not segment then
+                return
+        end
 
-	segment.drawX = nil
-	segment.drawY = nil
-	segment.x = nil
-	segment.y = nil
-	segment.dirX = nil
+        local col, row = segment.cellCol, segment.cellRow
+        if col and row then
+                removeSnakeBodySpatialEntry(col, row, segment)
+        end
+
+        segment.drawX = nil
+        segment.drawY = nil
+        segment.x = nil
+        segment.y = nil
+        segment.dirX = nil
         segment.dirY = nil
         segment.fruitMarker = nil
         segment.fruitMarkerX = nil
         segment.fruitMarkerY = nil
         segment.lengthToPrev = nil
+        segment.cellCol = nil
+        segment.cellRow = nil
 
         segmentPoolCount = segmentPoolCount + 1
         segmentPool[segmentPoolCount] = segment
@@ -573,8 +580,8 @@ local function isCellOccupiedBySnakeBody(col, row)
         return (column[row] or 0) > 0
 end
 
-local function addSnakeBodySpatialEntry(col, row, segmentIndex)
-        if not (col and row and segmentIndex) then
+local function addSnakeBodySpatialEntry(col, row, segment)
+        if not (col and row and segment) then
                 return
         end
 
@@ -588,32 +595,208 @@ local function addSnakeBodySpatialEntry(col, row, segmentIndex)
         if not bucket then
                 bucket = {}
                 column[row] = bucket
+        else
+                for i = 1, #bucket do
+                        if bucket[i] == segment then
+                                return
+                        end
+                end
         end
 
-        bucket[#bucket + 1] = segmentIndex
+        bucket[#bucket + 1] = segment
         snakeBodySpatialIndexAvailable = true
+end
+
+local function hasSnakeBodySpatialEntry(col, row, segment)
+        if not (col and row and segment) then
+                return false
+        end
+
+        local column = snakeBodySpatialIndex[col]
+        if not column then
+                return false
+        end
+
+        local bucket = column[row]
+        if not bucket then
+                return false
+        end
+
+        for i = 1, #bucket do
+                if bucket[i] == segment then
+                        return true
+                end
+        end
+
+        return false
+end
+
+local function removeSnakeBodySpatialEntry(col, row, segment)
+        if not (col and row and segment) then
+                return
+        end
+
+        local column = snakeBodySpatialIndex[col]
+        if not column then
+                return
+        end
+
+        local bucket = column[row]
+        if not bucket then
+                return
+        end
+
+        for i = #bucket, 1, -1 do
+                if bucket[i] == segment then
+                        table.remove(bucket, i)
+                        break
+                end
+        end
+
+        if not bucket[1] then
+                column[row] = nil
+                if not next(column) then
+                        snakeBodySpatialIndex[col] = nil
+                end
+        end
+
+        if snakeBodySpatialIndexAvailable and not next(snakeBodySpatialIndex) then
+                snakeBodySpatialIndexAvailable = false
+        end
 end
 
 local function rebuildSnakeBodySpatialIndex()
         clearSnakeBodySpatialIndex()
 
-        if not (trail and trail[2]) then
+        if not (trail and trail[1]) then
                 return
         end
 
-        for i = 2, #trail do
+        for i = 1, #trail do
                 local segment = trail[i]
                 local sx = segment and (segment.drawX or segment.x)
                 local sy = segment and (segment.drawY or segment.y)
+                local col, row = nil, nil
                 if sx and sy then
-                        local col, row = toCell(sx, sy)
-                        addSnakeBodySpatialEntry(col, row, i)
+                        col, row = toCell(sx, sy)
+                end
+
+                if segment then
+                        segment.cellCol = col
+                        segment.cellRow = row
+                end
+
+                if i >= 2 and col and row then
+                        addSnakeBodySpatialEntry(col, row, segment)
                 end
         end
 
-        if not snakeBodySpatialIndexAvailable then
+        if not next(snakeBodySpatialIndex) then
+                snakeBodySpatialIndexAvailable = false
+        else
                 snakeBodySpatialIndexAvailable = true
         end
+end
+
+local function syncSegmentSpatialEntry(segmentIndex)
+        if not (trail and segmentIndex) then
+                return false
+        end
+
+        local segment = trail[segmentIndex]
+        if not segment then
+                return false
+        end
+
+        local x = segment.drawX or segment.x
+        local y = segment.drawY or segment.y
+
+        local col, row = nil, nil
+        if x and y then
+                col, row = toCell(x, y)
+        end
+
+        local prevCol, prevRow = segment.cellCol, segment.cellRow
+
+        if prevCol and prevRow and (prevCol ~= col or prevRow ~= row) then
+                removeSnakeBodySpatialEntry(prevCol, prevRow, segment)
+        end
+
+        segment.cellCol = col
+        segment.cellRow = row
+
+        if segmentIndex >= 2 then
+                if not (col and row) then
+                        return false
+                end
+
+                if not hasSnakeBodySpatialEntry(col, row, segment) then
+                        addSnakeBodySpatialEntry(col, row, segment)
+                end
+        elseif col and row then
+                -- ensure head does not pollute the spatial index
+                removeSnakeBodySpatialEntry(col, row, segment)
+        end
+
+        return true
+end
+
+local function syncSegmentSpatialRange(startIndex, finishIndex)
+        if not (trail and startIndex and finishIndex) then
+                return true
+        end
+
+        if finishIndex < startIndex then
+                return true
+        end
+
+        startIndex = max(1, startIndex)
+        finishIndex = min(#trail, finishIndex)
+
+        for i = startIndex, finishIndex do
+                if not syncSegmentSpatialEntry(i) then
+                        return false
+                end
+        end
+
+        return true
+end
+
+local function syncSnakeHeadSegments(headCellCount)
+        if not trail or #trail == 0 then
+                return true
+        end
+
+        local headSynced = syncSegmentSpatialEntry(1)
+        if not headSynced then
+                return false
+        end
+
+        local syncCount = headCellCount or 0
+        local extraSegments = newHeadSegmentsMax or 0
+        if extraSegments > syncCount then
+                syncCount = extraSegments
+        end
+
+        if syncCount <= 0 then
+                return true
+        end
+
+        local limit = 1 + syncCount
+        return syncSegmentSpatialRange(2, limit)
+end
+
+local function syncSnakeTailSegment()
+        if not trail then
+                return true
+        end
+
+        local length = #trail
+        if length <= 1 then
+                return true
+        end
+
+        return syncSegmentSpatialEntry(length)
 end
 
 local function clampTileBounds(minCol, maxCol, minRow, maxRow)
@@ -705,10 +888,10 @@ local function collectSnakeSegmentCandidatesForRect(x, y, w, h)
                                 local entries = column[row]
                                 if entries then
                                         for i = 1, #entries do
-                                                local segIndex = entries[i]
-                                                if segIndex and not segmentCandidateLookup[segIndex] then
-                                                        segmentCandidateLookup[segIndex] = true
-                                                        segmentCandidateBuffer[#segmentCandidateBuffer + 1] = segIndex
+                                                local segment = entries[i]
+                                                if segment and not segmentCandidateLookup[segment] then
+                                                        segmentCandidateLookup[segment] = true
+                                                        segmentCandidateBuffer[#segmentCandidateBuffer + 1] = segment
                                                 end
                                         end
                                 end
@@ -1515,19 +1698,23 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
 		end
 	end
 
-	if not processedHead then
-		if overrideCol and overrideRow then
-			if headOccupancyCol ~= overrideCol or headOccupancyRow ~= overrideRow then
-				rebuildOccupancyFromTrail(overrideCol, overrideRow)
-				return
-			end
-		else
-			headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-		end
-	end
+        if not processedHead then
+                if overrideCol and overrideRow then
+                        if headOccupancyCol ~= overrideCol or headOccupancyRow ~= overrideRow then
+                                rebuildOccupancyFromTrail(overrideCol, overrideRow)
+                                return
+                        end
+                else
+                        headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
+                end
+        end
+
+        if not syncSnakeHeadSegments(headCellCount) then
+                rebuildSnakeBodySpatialIndex()
+                return
+        end
 
         if not tailMoved then
-                rebuildSnakeBodySpatialIndex()
                 return
         end
 
@@ -1577,7 +1764,9 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
         end
 
         headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-        rebuildSnakeBodySpatialIndex()
+        if not syncSnakeTailSegment() then
+                rebuildSnakeBodySpatialIndex()
+        end
 end
 
 local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
@@ -1810,6 +1999,8 @@ local function copySegmentData(segment)
         copy.fruitMarkerX = segment.fruitMarkerX
         copy.fruitMarkerY = segment.fruitMarkerY
         copy.lengthToPrev = segment.lengthToPrev
+        copy.cellCol = segment.cellCol
+        copy.cellRow = segment.cellRow
 
         return copy
 end
@@ -2719,6 +2910,7 @@ function Snake:setHeadPosition(x, y)
 
         head.drawX = x
         head.drawY = y
+        syncSegmentSpatialEntry(1)
         local count = trail and #trail or 0
         if count > 0 then
                 recalcSegmentLengthsRange(1, min(count, 2))
@@ -4546,7 +4738,7 @@ local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, ex
                         local segLen = sqrt(dx * dx + dy * dy)
 
                         if segLen > 1e-6 then
-                                local shouldTest = not useCandidateFilter or candidateLookup[index]
+                                local shouldTest = not useCandidateFilter or candidateLookup[segment]
                                 if shouldTest then
                                         local intersects, cutX, cutY, t = segmentRectIntersection(
                                                 prevX,
@@ -4621,7 +4813,7 @@ local function evaluateTrailCircleCut(context, saw, centerX, centerY, combinedRa
                         local segLen = sqrt(dx * dx + dy * dy)
 
                         if segLen > 1e-6 then
-                                local shouldTest = not useCandidateFilter or candidateLookup[index]
+                                local shouldTest = not useCandidateFilter or candidateLookup[segment]
                                 if shouldTest then
                                         local candidate = true
                                         if Saws and Saws.isCollisionCandidate then
