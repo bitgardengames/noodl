@@ -34,6 +34,7 @@ local HIGH_PRIORITY_FACE_STATES = {
 
 local spawnGluttonsWakeRock
 local crystallizeGluttonsWakeSegments
+local removeSnakeBodySpatialEntry
 
 local screenW, screenH
 local direction = {x = 1, y = 0}
@@ -635,7 +636,7 @@ local function hasSnakeBodySpatialEntry(col, row, segment)
         return false
 end
 
-local function removeSnakeBodySpatialEntry(col, row, segment)
+function removeSnakeBodySpatialEntry(col, row, segment)
         if not (col and row and segment) then
                 return
         end

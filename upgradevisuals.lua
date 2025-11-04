@@ -1144,8 +1144,6 @@ local function drawAbyssalCatalyst(effect, progress)
 	love.graphics.setLineWidth(1)
 end
 
-end
-
 local variantDrawers = {
 	phoenix_flare = drawPhoenixFlare,
 	event_horizon = drawEventHorizon,
