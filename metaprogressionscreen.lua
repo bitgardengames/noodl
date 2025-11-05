@@ -146,8 +146,6 @@ local analogAxisDirections = {horizontal = nil, vertical = nil}
 local trackEntries = {}
 local trackContentHeight = 0
 local statsEntries = {}
-local statsHighlights = {}
-local statsSummaryHeight = 0
 local cosmeticsEntries = {}
 local cosmeticsSummary = {unlocked = 0, total = 0, newUnlocks = 0}
 local cosmeticShaderShowcaseEntries = {}
@@ -430,13 +428,6 @@ local function updateScrollBounds(sw, sh)
 	local viewportBottom = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or footerSpacing))) - footerSpacing
 	viewportBottom = max(viewportBottom, menuAnchors.contentTop + 1)
 	local topOffset = 0
-	if activeTab == "stats" then
-		topOffset = statsSummaryHeight
-		if topOffset > 0 then
-			topOffset = topOffset + STATS_SUMMARY_SPACING
-		end
-	end
-
 	local baseTop = getListTop()
 	viewportTop = baseTop + topOffset
 	viewportHeight = max(0, viewportBottom - viewportTop)
@@ -555,13 +546,6 @@ local function isHiddenStat(key)
 	return false
 end
 
-local highlightStatOrder = {
-	"snakeScore",
-	"floorsCleared",
-	"totalApplesEaten",
-	"totalTimeAlive",
-}
-
 local function prettifyKey(key)
 	if not key or key == "" then
 		return ""
@@ -608,44 +592,6 @@ local function buildStatsEntries()
 	end
 
 	sort(statsEntries, compareStatsEntries)
-
-	local function buildStatsHighlights()
-		statsHighlights = {}
-		statsSummaryHeight = 0
-
-		if #statsEntries == 0 then
-			return
-		end
-
-		local used = {}
-
-		for _, statId in ipairs(highlightStatOrder) do
-			for _, entry in ipairs(statsEntries) do
-				if entry.id == statId and not used[entry] then
-					statsHighlights[#statsHighlights + 1] = entry
-					used[entry] = true
-					break
-				end
-			end
-		end
-
-		local desired = min(4, #statsEntries)
-		local index = 1
-		while #statsHighlights < desired and index <= #statsEntries do
-			local candidate = statsEntries[index]
-			if not used[candidate] then
-				statsHighlights[#statsHighlights + 1] = candidate
-				used[candidate] = true
-			end
-			index = index + 1
-		end
-
-		if #statsHighlights > 0 then
-			statsSummaryHeight = STATS_SUMMARY_CARD_HEIGHT + STATS_SUMMARY_SHADOW_OFFSET
-		end
-	end
-
-	buildStatsHighlights()
 end
 
 local function formatShaderDisplayName(typeId)
@@ -2071,51 +2017,6 @@ local function drawCosmeticsList(sw, sh)
 	love.graphics.pop()
 end
 
-local function drawStatsHeader(sw)
-	-- Intentionally left blank: the stats header and subheader have been removed.
-end
-
-local function drawStatsSummary(sw)
-	if #statsHighlights == 0 then
-		return
-	end
-
-	local totalWidth = #statsHighlights * STATS_SUMMARY_CARD_WIDTH + max(0, #statsHighlights - 1) * STATS_SUMMARY_CARD_SPACING
-	local frameWidth = totalWidth + WINDOW_PADDING_X * 2
-	local frameHeight = STATS_SUMMARY_CARD_HEIGHT + WINDOW_PADDING_Y * 2
-	local frameX = sw / 2 - frameWidth / 2
-	local frameY = viewportTop - WINDOW_PADDING_Y
-	drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
-		accentHeight = 0,
-		accentInsetY = WINDOW_PADDING_Y * 0.35,
-		accentAlpha = 0.26,
-	})
-
-	local startX = frameX + WINDOW_PADDING_X
-	local cardY = frameY + WINDOW_PADDING_Y
-	local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
-	local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.8}
-
-	for index, entry in ipairs(statsHighlights) do
-		local cardX = startX + (index - 1) * (STATS_SUMMARY_CARD_WIDTH + STATS_SUMMARY_CARD_SPACING)
-		local fillColor = lightenColor(basePanel, 0.20 + 0.05 * ((index - 1) % 2))
-
-		love.graphics.setColor(0, 0, 0, 0.28)
-		UI.drawRoundedRect(cardX + 4, cardY + STATS_SUMMARY_SHADOW_OFFSET, STATS_SUMMARY_CARD_WIDTH, STATS_SUMMARY_CARD_HEIGHT, 14)
-
-		love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 0.96)
-		UI.drawRoundedRect(cardX, cardY, STATS_SUMMARY_CARD_WIDTH, STATS_SUMMARY_CARD_HEIGHT, 14)
-
-		love.graphics.setFont(UI.fonts.caption)
-		love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
-		love.graphics.printf(entry.label or "", cardX + 20, cardY + 18, STATS_SUMMARY_CARD_WIDTH - 40, "left")
-
-		love.graphics.setFont(UI.fonts.heading)
-		love.graphics.setColor(Theme.textColor)
-		love.graphics.printf(entry.valueText or "0", cardX + 20, cardY + 42, STATS_SUMMARY_CARD_WIDTH - 40, "left")
-	end
-end
-
 local function drawStatsList(sw, sh)
 	local clipY = viewportTop
 	local clipH = viewportHeight
@@ -2203,11 +2104,8 @@ function ProgressionScreen:draw()
 		drawCosmeticsHeader(sw)
 		drawCosmeticsList(sw, sh)
 	else
-		drawStatsHeader(sw)
-		drawStatsSummary(sw)
 		drawStatsList(sw, sh)
 	end
-
         buttonList:syncUI()
 
         UI.refreshCursor()
