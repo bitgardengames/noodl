@@ -1356,11 +1356,23 @@ function AchievementsMenu:draw()
                 local scrollRange = -minScrollOffset
                 local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
 
-                local minThumbHeight = 36
-                local thumbHeight = max(minThumbHeight, viewportHeight * (viewportHeight / contentHeight))
-                thumbHeight = min(thumbHeight, trackHeight)
-                local thumbTravel = max(0, trackHeight - thumbHeight)
-                local thumbY = trackY + thumbTravel * scrollProgress
+				local minThumbHeight = 36
+				local thumbHeight = max(minThumbHeight, viewportHeight * (viewportHeight / contentHeight))
+				thumbHeight = min(thumbHeight, trackHeight)
+
+				-- Clamp scrollProgress just to be safe
+				local scrollRange = -minScrollOffset
+				local scrollProgress = (scrollRange > 0) and (-scrollOffset / scrollRange) or 0
+				scrollProgress = clamp(scrollProgress, 0, 1)
+
+				-- Offset compensation (snake art overhang)
+				local overhangInset = 12
+
+				-- Compute center-clamped Y
+				local thumbCenterY = trackY + (trackHeight - thumbHeight) * scrollProgress + thumbHeight * 0.5
+				thumbCenterY = clamp(thumbCenterY, trackY + thumbHeight * 0.5 + overhangInset, trackY + trackHeight - thumbHeight * 0.5 - overhangInset)
+
+				local thumbY = thumbCenterY - thumbHeight * 0.5
 
                 local mx, my = UI.getCursorPosition()
                 local isOverScrollbar = mx >= trackX and mx <= trackX + trackWidth and my >= trackY and my <= trackY + trackHeight
