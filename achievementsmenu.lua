@@ -1321,21 +1321,21 @@ function AchievementsMenu:draw()
 				setColor(darkenColor(cardBase, 0.45))
 				love.graphics.rectangle("fill", barX, barY, barW, barH, 6)
 
-                                if ratio > 0 then
-                                        setColor(progressColor)
-                                        love.graphics.rectangle("fill", barX, barY, barW * ratio, barH, 6)
-                                end
+				if ratio > 0 then
+					setColor(progressColor)
+					love.graphics.rectangle("fill", barX, barY, barW * ratio, barH, 6)
+				end
 
 				local progressLabel = Achievements:getProgressLabel(ach)
 				if progressLabel then
-                                        love.graphics.setFont(UI.fonts.small)
-                                        local progressColor = withAlpha(titleColor, (titleColor[4] or 1) * 0.9)
-                                        printfWithShadow(progressLabel, barX, barY - 18, barW, "right", progressColor)
-                                end
+					love.graphics.setFont(UI.fonts.small)
+					local progressColor = withAlpha(titleColor, (titleColor[4] or 1) * 0.9)
+					printfWithShadow(progressLabel, barX, barY - 18, barW, "right", progressColor)
+				end
 			end
 
 			y = y + spacing
-                end
+		end
 	end
 
 	love.graphics.pop()
