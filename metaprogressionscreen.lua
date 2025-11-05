@@ -2094,7 +2094,6 @@ local function drawStatsSummary(sw)
 	local startX = frameX + WINDOW_PADDING_X
 	local cardY = frameY + WINDOW_PADDING_Y
 	local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
-	local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
 	local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.8}
 
 	for index, entry in ipairs(statsHighlights) do
@@ -2106,9 +2105,6 @@ local function drawStatsSummary(sw)
 
 		love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 0.96)
 		UI.drawRoundedRect(cardX, cardY, STATS_SUMMARY_CARD_WIDTH, STATS_SUMMARY_CARD_HEIGHT, 14)
-
-		love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.22)
-		love.graphics.rectangle("fill", cardX, cardY, STATS_SUMMARY_CARD_WIDTH, 6, 14, 14)
 
 		love.graphics.setFont(UI.fonts.caption)
 		love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
@@ -2148,7 +2144,6 @@ local function drawStatsList(sw, sh)
 		love.graphics.setColor(Theme.textColor)
 		love.graphics.printf(Localization:get("metaprogression.stats_empty"), listX, clipY + viewportHeight / 2 - 12, CARD_WIDTH, "center")
 	else
-		local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
 		local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.8}
 
 		for index, entry in ipairs(statsEntries) do
@@ -2169,9 +2164,6 @@ local function drawStatsList(sw, sh)
 				love.graphics.setLineWidth(2)
 				love.graphics.rectangle("line", listX, y, CARD_WIDTH, STAT_CARD_HEIGHT, 12, 12)
 				love.graphics.setLineWidth(1)
-
-				love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.18)
-				love.graphics.rectangle("fill", listX + 20, y + STAT_CARD_HEIGHT - 8, CARD_WIDTH - 40, 4, 2, 2)
 
 				local labelX = listX + 32
 				local valueAreaX = listX + CARD_WIDTH * 0.55
