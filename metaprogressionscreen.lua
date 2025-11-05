@@ -223,93 +223,6 @@ local function computeCosmeticShowcaseLayout(sw)
 	}
 end
 
-local function drawCosmeticShaderShowcase(sw)
-	local layout = computeCosmeticShowcaseLayout(sw)
-	if not layout then
-		return
-	end
-
-	local basePanel = Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-	local borderColor = Theme.panelBorder or {0.35, 0.30, 0.50, 1.0}
-	local textColor = Theme.textColor or {1, 1, 1, 1}
-	local mutedText = Theme.mutedTextColor or {textColor[1], textColor[2], textColor[3], (textColor[4] or 1) * 0.8}
-
-	local previewHeight = min(COSMETIC_PREVIEW_HEIGHT, layout.tileHeight - 48)
-	local previewWidth = min(COSMETIC_PREVIEW_WIDTH, layout.tileWidth - 36)
-
-	for index, entry in ipairs(cosmeticShaderShowcaseEntries) do
-		local column = (index - 1) % layout.columns
-		local row = floor((index - 1) / layout.columns)
-		local tileX = layout.startX + column * (layout.tileWidth + layout.spacingX)
-		local tileY = layout.startY + row * (layout.tileHeight + layout.spacingY)
-
-		local unlocked = (entry.unlockedCount or 0) > 0
-
-		local fillColor = unlocked and lightenColor(basePanel, 0.18) or darkenColor(basePanel, 0.08)
-		love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], (fillColor[4] or 1) * 0.95)
-		UI.drawRoundedRect(tileX, tileY, layout.tileWidth, layout.tileHeight, 12)
-
-		local outline = unlocked and (Theme.progressColor or Theme.accentTextColor or borderColor) or borderColor
-		love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1))
-		love.graphics.setLineWidth(unlocked and 2.4 or 2)
-		love.graphics.rectangle("line", tileX, tileY, layout.tileWidth, layout.tileHeight, 12, 12)
-		love.graphics.setLineWidth(1)
-
-		local previewX = tileX + (layout.tileWidth - previewWidth) * 0.5
-		local previewY = tileY + 14
-
-		local palette = entry.palette or {}
-		local bodyColor = palette.body or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
-		local outlineColor = palette.outline or {0.05, 0.15, 0.12, 1}
-		local glowColor = palette.glow or Theme.accentTextColor or {1, 0.78, 0.32, 1}
-		local overlayEffect = palette.overlay or entry.overlay
-
-		if not unlocked then
-			bodyColor = darkenColor(bodyColor, 0.22)
-			outlineColor = darkenColor(outlineColor, 0.16)
-			glowColor = darkenColor(glowColor, 0.25)
-			if overlayEffect then
-				overlayEffect = shallowCopy(overlayEffect)
-				if overlayEffect.opacity then
-					overlayEffect.opacity = overlayEffect.opacity * 0.65
-				end
-				if overlayEffect.intensity then
-					overlayEffect.intensity = overlayEffect.intensity * 0.6
-				end
-			end
-		end
-
-		local previewPalette = {
-			body = bodyColor,
-			outline = outlineColor,
-			glow = glowColor,
-			overlay = overlayEffect,
-		}
-
-		drawCosmeticSnakePreview(previewX, previewY, previewWidth, previewHeight, entry.primarySkin, previewPalette)
-
-		local label = entry.displayName or entry.type or ""
-		love.graphics.setFont(UI.fonts.caption)
-		love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
-		love.graphics.printf(label, tileX + 12, tileY + layout.tileHeight - 34, layout.tileWidth - 24, "center")
-
-		local statusText
-		if (entry.totalCount or 0) > 1 then
-			statusText = string.format("%d / %d unlocked", entry.unlockedCount or 0, entry.totalCount or 0)
-		elseif unlocked then
-			statusText = Localization and Localization.get and Localization:get("metaprogression.status_unlocked") or "Unlocked"
-		else
-			statusText = Localization and Localization.get and Localization:get("metaprogression.cosmetics.locked_label") or "Locked"
-		end
-
-		love.graphics.setFont(UI.fonts.small)
-		love.graphics.setColor(mutedText[1], mutedText[2], mutedText[3], mutedText[4] or 1)
-		love.graphics.printf(statusText or "", tileX + 12, tileY + layout.tileHeight - 18, layout.tileWidth - 24, "center")
-	end
-
-	love.graphics.setColor(1, 1, 1, 1)
-end
-
 local tabs = {
 	{
 		id = "experience",
@@ -1470,7 +1383,7 @@ function ProgressionScreen:enter()
 
 	local footerSpacing = menuLayout.footerSpacing or UI.spacing.sectionSpacing
 	local bottomLine = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or footerSpacing))) - footerSpacing
-	local backButtonY = bottomLine - UI.spacing.buttonHeight
+	local backButtonY = sh - UI.spacing.buttonHeight - UI.spacing.sectionSpacing
 	backButtonY = max(backButtonY, menuAnchors.contentTop + UI.spacing.sectionSpacing)
 
 	buttons[#buttons + 1] = {
@@ -1910,8 +1823,6 @@ local function drawCosmeticsHeader(sw)
 			love.graphics.printf(Localization:get(key, {count = cosmeticsSummary.newUnlocks}), 0, headerY + 60, sw, "center")
 		end
 	end
-
-	drawCosmeticShaderShowcase(sw)
 end
 
 local function drawCosmeticsList(sw, sh)
