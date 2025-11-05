@@ -36,9 +36,9 @@ local CARD_HEIGHT = 120
 -- slightly above the first card remain visible when at the top of the list.
 local SCROLL_SCISSOR_TOP_PADDING = 64
 local SCROLL_SPEED = 60
-local BASE_PANEL_PADDING_X = 48
-local BASE_PANEL_PADDING_Y = 56
-local MIN_SCROLLBAR_INSET = 16
+local BASE_PANEL_PADDING_X = 40
+local BASE_PANEL_PADDING_Y = 32
+local MIN_SCROLLBAR_INSET = 12
 local SCROLLBAR_TRACK_WIDTH = 28
 
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
@@ -1225,10 +1225,12 @@ function AchievementsMenu:draw()
         })
         love.graphics.pop()
 
-	local scissorTop = layout.scissorTop
-	local scissorBottom = layout.scissorBottom
-	local scissorHeight = layout.scissorHeight
-	love.graphics.setScissor(0, scissorTop, sw, scissorHeight)
+	local clipX = panelX + panelPaddingX
+	local clipY = panelY + panelPaddingY
+	local clipW = panelWidth - panelPaddingX * 2
+	local clipH = panelHeight - panelPaddingY * 2
+	local scissorInset = 12
+	love.graphics.setScissor(clipX - scissorInset, clipY, clipW + scissorInset * 2, clipH)
 
 	love.graphics.push()
 	love.graphics.translate(0, scrollOffset)
