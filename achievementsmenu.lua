@@ -1203,8 +1203,10 @@ function AchievementsMenu:draw()
 	setColor(darkenColor(panelColor, 0.4))
 	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth, summaryProgressHeight, 6, 6)
 
-	setColor(progressColor)
-	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
+	if (totals.completion or 0) > 0 then
+		setColor(progressColor)
+		love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
+	end
 
         local baseShadowOffset = UI.shadowOffset or 0
         local panelShadowOffset = max(0, baseShadowOffset - 3)
@@ -1318,19 +1320,20 @@ function AchievementsMenu:draw()
 			if hasProgress then
 				local ratio = Achievements:getProgressRatio(ach)
 
-				setColor(darkenColor(cardBase, 0.45))
-				love.graphics.rectangle("fill", barX, barY, barW, barH, 6)
-
 				if ratio > 0 then
+					-- Draw background + fill
+					setColor(darkenColor(cardBase, 0.45))
+					love.graphics.rectangle("fill", barX, barY, barW, barH, 6)
+
 					setColor(progressColor)
 					love.graphics.rectangle("fill", barX, barY, barW * ratio, barH, 6)
-				end
 
-				local progressLabel = Achievements:getProgressLabel(ach)
-				if progressLabel then
-					love.graphics.setFont(UI.fonts.small)
-					local progressColor = withAlpha(titleColor, (titleColor[4] or 1) * 0.9)
-					printfWithShadow(progressLabel, barX, barY - 18, barW, "right", progressColor)
+					local progressLabel = Achievements:getProgressLabel(ach)
+					if progressLabel then
+						love.graphics.setFont(UI.fonts.small)
+						local progressColor = withAlpha(titleColor, (titleColor[4] or 1) * 0.9)
+						printfWithShadow(progressLabel, barX, barY - 18, barW, "right", progressColor)
+					end
 				end
 			end
 
