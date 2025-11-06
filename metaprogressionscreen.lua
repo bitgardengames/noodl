@@ -83,6 +83,22 @@ local viewportTop = menuAnchors.contentTop
 local viewportHeight = 0
 local contentHeight = 0
 
+local scrollbarState = {
+	visible = false,
+	trackX = 0,
+	trackY = 0,
+	trackWidth = 0,
+	trackHeight = 0,
+	thumbY = 0,
+	thumbHeight = 0,
+	scrollRange = 0,
+}
+
+local scrollbarDrag = {
+	active = false,
+	grabOffset = 0,
+}
+
 local drawCosmeticSnakePreview
 
 local function clampColorComponent(value)
@@ -290,6 +306,126 @@ local function withAlpha(color, alpha)
 	local b = color[3] or 1
 	local a = color[4] == nil and 1 or color[4]
 	return {r, g, b, a * alpha}
+end
+
+local function setColor(color, alphaOverride)
+	if not color then
+		love.graphics.setColor(1, 1, 1, alphaOverride or 1)
+		return
+	end
+
+	love.graphics.setColor(
+	color[1] or 1,
+	color[2] or 1,
+	color[3] or 1,
+	alphaOverride or color[4] or 1
+	)
+end
+
+local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isHovered, isThumbHovered, panelColor)
+	love.graphics.push("all")
+
+	local baseTrackColor = panelColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+	local snakeBodyColor = Theme.snakeDefault or Theme.progressColor or {0.45, 0.85, 0.70, 1}
+	local baseAlpha = baseTrackColor[4] == nil and 1 or baseTrackColor[4]
+	local trackColor = copyColor(panelColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.9})
+
+	if panelColor then
+		trackColor[4] = baseAlpha
+	else
+		trackColor[4] = isHovered and 0.82 or 0.68
+	end
+	local trackRadius = max(8, trackWidth * 0.65)
+	local trackOutlineColor = {0, 0, 0, 1}
+	trackOutlineColor[4] = panelColor and baseAlpha or 1
+
+	-- Track body
+	setColor(trackColor)
+	UI.drawPanel(trackX, trackY, trackWidth, trackHeight, {
+		radius = trackRadius,
+		fill = trackColor,
+		borderColor = panelColor,
+		borderWidth = 1,
+		shadowColor = withAlpha(Theme.shadowColor or {0,0,0,0.35}, (Theme.shadowColor and Theme.shadowColor[4] or 0.35) * 0.85),
+		shadowOffset = 3,
+	})
+
+	-- Track outline for visibility
+	if trackOutlineColor then
+		local outlineWidth = 3
+		setColor(withAlpha(trackOutlineColor, trackOutlineColor[4]))
+		love.graphics.setLineWidth(outlineWidth)
+		local inset = outlineWidth * 0.5
+		love.graphics.rectangle(
+		"line",
+		trackX + inset,
+		trackY + inset,
+		trackWidth - outlineWidth,
+		trackHeight - outlineWidth,
+		max(0, trackRadius - inset)
+		)
+	end
+
+	-- Snake thumb
+	local thumbPadding = 2
+	local thumbWidth = max(6, trackWidth - thumbPadding * 2 + 2)
+	local thumbOffsetX = -1
+	local thumbX = trackX + thumbPadding + thumbOffsetX
+	local hoverBoost = 0
+	if scrollbarDrag.active then
+	  hoverBoost = 0.35
+	elseif isThumbHovered then
+	  hoverBoost = 0.25
+	elseif isHovered then
+	  hoverBoost = 0.15
+	end
+
+	local function adjustHover(color, factor)
+		if not color then
+			return nil
+		end
+		local alpha = color[4] == nil and 1 or color[4]
+		if not factor or factor <= 0 then
+			local copy = copyColor(color)
+			copy[4] = alpha
+			return copy
+		end
+		local adjusted = lightenColor(color, factor)
+		adjusted[4] = alpha
+		return adjusted
+	end
+
+	local snakePalette = SnakeCosmetics:getPaletteForSkin()
+	local baseBodyColor = (snakePalette and snakePalette.body) or snakeBodyColor
+	local bodyColor = adjustHover(baseBodyColor, hoverBoost)
+
+	local paletteOverride = nil
+	if snakePalette then
+		paletteOverride = {
+			body = bodyColor,
+			outline = adjustHover(snakePalette.outline, hoverBoost * 0.5),
+			glow = adjustHover(snakePalette.glow, hoverBoost * 0.35),
+			glowEffect = snakePalette.glowEffect,
+			overlay = snakePalette.overlay,
+		}
+	elseif hoverBoost > 0 then
+		paletteOverride = {body = bodyColor}
+	end
+
+	UI.drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, {
+		amplitude = 0,
+		frequency = 1.2,
+		segmentCount = 18,
+		segmentScale = 0.95,
+		falloff = 0.4,
+		lengthScale = 1,
+		paletteOverride = paletteOverride,
+		flipVertical = true,
+		drawFace = true,
+		faceAtBottom = true,
+	})
+
+	love.graphics.pop()
 end
 
 local function configureBackgroundEffect()
@@ -2053,40 +2189,66 @@ local function drawStatsList(sw, sh)
 				local valueAreaX = listX + CARD_WIDTH * 0.55
 				local valueAreaWidth = CARD_WIDTH - (valueAreaX - listX) - 32
 				local labelWidth = valueAreaX - labelX - 16
+				local labelHeight = UI.fonts.prompt:getHeight()
 				local centerY = y + STAT_CARD_HEIGHT / 2
 
 				love.graphics.setFont(UI.fonts.prompt)
-				local labelHeight = UI.fonts.prompt:getHeight()
 				love.graphics.setColor(Theme.textColor)
 				love.graphics.printf(entry.label, labelX, centerY - labelHeight / 2, labelWidth, "left")
 
-				love.graphics.setFont(UI.fonts.button)
-				local valueHeight = UI.fonts.button:getHeight()
+				love.graphics.setFont(UI.fonts.prompt)
 				love.graphics.setColor(Theme.textColor)
-				love.graphics.printf(entry.valueText, valueAreaX, centerY - valueHeight / 2, valueAreaWidth, "right")
+				love.graphics.printf(entry.valueText, valueAreaX, centerY - labelHeight / 2, valueAreaWidth, "right")
 			end
 		end
 	end
 
+	-- Scrollbar metrics
+	local trackWidth = 26
+	local outlineThickness = 3
+	local outerPadding = 10
+	local trackX = frameX + frameWidth + outlineThickness + outerPadding
+	local trackY = clipY
+	local trackHeight = clipH
+
+	local contentHeight = #statsEntries * (STAT_CARD_HEIGHT + STAT_CARD_SPACING)
+	local visibleRatio = math.min(1, clipH / contentHeight)
+	local thumbHeight = math.max(36, trackHeight * visibleRatio)
+	local scrollRange = math.max(1, contentHeight - clipH)
+	local scrollProgress = 0
+	if scrollRange > 0 then
+		scrollProgress = math.max(0, math.min(1, scrollOffset / scrollRange))
+	end
+
+	local thumbTravel = trackHeight - thumbHeight
+	local thumbY = trackY + thumbTravel * scrollProgress
+
+	scrollbarState.visible = visibleRatio < 1
+	scrollbarState.trackX = trackX
+	scrollbarState.trackY = trackY
+	scrollbarState.trackWidth = trackWidth
+	scrollbarState.trackHeight = trackHeight
+	scrollbarState.thumbY = thumbY
+	scrollbarState.thumbHeight = thumbHeight
+	scrollbarState.scrollRange = scrollRange
+
 	love.graphics.setScissor()
 	love.graphics.pop()
-end
 
---[[local fontDefinitions = {
-	title = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 72, min = 28},
-	display = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 64, min = 24},
-	subtitle = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 32, min = 18},
-	heading = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 28, min = 16},
-	button = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 24, min = 14},
-	body = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 16, min = 12},
-	prompt = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12},
-	caption = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 14, min = 10},
-	small = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 12, min = 9},
-	timer = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 42, min = 24},
-	timerSmall = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 20, min = 12},
-	achieve = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 18, min = 12},
-	badge = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12},
-}]]
+	if scrollbarState.visible then
+		drawScrollbar(
+			scrollbarState.trackX,
+			scrollbarState.trackY,
+			scrollbarState.trackWidth,
+			scrollbarState.trackHeight,
+			scrollbarState.thumbY,
+			scrollbarState.thumbHeight,
+			false,
+			false,
+			Theme.panelColor
+		)
+	end
+end
 
 function ProgressionScreen:draw()
 	local sw, sh = Screen:get()
