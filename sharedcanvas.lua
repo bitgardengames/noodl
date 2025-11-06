@@ -3,31 +3,31 @@ local max = math.max
 
 local SharedCanvas = {}
 
-local DEFAULT_MSAA = 8
+local MAX_ALLOWED_MSAA = 8
 
 local desiredMSAASamples = nil
 local canvasCreationOptions = nil
 local maxSupportedSamples = 0
 
 local function updateDesiredSamples(samples)
-	if type(samples) ~= "number" then
-		samples = 0
-	end
+        if type(samples) ~= "number" then
+                samples = 0
+        end
 
-	if samples >= 2 then
-		samples = floor(samples)
-		if samples < 2 then
-			samples = 0
-		else
-			if maxSupportedSamples >= 2 then
-				samples = math.min(samples, maxSupportedSamples)
-			end
-			samples = math.min(samples, DEFAULT_MSAA)
-			if samples < 2 then
-				samples = 0
-			end
-		end
-	end
+        if samples >= 2 then
+                samples = floor(samples)
+                if samples < 2 then
+                        samples = 0
+                else
+                        if maxSupportedSamples >= 2 then
+                                samples = math.min(samples, maxSupportedSamples)
+                        end
+                        samples = math.min(samples, MAX_ALLOWED_MSAA)
+                        if samples < 2 then
+                                samples = 0
+                        end
+                end
+        end
 
 	if samples >= 2 then
 		desiredMSAASamples = samples
@@ -39,9 +39,9 @@ local function updateDesiredSamples(samples)
 end
 
 local function normalizeOverrideSamples(samples)
-	if samples == nil then
-		return nil
-	end
+        if samples == nil then
+                return nil
+        end
 
 	if type(samples) ~= "number" then
 		samples = 0
@@ -52,18 +52,18 @@ local function normalizeOverrideSamples(samples)
 		samples = 0
 	end
 
-	if samples >= 2 then
-		if maxSupportedSamples >= 2 then
-			samples = math.min(samples, maxSupportedSamples)
-		else
-			samples = 0
-		end
-		samples = math.min(samples, DEFAULT_MSAA)
-		if samples < 2 then
-			samples = 0
-		end
-	else
-		samples = 0
+        if samples >= 2 then
+                if maxSupportedSamples >= 2 then
+                        samples = math.min(samples, maxSupportedSamples)
+                else
+                        samples = 0
+                end
+                samples = math.min(samples, MAX_ALLOWED_MSAA)
+                if samples < 2 then
+                        samples = 0
+                end
+        else
+                samples = 0
 	end
 
 	return samples
@@ -98,20 +98,30 @@ local function ensureInitialized()
 	end
 	maxSupportedSamples = maximumSamples
 
-	if maxSupportedSamples >= 2 then
-		updateDesiredSamples(math.min(DEFAULT_MSAA, maxSupportedSamples))
-	else
-		updateDesiredSamples(0)
-	end
+        if maxSupportedSamples >= 2 then
+                updateDesiredSamples(math.min(MAX_ALLOWED_MSAA, maxSupportedSamples))
+        else
+                updateDesiredSamples(0)
+        end
 end
 
 function SharedCanvas.getDesiredSamples()
-	ensureInitialized()
-	return desiredMSAASamples or 0
+        ensureInitialized()
+        return desiredMSAASamples or 0
 end
 
 function SharedCanvas.isMSAAEnabled()
-	return SharedCanvas.getDesiredSamples() >= 2
+        return SharedCanvas.getDesiredSamples() >= 2
+end
+
+function SharedCanvas.getMaximumSupportedSamples()
+        ensureInitialized()
+        return maxSupportedSamples or 0
+end
+
+function SharedCanvas.setDesiredSamples(samples)
+        ensureInitialized()
+        updateDesiredSamples(samples)
 end
 
 local function resolveDimensions(width, height)
@@ -231,3 +241,4 @@ function SharedCanvas.ensureCanvas(existingCanvas, width, height, requestedSampl
 end
 
 return SharedCanvas
+
