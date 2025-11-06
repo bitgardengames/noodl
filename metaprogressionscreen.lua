@@ -2152,7 +2152,7 @@ local function drawStatsList(sw, sh)
 	local frameX = listX - WINDOW_PADDING_X
 	local frameY = clipY - WINDOW_PADDING_Y
 	local frameWidth = CARD_WIDTH + WINDOW_PADDING_X * 2
-	local frameHeight = clipH + WINDOW_PADDING_Y * 2
+	local frameHeight = clipH + WINDOW_PADDING_Y * 2 - 12
 	drawWindowFrame(frameX, frameY, frameWidth, frameHeight, {
 		accentHeight = 0,
 		accentInsetY = WINDOW_PADDING_Y * 0.5,
@@ -2160,7 +2160,15 @@ local function drawStatsList(sw, sh)
 	})
 
 	love.graphics.push()
-	love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
+	local scissorOffsetY = 6
+	local scissorReduction = 12
+
+	love.graphics.setScissor(
+		listX - 20,
+		clipY - 10 + scissorOffsetY,
+		CARD_WIDTH + 40,
+		clipH + 20 - scissorReduction
+	)
 
 	if #statsEntries == 0 then
 		love.graphics.setFont(UI.fonts.body)
@@ -2206,7 +2214,7 @@ local function drawStatsList(sw, sh)
 	-- Scrollbar metrics
 	local trackWidth = 26
 	local outlineThickness = 3
-	local outerPadding = 10
+	local outerPadding = 14
 	local trackX = frameX + frameWidth + outlineThickness + outerPadding
 	local trackY = clipY
 	local trackHeight = clipH
