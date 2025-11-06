@@ -31,6 +31,9 @@ local defaultTailFlashColor = {1, 0, 0}
 local snakeCanvas = nil
 local snakeCanvasWidth = 0
 local snakeCanvasHeight = 0
+local snakeOverlayCanvas = nil
+local snakeOverlayCanvasWidth = 0
+local snakeOverlayCanvasHeight = 0
 
 local glowSprite = nil
 local glowSpriteResolution = 128
@@ -751,11 +754,41 @@ local function ensureSnakeCanvas(width, height)
         return snakeCanvas
 end
 
+local function ensureSnakeOverlayCanvas(width, height)
+        if width <= 0 or height <= 0 then
+                return nil
+        end
+
+        local targetWidth = width
+        local targetHeight = height
+
+        if snakeOverlayCanvas then
+                if width > snakeOverlayCanvasWidth or height > snakeOverlayCanvasHeight then
+                        targetWidth = max(width, snakeOverlayCanvasWidth)
+                        targetHeight = max(height, snakeOverlayCanvasHeight)
+                else
+                        targetWidth = snakeOverlayCanvasWidth
+                        targetHeight = snakeOverlayCanvasHeight
+                end
+        end
+
+        local canvas, replaced = SharedCanvas.ensureCanvas(snakeOverlayCanvas, targetWidth, targetHeight)
+        if canvas then
+                snakeOverlayCanvas = canvas
+                if replaced or snakeOverlayCanvasWidth ~= canvas:getWidth() or snakeOverlayCanvasHeight ~= canvas:getHeight() then
+                        snakeOverlayCanvasWidth = canvas:getWidth()
+                        snakeOverlayCanvasHeight = canvas:getHeight()
+                end
+        end
+
+        return snakeOverlayCanvas
+end
+
 
 local function renderTrailRegion(trail, half, options, overlayEffect, palette, coords, bounds)
-	if not trail or #trail == 0 then
-		return false
-	end
+        if not trail or #trail == 0 then
+                return false
+        end
 
 	coords = coords or buildCoords(trail)
 
@@ -817,30 +850,60 @@ local function renderPortalFallback(items, half, options, overlayEffect)
 end
 
 local function presentSnakeCanvas(overlayEffect, width, height, offsetX, offsetY)
-	if not snakeCanvas then
-		return false
-	end
+        if not snakeCanvas then
+                return false
+        end
 
-	local drawX = offsetX or 0
-	local drawY = offsetY or 0
+        local drawX = offsetX or 0
+        local drawY = offsetY or 0
 
-	RenderLayers:withLayer("shadows", function()
-		love.graphics.setColor(0, 0, 0, 0.25)
-		love.graphics.draw(snakeCanvas, drawX + SHADOW_OFFSET, drawY + SHADOW_OFFSET)
-	end)
+        local sourceCanvas = snakeCanvas
+        local overlayApplied = false
 
-	local drewOverlay = false
-	RenderLayers:withLayer("main", function()
-		love.graphics.setColor(1, 1, 1, 1)
-		if overlayEffect then
-			drewOverlay = applyOverlay(snakeCanvas, overlayEffect, drawX, drawY)
-		end
-		if not drewOverlay then
-			love.graphics.draw(snakeCanvas, drawX, drawY)
-		end
-	end)
+        if overlayEffect then
+                local targetWidth = width or snakeCanvasWidth or 0
+                local targetHeight = height or snakeCanvasHeight or 0
+                local overlayCanvas = ensureSnakeOverlayCanvas(targetWidth, targetHeight)
+                if overlayCanvas then
+                        local previousCanvas = {love.graphics.getCanvas()}
+                        love.graphics.setCanvas({overlayCanvas, stencil = true})
+                        love.graphics.clear(0, 0, 0, 0)
+                        overlayApplied = applyOverlay(snakeCanvas, overlayEffect, 0, 0)
+                        if #previousCanvas > 0 then
+                                local unpack = table.unpack or unpack
+                                love.graphics.setCanvas(unpack(previousCanvas))
+                        else
+                                love.graphics.setCanvas()
+                        end
+                        if overlayApplied then
+                                sourceCanvas = overlayCanvas
+                        end
+                end
+        end
 
-	return drewOverlay
+        RenderLayers:withLayer("shadows", function()
+                love.graphics.setColor(0, 0, 0, 0.25)
+                love.graphics.draw(sourceCanvas, drawX + SHADOW_OFFSET, drawY + SHADOW_OFFSET)
+        end)
+
+        local overlayDrawn = overlayApplied
+        RenderLayers:withLayer("main", function()
+                love.graphics.setColor(1, 1, 1, 1)
+                if overlayApplied then
+                        love.graphics.draw(sourceCanvas, drawX, drawY)
+                else
+                        local drewOverlay = false
+                        if overlayEffect then
+                                drewOverlay = applyOverlay(sourceCanvas, overlayEffect, drawX, drawY)
+                        end
+                        if not drewOverlay then
+                                love.graphics.draw(sourceCanvas, drawX, drawY)
+                        end
+                        overlayDrawn = drewOverlay
+                end
+        end)
+
+        return overlayDrawn
 end
 
 local shadowPalette = {
