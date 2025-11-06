@@ -160,15 +160,22 @@ def format_lines(lines: Iterable[str]) -> List[str]:
 
 
 def process_file(path: str) -> bool:
-	with open(path, "r", encoding="utf-8") as f:
-		original_lines = f.read().splitlines()
-	formatted_lines = format_lines(original_lines)
-	if formatted_lines == original_lines:
-		return False
-	with open(path, "w", encoding="utf-8", newline="\n") as f:
-		f.write("\n".join(formatted_lines))
-		f.write("\n")
-	return True
+    with open(path, "r", encoding="utf-8") as f:
+        original_lines = f.read().splitlines()
+    formatted_lines = format_lines(original_lines)
+
+    # 🧹 Trim trailing spaces and remove blank lines at end of file
+    formatted_lines = [line.rstrip() for line in formatted_lines]
+    while formatted_lines and not formatted_lines[-1]:
+        formatted_lines.pop()
+
+    if formatted_lines == original_lines:
+        return False
+
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(formatted_lines))
+        f.write("\n")
+    return True
 
 
 def iter_lua_files(paths: List[str]) -> Iterable[str]:
