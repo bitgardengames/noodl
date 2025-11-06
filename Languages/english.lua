@@ -522,16 +522,8 @@ local english = {
 				name = "Tempest Ward",
 				description = "After collecting twenty fruit, forge a single shield charge.",
 			},
-			mapmakers_compass = {
-				name = "Mapmaker's Compass",
-				description = "At each floor start, reduce the most common hazard spawn. If none remain, gain bonus score and stall the saws instead.",
-				activation_text = "Adjusted Route",
-				rocks_text = "Thinned Rocks",
-				saws_text = "Sparse Saws",
-				lasers_text = "Scattered Lasers",
-			},
-			molting_reflex = {
-				name = "Molting Reflex",
+                        molting_reflex = {
+                                name = "Molting Reflex",
 				description = "Shields trigger a 60% adrenaline surge.",
 			},
 			mystery_card = {
