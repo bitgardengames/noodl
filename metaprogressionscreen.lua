@@ -2214,10 +2214,10 @@ local function drawStatsList(sw, sh)
 	-- Scrollbar metrics
 	local trackWidth = 26
 	local outlineThickness = 3
-	local outerPadding = 14
+	local outerPadding = 18
 	local trackX = frameX + frameWidth + outlineThickness + outerPadding
-	local trackY = clipY
-	local trackHeight = clipH
+	local trackY = clipY - 14
+	local trackHeight = frameHeight - 12
 
 	local contentHeight = #statsEntries * (STAT_CARD_HEIGHT + STAT_CARD_SPACING)
 	local visibleRatio = math.min(1, clipH / contentHeight)
