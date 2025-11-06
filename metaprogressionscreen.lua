@@ -636,16 +636,12 @@ local function drawWindowFrame(x, y, width, height, options)
 	end
 
 	local panelColor = options.baseColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.92}
-	local borderColor = options.borderColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+	local borderColor = options.borderColor or {0, 0, 0, 1}
 	local accentColor = options.accentColor or Theme.progressColor or Theme.accentTextColor or Theme.textColor or {1, 1, 1, 1}
 	local shadowColor = options.shadowColor or (UI.colors and UI.colors.shadow) or Theme.shadowColor or {0, 0, 0, 0.45}
 	local shadowAlpha = options.shadowAlpha
 	local baseAlpha = options.baseAlpha or 0.94
 	local borderAlpha = options.borderAlpha or 0.85
-	local accentAlpha = options.accentAlpha or 0.28
-	local accentHeight = options.accentHeight or WINDOW_ACCENT_HEIGHT
-	local accentInsetX = options.accentInsetX or (WINDOW_PADDING_X * 0.6)
-	local accentInsetY = options.accentInsetY or (WINDOW_PADDING_Y * 0.35)
 
 	local shadowOffset = options.shadowOffset
 	if shadowOffset == nil then
@@ -661,18 +657,8 @@ local function drawWindowFrame(x, y, width, height, options)
 	love.graphics.setColor(fill)
 	UI.drawRoundedRect(x, y, width, height, WINDOW_CORNER_RADIUS)
 
-	if accentHeight and accentHeight > 0 then
-		local accentWidth = max(0, width - accentInsetX * 2)
-		if accentWidth > 0 and height - accentInsetY * 2 > 0 then
-			local accentY = y + accentInsetY
-			local accentX = x + accentInsetX
-			love.graphics.setColor(withAlpha(accentColor, accentAlpha))
-			UI.drawRoundedRect(accentX, accentY, accentWidth, min(accentHeight, height - accentInsetY * 2), max(4, accentHeight / 2))
-		end
-	end
-
 	love.graphics.setColor(withAlpha(borderColor, borderAlpha))
-	love.graphics.setLineWidth(options.borderWidth or 2)
+	love.graphics.setLineWidth(options.borderWidth or 3)
 	love.graphics.rectangle("line", x, y, width, height, WINDOW_CORNER_RADIUS, WINDOW_CORNER_RADIUS)
 	love.graphics.setLineWidth(1)
 
@@ -1417,7 +1403,7 @@ local function drawSummaryPanel(sw)
 	local panelX = frameX + WINDOW_PADDING_X
 	local panelY = menuAnchors.experienceSummaryTop
 	local padding = 24
-	local border = Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+	local border = {0, 0, 0, 1}
 	local accentColor = Theme.progressColor or Theme.accentTextColor or {0.6, 0.8, 0.6, 1}
 	local mutedColor = withAlpha(Theme.mutedTextColor or Theme.textColor, 0.85)
 
@@ -1468,8 +1454,8 @@ local function drawSummaryPanel(sw)
 	love.graphics.setColor(withAlpha(lightenColor(Theme.panelColor or {0.18, 0.18, 0.22, 1}, 0.18), 0.96))
 	love.graphics.circle("fill", circleCenterX, circleCenterY, circleRadius)
 
-	love.graphics.setColor(withAlpha(border, 0.85))
-	love.graphics.setLineWidth(2)
+	love.graphics.setColor(border)
+	love.graphics.setLineWidth(3)
 	love.graphics.circle("line", circleCenterX, circleCenterY, circleRadius)
 	love.graphics.setLineWidth(1)
 
@@ -1536,7 +1522,7 @@ local function drawSummaryPanel(sw)
 	end
 
 	love.graphics.setColor(withAlpha(border, 0.9))
-	love.graphics.setLineWidth(1.6)
+	love.graphics.setLineWidth(3)
 	love.graphics.rectangle("line", barX, barY, barWidth, barHeight, barRadius, barRadius)
 	love.graphics.setLineWidth(1)
 
@@ -2045,8 +2031,6 @@ local function drawStatsList(sw, sh)
 		love.graphics.setColor(Theme.textColor)
 		love.graphics.printf(Localization:get("metaprogression.stats_empty"), listX, clipY + viewportHeight / 2 - 12, CARD_WIDTH, "center")
 	else
-		local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.8}
-
 		for index, entry in ipairs(statsEntries) do
 			local y = viewportTop + scrollOffset + (index - 1) * (STAT_CARD_HEIGHT + STAT_CARD_SPACING)
 			if y + STAT_CARD_HEIGHT >= clipY - STAT_CARD_HEIGHT and y <= clipY + clipH + STAT_CARD_HEIGHT then
@@ -2060,9 +2044,8 @@ local function drawStatsList(sw, sh)
 				love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], fillColor[4] or 0.95)
 				UI.drawRoundedRect(listX, y, CARD_WIDTH, STAT_CARD_HEIGHT, 12)
 
-				local borderColor = Theme.panelBorder or {0.35, 0.30, 0.50, 1.0}
-				love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], (borderColor[4] or 1) * 0.8)
-				love.graphics.setLineWidth(2)
+				love.graphics.setColor({0, 0, 0, 1})
+				love.graphics.setLineWidth(3)
 				love.graphics.rectangle("line", listX, y, CARD_WIDTH, STAT_CARD_HEIGHT, 12, 12)
 				love.graphics.setLineWidth(1)
 
@@ -2070,14 +2053,17 @@ local function drawStatsList(sw, sh)
 				local valueAreaX = listX + CARD_WIDTH * 0.55
 				local valueAreaWidth = CARD_WIDTH - (valueAreaX - listX) - 32
 				local labelWidth = valueAreaX - labelX - 16
+				local centerY = y + STAT_CARD_HEIGHT / 2
 
-				love.graphics.setFont(UI.fonts.caption)
-				love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
-				love.graphics.printf(entry.label, labelX, y + 12, labelWidth, "left")
-
-				love.graphics.setFont(UI.fonts.subtitle)
+				love.graphics.setFont(UI.fonts.prompt)
+				local labelHeight = UI.fonts.prompt:getHeight()
 				love.graphics.setColor(Theme.textColor)
-				love.graphics.printf(entry.valueText, valueAreaX, y + 26, valueAreaWidth, "right")
+				love.graphics.printf(entry.label, labelX, centerY - labelHeight / 2, labelWidth, "left")
+
+				love.graphics.setFont(UI.fonts.button)
+				local valueHeight = UI.fonts.button:getHeight()
+				love.graphics.setColor(Theme.textColor)
+				love.graphics.printf(entry.valueText, valueAreaX, centerY - valueHeight / 2, valueAreaWidth, "right")
 			end
 		end
 	end
@@ -2085,6 +2071,22 @@ local function drawStatsList(sw, sh)
 	love.graphics.setScissor()
 	love.graphics.pop()
 end
+
+--[[local fontDefinitions = {
+	title = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 72, min = 28},
+	display = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 64, min = 24},
+	subtitle = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 32, min = 18},
+	heading = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 28, min = 16},
+	button = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 24, min = 14},
+	body = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 16, min = 12},
+	prompt = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12},
+	caption = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 14, min = 10},
+	small = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 12, min = 9},
+	timer = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 42, min = 24},
+	timerSmall = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 20, min = 12},
+	achieve = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 18, min = 12},
+	badge = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12},
+}]]
 
 function ProgressionScreen:draw()
 	local sw, sh = Screen:get()
