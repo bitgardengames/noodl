@@ -3,6 +3,7 @@ local SnakeCosmetics = require("snakecosmetics")
 local ModuleUtil = require("moduleutil")
 local RenderLayers = require("renderlayers")
 local Timer = require("timer")
+local SharedCanvas = require("sharedcanvas")
 
 local abs = math.abs
 local atan = math.atan
@@ -28,6 +29,8 @@ local defaultTailFlashColor = {1, 0, 0}
 
 -- Canvas for single-pass shadow
 local snakeCanvas = nil
+local snakeCanvasWidth = 0
+local snakeCanvasHeight = 0
 
 local glowSprite = nil
 local glowSpriteResolution = 128
@@ -719,22 +722,33 @@ local function finalizeBounds(bounds, half)
 end
 
 local function ensureSnakeCanvas(width, height)
-	if width <= 0 or height <= 0 then
-		return nil
-	end
+        if width <= 0 or height <= 0 then
+                return nil
+        end
 
-	if not snakeCanvas then
-		snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
-	else
-		local currentWidth = snakeCanvas:getWidth()
-		local currentHeight = snakeCanvas:getHeight()
-		if width > currentWidth or height > currentHeight then
-			local newWidth = max(width, currentWidth)
-			local newHeight = max(height, currentHeight)
-			snakeCanvas = love.graphics.newCanvas(newWidth, newHeight, {msaa = 8})
-		end
-	end
-	return snakeCanvas
+        local targetWidth = width
+        local targetHeight = height
+
+        if snakeCanvas then
+                if width > snakeCanvasWidth or height > snakeCanvasHeight then
+                        targetWidth = max(width, snakeCanvasWidth)
+                        targetHeight = max(height, snakeCanvasHeight)
+                else
+                        targetWidth = snakeCanvasWidth
+                        targetHeight = snakeCanvasHeight
+                end
+        end
+
+        local canvas, replaced = SharedCanvas.ensureCanvas(snakeCanvas, targetWidth, targetHeight)
+        if canvas then
+                snakeCanvas = canvas
+                if replaced or snakeCanvasWidth ~= canvas:getWidth() or snakeCanvasHeight ~= canvas:getHeight() then
+                        snakeCanvasWidth = canvas:getWidth()
+                        snakeCanvasHeight = canvas:getHeight()
+                end
+        end
+
+        return snakeCanvas
 end
 
 
@@ -2933,3 +2947,4 @@ function SnakeDraw.setGlowSpriteResolution(resolution)
 end
 
 return SnakeDraw
+

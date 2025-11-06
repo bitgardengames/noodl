@@ -37,12 +37,13 @@ end
 local backButtonOption = {type = "action", labelKey = "settings.back", action = "menu"}
 
 local options = {
-	{type = "header", labelKey = "settings.section_display"},
-	{type = "cycle", labelKey = "settings.display_mode", setting = "displayMode"},
-	{type = "cycle", labelKey = "settings.windowed_resolution", setting = "resolution"},
-	{type = "toggle", labelKey = "settings.toggle_vsync", toggle = "vsync", onChanged = applyDisplaySettings},
+        {type = "header", labelKey = "settings.section_display"},
+        {type = "cycle", labelKey = "settings.display_mode", setting = "displayMode"},
+        {type = "cycle", labelKey = "settings.windowed_resolution", setting = "resolution"},
+        {type = "toggle", labelKey = "settings.toggle_vsync", toggle = "vsync", onChanged = applyDisplaySettings},
+        {type = "cycle", labelKey = "settings.msaa_samples", setting = "msaaSamples"},
 
-	{type = "header", labelKey = "settings.section_audio"},
+        {type = "header", labelKey = "settings.section_audio"},
 	{type = "toggle", labelKey = "settings.toggle_music", toggle = "muteMusic", onChanged = applyAudioVolumes, invertStateLabel = true},
 	{type = "toggle", labelKey = "settings.toggle_sfx", toggle = "muteSFX", onChanged = applyAudioVolumes, invertStateLabel = true},
 	{type = "slider", labelKey = "settings.music_volume", slider = "musicVolume", onChanged = applyAudioVolumes},
@@ -169,14 +170,26 @@ local function getResolutionLabel()
 end
 
 local function getCycleStateLabel(setting)
-	if setting == "language" then
-		local current = Settings.language or Localization:getCurrentLanguage()
-		return Localization:getLanguageName(current)
-	elseif setting == "displayMode" then
-		return getDisplayModeLabel()
-	elseif setting == "resolution" then
-		return getResolutionLabel()
-	end
+        if setting == "language" then
+                local current = Settings.language or Localization:getCurrentLanguage()
+                return Localization:getLanguageName(current)
+        elseif setting == "displayMode" then
+                return getDisplayModeLabel()
+        elseif setting == "resolution" then
+                return getResolutionLabel()
+        elseif setting == "msaaSamples" then
+                local samples = Settings.msaaSamples or 0
+                if samples >= 2 then
+                        return string.format("%dx", samples)
+                end
+
+                local offLabel = Localization:get("settings.msaa_samples_off")
+                if not offLabel or offLabel == "" then
+                        return "0x"
+                end
+
+                return offLabel
+        end
 end
 
 local function cycleLanguage(delta)
@@ -1358,18 +1371,27 @@ function SettingsScreen:cycleSetting(setting, delta)
 			Audio:playSound("click")
 			refreshLayout(self)
 		end
-	elseif setting == "resolution" then
-		local nextResolution = Display.cycleResolution(Settings.resolution, delta)
-		if nextResolution ~= Settings.resolution then
-			Settings.resolution = nextResolution
-			Settings:save()
-			if Settings.displayMode == "windowed" then
-				Display.apply(Settings)
-			end
-			Audio:playSound("click")
-			refreshLayout(self)
-		end
-	end
+        elseif setting == "resolution" then
+                local nextResolution = Display.cycleResolution(Settings.resolution, delta)
+                if nextResolution ~= Settings.resolution then
+                        Settings.resolution = nextResolution
+                        Settings:save()
+                        if Settings.displayMode == "windowed" then
+                                Display.apply(Settings)
+                        end
+                        Audio:playSound("click")
+                        refreshLayout(self)
+                end
+        elseif setting == "msaaSamples" then
+                local nextSamples = Display.cycleMSAASamples(Settings.msaaSamples, delta)
+                if nextSamples ~= Settings.msaaSamples then
+                        Settings.msaaSamples = nextSamples
+                        Display.apply(Settings)
+                        Settings:save()
+                        Audio:playSound("click")
+                        refreshLayout(self)
+                end
+        end
 end
 
 function SettingsScreen:adjustFocused(delta)
@@ -1559,3 +1581,4 @@ function SettingsScreen:wheelmoved(_, dy)
 end
 
 return SettingsScreen
+

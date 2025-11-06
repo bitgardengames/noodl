@@ -1,6 +1,12 @@
+local SharedCanvas = require("sharedcanvas")
+
 local Display = {}
 
+local floor = math.floor
+
 local displayModes = {"fullscreen", "windowed"}
+
+local msaaLevels = {0, 2, 4, 6, 8}
 
 local resolutions = {
 	{id = "1280x720", width = 1280, height = 720},
@@ -17,7 +23,74 @@ for index, res in ipairs(resolutions) do
 end
 
 local function wrapIndex(index, count)
-	return ((index - 1) % count) + 1
+        return ((index - 1) % count) + 1
+end
+
+local function getMaximumMSAASupport()
+        local maxSamples = SharedCanvas.getMaximumSupportedSamples and SharedCanvas.getMaximumSupportedSamples() or 0
+        if type(maxSamples) ~= "number" then
+                maxSamples = 0
+        end
+
+        if maxSamples < 0 then
+                maxSamples = 0
+        end
+
+        local maxAllowed = msaaLevels[#msaaLevels] or 0
+        if maxSamples > maxAllowed then
+                maxSamples = maxAllowed
+        end
+
+        return maxSamples
+end
+
+local function getAvailableMSAALevels()
+        local maxSamples = getMaximumMSAASupport()
+        local available = {0}
+
+        if maxSamples >= 2 then
+                for i = 2, #msaaLevels do
+                        local level = msaaLevels[i]
+                        if level <= maxSamples then
+                                available[#available + 1] = level
+                        end
+                end
+        end
+
+        return available
+end
+
+local function resolveMSAALevel(value)
+        local numeric = tonumber(value) or 0
+        if numeric < 0 then
+                numeric = 0
+        end
+
+        numeric = floor(numeric)
+
+        local available = getAvailableMSAALevels()
+        local resolved = available[1] or 0
+
+        for _, level in ipairs(available) do
+                if level <= numeric then
+                        resolved = level
+                end
+        end
+
+        return resolved
+end
+
+local function getAvailableMSAAIndex(value)
+        local available = getAvailableMSAALevels()
+        local resolved = resolveMSAALevel(value)
+
+        for index, level in ipairs(available) do
+                if level == resolved then
+                        return index, available
+                end
+        end
+
+        return 1, available
 end
 
 
@@ -79,7 +152,7 @@ function Display.cycleResolution(currentId, delta)
 end
 
 function Display.ensure(settings)
-	local changed = false
+        local changed = false
 
 	if not settings.displayMode or (settings.displayMode ~= "fullscreen" and settings.displayMode ~= "windowed") then
 		settings.displayMode = "fullscreen"
@@ -91,12 +164,20 @@ function Display.ensure(settings)
 		changed = true
 	end
 
-	if type(settings.vsync) ~= "boolean" then
-		settings.vsync = true
-		changed = true
-	end
+        if type(settings.vsync) ~= "boolean" then
+                settings.vsync = true
+                changed = true
+        end
 
-	return changed
+        local resolvedMSAA = resolveMSAALevel(settings.msaaSamples)
+        if settings.msaaSamples ~= resolvedMSAA then
+                settings.msaaSamples = resolvedMSAA
+                changed = true
+        end
+
+        SharedCanvas.setDesiredSamples(settings.msaaSamples)
+
+        return changed
 end
 
 function Display.apply(settings)
@@ -118,13 +199,48 @@ function Display.apply(settings)
 		flags.resizable = true
 	end
 
-	if settings.vsync == false then
-		flags.vsync = 0
-	else
-		flags.vsync = 1
-	end
+        if settings.vsync == false then
+                flags.vsync = 0
+        else
+                flags.vsync = 1
+        end
 
-	love.window.setMode(width, height, flags)
+        local msaa = resolveMSAALevel(settings.msaaSamples)
+        if settings.msaaSamples ~= msaa then
+                settings.msaaSamples = msaa
+        end
+
+        if msaa >= 2 then
+                flags.msaa = msaa
+        else
+                flags.msaa = 0
+        end
+
+        love.window.setMode(width, height, flags)
+
+        local _, _, appliedFlags = love.window.getMode()
+        if type(appliedFlags) == "table" then
+                local appliedMSAA = resolveMSAALevel(appliedFlags.msaa or 0)
+                if appliedMSAA ~= settings.msaaSamples then
+                        settings.msaaSamples = appliedMSAA
+                end
+        end
+
+        SharedCanvas.setDesiredSamples(settings.msaaSamples)
+end
+
+function Display.cycleMSAASamples(current, delta)
+        delta = delta or 1
+
+        local currentIndex, available = getAvailableMSAAIndex(current)
+        local count = #available
+
+        if count == 0 then
+                return resolveMSAALevel(current)
+        end
+
+        local newIndex = wrapIndex(currentIndex + delta, count)
+        return available[newIndex]
 end
 
 return Display
