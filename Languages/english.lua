@@ -141,7 +141,7 @@ local english = {
 					title = "Floor Speedrunner",
 					description = "Clear any floor in under ${seconds} seconds.",
 					progress = "Fastest floor: ${best} (Target ${target})",
-					complete = "Blazing clear! Floor finished in ${best}.",
+                                        complete = "Blazing clear!",
 				},
 				pace_setter = {
 					title = "Pace Setter",
