@@ -9,6 +9,7 @@ local LEFT_EYE_CENTER_X = 2.5
 local RIGHT_EYE_CENTER_X = 11.5
 local EYE_CENTER_Y = 1.5
 local EYE_RADIUS = 2
+local IDLE_EYE_RADIUS_MULTIPLIER = 0.55
 local EYELID_WIDTH = 4
 local EYELID_HEIGHT = 1
 
@@ -18,6 +19,7 @@ local PI = math.pi
 
 local shapeDrawers = {}
 local shapeDefinitions = {}
+local shapeMetadata = {}
 local SHAPE_CANVAS_SIZE = 32
 local FACE_CANVAS_OFFSET_X = (SHAPE_CANVAS_SIZE - FACE_WIDTH) / 2
 local FACE_CANVAS_OFFSET_Y = (SHAPE_CANVAS_SIZE - FACE_HEIGHT) / 2
@@ -68,16 +70,18 @@ local function drawAngryEye(cx, isLeft)
 end
 
 local function registerDrawer(name, drawer, options)
-	shapeDefinitions[name] = function()
-		if not (options and options.skipColor) then
-			love.graphics.setColor(0, 0, 0, 1)
-		end
-		drawer()
-	end
+        shapeDefinitions[name] = function()
+                if not (options and options.skipColor) then
+                        love.graphics.setColor(0, 0, 0, 1)
+                end
+                drawer()
+        end
 
-	if shapeCacheBuilt and rebuildShapeCache then
-		rebuildShapeCache()
-	end
+        shapeMetadata[name] = options or {}
+
+        if shapeCacheBuilt and rebuildShapeCache then
+                rebuildShapeCache()
+        end
 end
 
 local function buildShapeCache()
@@ -106,12 +110,15 @@ local function buildShapeCache()
 
 		canvas:release()
 
-		shapeDrawers[name] = {
-			image = image,
-			originX = SHAPE_CANVAS_SIZE / 2,
-			originY = SHAPE_CANVAS_SIZE / 2
-		}
-	end
+                local metadata = shapeMetadata[name]
+
+                shapeDrawers[name] = {
+                        image = image,
+                        originX = SHAPE_CANVAS_SIZE / 2,
+                        originY = SHAPE_CANVAS_SIZE / 2,
+                        baseRadius = metadata and metadata.baseRadius or nil
+                }
+        end
 
 	shapeCacheBuilt = true
 end
@@ -140,13 +147,15 @@ local function ensureShapeCache()
 end
 
 registerDrawer("idle", function()
-	-- Explicitly provide a generous segment count so the filled circles stay
-	-- visually round even after any scaling applied to the snake sprite.
-	local circleSegments = 24
-	local radius = EYE_RADIUS * currentEyeScale
-	love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, radius, circleSegments)
-	love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, radius, circleSegments)
-end)
+        -- Explicitly provide a generous segment count so the filled circles stay
+        -- visually round even after any scaling applied to the snake sprite.
+        local circleSegments = 24
+        local radius = EYE_RADIUS * IDLE_EYE_RADIUS_MULTIPLIER * currentEyeScale
+        love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, radius, circleSegments)
+        love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, radius, circleSegments)
+end, {
+        baseRadius = EYE_RADIUS * IDLE_EYE_RADIUS_MULTIPLIER
+})
 
 registerDrawer("blink", function()
 	local width = EYELID_WIDTH * currentEyeScale
@@ -325,11 +334,11 @@ function Face:draw(x, y, scale, options)
 	love.graphics.setColor(1, 1, 1, 1)
 	love.graphics.draw(entry.image, x, y, 0, finalScale, finalScale, entry.originX, entry.originY)
 
-	if highlight > 0 then
-		local baseRadius = EYE_RADIUS
-		local glowRadius = baseRadius * (1.35 + 0.35 * highlight)
-		local pulse = 0.82 + 0.18 * math.sin(time * 6)
-		local alpha = (0.16 + 0.22 * highlight) * pulse
+        if highlight > 0 then
+                local baseRadius = entry.baseRadius or EYE_RADIUS
+                local glowRadius = baseRadius * (1.35 + 0.35 * highlight)
+                local pulse = 0.82 + 0.18 * math.sin(time * 6)
+                local alpha = (0.16 + 0.22 * highlight) * pulse
 
 		love.graphics.translate(x, y)
 		love.graphics.scale(finalScale)
