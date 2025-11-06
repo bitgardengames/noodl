@@ -512,8 +512,21 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
                 trackColor[4] = isHovered and 0.82 or 0.68
         end
         local trackRadius = max(8, trackWidth * 0.65)
-        local trackOutlineColor = darkenColor(baseTrackColor, 0.45)
+        local trackOutlineColor = {0, 0, 0, 1}
         trackOutlineColor[4] = panelColor and baseAlpha or 1
+
+		-- Track shadow
+		local shadowColor = withAlpha(Theme.shadowColor or {0, 0, 0, 1}, 0.35)
+		local shadowOffset = 3
+		setColor(shadowColor)
+		love.graphics.rectangle(
+			"fill",
+			trackX + shadowOffset,
+			trackY + shadowOffset,
+			trackWidth,
+			trackHeight,
+			trackRadius
+		)
 
         -- Track body
         setColor(trackColor)
@@ -521,9 +534,8 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 
         -- Track outline for visibility
         if trackOutlineColor then
-                local outlineAlpha = (trackOutlineColor[4] or 1) * 0.95
                 local outlineWidth = 3
-                setColor(withAlpha(trackOutlineColor, outlineAlpha))
+                setColor(withAlpha(trackOutlineColor, trackOutlineColor[4]))
                 love.graphics.setLineWidth(outlineWidth)
                 local inset = outlineWidth * 0.5
                 love.graphics.rectangle(
@@ -1350,8 +1362,8 @@ function AchievementsMenu:draw()
                 local trackWidth = SCROLLBAR_TRACK_WIDTH
                 local trackInset = max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
                 local trackX = panelX + panelWidth + trackInset
-                local trackY = panelY
-                local trackHeight = layout.panelHeight
+                local trackY = panelY - 1
+                local trackHeight = layout.panelHeight + 2
 
                 local scrollRange = -minScrollOffset
                 local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
