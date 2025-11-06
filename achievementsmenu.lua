@@ -504,8 +504,8 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
         local baseTrackColor = panelColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
         local snakeBodyColor = Theme.snakeDefault or Theme.progressColor or {0.45, 0.85, 0.70, 1}
         local baseAlpha = baseTrackColor[4] == nil and 1 or baseTrackColor[4]
-        local baseLighten = isHovered and 0.18 or 0.12
-        local trackColor = lightenColor(baseTrackColor, baseLighten)
+		local trackColor = copyColor(panelColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.9})
+
         if panelColor then
                 trackColor[4] = baseAlpha
         else
@@ -515,22 +515,16 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
         local trackOutlineColor = {0, 0, 0, 1}
         trackOutlineColor[4] = panelColor and baseAlpha or 1
 
-		-- Track shadow
-		local shadowColor = withAlpha(Theme.shadowColor or {0, 0, 0, 1}, 0.35)
-		local shadowOffset = 3
-		setColor(shadowColor)
-		love.graphics.rectangle(
-			"fill",
-			trackX + shadowOffset,
-			trackY + shadowOffset,
-			trackWidth,
-			trackHeight,
-			trackRadius
-		)
-
         -- Track body
         setColor(trackColor)
-        love.graphics.rectangle("fill", trackX, trackY, trackWidth, trackHeight, trackRadius)
+		UI.drawPanel(trackX, trackY, trackWidth, trackHeight, {
+			radius = trackRadius,
+			fill = trackColor,
+			borderColor = panelColor,
+			borderWidth = 1,
+			shadowColor = withAlpha(Theme.shadowColor or {0,0,0,0.35}, (Theme.shadowColor and Theme.shadowColor[4] or 0.35) * 0.85),
+			shadowOffset = 3,
+		})
 
         -- Track outline for visibility
         if trackOutlineColor then
@@ -594,11 +588,7 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
                 paletteOverride = {body = bodyColor}
         end
 
-        local shadowColor = withAlpha(darkenColor(bodyColor or snakeBodyColor, 0.55), 0.45)
-        setColor(shadowColor)
-        love.graphics.rectangle("fill", thumbX + 1, thumbY + 3, thumbWidth, thumbHeight, thumbWidth * 0.5)
-
-        local snakeDrawn = UI.drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, {
+        UI.drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, {
                 amplitude = 0,
                 frequency = 1.2,
                 segmentCount = 18,
@@ -610,93 +600,6 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
                 drawFace = true,
                 faceAtBottom = true,
         })
-
-        if not snakeDrawn then
-                love.graphics.push()
-                love.graphics.translate(0, 2 * thumbY + thumbHeight)
-                love.graphics.scale(1, -1)
-
-                local headHeight = min(thumbWidth * 0.9, thumbHeight * 0.42)
-                local tailHeight = min(thumbWidth * 0.55, thumbHeight * 0.28)
-                local headCenterY = thumbY + headHeight * 0.45
-                local tailStartY = thumbY + thumbHeight - tailHeight * 0.6
-                local bodyTop = thumbY + headHeight * 0.55
-                local bodyBottom = max(bodyTop, tailStartY)
-                local bodyHeight = max(0, bodyBottom - bodyTop)
-
-                setColor(bodyColor)
-                love.graphics.ellipse("fill", thumbX + thumbWidth * 0.5, headCenterY, thumbWidth * 0.5, headHeight * 0.5)
-                if bodyHeight > 0 then
-                        love.graphics.rectangle("fill", thumbX, bodyTop, thumbWidth, bodyHeight, thumbWidth * 0.45)
-                end
-                love.graphics.polygon(
-                        "fill",
-                        thumbX + thumbWidth * 0.15,
-                        bodyBottom,
-                        thumbX + thumbWidth * 0.85,
-                        bodyBottom,
-                        thumbX + thumbWidth * 0.5,
-                        min(thumbY + thumbHeight, bodyBottom + tailHeight)
-                )
-
-                -- Snake belly highlight
-                local bellyWidth = thumbWidth * 0.6
-                local bellyX = thumbX + (thumbWidth - bellyWidth) * 0.5
-                local bellyTop = bodyTop + 4
-                local bellyBottom = min(bodyBottom - 2, thumbY + thumbHeight - tailHeight * 0.3)
-                if bellyBottom > bellyTop then
-                        setColor(withAlpha(lightenColor(bodyColor, 0.45), 0.9))
-                        love.graphics.rectangle("fill", bellyX, bellyTop, bellyWidth, bellyBottom - bellyTop, bellyWidth * 0.45)
-
-                        local stripeColor = withAlpha(darkenColor(bodyColor, 0.35), 0.55)
-                        local stripeSpacing = 9
-                        local stripeInset = bellyWidth * 0.12
-                        for y = bellyTop + 3, bellyBottom - 3, stripeSpacing do
-                                setColor(stripeColor)
-                                love.graphics.rectangle(
-                                        "fill",
-                                        bellyX + stripeInset,
-                                        y,
-                                        bellyWidth - stripeInset * 2,
-                                        2,
-                                        bellyWidth * 0.35
-                                )
-                        end
-                end
-
-                -- Eyes to sell the snake silhouette
-                local eyeColor = Theme.textColor or {0.88, 0.88, 0.92, 1}
-                local pupilColor = Theme.bgColor or {0.12, 0.12, 0.14, 1}
-                local eyeRadius = max(1.2, thumbWidth * 0.08)
-                local pupilRadius = eyeRadius * 0.45
-                local eyeOffsetX = thumbWidth * 0.28
-                local eyeY = thumbY + headHeight * 0.08
-                setColor(withAlpha(eyeColor, 0.95))
-                love.graphics.circle("fill", thumbX + thumbWidth * 0.5 - eyeOffsetX, eyeY, eyeRadius)
-                love.graphics.circle("fill", thumbX + thumbWidth * 0.5 + eyeOffsetX, eyeY, eyeRadius)
-                setColor(withAlpha(pupilColor, 0.9))
-                love.graphics.circle("fill", thumbX + thumbWidth * 0.5 - eyeOffsetX + pupilRadius * 0.3, eyeY, pupilRadius)
-                love.graphics.circle("fill", thumbX + thumbWidth * 0.5 + eyeOffsetX - pupilRadius * 0.3, eyeY, pupilRadius)
-
-                -- Outline around the snake thumb for readability
-                setColor(withAlpha(darkenColor(bodyColor, 0.55), 0.9))
-                love.graphics.setLineWidth(2)
-                love.graphics.ellipse("line", thumbX + thumbWidth * 0.5, headCenterY, thumbWidth * 0.5, headHeight * 0.5)
-                if bodyHeight > 0 then
-                        love.graphics.rectangle("line", thumbX, bodyTop, thumbWidth, bodyHeight, thumbWidth * 0.45)
-                end
-                love.graphics.polygon(
-                        "line",
-                        thumbX + thumbWidth * 0.15,
-                        bodyBottom,
-                        thumbX + thumbWidth * 0.85,
-                        bodyBottom,
-                        thumbX + thumbWidth * 0.5,
-                        min(thumbY + thumbHeight, bodyBottom + tailHeight)
-                )
-
-                love.graphics.pop()
-        end
 
         love.graphics.pop()
 end
