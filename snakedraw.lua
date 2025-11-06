@@ -844,8 +844,13 @@ local function presentSnakeCanvas(overlayEffect, width, height, offsetX, offsetY
 end
 
 local shadowPalette = {
-	body = {0, 0, 0, 0.25},
-	outline = {0, 0, 0, 0.25},
+        body = {0, 0, 0, 0.25},
+        outline = {0, 0, 0, 0.25},
+}
+
+local shadowMaskPalette = {
+        body = {1, 1, 1, 1},
+        outline = {1, 1, 1, 1},
 }
 
 local overlayPrimaryColor = {1, 1, 1, 1}
@@ -2837,18 +2842,54 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 					presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
 				end
 			end
-		else
-			RenderLayers:withLayer("shadows", function()
-				love.graphics.push()
-				love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-				drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
-				love.graphics.pop()
-			end)
+                else
+                        local shadowCanvas
+                        local shadowOffsetX, shadowOffsetY = 0, 0
+                        local shadowColor = shadowPalette.body or shadowPalette.outline or {0, 0, 0, 0.25}
+                        local shadowAlpha = shadowColor[4] or 0.25
 
-			RenderLayers:withLayer("main", function()
-				drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-			end)
-		end
+                        if shadowAlpha > 0 then
+                                local shadowBounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
+                                if shadowBounds then
+                                        local canvas = ensureSnakeCanvas(shadowBounds.width, shadowBounds.height)
+                                        if canvas then
+                                                love.graphics.setCanvas({canvas, stencil = true})
+                                                love.graphics.clear(0, 0, 0, 0)
+                                                love.graphics.push()
+                                                love.graphics.translate(-shadowBounds.offsetX, -shadowBounds.offsetY)
+                                                drawTrailSegmentToCanvas(trail, half, options, shadowMaskPalette, coords)
+                                                love.graphics.pop()
+                                                love.graphics.setCanvas()
+
+                                                shadowCanvas = canvas
+                                                shadowOffsetX = shadowBounds.offsetX
+                                                shadowOffsetY = shadowBounds.offsetY
+                                        end
+                                end
+                        end
+
+                        if shadowCanvas then
+                                local shadowR = shadowColor[1] or 0
+                                local shadowG = shadowColor[2] or 0
+                                local shadowB = shadowColor[3] or 0
+                                RenderLayers:withLayer("shadows", function()
+                                        love.graphics.setColor(shadowR, shadowG, shadowB, shadowAlpha)
+                                        love.graphics.draw(shadowCanvas, shadowOffsetX + SHADOW_OFFSET, shadowOffsetY + SHADOW_OFFSET)
+                                        love.graphics.setColor(1, 1, 1, 1)
+                                end)
+                        else
+                                RenderLayers:withLayer("shadows", function()
+                                        love.graphics.push()
+                                        love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+                                        drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
+                                        love.graphics.pop()
+                                end)
+                        end
+
+                        RenderLayers:withLayer("main", function()
+                                drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+                        end)
+                end
 	end
 
 	local shouldDrawOverlay = (hx and hy and drawFace ~= false) or (popTimer and popTimer > 0 and hx and hy)
