@@ -25,7 +25,7 @@ local GAMEPLAY_SYSTEMS = ModuleUtil.prepareSystems({
 	Score,
 	FloatingText,
 	Particles,
-        Bombs,
+	Bombs,
 	UpgradeVisuals,
 	Rocks,
 	Saws,

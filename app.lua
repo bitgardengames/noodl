@@ -141,8 +141,8 @@ function App:keypressed(key)
 end
 
 function App:resize(...)
-        Screen:update()
-        return self:forwardEvent("resize", ...)
+	Screen:update()
+	return self:forwardEvent("resize", ...)
 end
 
 local function createEventForwarder(eventName, preHook)

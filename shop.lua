@@ -266,7 +266,7 @@ local function updateMysteryReveal(self, card, state, dt)
 			shakeMagnitude = pending.revealShakeMagnitude or 9,
 			shakeFrequency = pending.revealShakeFrequency or 26,
 			applyThreshold = pending.revealApplyThreshold or 0.6,
-                        postPauseDuration = (pending.revealPostPauseDuration or pending.revealPostPauseDelay or 0) + MYSTERY_REVEAL_EXTRA_POST_PAUSE,
+			postPauseDuration = (pending.revealPostPauseDuration or pending.revealPostPauseDelay or 0) + MYSTERY_REVEAL_EXTRA_POST_PAUSE,
 			postPauseTimer = 0,
 		}
 		state.mysteryReveal = reveal
@@ -1126,36 +1126,36 @@ local badgeDefinitions = {
 		fallback = {0.95, 0.80, 0.45, 1},
 		outlineFactor = 0.42,
 	},
-        defense = {
-                label = "Defense",
-                shape = "diamond",
-                colorKey = "snakeDefault",
-                fallback = {0.45, 0.85, 0.70, 1},
-        },
-        mobility = {
-                label = "Mobility",
-                shape = "triangle_up",
-                colorKey = "blueberryColor",
-                fallback = {0.55, 0.65, 0.95, 1},
-        },
-        risk = {
-                label = "Risk",
-                shape = "triangle_down",
-                colorKey = "warningColor",
-                fallback = {0.92, 0.55, 0.40, 1},
-        },
-        utility = {
-                label = "Utility",
-                shape = "square",
-                colorKey = "panelBorder",
-                fallback = {0.32, 0.50, 0.54, 1},
-        },
-        hazard = {
-                label = "Hazard",
-                shape = "hexagon",
-                colorKey = "appleColor",
-                fallback = {0.90, 0.45, 0.55, 1},
-        },
+	defense = {
+		label = "Defense",
+		shape = "diamond",
+		colorKey = "snakeDefault",
+		fallback = {0.45, 0.85, 0.70, 1},
+	},
+	mobility = {
+		label = "Mobility",
+		shape = "triangle_up",
+		colorKey = "blueberryColor",
+		fallback = {0.55, 0.65, 0.95, 1},
+	},
+	risk = {
+		label = "Risk",
+		shape = "triangle_down",
+		colorKey = "warningColor",
+		fallback = {0.92, 0.55, 0.40, 1},
+	},
+	utility = {
+		label = "Utility",
+		shape = "square",
+		colorKey = "panelBorder",
+		fallback = {0.32, 0.50, 0.54, 1},
+	},
+	hazard = {
+		label = "Hazard",
+		shape = "hexagon",
+		colorKey = "appleColor",
+		fallback = {0.90, 0.45, 0.55, 1},
+	},
 }
 
 local badgeTagAliases = {
@@ -1256,174 +1256,174 @@ local function drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
 end
 
 local function drawRoundedRegularPolygon(mode, cx, cy, radius, sides, rotation, baseCornerRadius, segments)
-        if not sides or sides < 3 then
-                return
-        end
+	if not sides or sides < 3 then
+		return
+	end
 
-        if not baseCornerRadius or baseCornerRadius <= 0 then
-                drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-                return
-        end
+	if not baseCornerRadius or baseCornerRadius <= 0 then
+		drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
+		return
+	end
 
-        segments = max(1, floor(segments or 1))
+	segments = max(1, floor(segments or 1))
 
-        local angleStep = (pi * 2) / sides
-        local offset = rotation or 0
-        local vertices = {}
-        for i = 0, sides - 1 do
-                local angle = offset + i * angleStep
-                vertices[i + 1] = {
-                        cx + cos(angle) * radius,
-                        cy + sin(angle) * radius,
-                }
-        end
+	local angleStep = (pi * 2) / sides
+	local offset = rotation or 0
+	local vertices = {}
+	for i = 0, sides - 1 do
+		local angle = offset + i * angleStep
+		vertices[i + 1] = {
+			cx + cos(angle) * radius,
+			cy + sin(angle) * radius,
+		}
+	end
 
-        local points = {}
-        for i = 1, sides do
-                local current = vertices[i]
-                local prev = vertices[i == 1 and sides or (i - 1)]
-                local next = vertices[i == sides and 1 or (i + 1)]
+	local points = {}
+	for i = 1, sides do
+		local current = vertices[i]
+		local prev = vertices[i == 1 and sides or (i - 1)]
+		local next = vertices[i == sides and 1 or (i + 1)]
 
-                local prevDirX = prev[1] - current[1]
-                local prevDirY = prev[2] - current[2]
-                local nextDirX = next[1] - current[1]
-                local nextDirY = next[2] - current[2]
+		local prevDirX = prev[1] - current[1]
+		local prevDirY = prev[2] - current[2]
+		local nextDirX = next[1] - current[1]
+		local nextDirY = next[2] - current[2]
 
-                local prevLen = sqrt(prevDirX * prevDirX + prevDirY * prevDirY)
-                local nextLen = sqrt(nextDirX * nextDirX + nextDirY * nextDirY)
+		local prevLen = sqrt(prevDirX * prevDirX + prevDirY * prevDirY)
+		local nextLen = sqrt(nextDirX * nextDirX + nextDirY * nextDirY)
 
-                if prevLen <= 0 or nextLen <= 0 then
-                        drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-                        return
-                end
+		if prevLen <= 0 or nextLen <= 0 then
+			drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
+			return
+		end
 
-                local cornerRadius = min(baseCornerRadius, prevLen * 0.48, nextLen * 0.48)
-                if cornerRadius <= 0 then
-                        drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-                        return
-                end
+		local cornerRadius = min(baseCornerRadius, prevLen * 0.48, nextLen * 0.48)
+		if cornerRadius <= 0 then
+			drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
+			return
+		end
 
-                local normPrevX = prevDirX / prevLen
-                local normPrevY = prevDirY / prevLen
-                local normNextX = nextDirX / nextLen
-                local normNextY = nextDirY / nextLen
+		local normPrevX = prevDirX / prevLen
+		local normPrevY = prevDirY / prevLen
+		local normNextX = nextDirX / nextLen
+		local normNextY = nextDirY / nextLen
 
-                local incomingPrevX = -normPrevX
-                local incomingPrevY = -normPrevY
-                local incomingNextX = -normNextX
-                local incomingNextY = -normNextY
+		local incomingPrevX = -normPrevX
+		local incomingPrevY = -normPrevY
+		local incomingNextX = -normNextX
+		local incomingNextY = -normNextY
 
-                local dot = incomingPrevX * incomingNextX + incomingPrevY * incomingNextY
-                dot = max(-1, min(1, dot))
-                local theta = acos(dot)
-                if theta <= 0 then
-                        drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-                        return
-                end
+		local dot = incomingPrevX * incomingNextX + incomingPrevY * incomingNextY
+		dot = max(-1, min(1, dot))
+		local theta = acos(dot)
+		if theta <= 0 then
+			drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
+			return
+		end
 
-                local halfTheta = theta * 0.5
-                local sinHalf = sin(halfTheta)
-                local tanHalf = tan(halfTheta)
+		local halfTheta = theta * 0.5
+		local sinHalf = sin(halfTheta)
+		local tanHalf = tan(halfTheta)
 
-                if abs(sinHalf) < 1e-4 or abs(tanHalf) < 1e-4 then
-                        drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-                        return
-                end
+		if abs(sinHalf) < 1e-4 or abs(tanHalf) < 1e-4 then
+			drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
+			return
+		end
 
-                local outwardX = incomingPrevX + incomingNextX
-                local outwardY = incomingPrevY + incomingNextY
-                local outwardLen = sqrt(outwardX * outwardX + outwardY * outwardY)
-                if outwardLen <= 1e-4 then
-                        drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-                        return
-                end
+		local outwardX = incomingPrevX + incomingNextX
+		local outwardY = incomingPrevY + incomingNextY
+		local outwardLen = sqrt(outwardX * outwardX + outwardY * outwardY)
+		if outwardLen <= 1e-4 then
+			drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
+			return
+		end
 
-                outwardX = outwardX / outwardLen
-                outwardY = outwardY / outwardLen
+		outwardX = outwardX / outwardLen
+		outwardY = outwardY / outwardLen
 
-                local offsetToCenter = cornerRadius / sinHalf
-                local offsetAlongEdge = cornerRadius / tanHalf
+		local offsetToCenter = cornerRadius / sinHalf
+		local offsetAlongEdge = cornerRadius / tanHalf
 
-                local centerX = current[1] + outwardX * offsetToCenter
-                local centerY = current[2] + outwardY * offsetToCenter
+		local centerX = current[1] + outwardX * offsetToCenter
+		local centerY = current[2] + outwardY * offsetToCenter
 
-                local prevPointX = current[1] + incomingPrevX * offsetAlongEdge
-                local prevPointY = current[2] + incomingPrevY * offsetAlongEdge
-                local nextPointX = current[1] + incomingNextX * offsetAlongEdge
-                local nextPointY = current[2] + incomingNextY * offsetAlongEdge
+		local prevPointX = current[1] + incomingPrevX * offsetAlongEdge
+		local prevPointY = current[2] + incomingPrevY * offsetAlongEdge
+		local nextPointX = current[1] + incomingNextX * offsetAlongEdge
+		local nextPointY = current[2] + incomingNextY * offsetAlongEdge
 
-                points[#points + 1] = prevPointX
-                points[#points + 1] = prevPointY
+		points[#points + 1] = prevPointX
+		points[#points + 1] = prevPointY
 
-                local anglePrev = atan2(prevPointY - centerY, prevPointX - centerX)
-                local angleNext = atan2(nextPointY - centerY, nextPointX - centerX)
-                local angleDelta = angleNext - anglePrev
-                if angleDelta <= 0 then
-                        angleDelta = angleDelta + (pi * 2)
-                end
+		local anglePrev = atan2(prevPointY - centerY, prevPointX - centerX)
+		local angleNext = atan2(nextPointY - centerY, nextPointX - centerX)
+		local angleDelta = angleNext - anglePrev
+		if angleDelta <= 0 then
+			angleDelta = angleDelta + (pi * 2)
+		end
 
-                for step = 1, segments do
-                        local t = step / segments
-                        local angle = anglePrev + angleDelta * t
-                        points[#points + 1] = centerX + cos(angle) * cornerRadius
-                        points[#points + 1] = centerY + sin(angle) * cornerRadius
-                end
-        end
+		for step = 1, segments do
+			local t = step / segments
+			local angle = anglePrev + angleDelta * t
+			points[#points + 1] = centerX + cos(angle) * cornerRadius
+			points[#points + 1] = centerY + sin(angle) * cornerRadius
+		end
+	end
 
-        love.graphics.polygon(mode, unpack(points))
+	love.graphics.polygon(mode, unpack(points))
 end
 
 local function drawPolygonShape(mode, cx, cy, size, sides, rotation, style, defaultRadiusScale)
-        local radiusScale = defaultRadiusScale or 0.5
-        if style and style.radiusScale ~= nil then
-                radiusScale = style.radiusScale
-        end
-        local radius = size * radiusScale
+	local radiusScale = defaultRadiusScale or 0.5
+	if style and style.radiusScale ~= nil then
+		radiusScale = style.radiusScale
+	end
+	local radius = size * radiusScale
 
-        local baseCornerRadius
-        if style then
-                if style.cornerRadius then
-                        baseCornerRadius = style.cornerRadius
-                elseif style.cornerRadiusScale then
-                        baseCornerRadius = radius * style.cornerRadiusScale
-                end
-        end
+	local baseCornerRadius
+	if style then
+		if style.cornerRadius then
+			baseCornerRadius = style.cornerRadius
+		elseif style.cornerRadiusScale then
+			baseCornerRadius = radius * style.cornerRadiusScale
+		end
+	end
 
-        if baseCornerRadius and baseCornerRadius > 0 then
-                local segments = 4
-                if style and style.cornerSegments then
-                        segments = style.cornerSegments
-                end
-                drawRoundedRegularPolygon(mode, cx, cy, radius, sides, rotation, baseCornerRadius, segments)
-                return
-        end
+	if baseCornerRadius and baseCornerRadius > 0 then
+		local segments = 4
+		if style and style.cornerSegments then
+			segments = style.cornerSegments
+		end
+		drawRoundedRegularPolygon(mode, cx, cy, radius, sides, rotation, baseCornerRadius, segments)
+		return
+	end
 
-        drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
+	drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
 end
 
 local function drawRoundedTriangle(mode, cx, cy, size, rotation, style)
-        drawPolygonShape(mode, cx, cy, size, 3, rotation, style, 0.52)
+	drawPolygonShape(mode, cx, cy, size, 3, rotation, style, 0.52)
 end
 
 local badgeShapeDrawers = {
-        circle = function(mode, cx, cy, size)
-                love.graphics.circle(mode, cx, cy, size * 0.5, 32)
-        end,
-        square = function(mode, cx, cy, size, style)
-                drawPolygonShape(mode, cx, cy, size, 4, pi / 4, style, 0.64)
-        end,
-        diamond = function(mode, cx, cy, size, style)
-                drawPolygonShape(mode, cx, cy, size, 4, 0, style, 0.54)
-        end,
-        triangle_up = function(mode, cx, cy, size, style)
-                drawRoundedTriangle(mode, cx, cy, size + 12, -pi / 2, style)
-        end,
-        triangle_down = function(mode, cx, cy, size, style)
-                drawRoundedTriangle(mode, cx, cy, size + 12, pi / 2, style)
-        end,
-        hexagon = function(mode, cx, cy, size, style)
-                drawPolygonShape(mode, cx, cy, size, 6, pi / 6, style, 0.48)
-        end,
+	circle = function(mode, cx, cy, size)
+		love.graphics.circle(mode, cx, cy, size * 0.5, 32)
+	end,
+	square = function(mode, cx, cy, size, style)
+		drawPolygonShape(mode, cx, cy, size, 4, pi / 4, style, 0.64)
+	end,
+	diamond = function(mode, cx, cy, size, style)
+		drawPolygonShape(mode, cx, cy, size, 4, 0, style, 0.54)
+	end,
+	triangle_up = function(mode, cx, cy, size, style)
+		drawRoundedTriangle(mode, cx, cy, size + 12, -pi / 2, style)
+	end,
+	triangle_down = function(mode, cx, cy, size, style)
+		drawRoundedTriangle(mode, cx, cy, size + 12, pi / 2, style)
+	end,
+	hexagon = function(mode, cx, cy, size, style)
+		drawPolygonShape(mode, cx, cy, size, 6, pi / 6, style, 0.48)
+	end,
 }
 
 local function drawBadgeShape(shape, mode, cx, cy, size, style)
@@ -1798,7 +1798,7 @@ function Shop:draw(screenW, screenH)
 	local startY = max(topPadding, min(preferredTop, centeredTop))
 	local layoutCenterY = startY + totalHeight / 2
 
-        local mx, my = UI.refreshCursor()
+	local mx, my = UI.refreshCursor()
 
 	local function renderCard(i, card)
 		local columnIndex = ((i - 1) % columns)
@@ -2042,10 +2042,10 @@ function Shop:gamepadpressed(_, button)
 		self:moveFocus(-1)
 	elseif button == "dpdown" or button == "dpright" then
 		self:moveFocus(1)
-        elseif button == "a" then
-                local index = self.focusIndex or 1
-                return self:pick(index)
-        end
+	elseif button == "a" then
+		local index = self.focusIndex or 1
+		return self:pick(index)
+	end
 end
 
 Shop.joystickpressed = Shop.gamepadpressed

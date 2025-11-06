@@ -165,97 +165,97 @@ local DEFAULT_EMITTER_ACCENT_COLOR = {1, 0.32, 0.26, 1}
 local ACCENT_COMPONENT_FALLBACKS = {1, 0.38, 0.18, 1}
 
 local function computeBodyComponents()
-        local source = Theme.laserBaseColor
-        if type(source) == "table" then
-                return source[1], source[2], source[3], source[4], source
-        end
+	local source = Theme.laserBaseColor
+	if type(source) == "table" then
+		return source[1], source[2], source[3], source[4], source
+	end
 
-        local defaults = DEFAULT_EMITTER_BODY_COLOR
-        return defaults[1], defaults[2], defaults[3], defaults[4], nil
+	local defaults = DEFAULT_EMITTER_BODY_COLOR
+	return defaults[1], defaults[2], defaults[3], defaults[4], nil
 end
 
 local function computeAccentComponents()
-        local source = Theme.laserColor
-        local r
-        local g
-        local b
-        local a
+	local source = Theme.laserColor
+	local r
+	local g
+	local b
+	local a
 
-        if type(source) == "table" then
-                local fallbacks = ACCENT_COMPONENT_FALLBACKS
-                r = (source[1] ~= nil) and source[1] or fallbacks[1]
-                g = (source[2] ~= nil) and source[2] or fallbacks[2]
-                b = (source[3] ~= nil) and source[3] or fallbacks[3]
-                a = (source[4] ~= nil) and source[4] or fallbacks[4]
-                return r, g, b, 0.85, source
-        end
+	if type(source) == "table" then
+		local fallbacks = ACCENT_COMPONENT_FALLBACKS
+		r = (source[1] ~= nil) and source[1] or fallbacks[1]
+		g = (source[2] ~= nil) and source[2] or fallbacks[2]
+		b = (source[3] ~= nil) and source[3] or fallbacks[3]
+		a = (source[4] ~= nil) and source[4] or fallbacks[4]
+		return r, g, b, 0.85, source
+	end
 
-        local defaults = DEFAULT_EMITTER_ACCENT_COLOR
-        r = defaults[1]
-        g = defaults[2]
-        b = defaults[3]
-        a = defaults[4]
-        return r, g, b, 0.85, nil
+	local defaults = DEFAULT_EMITTER_ACCENT_COLOR
+	r = defaults[1]
+	g = defaults[2]
+	b = defaults[3]
+	a = defaults[4]
+	return r, g, b, 0.85, nil
 end
 
 local function refreshEmitterColorCache(bodyR, bodyG, bodyB, bodyA, accentR, accentG, accentB, accentA, bodySourceRef, accentSourceRef)
-        emitterBodyColorCache = emitterBodyColorCache or {}
-        emitterAccentColorCache = emitterAccentColorCache or {}
+	emitterBodyColorCache = emitterBodyColorCache or {}
+	emitterAccentColorCache = emitterAccentColorCache or {}
 
-        emitterBodyColorCache[1] = bodyR
-        emitterBodyColorCache[2] = bodyG
-        emitterBodyColorCache[3] = bodyB
-        emitterBodyColorCache[4] = bodyA
+	emitterBodyColorCache[1] = bodyR
+	emitterBodyColorCache[2] = bodyG
+	emitterBodyColorCache[3] = bodyB
+	emitterBodyColorCache[4] = bodyA
 
-        emitterAccentColorCache[1] = accentR
-        emitterAccentColorCache[2] = accentG
-        emitterAccentColorCache[3] = accentB
-        emitterAccentColorCache[4] = accentA
+	emitterAccentColorCache[1] = accentR
+	emitterAccentColorCache[2] = accentG
+	emitterAccentColorCache[3] = accentB
+	emitterAccentColorCache[4] = accentA
 
-        lastLaserBaseColorComponents = lastLaserBaseColorComponents or {}
-        lastLaserBaseColorComponents[1] = bodyR
-        lastLaserBaseColorComponents[2] = bodyG
-        lastLaserBaseColorComponents[3] = bodyB
-        lastLaserBaseColorComponents[4] = bodyA
+	lastLaserBaseColorComponents = lastLaserBaseColorComponents or {}
+	lastLaserBaseColorComponents[1] = bodyR
+	lastLaserBaseColorComponents[2] = bodyG
+	lastLaserBaseColorComponents[3] = bodyB
+	lastLaserBaseColorComponents[4] = bodyA
 
-        lastLaserColorComponents = lastLaserColorComponents or {}
-        lastLaserColorComponents[1] = accentR
-        lastLaserColorComponents[2] = accentG
-        lastLaserColorComponents[3] = accentB
-        lastLaserColorComponents[4] = accentA
+	lastLaserColorComponents = lastLaserColorComponents or {}
+	lastLaserColorComponents[1] = accentR
+	lastLaserColorComponents[2] = accentG
+	lastLaserColorComponents[3] = accentB
+	lastLaserColorComponents[4] = accentA
 
-        lastLaserBaseColorRef = bodySourceRef
-        lastLaserColorRef = accentSourceRef
+	lastLaserBaseColorRef = bodySourceRef
+	lastLaserColorRef = accentSourceRef
 end
 
 local function componentsMatch(components, r, g, b, a)
-        return components and
-                components[1] == r and
-                components[2] == g and
-                components[3] == b and
-                components[4] == a
+	return components and
+	components[1] == r and
+	components[2] == g and
+	components[3] == b and
+	components[4] == a
 end
 
 local function getEmitterColors()
-        local bodyR, bodyG, bodyB, bodyA, bodySource = computeBodyComponents()
-        local accentR, accentG, accentB, accentA, accentSource = computeAccentComponents()
+	local bodyR, bodyG, bodyB, bodyA, bodySource = computeBodyComponents()
+	local accentR, accentG, accentB, accentA, accentSource = computeAccentComponents()
 
-        local needsRefresh = false
-        if not emitterBodyColorCache or not emitterAccentColorCache then
-                needsRefresh = true
-        else
-                if bodySource ~= lastLaserBaseColorRef or not componentsMatch(lastLaserBaseColorComponents, bodyR, bodyG, bodyB, bodyA) then
-                        needsRefresh = true
-                elseif accentSource ~= lastLaserColorRef or not componentsMatch(lastLaserColorComponents, accentR, accentG, accentB, accentA) then
-                        needsRefresh = true
-                end
-        end
+	local needsRefresh = false
+	if not emitterBodyColorCache or not emitterAccentColorCache then
+		needsRefresh = true
+	else
+		if bodySource ~= lastLaserBaseColorRef or not componentsMatch(lastLaserBaseColorComponents, bodyR, bodyG, bodyB, bodyA) then
+			needsRefresh = true
+		elseif accentSource ~= lastLaserColorRef or not componentsMatch(lastLaserColorComponents, accentR, accentG, accentB, accentA) then
+			needsRefresh = true
+		end
+	end
 
-        if needsRefresh then
-                refreshEmitterColorCache(bodyR, bodyG, bodyB, bodyA, accentR, accentG, accentB, accentA, bodySource, accentSource)
-        end
+	if needsRefresh then
+		refreshEmitterColorCache(bodyR, bodyG, bodyB, bodyA, accentR, accentG, accentB, accentA, bodySource, accentSource)
+	end
 
-        return emitterBodyColorCache, emitterAccentColorCache
+	return emitterBodyColorCache, emitterAccentColorCache
 end
 
 local function releaseOccupancy(beam)
@@ -499,81 +499,81 @@ local function computeBeamTarget(beam, rockLookup)
 end
 
 local function buildRockLookup()
-        local rocks = Rocks:getAll()
-        if not rocks or #rocks == 0 then
-                return {
-                        rows = {},
-                        cols = {},
-                }
-        end
+	local rocks = Rocks:getAll()
+	if not rocks or #rocks == 0 then
+		return {
+			rows = {},
+			cols = {},
+		}
+	end
 
-        local rows = {}
-        local cols = {}
+	local rows = {}
+	local cols = {}
 
-        for i = 1, #rocks do
-                local rock = rocks[i]
-                local row = rock and rock.row
-                if row then
-                        local list = rows[row]
-                        if list then
-                                list[#list + 1] = rock
-                        else
-                                rows[row] = {rock}
-                        end
-                end
+	for i = 1, #rocks do
+		local rock = rocks[i]
+		local row = rock and rock.row
+		if row then
+			local list = rows[row]
+			if list then
+				list[#list + 1] = rock
+			else
+				rows[row] = {rock}
+			end
+		end
 
-                local col = rock and rock.col
-                if col then
-                        local list = cols[col]
-                        if list then
-                                list[#list + 1] = rock
-                        else
-                                cols[col] = {rock}
-                        end
-                end
-        end
+		local col = rock and rock.col
+		if col then
+			local list = cols[col]
+			if list then
+				list[#list + 1] = rock
+			else
+				cols[col] = {rock}
+			end
+		end
+	end
 
-        return {
-                rows = rows,
-                cols = cols,
-        }
+	return {
+		rows = rows,
+		cols = cols,
+	}
 end
 
 local function getRockLookup()
-        local revision = Rocks.getRevision and Rocks:getRevision()
-        if cachedRockLookup and cachedRevision == revision then
-                return cachedRockLookup
-        end
+	local revision = Rocks.getRevision and Rocks:getRevision()
+	if cachedRockLookup and cachedRevision == revision then
+		return cachedRockLookup
+	end
 
-        cachedRockLookup = buildRockLookup()
-        cachedRevision = revision
-        return cachedRockLookup
+	cachedRockLookup = buildRockLookup()
+	cachedRevision = revision
+	return cachedRockLookup
 end
 
 function Lasers:reset()
-        for _, beam in ipairs(emitters) do
-                releaseOccupancy(beam)
-        end
-        emitters = {}
+	for _, beam in ipairs(emitters) do
+		releaseOccupancy(beam)
+	end
+	emitters = {}
 
-        stallTimer = 0
-        cachedRockLookup = nil
-        cachedRevision = nil
+	stallTimer = 0
+	cachedRockLookup = nil
+	cachedRevision = nil
 
-        Lasers.invalidateThemeCache()
+	Lasers.invalidateThemeCache()
 
-        if not LASERS_ENABLED then
-                return
-        end
+	if not LASERS_ENABLED then
+		return
+	end
 end
 
 function Lasers.invalidateThemeCache()
-        emitterBodyColorCache = nil
-        emitterAccentColorCache = nil
-        lastLaserBaseColorRef = nil
-        lastLaserColorRef = nil
-        lastLaserBaseColorComponents = nil
-        lastLaserColorComponents = nil
+	emitterBodyColorCache = nil
+	emitterAccentColorCache = nil
+	lastLaserBaseColorRef = nil
+	lastLaserColorRef = nil
+	lastLaserBaseColorComponents = nil
+	lastLaserColorComponents = nil
 end
 
 function Lasers:spawn(x, y, dir, options)
@@ -635,50 +635,50 @@ end
 -- Returns a shallow copy of the active laser emitters.
 -- Prefer iterateEmitters for allocation-free iteration in hot paths.
 function Lasers:getEmitters()
-        local copies = {}
-        for index, beam in ipairs(emitters) do
-                copies[index] = beam
-        end
-        return copies
+	local copies = {}
+	for index, beam in ipairs(emitters) do
+		copies[index] = beam
+	end
+	return copies
 end
 
 function Lasers:getEmitterArray()
-        return emitters
+	return emitters
 end
 
 function Lasers:getEmitterCount()
-        return #emitters
+	return #emitters
 end
 
 -- Iterates active laser emitters without allocating new tables.
 -- The callback receives (beam, index, emitters) and can return a non-nil value to stop.
 -- A table argument with {callback=fn, context=data} is also accepted to avoid closures.
 function Lasers:iterateEmitters(callback, context)
-        if type(callback) == "table" then
-                local spec = callback
-                callback = spec.callback
-                context = spec.context
-        end
+	if type(callback) == "table" then
+		local spec = callback
+		callback = spec.callback
+		context = spec.context
+	end
 
-        if type(callback) ~= "function" then
-                return
-        end
+	if type(callback) ~= "function" then
+		return
+	end
 
-        if context ~= nil then
-                for index = 1, #emitters do
-                        local result = callback(context, emitters[index], index, emitters)
-                        if result ~= nil then
-                                return result
-                        end
-                end
-        else
-                for index = 1, #emitters do
-                        local result = callback(emitters[index], index, emitters)
-                        if result ~= nil then
-                                return result
-                        end
-                end
-        end
+	if context ~= nil then
+		for index = 1, #emitters do
+			local result = callback(context, emitters[index], index, emitters)
+			if result ~= nil then
+				return result
+			end
+		end
+	else
+		for index = 1, #emitters do
+			local result = callback(emitters[index], index, emitters)
+			if result ~= nil then
+				return result
+			end
+		end
+	end
 end
 
 function Lasers:stall(duration, options)
@@ -788,7 +788,7 @@ function Lasers:update(dt)
 		return
 	end
 
-        local rockLookup = getRockLookup()
+	local rockLookup = getRockLookup()
 
 	for _, beam in ipairs(emitters) do
 		updateEmitterSlide(beam, dt)

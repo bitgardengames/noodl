@@ -235,10 +235,10 @@ local english = {
 			back_to_menu = "Back to Menu",
 			popup_heading = "${title} Unlocked!",
 			popup_message = "${title}: ${description}",
-                        progress = {
-                                label = "${current}/${goal}",
-                                unlocked = "Completed",
-                        },
+			progress = {
+				label = "${current}/${goal}",
+				unlocked = "Completed",
+			},
 			summary = {
 				unlocked = "${unlocked}/${total} unlocked",
 				completion = "${percent}% complete",
@@ -432,22 +432,22 @@ local english = {
 					"A molten wake isn't a good place to swim.",
 					"The floor decided to exhale… loudly.",
 				},
-                                laser = {
-                                        "You got carved up by a laser sweep.",
-                                        "Note to self: don't stand in the light show.",
-                                        "The beam didn't come to dance.",
-                                        "Snake tried to limbo under a laser and failed.",
-                                },
-                                dart = {
-                                        "A dart trap turned Snake into a pincushion.",
-                                        "Those wall ports aren't just décor.",
-                                        "Snake zigged when the dart zagged.",
-                                        "Tip: telegraphs mean it's time to move.",
-                                },
-                                unknown = {
-                                        "Mysterious demise...",
-                                        "The void has claimed you.",
-                                        "Well, that’s one way to end it.",
+				laser = {
+					"You got carved up by a laser sweep.",
+					"Note to self: don't stand in the light show.",
+					"The beam didn't come to dance.",
+					"Snake tried to limbo under a laser and failed.",
+				},
+				dart = {
+					"A dart trap turned Snake into a pincushion.",
+					"Those wall ports aren't just décor.",
+					"Snake zigged when the dart zagged.",
+					"Tip: telegraphs mean it's time to move.",
+				},
+				unknown = {
+					"Mysterious demise...",
+					"The void has claimed you.",
+					"Well, that’s one way to end it.",
 					"Snake blinked out of existence.",
 					"Cosmic forces intervened.",
 					"Snake entered the glitch dimension.",
@@ -500,7 +500,7 @@ local english = {
 				description = "Every three broken shields forge a fresh one.",
 				reforged = "Shield Reforged",
 			},
-                        extra_bite = {
+			extra_bite = {
 				name = "Extra Bite",
 				description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
 				celebration = "Early Exit",
@@ -534,14 +534,14 @@ local english = {
 				name = "Molting Reflex",
 				description = "Shields trigger a 60% adrenaline surge.",
 			},
-                        mystery_card = {
-                                name = "Mystery Card",
-                                description = "Select to reveal and immediately gain a random upgrade.",
-                        },
-                        circuit_breaker = {
-                                name = "Circuit Breaker",
-                                description = "Traps freeze for 1s after each fruit.",
-                        },
+			mystery_card = {
+				name = "Mystery Card",
+				description = "Select to reveal and immediately gain a random upgrade.",
+			},
+			circuit_breaker = {
+				name = "Circuit Breaker",
+				description = "Traps freeze for 1s after each fruit.",
+			},
 			tremor_bloom = {
 				name = "Tremor Bloom",
 				description = "Each time you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away.",

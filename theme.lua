@@ -5,7 +5,7 @@ local Theme = {
 
 	-- General background / chrome
 	bgColor        = {0.12, 0.12, 0.14, 1.0},
-        shadowColor    = {0.0, 0.0, 0.0, 0.25},
+	shadowColor    = {0.0, 0.0, 0.0, 0.25},
 	highlightColor = {1.0, 1.0, 1.0, 0.06},
 
 	-- Buttons
@@ -16,15 +16,15 @@ local Theme = {
 
 	-- Panels
 	panelColor      = {0.16, 0.16, 0.22, 0.94},
-        panelBorder     = {0.32, 0.50, 0.54, 1.0},
+	panelBorder     = {0.32, 0.50, 0.54, 1.0},
 
-        -- Darts
-        dartBaseColor      = {0.17, 0.18, 0.23, 0.98},
-        dartAccentColor    = {0.42, 0.72, 0.62, 1.0},
-        dartTelegraphColor = {0.52, 0.78, 0.72, 0.78},
-        dartBodyColor      = {0.70, 0.68, 0.60, 1.0},
-        dartTipColor       = {0.82, 0.86, 0.90, 1.0},
-        dartTailColor      = {0.42, 0.68, 0.64, 1.0},
+	-- Darts
+	dartBaseColor      = {0.17, 0.18, 0.23, 0.98},
+	dartAccentColor    = {0.42, 0.72, 0.62, 1.0},
+	dartTelegraphColor = {0.52, 0.78, 0.72, 0.78},
+	dartBodyColor      = {0.70, 0.68, 0.60, 1.0},
+	dartTipColor       = {0.82, 0.86, 0.90, 1.0},
+	dartTailColor      = {0.42, 0.68, 0.64, 1.0},
 
 	-- Text
 	textColor       = {0.88, 0.88, 0.92, 1.0},

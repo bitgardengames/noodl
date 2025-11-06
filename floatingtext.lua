@@ -296,39 +296,39 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
 	entry.x = x
 	entry.y = y
 	entry.font = font
-        entry.duration = entryDuration
-        if entryDuration > 0 then
-                entry.durationInv = 1 / entryDuration
-        else
-                entry.durationInv = nil
-        end
-        entry.timer = 0
-        entry.riseDistance = rise
-        entry.baseScale = baseScale
-        entry.popScale = popScale
-        entry.popDuration = popDuration
-        if popDuration > 0 then
-                entry.popDurationInv = 1 / popDuration
-        else
-                entry.popDurationInv = nil
-        end
-        local settleDuration = max(entryDuration - popDuration, 0.001)
-        entry.settleDuration = settleDuration
-        if settleDuration > 0 then
-                entry.settleDurationInv = 1 / settleDuration
-        else
-                entry.settleDurationInv = nil
-        end
-        entry.wobbleMagnitude = wobbleMagnitude
-        entry.wobbleFrequency = wobbleFrequency
-        entry.fadeStart = clamp(fadeStart, 0, 0.99)
-        entry.fadeStartTime = fadeStartTime
-        entry.fadeDuration = fadeDuration
-        if fadeDuration and fadeDuration > 0 then
-                entry.fadeDurationInv = 1 / fadeDuration
-        else
-                entry.fadeDurationInv = nil
-        end
+	entry.duration = entryDuration
+	if entryDuration > 0 then
+		entry.durationInv = 1 / entryDuration
+	else
+		entry.durationInv = nil
+	end
+	entry.timer = 0
+	entry.riseDistance = rise
+	entry.baseScale = baseScale
+	entry.popScale = popScale
+	entry.popDuration = popDuration
+	if popDuration > 0 then
+		entry.popDurationInv = 1 / popDuration
+	else
+		entry.popDurationInv = nil
+	end
+	local settleDuration = max(entryDuration - popDuration, 0.001)
+	entry.settleDuration = settleDuration
+	if settleDuration > 0 then
+		entry.settleDurationInv = 1 / settleDuration
+	else
+		entry.settleDurationInv = nil
+	end
+	entry.wobbleMagnitude = wobbleMagnitude
+	entry.wobbleFrequency = wobbleFrequency
+	entry.fadeStart = clamp(fadeStart, 0, 0.99)
+	entry.fadeStartTime = fadeStartTime
+	entry.fadeDuration = fadeDuration
+	if fadeDuration and fadeDuration > 0 then
+		entry.fadeDurationInv = 1 / fadeDuration
+	else
+		entry.fadeDurationInv = nil
+	end
 	entry.drift = drift
 	entry.rotationAmplitude = rotationAmplitude
 	entry.rotationDirection = rotationDirection
@@ -365,14 +365,14 @@ function FloatingText:update(dt)
 		local entry = entries[index]
 		entry.timer = entry.timer + dt
 
-                local duration = entry.duration
-                local durationInv = entry.durationInv
-                local progress = durationInv and clamp(entry.timer * durationInv, 0, 1) or 1
+		local duration = entry.duration
+		local durationInv = entry.durationInv
+		local progress = durationInv and clamp(entry.timer * durationInv, 0, 1) or 1
 
-                entry.offsetY = -entry.riseDistance * easeOutCubic(progress)
-                entry.offsetX = entry.drift * progress + entry.wobbleMagnitude * sin(entry.wobbleFrequency * entry.timer)
+		entry.offsetY = -entry.riseDistance * easeOutCubic(progress)
+		entry.offsetX = entry.drift * progress + entry.wobbleMagnitude * sin(entry.wobbleFrequency * entry.timer)
 
-                if entry.hasJitter then
+		if entry.hasJitter then
 			local falloff = (1 - progress)
 			local jitterStrength = entry.jitter * falloff * falloff
 			local phase = entry.jitterSeed
@@ -382,21 +382,21 @@ function FloatingText:update(dt)
 			entry.jitterX, entry.jitterY = 0, 0
 		end
 
-                local popDuration = entry.popDuration
-                if popDuration > 0 and entry.timer < popDuration then
-                        local popProgress = clamp(entry.timer * entry.popDurationInv, 0, 1)
-                        entry.scale = lerp(entry.popScale, entry.baseScale, easeOutBack(popProgress))
-                else
-                        local settleDuration = entry.settleDuration
-                        local settleProgress
-                        if settleDuration and settleDuration > 0 then
-                                settleProgress = clamp((entry.timer - popDuration) * entry.settleDurationInv, 0, 1)
-                        else
-                                settleProgress = 1
-                        end
-                        local pulse = sin(entry.timer * 6) * (1 - settleProgress) * 0.04
-                        entry.scale = entry.baseScale * (1 + pulse)
-                end
+		local popDuration = entry.popDuration
+		if popDuration > 0 and entry.timer < popDuration then
+			local popProgress = clamp(entry.timer * entry.popDurationInv, 0, 1)
+			entry.scale = lerp(entry.popScale, entry.baseScale, easeOutBack(popProgress))
+		else
+			local settleDuration = entry.settleDuration
+			local settleProgress
+			if settleDuration and settleDuration > 0 then
+				settleProgress = clamp((entry.timer - popDuration) * entry.settleDurationInv, 0, 1)
+			else
+				settleProgress = 1
+			end
+			local pulse = sin(entry.timer * 6) * (1 - settleProgress) * 0.04
+			entry.scale = entry.baseScale * (1 + pulse)
+		end
 
 		entry.rotation = entry.rotationAmplitude * entry.rotationDirection * sin(progress * pi)
 
@@ -423,75 +423,75 @@ function FloatingText:update(dt)
 end
 
 function FloatingText:draw()
-        local entries = self.entries
-        local defaultBlendMode, defaultAlphaMode = lg.getBlendMode()
-        local glowEntries = nil
-        local currentFont = nil
+	local entries = self.entries
+	local defaultBlendMode, defaultAlphaMode = lg.getBlendMode()
+	local glowEntries = nil
+	local currentFont = nil
 
-        for index = 1, #entries do
-                local entry = entries[index]
-                if entry.font ~= currentFont then
-                        lg.setFont(entry.font)
-                        currentFont = entry.font
-                end
+	for index = 1, #entries do
+		local entry = entries[index]
+		if entry.font ~= currentFont then
+			lg.setFont(entry.font)
+			currentFont = entry.font
+		end
 
 		local alpha = entry.color[4] or 1
-                if entry.duration > 0 and entry.fadeStartTime then
-                        if entry.timer >= entry.fadeStartTime then
-                                local fadeProgress = clamp((entry.timer - entry.fadeStartTime) * (entry.fadeDurationInv or 0), 0, 1)
-                                alpha = alpha * (1 - easeInCubic(fadeProgress))
-                        end
-                end
+		if entry.duration > 0 and entry.fadeStartTime then
+			if entry.timer >= entry.fadeStartTime then
+				local fadeProgress = clamp((entry.timer - entry.fadeStartTime) * (entry.fadeDurationInv or 0), 0, 1)
+				alpha = alpha * (1 - easeInCubic(fadeProgress))
+			end
+		end
 
-                alpha = clamp(alpha, 0, 1)
+		alpha = clamp(alpha, 0, 1)
 
-                local baseX = (entry.x or 0) + (entry.offsetX or 0) + (entry.jitterX or 0)
-                local baseY = (entry.y or 0) + (entry.offsetY or 0) + (entry.jitterY or 0)
-                local rotation = entry.rotation or 0
-                local scale = entry.scale or 1
-                local originX = entry.ox or 0
-                local originY = entry.oy or 0
+		local baseX = (entry.x or 0) + (entry.offsetX or 0) + (entry.jitterX or 0)
+		local baseY = (entry.y or 0) + (entry.offsetY or 0) + (entry.jitterY or 0)
+		local rotation = entry.rotation or 0
+		local scale = entry.scale or 1
+		local originX = entry.ox or 0
+		local originY = entry.oy or 0
 
-                local shadow = entry.shadow
-                if shadow and shadow.alpha > 0 then
-                        local shadowOriginX = originX - (shadow.offsetX or 0)
-                        local shadowOriginY = originY - (shadow.offsetY or 0)
-                        lg.setColor(0, 0, 0, shadow.alpha * alpha)
-                        lg.print(entry.text, baseX, baseY, rotation, scale, scale, shadowOriginX, shadowOriginY)
-                end
+		local shadow = entry.shadow
+		if shadow and shadow.alpha > 0 then
+			local shadowOriginX = originX - (shadow.offsetX or 0)
+			local shadowOriginY = originY - (shadow.offsetY or 0)
+			lg.setColor(0, 0, 0, shadow.alpha * alpha)
+			lg.print(entry.text, baseX, baseY, rotation, scale, scale, shadowOriginX, shadowOriginY)
+		end
 
-                lg.setColor(entry.color[1], entry.color[2], entry.color[3], alpha)
-                lg.print(entry.text, baseX, baseY, rotation, scale, scale, originX, originY)
+		lg.setColor(entry.color[1], entry.color[2], entry.color[3], alpha)
+		lg.print(entry.text, baseX, baseY, rotation, scale, scale, originX, originY)
 
-                if entry.glowAlpha and entry.glowAlpha > 0 and entry.glowColor then
-                        glowEntries = glowEntries or {}
-                        glowEntries[#glowEntries + 1] = {
-                                entry = entry,
-                                baseX = baseX,
-                                baseY = baseY,
-                                rotation = rotation,
-                                scale = scale,
-                                originX = originX,
-                                originY = originY,
-                                alpha = alpha,
-                        }
-                end
-        end
+		if entry.glowAlpha and entry.glowAlpha > 0 and entry.glowColor then
+			glowEntries = glowEntries or {}
+			glowEntries[#glowEntries + 1] = {
+				entry = entry,
+				baseX = baseX,
+				baseY = baseY,
+				rotation = rotation,
+				scale = scale,
+				originX = originX,
+				originY = originY,
+				alpha = alpha,
+			}
+		end
+	end
 
-        if glowEntries then
-                lg.setBlendMode("add", "alphamultiply")
+	if glowEntries then
+		lg.setBlendMode("add", "alphamultiply")
 
-                for index = 1, #glowEntries do
-                        local glow = glowEntries[index]
-                        local entry = glow.entry
-                        lg.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], glow.alpha * entry.glowAlpha)
-                        lg.print(entry.text, glow.baseX, glow.baseY, glow.rotation, glow.scale, glow.scale, glow.originX, glow.originY)
-                end
+		for index = 1, #glowEntries do
+			local glow = glowEntries[index]
+			local entry = glow.entry
+			lg.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], glow.alpha * entry.glowAlpha)
+			lg.print(entry.text, glow.baseX, glow.baseY, glow.rotation, glow.scale, glow.scale, glow.originX, glow.originY)
+		end
 
-                lg.setBlendMode(defaultBlendMode, defaultAlphaMode)
-        end
+		lg.setBlendMode(defaultBlendMode, defaultAlphaMode)
+	end
 
-        lg.setColor(1, 1, 1, 1)
+	lg.setColor(1, 1, 1, 1)
 end
 
 function FloatingText:reset()

@@ -26,10 +26,10 @@ local sqrt = math.sqrt
 local max = math.max
 local EMPTY_TABLE = {}
 local HIGH_PRIORITY_FACE_STATES = {
-        veryHappy = true,
-        angry = true,
-        sad = true,
-        blank = true
+	veryHappy = true,
+	angry = true,
+	sad = true,
+	blank = true
 }
 
 local spawnGluttonsWakeRock
@@ -80,112 +80,112 @@ local recentlyVacatedGeneration = 0
 local RECENTLY_VACATED_GENERATION_RESET = 1000000000
 
 local function getCellLookupKey(col, row)
-        if not (col and row) then
-                return nil
-        end
+	if not (col and row) then
+		return nil
+	end
 
-        local stride = cellKeyStride
-        if stride <= 0 then
-                stride = (Arena and Arena.rows or 0) + 16
-                if stride <= 0 then
-                        stride = 64
-                end
-                cellKeyStride = stride
-        end
+	local stride = cellKeyStride
+	if stride <= 0 then
+		stride = (Arena and Arena.rows or 0) + 16
+		if stride <= 0 then
+			stride = 64
+		end
+		cellKeyStride = stride
+	end
 
-        return col * stride + row
+	return col * stride + row
 end
 
 local trailLength = 0
 
 local function clearRecentlyVacatedCells()
-        recentlyVacatedCount = 0
-        recentlyVacatedGeneration = recentlyVacatedGeneration + 1
-        if recentlyVacatedGeneration >= RECENTLY_VACATED_GENERATION_RESET then
-                recentlyVacatedGeneration = 1
-                recentlyVacatedLookup = {}
-        end
+	recentlyVacatedCount = 0
+	recentlyVacatedGeneration = recentlyVacatedGeneration + 1
+	if recentlyVacatedGeneration >= RECENTLY_VACATED_GENERATION_RESET then
+		recentlyVacatedGeneration = 1
+		recentlyVacatedLookup = {}
+	end
 end
 
 local function markRecentlyVacatedCell(col, row)
-        if not (col and row) then
-                return
-        end
+	if not (col and row) then
+		return
+	end
 
-        if recentlyVacatedGeneration == 0 then
-                recentlyVacatedGeneration = 1
-        end
+	if recentlyVacatedGeneration == 0 then
+		recentlyVacatedGeneration = 1
+	end
 
-        local index = recentlyVacatedCount + 1
-        local cell = recentlyVacatedCells[index]
-        if cell then
-                cell[1] = col
-                cell[2] = row
-        else
-                cell = {col, row}
-                recentlyVacatedCells[index] = cell
-        end
+	local index = recentlyVacatedCount + 1
+	local cell = recentlyVacatedCells[index]
+	if cell then
+		cell[1] = col
+		cell[2] = row
+	else
+		cell = {col, row}
+		recentlyVacatedCells[index] = cell
+	end
 
-        local key = getCellLookupKey(col, row)
-        if key then
-                recentlyVacatedLookup[key] = recentlyVacatedGeneration
-        end
+	local key = getCellLookupKey(col, row)
+	if key then
+		recentlyVacatedLookup[key] = recentlyVacatedGeneration
+	end
 
-        recentlyVacatedCount = index
+	recentlyVacatedCount = index
 end
 
 function Snake:needsStencil()
-        local hole = descendingHole
-        if hole then
-                local radius = hole.radius or 0
-                local depth = hole.renderDepth or 0
-                if (radius > 0 or depth > 0) and not hole.fullyConsumed then
-                        return true
-                end
-        end
+	local hole = descendingHole
+	if hole then
+		local radius = hole.radius or 0
+		local depth = hole.renderDepth or 0
+		if (radius > 0 or depth > 0) and not hole.fullyConsumed then
+			return true
+		end
+	end
 
-        return false
+	return false
 end
 
 local function wasRecentlyVacated(col, row)
-        if recentlyVacatedGeneration == 0 or not (col and row) then
-                return false
-        end
+	if recentlyVacatedGeneration == 0 or not (col and row) then
+		return false
+	end
 
-        local key = getCellLookupKey(col, row)
-        if not key then
-                return false
-        end
+	local key = getCellLookupKey(col, row)
+	if not key then
+		return false
+	end
 
-        return recentlyVacatedLookup[key] == recentlyVacatedGeneration
+	return recentlyVacatedLookup[key] == recentlyVacatedGeneration
 end
 
 local TILE_COORD_EPSILON = 1e-9
 
 local function wipeTable(t)
-        if not t then
-                return
-        end
+	if not t then
+		return
+	end
 
-        for k in pairs(t) do
-                t[k] = nil
-        end
+	for k in pairs(t) do
+		t[k] = nil
+	end
 end
 
 local function clearSnakeBodySpatialIndex()
-        for _, column in pairs(snakeBodySpatialIndex) do
-                wipeTable(column)
-        end
+	for _, column in pairs(snakeBodySpatialIndex) do
+		wipeTable(column)
+	end
 
-        snakeBodySpatialIndexAvailable = false
+	snakeBodySpatialIndexAvailable = false
 end
 
 local function clearSnakeBodyOccupancy()
-        for _, column in pairs(snakeBodyOccupancy) do
-                wipeTable(column)
-        end
-        clearRecentlyVacatedCells()
-        clearSnakeBodySpatialIndex()
+	for _, column in pairs(snakeBodyOccupancy) do
+		wipeTable(column)
+	end
+	clearRecentlyVacatedCells()
+	clearSnakeBodySpatialIndex()
 end
 local snakeOccupiedCells = {}
 local snakeOccupiedFirst = 1
@@ -352,138 +352,138 @@ local function acquireSegment()
 end
 
 local function releaseSegment(segment)
-        if not segment then
-                return
-        end
+	if not segment then
+		return
+	end
 
-        local col, row = segment.cellCol, segment.cellRow
-        if col and row then
-                removeSnakeBodySpatialEntry(col, row, segment)
-        end
+	local col, row = segment.cellCol, segment.cellRow
+	if col and row then
+		removeSnakeBodySpatialEntry(col, row, segment)
+	end
 
-        segment.drawX = nil
-        segment.drawY = nil
-        segment.x = nil
-        segment.y = nil
-        segment.dirX = nil
-        segment.dirY = nil
-        segment.fruitMarker = nil
-        segment.fruitMarkerX = nil
-        segment.fruitMarkerY = nil
-        segment.lengthToPrev = nil
-        segment.cellCol = nil
-        segment.cellRow = nil
+	segment.drawX = nil
+	segment.drawY = nil
+	segment.x = nil
+	segment.y = nil
+	segment.dirX = nil
+	segment.dirY = nil
+	segment.fruitMarker = nil
+	segment.fruitMarkerX = nil
+	segment.fruitMarkerY = nil
+	segment.lengthToPrev = nil
+	segment.cellCol = nil
+	segment.cellRow = nil
 
-        segmentPoolCount = segmentPoolCount + 1
-        segmentPool[segmentPoolCount] = segment
+	segmentPoolCount = segmentPoolCount + 1
+	segmentPool[segmentPoolCount] = segment
 end
 
 local function releaseSegmentRange(buffer, startIndex)
-        if not buffer then
-                return
-        end
+	if not buffer then
+		return
+	end
 
-        for i = #buffer, startIndex, -1 do
-                local segment = buffer[i]
-                buffer[i] = nil
-                if segment then
-                        releaseSegment(segment)
-                end
-        end
+	for i = #buffer, startIndex, -1 do
+		local segment = buffer[i]
+		buffer[i] = nil
+		if segment then
+			releaseSegment(segment)
+		end
+	end
 end
 
 local function ensureHeadLength()
-        if not (trail and trail[1]) then
-                return
-        end
+	if not (trail and trail[1]) then
+		return
+	end
 
-        local head = trail[1]
-        local existing = head.lengthToPrev or 0
-        if existing ~= 0 then
-                trailLength = trailLength - existing
-                head.lengthToPrev = 0
-        end
+	local head = trail[1]
+	local existing = head.lengthToPrev or 0
+	if existing ~= 0 then
+		trailLength = trailLength - existing
+		head.lengthToPrev = 0
+	end
 end
 
 local function updateSegmentLengthAt(index)
-        if not (trail and index and index >= 2) then
-                return
-        end
+	if not (trail and index and index >= 2) then
+		return
+	end
 
-        local curr = trail[index]
-        local prev = trail[index - 1]
-        if not curr then
-                return
-        end
+	local curr = trail[index]
+	local prev = trail[index - 1]
+	if not curr then
+		return
+	end
 
-        local length = 0
-        if prev and prev.drawX and prev.drawY and curr.drawX and curr.drawY then
-                local dx = prev.drawX - curr.drawX
-                local dy = prev.drawY - curr.drawY
-                length = sqrt(dx * dx + dy * dy)
-        end
+	local length = 0
+	if prev and prev.drawX and prev.drawY and curr.drawX and curr.drawY then
+		local dx = prev.drawX - curr.drawX
+		local dy = prev.drawY - curr.drawY
+		length = sqrt(dx * dx + dy * dy)
+	end
 
-        local existing = curr.lengthToPrev or 0
-        if existing ~= length then
-                trailLength = trailLength - existing + length
-                curr.lengthToPrev = length
-        end
+	local existing = curr.lengthToPrev or 0
+	if existing ~= length then
+		trailLength = trailLength - existing + length
+		curr.lengthToPrev = length
+	end
 end
 
 local function recalcSegmentLengthsRange(startIndex, endIndex)
-        if not trail or #trail == 0 then
-                trailLength = 0
-                return
-        end
+	if not trail or #trail == 0 then
+		trailLength = 0
+		return
+	end
 
-        if not startIndex or startIndex <= 1 then
-                ensureHeadLength()
-                startIndex = 2
-        end
+	if not startIndex or startIndex <= 1 then
+		ensureHeadLength()
+		startIndex = 2
+	end
 
-        if not endIndex or endIndex > #trail then
-                endIndex = #trail
-        end
+	if not endIndex or endIndex > #trail then
+		endIndex = #trail
+	end
 
-        for i = startIndex, endIndex do
-                updateSegmentLengthAt(i)
-        end
+	for i = startIndex, endIndex do
+		updateSegmentLengthAt(i)
+	end
 end
 
 local function recalcSegmentLengthsFrom(startIndex)
-        recalcSegmentLengthsRange(startIndex, #trail)
+	recalcSegmentLengthsRange(startIndex, #trail)
 end
 
 local function syncTrailLength()
-        if not trail or #trail == 0 then
-                trailLength = 0
-                return trailLength
-        end
+	if not trail or #trail == 0 then
+		trailLength = 0
+		return trailLength
+	end
 
-        ensureHeadLength()
-        for i = 2, #trail do
-                updateSegmentLengthAt(i)
-        end
+	ensureHeadLength()
+	for i = 2, #trail do
+		updateSegmentLengthAt(i)
+	end
 
-        return trailLength
+	return trailLength
 end
 
 local function recycleTrail(buffer)
-        if not buffer then
-                return
-        end
+	if not buffer then
+		return
+	end
 
-        for i = #buffer, 1, -1 do
-                local segment = buffer[i]
-                buffer[i] = nil
-                if segment then
-                        releaseSegment(segment)
-                end
-        end
+	for i = #buffer, 1, -1 do
+		local segment = buffer[i]
+		buffer[i] = nil
+		if segment then
+			releaseSegment(segment)
+		end
+	end
 
-        if buffer == trail then
-                trailLength = 0
-        end
+	if buffer == trail then
+		trailLength = 0
+	end
 end
 
 local function clearPortalAnimation(state)
@@ -573,354 +573,354 @@ end
 local toCell
 
 local function isCellOccupiedBySnakeBody(col, row)
-        if not (col and row) then
-                return false
-        end
+	if not (col and row) then
+		return false
+	end
 
-        local column = snakeBodyOccupancy[col]
-        if not column then
-                return false
-        end
+	local column = snakeBodyOccupancy[col]
+	if not column then
+		return false
+	end
 
-        return (column[row] or 0) > 0
+	return (column[row] or 0) > 0
 end
 
 local function addSnakeBodySpatialEntry(col, row, segment)
-        if not (col and row and segment) then
-                return
-        end
+	if not (col and row and segment) then
+		return
+	end
 
-        local column = snakeBodySpatialIndex[col]
-        if not column then
-                column = {}
-                snakeBodySpatialIndex[col] = column
-        end
+	local column = snakeBodySpatialIndex[col]
+	if not column then
+		column = {}
+		snakeBodySpatialIndex[col] = column
+	end
 
-        local bucket = column[row]
-        if not bucket then
-                bucket = {}
-                column[row] = bucket
-        else
-                for i = 1, #bucket do
-                        if bucket[i] == segment then
-                                return
-                        end
-                end
-        end
+	local bucket = column[row]
+	if not bucket then
+		bucket = {}
+		column[row] = bucket
+	else
+		for i = 1, #bucket do
+			if bucket[i] == segment then
+				return
+			end
+		end
+	end
 
-        bucket[#bucket + 1] = segment
-        snakeBodySpatialIndexAvailable = true
+	bucket[#bucket + 1] = segment
+	snakeBodySpatialIndexAvailable = true
 end
 
 local function hasSnakeBodySpatialEntry(col, row, segment)
-        if not (col and row and segment) then
-                return false
-        end
+	if not (col and row and segment) then
+		return false
+	end
 
-        local column = snakeBodySpatialIndex[col]
-        if not column then
-                return false
-        end
+	local column = snakeBodySpatialIndex[col]
+	if not column then
+		return false
+	end
 
-        local bucket = column[row]
-        if not bucket then
-                return false
-        end
+	local bucket = column[row]
+	if not bucket then
+		return false
+	end
 
-        for i = 1, #bucket do
-                if bucket[i] == segment then
-                        return true
-                end
-        end
+	for i = 1, #bucket do
+		if bucket[i] == segment then
+			return true
+		end
+	end
 
-        return false
+	return false
 end
 
 function removeSnakeBodySpatialEntry(col, row, segment)
-        if not (col and row and segment) then
-                return
-        end
+	if not (col and row and segment) then
+		return
+	end
 
-        local column = snakeBodySpatialIndex[col]
-        if not column then
-                return
-        end
+	local column = snakeBodySpatialIndex[col]
+	if not column then
+		return
+	end
 
-        local bucket = column[row]
-        if not bucket then
-                return
-        end
+	local bucket = column[row]
+	if not bucket then
+		return
+	end
 
-        for i = #bucket, 1, -1 do
-                if bucket[i] == segment then
-                        table.remove(bucket, i)
-                        break
-                end
-        end
+	for i = #bucket, 1, -1 do
+		if bucket[i] == segment then
+			table.remove(bucket, i)
+			break
+		end
+	end
 
-        if not bucket[1] then
-                column[row] = nil
-                if not next(column) then
-                        snakeBodySpatialIndex[col] = nil
-                end
-        end
+	if not bucket[1] then
+		column[row] = nil
+		if not next(column) then
+			snakeBodySpatialIndex[col] = nil
+		end
+	end
 
-        if snakeBodySpatialIndexAvailable and not next(snakeBodySpatialIndex) then
-                snakeBodySpatialIndexAvailable = false
-        end
+	if snakeBodySpatialIndexAvailable and not next(snakeBodySpatialIndex) then
+		snakeBodySpatialIndexAvailable = false
+	end
 end
 
 local function rebuildSnakeBodySpatialIndex()
-        clearSnakeBodySpatialIndex()
+	clearSnakeBodySpatialIndex()
 
-        if not (trail and trail[1]) then
-                return
-        end
+	if not (trail and trail[1]) then
+		return
+	end
 
-        for i = 1, #trail do
-                local segment = trail[i]
-                local sx = segment and (segment.drawX or segment.x)
-                local sy = segment and (segment.drawY or segment.y)
-                local col, row = nil, nil
-                if sx and sy then
-                        col, row = toCell(sx, sy)
-                end
+	for i = 1, #trail do
+		local segment = trail[i]
+		local sx = segment and (segment.drawX or segment.x)
+		local sy = segment and (segment.drawY or segment.y)
+		local col, row = nil, nil
+		if sx and sy then
+			col, row = toCell(sx, sy)
+		end
 
-                if segment then
-                        segment.cellCol = col
-                        segment.cellRow = row
-                end
+		if segment then
+			segment.cellCol = col
+			segment.cellRow = row
+		end
 
-                if i >= 2 and col and row then
-                        addSnakeBodySpatialEntry(col, row, segment)
-                end
-        end
+		if i >= 2 and col and row then
+			addSnakeBodySpatialEntry(col, row, segment)
+		end
+	end
 
-        if not next(snakeBodySpatialIndex) then
-                snakeBodySpatialIndexAvailable = false
-        else
-                snakeBodySpatialIndexAvailable = true
-        end
+	if not next(snakeBodySpatialIndex) then
+		snakeBodySpatialIndexAvailable = false
+	else
+		snakeBodySpatialIndexAvailable = true
+	end
 end
 
 local function syncSegmentSpatialEntry(segmentIndex)
-        if not (trail and segmentIndex) then
-                return false
-        end
+	if not (trail and segmentIndex) then
+		return false
+	end
 
-        local segment = trail[segmentIndex]
-        if not segment then
-                return false
-        end
+	local segment = trail[segmentIndex]
+	if not segment then
+		return false
+	end
 
-        local x = segment.drawX or segment.x
-        local y = segment.drawY or segment.y
+	local x = segment.drawX or segment.x
+	local y = segment.drawY or segment.y
 
-        local col, row = nil, nil
-        if x and y then
-                col, row = toCell(x, y)
-        end
+	local col, row = nil, nil
+	if x and y then
+		col, row = toCell(x, y)
+	end
 
-        local prevCol, prevRow = segment.cellCol, segment.cellRow
+	local prevCol, prevRow = segment.cellCol, segment.cellRow
 
-        if prevCol and prevRow and (prevCol ~= col or prevRow ~= row) then
-                removeSnakeBodySpatialEntry(prevCol, prevRow, segment)
-        end
+	if prevCol and prevRow and (prevCol ~= col or prevRow ~= row) then
+		removeSnakeBodySpatialEntry(prevCol, prevRow, segment)
+	end
 
-        segment.cellCol = col
-        segment.cellRow = row
+	segment.cellCol = col
+	segment.cellRow = row
 
-        if segmentIndex >= 2 then
-                if not (col and row) then
-                        return false
-                end
+	if segmentIndex >= 2 then
+		if not (col and row) then
+			return false
+		end
 
-                if not hasSnakeBodySpatialEntry(col, row, segment) then
-                        addSnakeBodySpatialEntry(col, row, segment)
-                end
-        elseif col and row then
-                -- ensure head does not pollute the spatial index
-                removeSnakeBodySpatialEntry(col, row, segment)
-        end
+		if not hasSnakeBodySpatialEntry(col, row, segment) then
+			addSnakeBodySpatialEntry(col, row, segment)
+		end
+	elseif col and row then
+		-- ensure head does not pollute the spatial index
+		removeSnakeBodySpatialEntry(col, row, segment)
+	end
 
-        return true
+	return true
 end
 
 local function syncSegmentSpatialRange(startIndex, finishIndex)
-        if not (trail and startIndex and finishIndex) then
-                return true
-        end
+	if not (trail and startIndex and finishIndex) then
+		return true
+	end
 
-        if finishIndex < startIndex then
-                return true
-        end
+	if finishIndex < startIndex then
+		return true
+	end
 
-        startIndex = max(1, startIndex)
-        finishIndex = min(#trail, finishIndex)
+	startIndex = max(1, startIndex)
+	finishIndex = min(#trail, finishIndex)
 
-        for i = startIndex, finishIndex do
-                if not syncSegmentSpatialEntry(i) then
-                        return false
-                end
-        end
+	for i = startIndex, finishIndex do
+		if not syncSegmentSpatialEntry(i) then
+			return false
+		end
+	end
 
-        return true
+	return true
 end
 
 local function syncSnakeHeadSegments(headCellCount)
-        if not trail or #trail == 0 then
-                return true
-        end
+	if not trail or #trail == 0 then
+		return true
+	end
 
-        local headSynced = syncSegmentSpatialEntry(1)
-        if not headSynced then
-                return false
-        end
+	local headSynced = syncSegmentSpatialEntry(1)
+	if not headSynced then
+		return false
+	end
 
-        local syncCount = headCellCount or 0
-        local extraSegments = newHeadSegmentsMax or 0
-        if extraSegments > syncCount then
-                syncCount = extraSegments
-        end
+	local syncCount = headCellCount or 0
+	local extraSegments = newHeadSegmentsMax or 0
+	if extraSegments > syncCount then
+		syncCount = extraSegments
+	end
 
-        if syncCount <= 0 then
-                return true
-        end
+	if syncCount <= 0 then
+		return true
+	end
 
-        local limit = 1 + syncCount
-        return syncSegmentSpatialRange(2, limit)
+	local limit = 1 + syncCount
+	return syncSegmentSpatialRange(2, limit)
 end
 
 local function syncSnakeTailSegment()
-        if not trail then
-                return true
-        end
+	if not trail then
+		return true
+	end
 
-        local length = #trail
-        if length <= 1 then
-                return true
-        end
+	local length = #trail
+	if length <= 1 then
+		return true
+	end
 
-        return syncSegmentSpatialEntry(length)
+	return syncSegmentSpatialEntry(length)
 end
 
 local function clampTileBounds(minCol, maxCol, minRow, maxRow)
-        if Arena then
-                local cols = Arena.cols or maxCol
-                local rows = Arena.rows or maxRow
+	if Arena then
+		local cols = Arena.cols or maxCol
+		local rows = Arena.rows or maxRow
 
-                if cols and cols > 0 then
-                        if minCol < 1 then
-                                minCol = 1
-                        end
-                        if maxCol > cols then
-                                maxCol = cols
-                        end
-                end
+		if cols and cols > 0 then
+			if minCol < 1 then
+				minCol = 1
+			end
+			if maxCol > cols then
+				maxCol = cols
+			end
+		end
 
-                if rows and rows > 0 then
-                        if minRow < 1 then
-                                minRow = 1
-                        end
-                        if maxRow > rows then
-                                maxRow = rows
-                        end
-                end
-        end
+		if rows and rows > 0 then
+			if minRow < 1 then
+				minRow = 1
+			end
+			if maxRow > rows then
+				maxRow = rows
+			end
+		end
+	end
 
-        if maxCol < minCol then
-                maxCol = minCol
-        end
+	if maxCol < minCol then
+		maxCol = minCol
+	end
 
-        if maxRow < minRow then
-                maxRow = minRow
-        end
+	if maxRow < minRow then
+		maxRow = minRow
+	end
 
-        return minCol, maxCol, minRow, maxRow
+	return minCol, maxCol, minRow, maxRow
 end
 
 local function computeTileBoundsForRect(x, y, w, h)
-        if not (x and y and w and h) then
-                return nil, nil, nil, nil
-        end
+	if not (x and y and w and h) then
+		return nil, nil, nil, nil
+	end
 
-        local tileSize = (Arena and Arena.tileSize) or SEGMENT_SPACING or 1
-        if tileSize == 0 then
-                tileSize = 1
-        end
+	local tileSize = (Arena and Arena.tileSize) or SEGMENT_SPACING or 1
+	if tileSize == 0 then
+		tileSize = 1
+	end
 
-        local offsetX = (Arena and Arena.x) or 0
-        local offsetY = (Arena and Arena.y) or 0
+	local offsetX = (Arena and Arena.x) or 0
+	local offsetY = (Arena and Arena.y) or 0
 
-        local minX = min(x, x + w)
-        local maxX = max(x, x + w)
-        local minY = min(y, y + h)
-        local maxY = max(y, y + h)
+	local minX = min(x, x + w)
+	local maxX = max(x, x + w)
+	local minY = min(y, y + h)
+	local maxY = max(y, y + h)
 
-        local epsilon = TILE_COORD_EPSILON or 1e-9
-        local minCol = floor(((minX - offsetX) / tileSize) + epsilon) + 1
-        local maxCol = floor(((maxX - offsetX) / tileSize) - epsilon) + 1
-        local minRow = floor(((minY - offsetY) / tileSize) + epsilon) + 1
-        local maxRow = floor(((maxY - offsetY) / tileSize) - epsilon) + 1
+	local epsilon = TILE_COORD_EPSILON or 1e-9
+	local minCol = floor(((minX - offsetX) / tileSize) + epsilon) + 1
+	local maxCol = floor(((maxX - offsetX) / tileSize) - epsilon) + 1
+	local minRow = floor(((minY - offsetY) / tileSize) + epsilon) + 1
+	local maxRow = floor(((maxY - offsetY) / tileSize) - epsilon) + 1
 
-        return clampTileBounds(minCol, maxCol, minRow, maxRow)
+	return clampTileBounds(minCol, maxCol, minRow, maxRow)
 end
 
 local function resetSegmentCandidateBuffers()
-        segmentCandidateCount = 0
-        segmentCandidateGeneration = segmentCandidateGeneration + 1
-        if segmentCandidateGeneration >= SEGMENT_CANDIDATE_GENERATION_RESET then
-                segmentCandidateGeneration = 1
-                segmentCandidateLookup = {}
-        end
+	segmentCandidateCount = 0
+	segmentCandidateGeneration = segmentCandidateGeneration + 1
+	if segmentCandidateGeneration >= SEGMENT_CANDIDATE_GENERATION_RESET then
+		segmentCandidateGeneration = 1
+		segmentCandidateLookup = {}
+	end
 end
 
 local function collectSnakeSegmentCandidatesForRect(x, y, w, h)
-        if not snakeBodySpatialIndexAvailable then
-                return nil, 0, nil, segmentCandidateGeneration
-        end
+	if not snakeBodySpatialIndexAvailable then
+		return nil, 0, nil, segmentCandidateGeneration
+	end
 
-        resetSegmentCandidateBuffers()
+	resetSegmentCandidateBuffers()
 
-        local minCol, maxCol, minRow, maxRow = computeTileBoundsForRect(x, y, w, h)
-        if not (minCol and maxCol and minRow and maxRow) then
-                segmentCandidateBuffer[segmentCandidateCount + 1] = nil
-                return segmentCandidateBuffer, segmentCandidateCount, segmentCandidateLookup, segmentCandidateGeneration
-        end
+	local minCol, maxCol, minRow, maxRow = computeTileBoundsForRect(x, y, w, h)
+	if not (minCol and maxCol and minRow and maxRow) then
+		segmentCandidateBuffer[segmentCandidateCount + 1] = nil
+		return segmentCandidateBuffer, segmentCandidateCount, segmentCandidateLookup, segmentCandidateGeneration
+	end
 
-        local generation = segmentCandidateGeneration
+	local generation = segmentCandidateGeneration
 
-        for col = minCol, maxCol do
-                local column = snakeBodySpatialIndex[col]
-                if column then
-                        for row = minRow, maxRow do
-                                local entries = column[row]
-                                if entries then
-                                        for i = 1, #entries do
-                                                local segment = entries[i]
-                                                if segment and segmentCandidateLookup[segment] ~= generation then
-                                                        segmentCandidateLookup[segment] = generation
-                                                        segmentCandidateCount = segmentCandidateCount + 1
-                                                        segmentCandidateBuffer[segmentCandidateCount] = segment
-                                                end
-                                        end
-                                end
-                        end
-                end
-        end
+	for col = minCol, maxCol do
+		local column = snakeBodySpatialIndex[col]
+		if column then
+			for row = minRow, maxRow do
+				local entries = column[row]
+				if entries then
+					for i = 1, #entries do
+						local segment = entries[i]
+						if segment and segmentCandidateLookup[segment] ~= generation then
+							segmentCandidateLookup[segment] = generation
+							segmentCandidateCount = segmentCandidateCount + 1
+							segmentCandidateBuffer[segmentCandidateCount] = segment
+						end
+					end
+				end
+			end
+		end
+	end
 
-        segmentCandidateBuffer[segmentCandidateCount + 1] = nil
+	segmentCandidateBuffer[segmentCandidateCount + 1] = nil
 
-        return segmentCandidateBuffer, segmentCandidateCount, segmentCandidateLookup, generation
+	return segmentCandidateBuffer, segmentCandidateCount, segmentCandidateLookup, generation
 end
 
 local function collectSnakeSegmentCandidatesForCircle(cx, cy, radius)
-        if not radius or radius <= 0 then
-                return collectSnakeSegmentCandidatesForRect(cx, cy, 0, 0)
-        end
+	if not radius or radius <= 0 then
+		return collectSnakeSegmentCandidatesForRect(cx, cy, 0, 0)
+	end
 
-        local diameter = radius * 2
-        return collectSnakeSegmentCandidatesForRect(cx - radius, cy - radius, diameter, diameter)
+	local diameter = radius * 2
+	return collectSnakeSegmentCandidatesForRect(cx - radius, cy - radius, diameter, diameter)
 end
 
 local stencilCircleX, stencilCircleY, stencilCircleRadius = 0, 0, 0
@@ -1546,24 +1546,24 @@ toCell = function(x, y)
 end
 
 local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
-        if not ensureOccupancyGrid() then
-                resetTrackedSnakeCells()
-                clearSnakeBodyOccupancy()
-                headOccupancyCol = nil
-                headOccupancyRow = nil
-                clearSnakeBodySpatialIndex()
-                return
-        end
+	if not ensureOccupancyGrid() then
+		resetTrackedSnakeCells()
+		clearSnakeBodyOccupancy()
+		headOccupancyCol = nil
+		headOccupancyRow = nil
+		clearSnakeBodySpatialIndex()
+		return
+	end
 
-        clearSnakeOccupiedCells()
-        clearSnakeBodyOccupancy()
+	clearSnakeOccupiedCells()
+	clearSnakeBodyOccupancy()
 
-        if not trail then
-                headOccupancyCol = nil
-                headOccupancyRow = nil
-                clearSnakeBodySpatialIndex()
-                return
-        end
+	if not trail then
+		headOccupancyCol = nil
+		headOccupancyRow = nil
+		clearSnakeBodySpatialIndex()
+		return
+	end
 
 	local assignedHeadCol, assignedHeadRow = nil, nil
 
@@ -1591,36 +1591,36 @@ local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
 		end
 	end
 
-        rebuildSnakeBodySpatialIndex()
+	rebuildSnakeBodySpatialIndex()
 
-        if assignedHeadCol and assignedHeadRow then
-                headOccupancyCol = assignedHeadCol
-                headOccupancyRow = assignedHeadRow
-        else
-                headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-        end
+	if assignedHeadCol and assignedHeadRow then
+		headOccupancyCol = assignedHeadCol
+		headOccupancyRow = assignedHeadRow
+	else
+		headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
+	end
 end
 
 local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, overrideRow, tailMoved, tailAfterCol, tailAfterRow)
 	clearRecentlyVacatedCells()
 
-        if not ensureOccupancyGrid() then
-                resetTrackedSnakeCells()
-                clearSnakeBodyOccupancy()
-                headOccupancyCol = nil
-                headOccupancyRow = nil
-                clearSnakeBodySpatialIndex()
-                return
-        end
+	if not ensureOccupancyGrid() then
+		resetTrackedSnakeCells()
+		clearSnakeBodyOccupancy()
+		headOccupancyCol = nil
+		headOccupancyRow = nil
+		clearSnakeBodySpatialIndex()
+		return
+	end
 
-        if not trail or #trail == 0 then
-                clearSnakeOccupiedCells()
-                clearSnakeBodyOccupancy()
-                headOccupancyCol = nil
-                headOccupancyRow = nil
-                clearSnakeBodySpatialIndex()
-                return
-        end
+	if not trail or #trail == 0 then
+		clearSnakeOccupiedCells()
+		clearSnakeBodyOccupancy()
+		headOccupancyCol = nil
+		headOccupancyRow = nil
+		clearSnakeBodySpatialIndex()
+		return
+	end
 
 	if snakeOccupiedFirst > snakeOccupiedLast then
 		rebuildOccupancyFromTrail(overrideCol, overrideRow)
@@ -1647,41 +1647,41 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
 		end
 	end
 
-        if not processedHead then
-                if overrideCol and overrideRow then
-                        if headOccupancyCol ~= overrideCol or headOccupancyRow ~= overrideRow then
-                                rebuildOccupancyFromTrail(overrideCol, overrideRow)
-                                return
-                        end
-                else
-                        headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-                end
-        end
+	if not processedHead then
+		if overrideCol and overrideRow then
+			if headOccupancyCol ~= overrideCol or headOccupancyRow ~= overrideRow then
+				rebuildOccupancyFromTrail(overrideCol, overrideRow)
+				return
+			end
+		else
+			headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
+		end
+	end
 
-        if not syncSnakeHeadSegments(headCellCount) then
-                rebuildSnakeBodySpatialIndex()
-                return
-        end
+	if not syncSnakeHeadSegments(headCellCount) then
+		rebuildSnakeBodySpatialIndex()
+		return
+	end
 
-        if not tailMoved then
-                return
-        end
+	if not tailMoved then
+		return
+	end
 
-        if not tailAfterCol or not tailAfterRow then
-                while true do
-                        local col, row = popSnakeTailCell()
+	if not tailAfterCol or not tailAfterRow then
+		while true do
+			local col, row = popSnakeTailCell()
 			if not (col and row) then
 				break
 			end
 			markRecentlyVacatedCell(col, row)
 			SnakeUtils.setOccupied(col, row, false)
 			removeSnakeBodyOccupancy(col, row)
-                end
+		end
 
-                headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-                rebuildSnakeBodySpatialIndex()
-                return
-        end
+		headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
+		rebuildSnakeBodySpatialIndex()
+		return
+	end
 
 	local iterations = 0
 	while true do
@@ -1710,12 +1710,12 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
 			rebuildOccupancyFromTrail(overrideCol, overrideRow)
 			return
 		end
-        end
+	end
 
-        headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-        if not syncSnakeTailSegment() then
-                rebuildSnakeBodySpatialIndex()
-        end
+	headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
+	if not syncSnakeTailSegment() then
+		rebuildSnakeBodySpatialIndex()
+	end
 end
 
 local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
@@ -1941,138 +1941,138 @@ local function copySegmentData(segment)
 	copy.drawX = segment.drawX
 	copy.drawY = segment.drawY
 	copy.dirX = segment.dirX
-        copy.dirY = segment.dirY
-        copy.x = segment.x
-        copy.y = segment.y
-        copy.fruitMarker = segment.fruitMarker
-        copy.fruitMarkerX = segment.fruitMarkerX
-        copy.fruitMarkerY = segment.fruitMarkerY
-        copy.lengthToPrev = segment.lengthToPrev
-        copy.cellCol = segment.cellCol
-        copy.cellRow = segment.cellRow
+	copy.dirY = segment.dirY
+	copy.x = segment.x
+	copy.y = segment.y
+	copy.fruitMarker = segment.fruitMarker
+	copy.fruitMarkerX = segment.fruitMarkerX
+	copy.fruitMarkerY = segment.fruitMarkerY
+	copy.lengthToPrev = segment.lengthToPrev
+	copy.cellCol = segment.cellCol
+	copy.cellRow = segment.cellRow
 
-        return copy
+	return copy
 end
 
 local function computeTrailLength(trailData)
-        if not trailData then
-                return 0
-        end
+	if not trailData then
+		return 0
+	end
 
-        local total = 0
-        for i = 2, #trailData do
-                local prev = trailData[i - 1]
-                local curr = trailData[i]
-                local ax, ay = prev and prev.drawX, prev and prev.drawY
-                local bx, by = curr and curr.drawX, curr and curr.drawY
-                if ax and ay and bx and by then
-                        local dx = bx - ax
-                        local dy = by - ay
-                        total = total + sqrt(dx * dx + dy * dy)
-                end
-        end
+	local total = 0
+	for i = 2, #trailData do
+		local prev = trailData[i - 1]
+		local curr = trailData[i]
+		local ax, ay = prev and prev.drawX, prev and prev.drawY
+		local bx, by = curr and curr.drawX, curr and curr.drawY
+		if ax and ay and bx and by then
+			local dx = bx - ax
+			local dy = by - ay
+			total = total + sqrt(dx * dx + dy * dy)
+		end
+	end
 
-        return total
+	return total
 end
 
 local function applyTrailLengthLimit(maxLen, gluttonsWakeActive)
-        if not trail then
-                trailLength = 0
-                return
-        end
+	if not trail then
+		trailLength = 0
+		return
+	end
 
-        if not maxLen then
-                return
-        end
+	if not maxLen then
+		return
+	end
 
-        if maxLen <= 0 then
-                recycleTrail(trail)
-                trail = {}
-                trailLength = 0
-                return
-        end
+	if maxLen <= 0 then
+		recycleTrail(trail)
+		trail = {}
+		trailLength = 0
+		return
+	end
 
-        if #trail == 0 or trailLength <= maxLen then
-                return
-        end
+	if #trail == 0 or trailLength <= maxLen then
+		return
+	end
 
-        local remaining = trailLength - maxLen
-        local removeStartIndex = nil
-        local shortenIndex = nil
-        local newTailX, newTailY = nil, nil
+	local remaining = trailLength - maxLen
+	local removeStartIndex = nil
+	local shortenIndex = nil
+	local newTailX, newTailY = nil, nil
 
-        local index = #trail
-        while index >= 2 and remaining > 0 do
-                local segment = trail[index]
-                if not segment then
-                        break
-                end
+	local index = #trail
+	while index >= 2 and remaining > 0 do
+		local segment = trail[index]
+		if not segment then
+			break
+		end
 
-                local length = segment.lengthToPrev or 0
-                if length <= 0 then
-                        removeStartIndex = index
-                        index = index - 1
-                elseif length <= remaining + 1e-6 then
-                        remaining = remaining - length
-                        removeStartIndex = index
-                        index = index - 1
-                else
-                        shortenIndex = index
-                        local prev = trail[index - 1]
-                        if prev and prev.drawX and prev.drawY and segment.drawX and segment.drawY then
-                                local dx = segment.drawX - prev.drawX
-                                local dy = segment.drawY - prev.drawY
-                                local ratio = (length - remaining) / length
-                                if ratio < 0 then
-                                        ratio = 0
-                                elseif ratio > 1 then
-                                        ratio = 1
-                                end
-                                newTailX = prev.drawX + dx * ratio
-                                newTailY = prev.drawY + dy * ratio
-                        end
-                        remaining = 0
-                        break
-                end
-        end
+		local length = segment.lengthToPrev or 0
+		if length <= 0 then
+			removeStartIndex = index
+			index = index - 1
+		elseif length <= remaining + 1e-6 then
+			remaining = remaining - length
+			removeStartIndex = index
+			index = index - 1
+		else
+			shortenIndex = index
+			local prev = trail[index - 1]
+			if prev and prev.drawX and prev.drawY and segment.drawX and segment.drawY then
+				local dx = segment.drawX - prev.drawX
+				local dy = segment.drawY - prev.drawY
+				local ratio = (length - remaining) / length
+				if ratio < 0 then
+					ratio = 0
+				elseif ratio > 1 then
+					ratio = 1
+				end
+				newTailX = prev.drawX + dx * ratio
+				newTailY = prev.drawY + dy * ratio
+			end
+			remaining = 0
+			break
+		end
+	end
 
-        if removeStartIndex then
-                crystallizeGluttonsWakeSegments(trail, removeStartIndex, #trail, gluttonsWakeActive)
-                for i = removeStartIndex, #trail do
-                        local seg = trail[i]
-                        if seg then
-                                local segLen = seg.lengthToPrev or 0
-                                if segLen ~= 0 then
-                                        trailLength = trailLength - segLen
-                                end
-                        end
-                end
-                releaseSegmentRange(trail, removeStartIndex)
-        end
+	if removeStartIndex then
+		crystallizeGluttonsWakeSegments(trail, removeStartIndex, #trail, gluttonsWakeActive)
+		for i = removeStartIndex, #trail do
+			local seg = trail[i]
+			if seg then
+				local segLen = seg.lengthToPrev or 0
+				if segLen ~= 0 then
+					trailLength = trailLength - segLen
+				end
+			end
+		end
+		releaseSegmentRange(trail, removeStartIndex)
+	end
 
-        if shortenIndex then
-                if removeStartIndex and shortenIndex >= removeStartIndex then
-                        shortenIndex = removeStartIndex - 1
-                end
-                if shortenIndex and shortenIndex >= 2 then
-                        local segment = trail[shortenIndex]
-                        if segment then
-                                if newTailX and newTailY then
-                                        segment.drawX = newTailX
-                                        segment.drawY = newTailY
-                                end
-                                updateSegmentLengthAt(shortenIndex)
-                        end
-                end
-        end
+	if shortenIndex then
+		if removeStartIndex and shortenIndex >= removeStartIndex then
+			shortenIndex = removeStartIndex - 1
+		end
+		if shortenIndex and shortenIndex >= 2 then
+			local segment = trail[shortenIndex]
+			if segment then
+				if newTailX and newTailY then
+					segment.drawX = newTailX
+					segment.drawY = newTailY
+				end
+				updateSegmentLengthAt(shortenIndex)
+			end
+		end
+	end
 
-        if trailLength > maxLen + 1e-4 then
-                syncTrailLength()
-        end
+	if trailLength > maxLen + 1e-4 then
+		syncTrailLength()
+	end
 
-        if trailLength < 0 then
-                trailLength = 0
-        end
+	if trailLength < 0 then
+		trailLength = 0
+	end
 end
 
 local function sliceTrailByLength(sourceTrail, maxLength, destination)
@@ -2333,47 +2333,47 @@ end
 local isGluttonsWakeActive
 
 local function trimTrailToSegmentLimit()
-        if not trail or #trail == 0 then
-                trailLength = 0
-                return
-        end
+	if not trail or #trail == 0 then
+		trailLength = 0
+		return
+	end
 
-        local consumedLength = (descendingHole and descendingHole.consumedLength) or 0
-        local maxLen = max(0, segmentCount * SEGMENT_SPACING - consumedLength)
+	local consumedLength = (descendingHole and descendingHole.consumedLength) or 0
+	local maxLen = max(0, segmentCount * SEGMENT_SPACING - consumedLength)
 
-        local gluttonsWakeActive = isGluttonsWakeActive()
-        applyTrailLengthLimit(maxLen, gluttonsWakeActive)
+	local gluttonsWakeActive = isGluttonsWakeActive()
+	applyTrailLengthLimit(maxLen, gluttonsWakeActive)
 
-        local i = 2
-        while i <= #trail do
-                local seg = trail[i]
-                if not seg then
-                        break
-                end
+	local i = 2
+	while i <= #trail do
+		local seg = trail[i]
+		if not seg then
+			break
+		end
 
-                local segLen = seg.lengthToPrev or 0
-                if segLen <= 1e-6 then
-                        local removed = remove(trail, i)
-                        if removed then
-                                if gluttonsWakeActive then
-                                        spawnGluttonsWakeRock(removed)
-                                end
-                                if removed.lengthToPrev and removed.lengthToPrev ~= 0 then
-                                        trailLength = trailLength - removed.lengthToPrev
-                                end
-                                releaseSegment(removed)
-                        end
-                        if i <= #trail then
-                                updateSegmentLengthAt(i)
-                        end
-                else
-                        i = i + 1
-                end
-        end
+		local segLen = seg.lengthToPrev or 0
+		if segLen <= 1e-6 then
+			local removed = remove(trail, i)
+			if removed then
+				if gluttonsWakeActive then
+					spawnGluttonsWakeRock(removed)
+				end
+				if removed.lengthToPrev and removed.lengthToPrev ~= 0 then
+					trailLength = trailLength - removed.lengthToPrev
+				end
+				releaseSegment(removed)
+			end
+			if i <= #trail then
+				updateSegmentLengthAt(i)
+			end
+		else
+			i = i + 1
+		end
+	end
 
-        if trailLength < 0 then
-                trailLength = 0
-        end
+	if trailLength < 0 then
+		trailLength = 0
+	end
 end
 
 local function drawDescendingIntoHole(hole)
@@ -2675,33 +2675,33 @@ local function buildInitialTrail()
 	local midRow = floor(Arena.rows / 2)
 	local startX, startY = Arena:getCenterOfTile(midCol, midRow)
 
-        for i = 0, segmentCount - 1 do
-                local cx = startX - i * SEGMENT_SPACING * direction.x
-                local cy = startY - i * SEGMENT_SPACING * direction.y
-                local segment = acquireSegment()
-                segment.drawX = cx
-                segment.drawY = cy
-                segment.dirX = direction.x
-                segment.dirY = direction.y
-                t[#t + 1] = segment
-        end
-        if #t > 0 then
-                t[1].lengthToPrev = 0
-        end
-        local total = 0
-        for i = 2, #t do
-                local prev = t[i - 1]
-                local curr = t[i]
-                if prev and curr then
-                        local dx = (prev.drawX or 0) - (curr.drawX or 0)
-                        local dy = (prev.drawY or 0) - (curr.drawY or 0)
-                        local length = sqrt(dx * dx + dy * dy)
-                        curr.lengthToPrev = length
-                        total = total + length
-                end
-        end
-        trailLength = total
-        return t
+	for i = 0, segmentCount - 1 do
+		local cx = startX - i * SEGMENT_SPACING * direction.x
+		local cy = startY - i * SEGMENT_SPACING * direction.y
+		local segment = acquireSegment()
+		segment.drawX = cx
+		segment.drawY = cy
+		segment.dirX = direction.x
+		segment.dirY = direction.y
+		t[#t + 1] = segment
+	end
+	if #t > 0 then
+		t[1].lengthToPrev = 0
+	end
+	local total = 0
+	for i = 2, #t do
+		local prev = t[i - 1]
+		local curr = t[i]
+		if prev and curr then
+			local dx = (prev.drawX or 0) - (curr.drawX or 0)
+			local dy = (prev.drawY or 0) - (curr.drawY or 0)
+			local length = sqrt(dx * dx + dy * dy)
+			curr.lengthToPrev = length
+			total = total + length
+		end
+	end
+	trailLength = total
+	return t
 end
 
 function Snake:load(w, h)
@@ -2717,9 +2717,9 @@ function Snake:load(w, h)
 	self.damageFlashTimer = 0
 	self.tailHitFlashTimer = 0
 	recycleTrail(trail)
-        trail = buildInitialTrail()
-        syncTrailLength()
-        descendingHole = nil
+	trail = buildInitialTrail()
+	syncTrailLength()
+	descendingHole = nil
 	clearSeveredPieces()
 	severedPieces = {}
 	clearPortalAnimation(portalAnimation)
@@ -2835,18 +2835,18 @@ function Snake:getHead()
 end
 
 function Snake:setHeadPosition(x, y)
-        local head = trail[1]
-        if not head then
-                return
-        end
+	local head = trail[1]
+	if not head then
+		return
+	end
 
-        head.drawX = x
-        head.drawY = y
-        syncSegmentSpatialEntry(1)
-        local count = trail and #trail or 0
-        if count > 0 then
-                recalcSegmentLengthsRange(1, min(count, 2))
-        end
+	head.drawX = x
+	head.drawY = y
+	syncSegmentSpatialEntry(1)
+	local count = trail and #trail or 0
+	if count > 0 then
+		recalcSegmentLengthsRange(1, min(count, 2))
+	end
 end
 
 function Snake:resetMovementProgress()
@@ -2938,15 +2938,15 @@ function Snake:beginPortalWarp(params)
 		self:resetMovementProgress()
 	end
 
-        local head = trail and trail[1]
-        if head then
-                head.drawX = exitX
-                head.drawY = exitY
-                local count = trail and #trail or 0
-                if count > 0 then
-                        recalcSegmentLengthsRange(1, min(count, 2))
-                end
-        end
+	local head = trail and trail[1]
+	if head then
+		head.drawX = exitX
+		head.drawY = exitY
+		local count = trail and #trail or 0
+		if count > 0 then
+			recalcSegmentLengthsRange(1, min(count, 2))
+		end
+	end
 
 	local entrySource = {}
 	for i = 1, #entryClone do
@@ -3681,78 +3681,78 @@ function Snake:update(dt)
 		nx, ny = dx / dist, dy / dist
 	end
 
-        local remaining = dist
-        local prevX, prevY = head.drawX, head.drawY
-        local buffer = newHeadSegments
-        local bufferCount = 0
+	local remaining = dist
+	local prevX, prevY = head.drawX, head.drawY
+	local buffer = newHeadSegments
+	local bufferCount = 0
 
-        while remaining >= SAMPLE_STEP do
-                prevX = prevX + nx * SAMPLE_STEP
-                prevY = prevY + ny * SAMPLE_STEP
-                local segment = acquireSegment()
-                segment.drawX = prevX
-                segment.drawY = prevY
-                segment.dirX = direction.x
-                segment.dirY = direction.y
-                segment.fruitMarker = nil
-                segment.fruitMarkerX = nil
-                segment.fruitMarkerY = nil
-                segment.lengthToPrev = nil
-                bufferCount = bufferCount + 1
-                buffer[bufferCount] = segment
-                remaining = remaining - SAMPLE_STEP
-        end
+	while remaining >= SAMPLE_STEP do
+		prevX = prevX + nx * SAMPLE_STEP
+		prevY = prevY + ny * SAMPLE_STEP
+		local segment = acquireSegment()
+		segment.drawX = prevX
+		segment.drawY = prevY
+		segment.dirX = direction.x
+		segment.dirY = direction.y
+		segment.fruitMarker = nil
+		segment.fruitMarkerX = nil
+		segment.fruitMarkerY = nil
+		segment.lengthToPrev = nil
+		bufferCount = bufferCount + 1
+		buffer[bufferCount] = segment
+		remaining = remaining - SAMPLE_STEP
+	end
 
-        if bufferCount > 0 then
-                local existingCount = #trail
-                if existingCount > 0 then
-                        table.move(trail, 1, existingCount, bufferCount + 1)
-                end
+	if bufferCount > 0 then
+		local existingCount = #trail
+		if existingCount > 0 then
+			table.move(trail, 1, existingCount, bufferCount + 1)
+		end
 
-                if bufferCount > 1 then
-                        local half = floor(bufferCount * 0.5)
-                        for i = 1, half do
-                                local j = bufferCount - i + 1
-                                buffer[i], buffer[j] = buffer[j], buffer[i]
-                        end
-                end
+		if bufferCount > 1 then
+			local half = floor(bufferCount * 0.5)
+			for i = 1, half do
+				local j = bufferCount - i + 1
+				buffer[i], buffer[j] = buffer[j], buffer[i]
+			end
+		end
 
-                table.move(buffer, 1, bufferCount, 1, trail)
+		table.move(buffer, 1, bufferCount, 1, trail)
 
-                head = trail[1]
-        end
+		head = trail[1]
+	end
 
-        do
-                local previousMax = newHeadSegmentsMax
-                if bufferCount > previousMax then
-                        newHeadSegmentsMax = bufferCount
-                else
-                        for i = bufferCount + 1, previousMax do
-                                buffer[i] = nil
-                        end
-                        newHeadSegmentsMax = bufferCount
-                end
-        end
+	do
+		local previousMax = newHeadSegmentsMax
+		if bufferCount > previousMax then
+			newHeadSegmentsMax = bufferCount
+		else
+			for i = bufferCount + 1, previousMax do
+				buffer[i] = nil
+			end
+			newHeadSegmentsMax = bufferCount
+		end
+	end
 
-        -- final correction: put true head at exact new position
-        if trail[1] then
-                trail[1].drawX = newX
-                trail[1].drawY = newY
-        end
+	-- final correction: put true head at exact new position
+	if trail[1] then
+		trail[1].drawX = newX
+		trail[1].drawY = newY
+	end
 
-        if bufferCount == 0 then
-                recalcSegmentLengthsRange(1, min(#trail, 2))
-        else
-                recalcSegmentLengthsRange(1, min(#trail, bufferCount + 1))
-        end
+	if bufferCount == 0 then
+		recalcSegmentLengthsRange(1, min(#trail, 2))
+	else
+		recalcSegmentLengthsRange(1, min(#trail, bufferCount + 1))
+	end
 
-        if hole then
-                trimHoleSegments(hole)
-                head = trail[1]
-                if head then
-                        newX, newY = head.drawX, head.drawY
-                end
-        end
+	if hole then
+		trimHoleSegments(hole)
+		head = trail[1]
+		if head then
+			newX, newY = head.drawX, head.drawY
+		end
+	end
 
 	-- tail trimming
 	local tailBeforeX, tailBeforeY = nil, nil
@@ -3770,7 +3770,7 @@ function Snake:update(dt)
 	local consumedLength = (hole and hole.consumedLength) or 0
 	local maxLen = max(0, segmentCount * SEGMENT_SPACING - consumedLength)
 
-        applyTrailLengthLimit(maxLen, isGluttonsWakeActive())
+	applyTrailLengthLimit(maxLen, isGluttonsWakeActive())
 
 	local lenAfterTrim = #trail
 	do
@@ -3884,9 +3884,9 @@ function Snake:update(dt)
 		end
 	end
 
-        if portalAnimation then
-                local state = portalAnimation
-                local duration = state.duration or 0.3
+	if portalAnimation then
+		local state = portalAnimation
+		local duration = state.duration or 0.3
 		if not duration or duration <= 1e-4 then
 			duration = 1e-4
 		end
@@ -3950,11 +3950,11 @@ function Snake:update(dt)
 			exitHole.pulse = (exitHole.pulse or 0) + dt
 		end
 
-                if progress >= 1 then
-                        clearPortalAnimation(state)
-                        portalAnimation = nil
-                end
-        end
+		if progress >= 1 then
+			clearPortalAnimation(state)
+			portalAnimation = nil
+		end
+	end
 
 	-- update timers
 	if popTimer > 0 then
@@ -4231,9 +4231,9 @@ function Snake:loseSegments(count, options)
 	end
 
 	if (not options) or options.spawnParticles ~= false then
-	local burstColor = LOSE_SEGMENTS_DEFAULT_BURST_COLOR
-	if options and (options.cause == "saw" or options.cause == "laser" or options.cause == "dart") then
-		burstColor = LOSE_SEGMENTS_SAW_BURST_COLOR
+		local burstColor = LOSE_SEGMENTS_DEFAULT_BURST_COLOR
+		if options and (options.cause == "saw" or options.cause == "laser" or options.cause == "dart") then
+			burstColor = LOSE_SEGMENTS_SAW_BURST_COLOR
 		end
 
 		if Particles and Particles.spawnBurst and tailX and tailY then
@@ -4264,69 +4264,69 @@ local function chopTailLossAmount()
 end
 
 function Snake:chopTailByHazard(cause)
-        local loss = chopTailLossAmount()
-        if loss <= 0 then
-                return 0
-        end
+	local loss = chopTailLossAmount()
+	if loss <= 0 then
+		return 0
+	end
 
-        local hazardCause = cause or "saw"
-        local trimmed = self:loseSegments(loss, {cause = hazardCause})
+	local hazardCause = cause or "saw"
+	local trimmed = self:loseSegments(loss, {cause = hazardCause})
 
-        if trimmed > 0 then
-                local tailSegment = trail[#trail]
-                local chopX = tailSegment and tailSegment.drawX
-                local chopY = tailSegment and tailSegment.drawY
+	if trimmed > 0 then
+		local tailSegment = trail[#trail]
+		local chopX = tailSegment and tailSegment.drawX
+		local chopY = tailSegment and tailSegment.drawY
 
-                if Face then
-                        local activeState = Face.state
-                        if activeState == "blink" then
-                                activeState = Face.savedState or activeState
-                        end
+		if Face then
+			local activeState = Face.state
+			if activeState == "blink" then
+				activeState = Face.savedState or activeState
+			end
 
-                        if not HIGH_PRIORITY_FACE_STATES[activeState] then
-                                Face:set("shocked", 1.3)
-                        end
-                end
+			if not HIGH_PRIORITY_FACE_STATES[activeState] then
+				Face:set("shocked", 1.3)
+			end
+		end
 
-                local Game = package.loaded["game"]
-                if Game then
-                        if Game.triggerTailChopFeedback then
-                                Game:triggerTailChopFeedback(hazardCause, chopX, chopY)
-                        elseif Game.triggerTailChopShake then
-                                Game:triggerTailChopShake(hazardCause)
-                        elseif Game.triggerScreenShake then
-                                Game:triggerScreenShake(0.16)
-                        end
-                end
-        end
+		local Game = package.loaded["game"]
+		if Game then
+			if Game.triggerTailChopFeedback then
+				Game:triggerTailChopFeedback(hazardCause, chopX, chopY)
+			elseif Game.triggerTailChopShake then
+				Game:triggerTailChopShake(hazardCause)
+			elseif Game.triggerScreenShake then
+				Game:triggerScreenShake(0.16)
+			end
+		end
+	end
 
-        return trimmed
+	return trimmed
 end
 
 function Snake:chopTailBySaw()
-        return self:chopTailByHazard("saw")
+	return self:chopTailByHazard("saw")
 end
 
 local function isSawActive(saw)
-        if not saw then
-                return false
-        end
+	if not saw then
+		return false
+	end
 
-        return not ((saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0)
+	return not ((saw.sinkProgress or 0) > 0 or (saw.sinkTarget or 0) > 0)
 end
 
 local function getSawCenterPosition(saw)
-        if not (Saws and Saws.getCollisionCenter) then
-                return nil, nil
-        end
+	if not (Saws and Saws.getCollisionCenter) then
+		return nil, nil
+	end
 
-        return Saws:getCollisionCenter(saw)
+	return Saws:getCollisionCenter(saw)
 end
 
 local function isSawCutPointExposed(saw, sx, sy, px, py)
-        if not (saw and sx and sy and px and py) then
-                return true
-        end
+	if not (saw and sx and sy and px and py) then
+		return true
+	end
 
 	local tolerance = 1.0
 	local nx, ny
@@ -4532,412 +4532,412 @@ function Snake:handleSawBodyCut(context)
 		end
 	end
 
-        for i = #trail, previousIndex + 1, -1 do
-                local removed = trail[i]
-                trail[i] = nil
-                if removed then
-                        local lenToPrev = removed.lengthToPrev or 0
-                        if lenToPrev ~= 0 then
-                                trailLength = trailLength - lenToPrev
-                        end
-                        releaseSegment(removed)
-                end
-        end
+	for i = #trail, previousIndex + 1, -1 do
+		local removed = trail[i]
+		trail[i] = nil
+		if removed then
+			local lenToPrev = removed.lengthToPrev or 0
+			if lenToPrev ~= 0 then
+				trailLength = trailLength - lenToPrev
+			end
+			releaseSegment(removed)
+		end
+	end
 
-        newTail.lengthToPrev = nil
-        trail[#trail + 1] = newTail
-        updateSegmentLengthAt(#trail)
+	newTail.lengthToPrev = nil
+	trail[#trail + 1] = newTail
+	updateSegmentLengthAt(#trail)
 
-        addSeveredTrail(severedTrail, lostSegments + 1)
-        spawnSawCutParticles(cutX, cutY, lostSegments)
+	addSeveredTrail(severedTrail, lostSegments + 1)
+	spawnSawCutParticles(cutX, cutY, lostSegments)
 
-        self:loseSegments(lostSegments, {cause = cause, trimTrail = false})
+	self:loseSegments(lostSegments, {cause = cause, trimTrail = false})
 
-        return true
+	return true
 end
 
 local laserCollisionContext = {
-        snake = nil,
-        trail = nil,
-        headX = nil,
-        headY = nil,
-        guardDistance = 0,
-        bodyRadius = 0,
-        cutEvent = {cause = "laser"},
+	snake = nil,
+	trail = nil,
+	headX = nil,
+	headY = nil,
+	guardDistance = 0,
+	bodyRadius = 0,
+	cutEvent = {cause = "laser"},
 }
 
 local dartCollisionContext = {
-        snake = nil,
-        trail = nil,
-        headX = nil,
-        headY = nil,
-        guardDistance = 0,
-        bodyRadius = 0,
-        cutEvent = {cause = "dart"},
+	snake = nil,
+	trail = nil,
+	headX = nil,
+	headY = nil,
+	guardDistance = 0,
+	bodyRadius = 0,
+	cutEvent = {cause = "dart"},
 }
 
 local sawCollisionContext = {
-        snake = nil,
-        trail = nil,
-        headX = nil,
-        headY = nil,
-        guardDistance = 0,
-        bodyRadius = 0,
-        cutEvent = {},
+	snake = nil,
+	trail = nil,
+	headX = nil,
+	headY = nil,
+	guardDistance = 0,
+	bodyRadius = 0,
+	cutEvent = {},
 }
 
 local function resetCollisionContext(context)
-        if not context then
-                return
-        end
+	if not context then
+		return
+	end
 
-        context.snake = nil
-        context.trail = nil
-        context.headX = nil
-        context.headY = nil
-        context.guardDistance = 0
-        context.bodyRadius = 0
+	context.snake = nil
+	context.trail = nil
+	context.headX = nil
+	context.headY = nil
+	context.guardDistance = 0
+	context.bodyRadius = 0
 
-        local cutEvent = context.cutEvent
-        if cutEvent then
-                cutEvent.index = nil
-                cutEvent.cutX = nil
-                cutEvent.cutY = nil
-                cutEvent.cutDistance = nil
-        end
+	local cutEvent = context.cutEvent
+	if cutEvent then
+		cutEvent.index = nil
+		cutEvent.cutX = nil
+		cutEvent.cutY = nil
+		cutEvent.cutDistance = nil
+	end
 end
 
 local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidateIndices, candidateCount, candidateLookup, candidateGeneration)
-        local trailRef = context.trail
-        if not (trailRef and trailRef[1]) then
-                return nil
-        end
+	local trailRef = context.trail
+	if not (trailRef and trailRef[1]) then
+		return nil
+	end
 
-        local headX = context.headX
-        local headY = context.headY
-        if not (headX and headY) then
-                return nil
-        end
+	local headX = context.headX
+	local headY = context.headY
+	if not (headX and headY) then
+		return nil
+	end
 
-        if not candidateLookup then
-                candidateIndices, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
-        end
+	if not candidateLookup then
+		candidateIndices, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
+	end
 
-        local useCandidateFilter = candidateLookup ~= nil
-        if useCandidateFilter and (not candidateIndices or (candidateCount or 0) == 0) then
-                return nil
-        end
+	local useCandidateFilter = candidateLookup ~= nil
+	if useCandidateFilter and (not candidateIndices or (candidateCount or 0) == 0) then
+		return nil
+	end
 
-        local travelled = 0
-        local prevX, prevY = headX, headY
+	local travelled = 0
+	local prevX, prevY = headX, headY
 
-        for index = 2, #trailRef do
-                local segment = trailRef[index]
-                local cx = segment and (segment.drawX or segment.x)
-                local cy = segment and (segment.drawY or segment.y)
-                if cx and cy then
-                        local dx = cx - prevX
-                        local dy = cy - prevY
-                        local segLen = sqrt(dx * dx + dy * dy)
+	for index = 2, #trailRef do
+		local segment = trailRef[index]
+		local cx = segment and (segment.drawX or segment.x)
+		local cy = segment and (segment.drawY or segment.y)
+		if cx and cy then
+			local dx = cx - prevX
+			local dy = cy - prevY
+			local segLen = sqrt(dx * dx + dy * dy)
 
-                        if segLen > 1e-6 then
-                                local shouldTest = not useCandidateFilter or (candidateLookup[segment] == candidateGeneration)
-                                if shouldTest then
-                                        local intersects, cutX, cutY, t = segmentRectIntersection(
-                                                prevX,
-                                                prevY,
-                                                cx,
-                                                cy,
-                                                expandedX,
-                                                expandedY,
-                                                expandedW,
-                                                expandedH
-                                        )
+			if segLen > 1e-6 then
+				local shouldTest = not useCandidateFilter or (candidateLookup[segment] == candidateGeneration)
+				if shouldTest then
+					local intersects, cutX, cutY, t = segmentRectIntersection(
+					prevX,
+					prevY,
+					cx,
+					cy,
+					expandedX,
+					expandedY,
+					expandedW,
+					expandedH
+					)
 
-                                        if intersects and t then
-                                                local along = travelled + segLen * t
-                                                if along > context.guardDistance then
-                                                        local cutEvent = context.cutEvent
-                                                        cutEvent.index = index
-                                                        cutEvent.cutX = cutX
-                                                        cutEvent.cutY = cutY
-                                                        cutEvent.cutDistance = along
-                                                        return cutEvent
-                                                end
-                                        end
-                                end
-                        end
+					if intersects and t then
+						local along = travelled + segLen * t
+						if along > context.guardDistance then
+							local cutEvent = context.cutEvent
+							cutEvent.index = index
+							cutEvent.cutX = cutX
+							cutEvent.cutY = cutY
+							cutEvent.cutDistance = along
+							return cutEvent
+						end
+					end
+				end
+			end
 
-                        travelled = travelled + segLen
-                        prevX, prevY = cx, cy
-                end
-        end
+			travelled = travelled + segLen
+			prevX, prevY = cx, cy
+		end
+	end
 
-        return nil
+	return nil
 end
 
 local function evaluateTrailCircleCut(context, saw, centerX, centerY, combinedRadiusSq, candidateIndices, candidateCount, candidateLookup, candidateGeneration)
-        local trailRef = context.trail
-        if not (trailRef and trailRef[1]) then
-                return nil
-        end
+	local trailRef = context.trail
+	if not (trailRef and trailRef[1]) then
+		return nil
+	end
 
-        local headX = context.headX
-        local headY = context.headY
-        if not (headX and headY) then
-                return nil
-        end
+	local headX = context.headX
+	local headY = context.headY
+	if not (headX and headY) then
+		return nil
+	end
 
-        local radius = 0
-        if combinedRadiusSq and combinedRadiusSq > 0 then
-                radius = sqrt(combinedRadiusSq)
-        end
+	local radius = 0
+	if combinedRadiusSq and combinedRadiusSq > 0 then
+		radius = sqrt(combinedRadiusSq)
+	end
 
-        if not candidateLookup then
-                candidateIndices, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForCircle(centerX, centerY, radius)
-        end
+	if not candidateLookup then
+		candidateIndices, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForCircle(centerX, centerY, radius)
+	end
 
-        local useCandidateFilter = candidateLookup ~= nil
-        if useCandidateFilter and (not candidateIndices or (candidateCount or 0) == 0) then
-                return nil
-        end
+	local useCandidateFilter = candidateLookup ~= nil
+	if useCandidateFilter and (not candidateIndices or (candidateCount or 0) == 0) then
+		return nil
+	end
 
-        local travelled = 0
-        local prevX, prevY = headX, headY
-        local bodyRadius = context.bodyRadius or 0
+	local travelled = 0
+	local prevX, prevY = headX, headY
+	local bodyRadius = context.bodyRadius or 0
 
-        for index = 2, #trailRef do
-                local segment = trailRef[index]
-                local cx = segment and (segment.drawX or segment.x)
-                local cy = segment and (segment.drawY or segment.y)
-                if cx and cy then
-                        local dx = cx - prevX
-                        local dy = cy - prevY
-                        local segLen = sqrt(dx * dx + dy * dy)
+	for index = 2, #trailRef do
+		local segment = trailRef[index]
+		local cx = segment and (segment.drawX or segment.x)
+		local cy = segment and (segment.drawY or segment.y)
+		if cx and cy then
+			local dx = cx - prevX
+			local dy = cy - prevY
+			local segLen = sqrt(dx * dx + dy * dy)
 
-                        if segLen > 1e-6 then
-                                local shouldTest = not useCandidateFilter or (candidateLookup[segment] == candidateGeneration)
-                                if shouldTest then
-                                        local candidate = true
-                                        if Saws and Saws.isCollisionCandidate then
-                                                local minX = min(prevX, cx) - bodyRadius
-                                                local minY = min(prevY, cy) - bodyRadius
-                                                local maxX = max(prevX, cx) + bodyRadius
-                                                local maxY = max(prevY, cy) + bodyRadius
-                                                candidate = Saws:isCollisionCandidate(saw, minX, minY, maxX - minX, maxY - minY)
-                                        end
+			if segLen > 1e-6 then
+				local shouldTest = not useCandidateFilter or (candidateLookup[segment] == candidateGeneration)
+				if shouldTest then
+					local candidate = true
+					if Saws and Saws.isCollisionCandidate then
+						local minX = min(prevX, cx) - bodyRadius
+						local minY = min(prevY, cy) - bodyRadius
+						local maxX = max(prevX, cx) + bodyRadius
+						local maxY = max(prevY, cy) + bodyRadius
+						candidate = Saws:isCollisionCandidate(saw, minX, minY, maxX - minX, maxY - minY)
+					end
 
-                                        if candidate then
-                                                local closestX, closestY, distSq, t = closestPointOnSegment(centerX, centerY, prevX, prevY, cx, cy)
-                                                local along = travelled + segLen * (t or 0)
-                                                if along > context.guardDistance and distSq <= combinedRadiusSq then
-                                                        if isSawCutPointExposed(saw, centerX, centerY, closestX, closestY) then
-                                                                local cutEvent = context.cutEvent
-                                                                cutEvent.index = index
-                                                                cutEvent.cutX = closestX
-                                                                cutEvent.cutY = closestY
-                                                                cutEvent.cutDistance = along
-                                                                return cutEvent
-                                                        end
-                                                end
-                                        end
-                                end
-                        end
+					if candidate then
+						local closestX, closestY, distSq, t = closestPointOnSegment(centerX, centerY, prevX, prevY, cx, cy)
+						local along = travelled + segLen * (t or 0)
+						if along > context.guardDistance and distSq <= combinedRadiusSq then
+							if isSawCutPointExposed(saw, centerX, centerY, closestX, closestY) then
+								local cutEvent = context.cutEvent
+								cutEvent.index = index
+								cutEvent.cutX = closestX
+								cutEvent.cutY = closestY
+								cutEvent.cutDistance = along
+								return cutEvent
+							end
+						end
+					end
+				end
+			end
 
-                        travelled = travelled + segLen
-                        prevX, prevY = cx, cy
-                end
-        end
+			travelled = travelled + segLen
+			prevX, prevY = cx, cy
+		end
+	end
 
-        return nil
+	return nil
 end
 
 function Snake:checkLaserBodyCollision()
-        if isDead then
-                return false
-        end
+	if isDead then
+		return false
+	end
 
-        if not (trail and #trail > 2) then
-                return false
-        end
+	if not (trail and #trail > 2) then
+		return false
+	end
 
-        if not (Lasers and Lasers.getEmitterArray) then
-                return false
-        end
+	if not (Lasers and Lasers.getEmitterArray) then
+		return false
+	end
 
-        local emitters = Lasers:getEmitterArray()
-        local emitterCount = emitters and #emitters or 0
-        if emitterCount == 0 then
-                return false
-        end
+	local emitters = Lasers:getEmitterArray()
+	local emitterCount = emitters and #emitters or 0
+	if emitterCount == 0 then
+		return false
+	end
 
-        local head = trail[1]
-        local headX = head and (head.drawX or head.x)
-        local headY = head and (head.drawY or head.y)
-        if not (headX and headY) then
-                return false
-        end
+	local head = trail[1]
+	local headX = head and (head.drawX or head.x)
+	local headY = head and (head.drawY or head.y)
+	if not (headX and headY) then
+		return false
+	end
 
-        local context = laserCollisionContext
-        context.snake = self
-        context.trail = trail
-        context.headX = headX
-        context.headY = headY
-        context.guardDistance = SEGMENT_SPACING * 0.9
-        context.bodyRadius = SEGMENT_SIZE * 0.5
+	local context = laserCollisionContext
+	context.snake = self
+	context.trail = trail
+	context.headX = headX
+	context.headY = headY
+	context.guardDistance = SEGMENT_SPACING * 0.9
+	context.bodyRadius = SEGMENT_SIZE * 0.5
 
-        local bodyRadius = context.bodyRadius
+	local bodyRadius = context.bodyRadius
 
-        for index = 1, emitterCount do
-                local beam = emitters[index]
-                if beam and beam.state == "firing" then
-                        local rect = beam.beamRect
-                        if rect then
-                                local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
-                                if rw and rh and rw > 0 and rh > 0 then
-                                        local expandedX = (rx or 0) - bodyRadius
-                                        local expandedY = (ry or 0) - bodyRadius
-                                        local expandedW = rw + bodyRadius * 2
-                                        local expandedH = rh + bodyRadius * 2
+	for index = 1, emitterCount do
+		local beam = emitters[index]
+		if beam and beam.state == "firing" then
+			local rect = beam.beamRect
+			if rect then
+				local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
+				if rw and rh and rw > 0 and rh > 0 then
+					local expandedX = (rx or 0) - bodyRadius
+					local expandedY = (ry or 0) - bodyRadius
+					local expandedW = rw + bodyRadius * 2
+					local expandedH = rh + bodyRadius * 2
 
-                                        local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
-                                        local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateCount, candidateLookup, candidateGeneration)
-                                        if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
-                                                -- Leave the laser scorch effect but skip the usual hazard flash
-                                                -- response so the tail chop only highlights the snake itself.
-                                                beam.burnAlpha = 0.92
-                                                resetCollisionContext(context)
-                                                return true
-                                        end
-                                end
-                        end
-                end
-        end
+					local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
+					local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateCount, candidateLookup, candidateGeneration)
+					if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
+						-- Leave the laser scorch effect but skip the usual hazard flash
+						-- response so the tail chop only highlights the snake itself.
+						beam.burnAlpha = 0.92
+						resetCollisionContext(context)
+						return true
+					end
+				end
+			end
+		end
+	end
 
-        resetCollisionContext(context)
-        return false
+	resetCollisionContext(context)
+	return false
 end
 
 function Snake:checkDartBodyCollision()
-        if isDead then
-                return false
-        end
+	if isDead then
+		return false
+	end
 
-        if not (trail and #trail > 2) then
-                return false
-        end
+	if not (trail and #trail > 2) then
+		return false
+	end
 
-        if not (Darts and Darts.getEmitterArray) then
-                return false
-        end
+	if not (Darts and Darts.getEmitterArray) then
+		return false
+	end
 
-        local emitters = Darts:getEmitterArray()
-        local emitterCount = emitters and #emitters or 0
-        if emitterCount == 0 then
-                return false
-        end
+	local emitters = Darts:getEmitterArray()
+	local emitterCount = emitters and #emitters or 0
+	if emitterCount == 0 then
+		return false
+	end
 
-        local head = trail[1]
-        local headX = head and (head.drawX or head.x)
-        local headY = head and (head.drawY or head.y)
-        if not (headX and headY) then
-                return false
-        end
+	local head = trail[1]
+	local headX = head and (head.drawX or head.x)
+	local headY = head and (head.drawY or head.y)
+	if not (headX and headY) then
+		return false
+	end
 
-        local context = dartCollisionContext
-        context.snake = self
-        context.trail = trail
-        context.headX = headX
-        context.headY = headY
-        context.guardDistance = SEGMENT_SPACING * 0.85
-        context.bodyRadius = SEGMENT_SIZE * 0.45
+	local context = dartCollisionContext
+	context.snake = self
+	context.trail = trail
+	context.headX = headX
+	context.headY = headY
+	context.guardDistance = SEGMENT_SPACING * 0.85
+	context.bodyRadius = SEGMENT_SIZE * 0.45
 
-        local bodyRadius = context.bodyRadius
+	local bodyRadius = context.bodyRadius
 
-        for index = 1, emitterCount do
-                local emitter = emitters[index]
-                if emitter and emitter.state == "firing" then
-                        local rect = emitter.shotRect
-                        if rect then
-                                local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
-                                if rw and rh and rw > 0 and rh > 0 then
-                                        local expandedX = (rx or 0) - bodyRadius
-                                        local expandedY = (ry or 0) - bodyRadius
-                                        local expandedW = rw + bodyRadius * 2
-                                        local expandedH = rh + bodyRadius * 2
+	for index = 1, emitterCount do
+		local emitter = emitters[index]
+		if emitter and emitter.state == "firing" then
+			local rect = emitter.shotRect
+			if rect then
+				local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
+				if rw and rh and rw > 0 and rh > 0 then
+					local expandedX = (rx or 0) - bodyRadius
+					local expandedY = (ry or 0) - bodyRadius
+					local expandedW = rw + bodyRadius * 2
+					local expandedH = rh + bodyRadius * 2
 
-                                        local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
-                                        local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateCount, candidateLookup, candidateGeneration)
-                                        if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
-                                                -- Avoid triggering the dart emitter flash when only the tail is clipped.
-                                                resetCollisionContext(context)
-                                                return true
-                                        end
-                                end
-                        end
-                end
-        end
+					local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
+					local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateCount, candidateLookup, candidateGeneration)
+					if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
+						-- Avoid triggering the dart emitter flash when only the tail is clipped.
+						resetCollisionContext(context)
+						return true
+					end
+				end
+			end
+		end
+	end
 
-        resetCollisionContext(context)
-        return false
+	resetCollisionContext(context)
+	return false
 end
 
 function Snake:checkSawBodyCollision()
-        if isDead then
-                return false
-        end
+	if isDead then
+		return false
+	end
 
-        if not (trail and #trail > 2) then
-                return false
-        end
+	if not (trail and #trail > 2) then
+		return false
+	end
 
-        if not (Saws and Saws.getAll) then
-                return false
-        end
+	if not (Saws and Saws.getAll) then
+		return false
+	end
 
-        local saws = Saws:getAll()
-        if not (saws and #saws > 0) then
-                return false
-        end
+	local saws = Saws:getAll()
+	if not (saws and #saws > 0) then
+		return false
+	end
 
-        local head = trail[1]
-        local headX = head and (head.drawX or head.x)
-        local headY = head and (head.drawY or head.y)
-        if not (headX and headY) then
-                return false
-        end
+	local head = trail[1]
+	local headX = head and (head.drawX or head.x)
+	local headY = head and (head.drawY or head.y)
+	if not (headX and headY) then
+		return false
+	end
 
-        local context = sawCollisionContext
-        context.snake = self
-        context.trail = trail
-        context.headX = headX
-        context.headY = headY
-        context.guardDistance = SEGMENT_SPACING * 0.9
-        context.bodyRadius = SEGMENT_SIZE * 0.5
+	local context = sawCollisionContext
+	context.snake = self
+	context.trail = trail
+	context.headX = headX
+	context.headY = headY
+	context.guardDistance = SEGMENT_SPACING * 0.9
+	context.bodyRadius = SEGMENT_SIZE * 0.5
 
-        local bodyRadius = context.bodyRadius
+	local bodyRadius = context.bodyRadius
 
-        for i = 1, #saws do
-                local saw = saws[i]
-                if isSawActive(saw) then
-                        local sx, sy = getSawCenterPosition(saw)
-                        if sx and sy then
-                                local sawRadius = (saw.collisionRadius or saw.radius or 0)
-                                local combined = sawRadius + bodyRadius
-                                if combined > 0 then
-                                        local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForCircle(sx, sy, combined)
-                                        local cutEvent = evaluateTrailCircleCut(context, saw, sx, sy, combined * combined, candidates, candidateCount, candidateLookup, candidateGeneration)
-                                        if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
-                                                resetCollisionContext(context)
-                                                return true
-                                        end
-                                end
-                        end
-                end
-        end
+	for i = 1, #saws do
+		local saw = saws[i]
+		if isSawActive(saw) then
+			local sx, sy = getSawCenterPosition(saw)
+			if sx and sy then
+				local sawRadius = (saw.collisionRadius or saw.radius or 0)
+				local combined = sawRadius + bodyRadius
+				if combined > 0 then
+					local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForCircle(sx, sy, combined)
+					local cutEvent = evaluateTrailCircleCut(context, saw, sx, sy, combined * combined, candidates, candidateCount, candidateLookup, candidateGeneration)
+					if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
+						resetCollisionContext(context)
+						return true
+					end
+				end
+			end
+		end
+	end
 
-        resetCollisionContext(context)
-        return false
+	resetCollisionContext(context)
+	return false
 end
 
 function Snake:markFruitSegment(fruitX, fruitY)
@@ -5021,9 +5021,9 @@ function Snake:draw()
 		local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
 
 		if not hideDescendingBody then
-		local drawOptions
-		if portalAnimation then
-			drawOptions = {
+			local drawOptions
+			if portalAnimation then
+				drawOptions = {
 					drawFace = shouldDrawFace,
 					portalAnimation = {
 						entryTrail = portalAnimation.entryTrail,
@@ -5039,32 +5039,32 @@ function Snake:draw()
 						exitHole = portalAnimation.exitHole,
 					},
 				}
-		else
-			drawOptions = shouldDrawFace
-		end
+			else
+				drawOptions = shouldDrawFace
+			end
 
-				local tailHitFlash
-				if self.tailHitFlashTimer and self.tailHitFlashTimer > 0 then
-					tailHitFlash = clamp01(self.tailHitFlashTimer / TAIL_HIT_FLASH_DURATION)
-				end
+			local tailHitFlash
+			if self.tailHitFlashTimer and self.tailHitFlashTimer > 0 then
+				tailHitFlash = clamp01(self.tailHitFlashTimer / TAIL_HIT_FLASH_DURATION)
+			end
 
-				if tailHitFlash and tailHitFlash > 0 then
-					if type(drawOptions) ~= "table" then
-						drawOptions = {drawFace = drawOptions ~= false}
-					else
-						if drawOptions.drawFace == nil then
-							drawOptions.drawFace = true
-						end
+			if tailHitFlash and tailHitFlash > 0 then
+				if type(drawOptions) ~= "table" then
+					drawOptions = {drawFace = drawOptions ~= false}
+				else
+					if drawOptions.drawFace == nil then
+						drawOptions.drawFace = true
 					end
-
-                                        drawOptions.tailHitFlash = tailHitFlash
-                                        drawOptions.tailHitFlashColor = TAIL_HIT_FLASH_COLOR
 				end
 
-		currentHeadOwner = self
-		SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getOwnerHead, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
-		currentHeadOwner = nil
-	end
+				drawOptions.tailHitFlash = tailHitFlash
+				drawOptions.tailHitFlashColor = TAIL_HIT_FLASH_COLOR
+			end
+
+			currentHeadOwner = self
+			SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getOwnerHead, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
+			currentHeadOwner = nil
+		end
 
 	end
 end
@@ -5076,53 +5076,53 @@ end
 -- Returns a reusable snapshot of the snake trail. Callers must treat the
 -- returned data as read-only until the next frame.
 function Snake:getSegments()
-        local snapshot = segmentSnapshot
-        local previousCount = #snapshot
-        local count = #trail
+	local snapshot = segmentSnapshot
+	local previousCount = #snapshot
+	local count = #trail
 
-        for i = 1, count do
-                local seg = trail[i]
-                local entry = snapshot[i]
-                if not entry then
-                        if segmentSnapshotPoolCount > 0 then
-                                entry = segmentSnapshotPool[segmentSnapshotPoolCount]
-                                segmentSnapshotPool[segmentSnapshotPoolCount] = nil
-                                segmentSnapshotPoolCount = segmentSnapshotPoolCount - 1
-                        else
-                                entry = {}
-                        end
-                        snapshot[i] = entry
-                end
+	for i = 1, count do
+		local seg = trail[i]
+		local entry = snapshot[i]
+		if not entry then
+			if segmentSnapshotPoolCount > 0 then
+				entry = segmentSnapshotPool[segmentSnapshotPoolCount]
+				segmentSnapshotPool[segmentSnapshotPoolCount] = nil
+				segmentSnapshotPoolCount = segmentSnapshotPoolCount - 1
+			else
+				entry = {}
+			end
+			snapshot[i] = entry
+		end
 
-                entry.drawX = seg.drawX
-                entry.drawY = seg.drawY
-                entry.dirX = seg.dirX
-                entry.dirY = seg.dirY
-        end
+		entry.drawX = seg.drawX
+		entry.drawY = seg.drawY
+		entry.dirX = seg.dirX
+		entry.dirY = seg.dirY
+	end
 
-        for i = count + 1, previousCount do
-                local entry = snapshot[i]
-                if entry then
-                        entry.drawX = nil
-                        entry.drawY = nil
-                        entry.dirX = nil
-                        entry.dirY = nil
-                        segmentSnapshotPoolCount = segmentSnapshotPoolCount + 1
-                        segmentSnapshotPool[segmentSnapshotPoolCount] = entry
-                        snapshot[i] = nil
-                end
-        end
+	for i = count + 1, previousCount do
+		local entry = snapshot[i]
+		if entry then
+			entry.drawX = nil
+			entry.drawY = nil
+			entry.dirX = nil
+			entry.dirY = nil
+			segmentSnapshotPoolCount = segmentSnapshotPoolCount + 1
+			segmentSnapshotPool[segmentSnapshotPoolCount] = entry
+			snapshot[i] = nil
+		end
+	end
 
-        return snapshot
+	return snapshot
 end
 
 function Snake:getTail()
-        local tail = trail[#trail]
-        if not tail then
-                return nil, nil, nil
-        end
+	local tail = trail[#trail]
+	if not tail then
+		return nil, nil, nil
+	end
 
-        return tail.drawX, tail.drawY, tail
+	return tail.drawX, tail.drawY, tail
 end
 
 return Snake

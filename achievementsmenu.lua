@@ -14,7 +14,7 @@ local max = math.max
 local min = math.min
 
 local AchievementsMenu = {
-    transitionDuration = 0.3,
+	transitionDuration = 0.3,
 }
 
 local buttonList = ButtonList.new()
@@ -52,19 +52,19 @@ local contentHeight = 0
 local DPAD_SCROLL_AMOUNT = CARD_SPACING
 
 local scrollbarState = {
-        visible = false,
-        trackX = 0,
-        trackY = 0,
-        trackWidth = 0,
-        trackHeight = 0,
-        thumbY = 0,
-        thumbHeight = 0,
-        scrollRange = 0,
+	visible = false,
+	trackX = 0,
+	trackY = 0,
+	trackWidth = 0,
+	trackHeight = 0,
+	thumbY = 0,
+	thumbHeight = 0,
+	scrollRange = 0,
 }
 
 local scrollbarDrag = {
-        active = false,
-        grabOffset = 0,
+	active = false,
+	grabOffset = 0,
 }
 
 local heldDpadButton = nil
@@ -78,100 +78,100 @@ local backgroundEffectCache = {}
 local backgroundEffect = nil
 
 local function copyColor(color)
-        if not color then
-                return {0, 0, 0, 1}
-        end
+	if not color then
+		return {0, 0, 0, 1}
+	end
 
-        return {
-                color[1] or 0,
-                color[2] or 0,
-                color[3] or 0,
-                color[4] == nil and 1 or color[4],
-        }
+	return {
+		color[1] or 0,
+		color[2] or 0,
+		color[3] or 0,
+		color[4] == nil and 1 or color[4],
+	}
 end
 
 local function lightenColor(color, factor)
-        factor = factor or 0.35
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] == nil and 1 or color[4]
-        return {
-                r + (1 - r) * factor,
-                g + (1 - g) * factor,
-                b + (1 - b) * factor,
-                a * (0.65 + factor * 0.35),
-        }
+	factor = factor or 0.35
+	local r = color[1] or 1
+	local g = color[2] or 1
+	local b = color[3] or 1
+	local a = color[4] == nil and 1 or color[4]
+	return {
+		r + (1 - r) * factor,
+		g + (1 - g) * factor,
+		b + (1 - b) * factor,
+		a * (0.65 + factor * 0.35),
+	}
 end
 
 local function darkenColor(color, factor)
-        factor = factor or 0.35
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] == nil and 1 or color[4]
-        return {
-                r * (1 - factor),
-                g * (1 - factor),
-                b * (1 - factor),
-                a,
-        }
+	factor = factor or 0.35
+	local r = color[1] or 1
+	local g = color[2] or 1
+	local b = color[3] or 1
+	local a = color[4] == nil and 1 or color[4]
+	return {
+		r * (1 - factor),
+		g * (1 - factor),
+		b * (1 - factor),
+		a,
+	}
 end
 
 local function clamp(value, minValue, maxValue)
-        if value < minValue then
-                return minValue
-        elseif value > maxValue then
-                return maxValue
-        end
+	if value < minValue then
+		return minValue
+	elseif value > maxValue then
+		return maxValue
+	end
 
-        return value
+	return value
 end
 
 local function withAlpha(color, alpha)
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] == nil and 1 or color[4]
-        return {r, g, b, a * alpha}
+	local r = color[1] or 1
+	local g = color[2] or 1
+	local b = color[3] or 1
+	local a = color[4] == nil and 1 or color[4]
+	return {r, g, b, a * alpha}
 end
 
 local function configureBackgroundEffect()
-        local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-        if not effect then
-                backgroundEffect = nil
-                return
-        end
+	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
+	if not effect then
+		backgroundEffect = nil
+		return
+	end
 
-        local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-        local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
-        local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-        local accentColor = lightenColor(copyColor(coolAccent), 0.18)
-        accentColor[4] = 1
+	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
+	local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
+	local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+	local accentColor = lightenColor(copyColor(coolAccent), 0.18)
+	accentColor[4] = 1
 
-        local pulseColor = lightenColor(copyColor(Theme.panelBorder or Theme.progressColor or accentColor), 0.26)
-        pulseColor[4] = 1
+	local pulseColor = lightenColor(copyColor(Theme.panelBorder or Theme.progressColor or accentColor), 0.26)
+	pulseColor[4] = 1
 
-        baseColor = darkenColor(baseColor, 0.15)
-        baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
+	baseColor = darkenColor(baseColor, 0.15)
+	baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-        local vignette = {
-                color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
-                alpha = 0.28,
-                steps = 3,
-                thickness = nil,
-        }
+	local vignette = {
+		color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
+		alpha = 0.28,
+		steps = 3,
+		thickness = nil,
+	}
 
-        effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
+	effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
 
-        Shaders.configure(effect, {
-                bgColor = baseColor,
-                accentColor = accentColor,
-                pulseColor = pulseColor,
-        })
+	Shaders.configure(effect, {
+		bgColor = baseColor,
+		accentColor = accentColor,
+		pulseColor = pulseColor,
+	})
 
-        effect.vignetteOverlay = vignette
-        backgroundEffect = effect
+	effect.vignetteOverlay = vignette
+	backgroundEffect = effect
 end
 
 local function drawBackground(sw, sh)
@@ -290,52 +290,52 @@ local function withAlpha(color, alpha)
 end
 
 local function setColor(color, alphaOverride)
-        if not color then
-                love.graphics.setColor(1, 1, 1, alphaOverride or 1)
-                return
-        end
+	if not color then
+		love.graphics.setColor(1, 1, 1, alphaOverride or 1)
+		return
+	end
 
-        love.graphics.setColor(
-                color[1] or 1,
-                color[2] or 1,
-                color[3] or 1,
-                alphaOverride or color[4] or 1
-        )
+	love.graphics.setColor(
+	color[1] or 1,
+	color[2] or 1,
+	color[3] or 1,
+	alphaOverride or color[4] or 1
+	)
 end
 
 local function printfWithShadow(text, x, y, limit, align, color, shadowColor)
-        if not text or text == "" then
-                return
-        end
+	if not text or text == "" then
+		return
+	end
 
-        local baseR = 1
-        local baseG = 1
-        local baseB = 1
-        local baseA = 1
-        if color then
-                baseR = color[1] or 1
-                baseG = color[2] or 1
-                baseB = color[3] or 1
-                baseA = color[4] or 1
-        end
+	local baseR = 1
+	local baseG = 1
+	local baseB = 1
+	local baseA = 1
+	if color then
+		baseR = color[1] or 1
+		baseG = color[2] or 1
+		baseB = color[3] or 1
+		baseA = color[4] or 1
+	end
 
-        local shadow = shadowColor
-        if shadow then
-                shadow = {
-                        shadow[1] or 0,
-                        shadow[2] or 0,
-                        shadow[3] or 0,
-                        shadow[4] or (baseA * 0.7),
-                }
-        else
-                shadow = {0, 0, 0, baseA * 0.7}
-        end
+	local shadow = shadowColor
+	if shadow then
+		shadow = {
+			shadow[1] or 0,
+			shadow[2] or 0,
+			shadow[3] or 0,
+			shadow[4] or (baseA * 0.7),
+		}
+	else
+		shadow = {0, 0, 0, baseA * 0.7}
+	end
 
-        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4])
-        love.graphics.printf(text, x + 1, y + 1, limit, align or "left")
+	love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadow[4])
+	love.graphics.printf(text, x + 1, y + 1, limit, align or "left")
 
-        love.graphics.setColor(baseR, baseG, baseB, baseA)
-        love.graphics.printf(text, x, y, limit, align or "left")
+	love.graphics.setColor(baseR, baseG, baseB, baseA)
+	love.graphics.printf(text, x, y, limit, align or "left")
 end
 
 local function joinWithConjunction(items)
@@ -366,36 +366,36 @@ local function joinWithConjunction(items)
 end
 
 local function resolveBackButtonY(sw, sh, layout)
-        local menuLayout = UI.getMenuLayout(sw, sh)
-        local buttonHeight = UI.spacing.buttonHeight or 0
-        local spacing = UI.spacing.buttonSpacing or UI.spacing.sectionSpacing or 0
-        local marginBottom = menuLayout.marginBottom or 0
+	local menuLayout = UI.getMenuLayout(sw, sh)
+	local buttonHeight = UI.spacing.buttonHeight or 0
+	local spacing = UI.spacing.buttonSpacing or UI.spacing.sectionSpacing or 0
+	local marginBottom = menuLayout.marginBottom or 0
 
-        local y = sh - buttonHeight - spacing
-        local safeBottom = (menuLayout.bottomY or (sh - marginBottom)) - buttonHeight
-        if safeBottom then
-                y = max(y, safeBottom)
-        end
+	local y = sh - buttonHeight - spacing
+	local safeBottom = (menuLayout.bottomY or (sh - marginBottom)) - buttonHeight
+	if safeBottom then
+		y = max(y, safeBottom)
+	end
 
-        if layout then
-                local panelBottom
-                if layout.panelY and layout.panelHeight then
-                        panelBottom = layout.panelY + layout.panelHeight
-                elseif layout.viewportBottom then
-                        panelBottom = layout.viewportBottom
-                end
+	if layout then
+		local panelBottom
+		if layout.panelY and layout.panelHeight then
+			panelBottom = layout.panelY + layout.panelHeight
+		elseif layout.viewportBottom then
+			panelBottom = layout.viewportBottom
+		end
 
-                if panelBottom then
-                        y = max(y, panelBottom + spacing)
-                end
-        end
+		if panelBottom then
+			y = max(y, panelBottom + spacing)
+		end
+	end
 
-        local maxY = sh - buttonHeight
-        if y > maxY then
-                y = maxY
-        end
+	local maxY = sh - buttonHeight
+	if y > maxY then
+		y = maxY
+	end
 
-        return y
+	return y
 end
 
 local function applyBackButtonLayout(layout, sw, sh)
@@ -403,23 +403,23 @@ local function applyBackButtonLayout(layout, sw, sh)
 		return
 	end
 
-        local buttonWidth = UI.spacing.buttonWidth or 0
-        local buttonHeight = UI.spacing.buttonHeight or 0
-        local x = sw / 2 - buttonWidth / 2
-        local y = resolveBackButtonY(sw, sh, layout)
+	local buttonWidth = UI.spacing.buttonWidth or 0
+	local buttonHeight = UI.spacing.buttonHeight or 0
+	local x = sw / 2 - buttonWidth / 2
+	local y = resolveBackButtonY(sw, sh, layout)
 
-        for _, btn in buttonList:iter() do
-                if btn.id == "achievementsBack" then
-                        btn.x = x
-                        btn.y = y
-                        btn.w = buttonWidth
-                        btn.h = buttonHeight
-                        if layout then
-                                layout.backButtonY = y
-                        end
-                        break
-                end
-        end
+	for _, btn in buttonList:iter() do
+		if btn.id == "achievementsBack" then
+			btn.x = x
+			btn.y = y
+			btn.w = buttonWidth
+			btn.h = buttonHeight
+			if layout then
+				layout.backButtonY = y
+			end
+			break
+		end
+	end
 end
 
 local function formatAchievementRewards(rewards)
@@ -499,109 +499,109 @@ local function toPercent(value)
 end
 
 local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, thumbHeight, isHovered, isThumbHovered, panelColor)
-        love.graphics.push("all")
+	love.graphics.push("all")
 
-        local baseTrackColor = panelColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
-        local snakeBodyColor = Theme.snakeDefault or Theme.progressColor or {0.45, 0.85, 0.70, 1}
-        local baseAlpha = baseTrackColor[4] == nil and 1 or baseTrackColor[4]
-		local trackColor = copyColor(panelColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.9})
+	local baseTrackColor = panelColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.9}
+	local snakeBodyColor = Theme.snakeDefault or Theme.progressColor or {0.45, 0.85, 0.70, 1}
+	local baseAlpha = baseTrackColor[4] == nil and 1 or baseTrackColor[4]
+	local trackColor = copyColor(panelColor or Theme.panelColor or {0.18, 0.18, 0.22, 0.9})
 
-        if panelColor then
-                trackColor[4] = baseAlpha
-        else
-                trackColor[4] = isHovered and 0.82 or 0.68
-        end
-        local trackRadius = max(8, trackWidth * 0.65)
-        local trackOutlineColor = {0, 0, 0, 1}
-        trackOutlineColor[4] = panelColor and baseAlpha or 1
+	if panelColor then
+		trackColor[4] = baseAlpha
+	else
+		trackColor[4] = isHovered and 0.82 or 0.68
+	end
+	local trackRadius = max(8, trackWidth * 0.65)
+	local trackOutlineColor = {0, 0, 0, 1}
+	trackOutlineColor[4] = panelColor and baseAlpha or 1
 
-        -- Track body
-        setColor(trackColor)
-		UI.drawPanel(trackX, trackY, trackWidth, trackHeight, {
-			radius = trackRadius,
-			fill = trackColor,
-			borderColor = panelColor,
-			borderWidth = 1,
-			shadowColor = withAlpha(Theme.shadowColor or {0,0,0,0.35}, (Theme.shadowColor and Theme.shadowColor[4] or 0.35) * 0.85),
-			shadowOffset = 3,
-		})
+	-- Track body
+	setColor(trackColor)
+	UI.drawPanel(trackX, trackY, trackWidth, trackHeight, {
+		radius = trackRadius,
+		fill = trackColor,
+		borderColor = panelColor,
+		borderWidth = 1,
+		shadowColor = withAlpha(Theme.shadowColor or {0,0,0,0.35}, (Theme.shadowColor and Theme.shadowColor[4] or 0.35) * 0.85),
+		shadowOffset = 3,
+	})
 
-        -- Track outline for visibility
-        if trackOutlineColor then
-                local outlineWidth = 3
-                setColor(withAlpha(trackOutlineColor, trackOutlineColor[4]))
-                love.graphics.setLineWidth(outlineWidth)
-                local inset = outlineWidth * 0.5
-                love.graphics.rectangle(
-                        "line",
-                        trackX + inset,
-                        trackY + inset,
-                        trackWidth - outlineWidth,
-                        trackHeight - outlineWidth,
-                        max(0, trackRadius - inset)
-                )
-        end
+	-- Track outline for visibility
+	if trackOutlineColor then
+		local outlineWidth = 3
+		setColor(withAlpha(trackOutlineColor, trackOutlineColor[4]))
+		love.graphics.setLineWidth(outlineWidth)
+		local inset = outlineWidth * 0.5
+		love.graphics.rectangle(
+		"line",
+		trackX + inset,
+		trackY + inset,
+		trackWidth - outlineWidth,
+		trackHeight - outlineWidth,
+		max(0, trackRadius - inset)
+		)
+	end
 
-        -- Snake thumb
-        local thumbPadding = 2
-        local thumbWidth = max(6, trackWidth - thumbPadding * 2 + 2)
-        local thumbOffsetX = -1
-        local thumbX = trackX + thumbPadding + thumbOffsetX
-        local hoverBoost = 0
-        if scrollbarDrag.active then
-                hoverBoost = 0.35
-        elseif isThumbHovered then
-                hoverBoost = 0.25
-        elseif isHovered then
-                hoverBoost = 0.15
-        end
+	-- Snake thumb
+	local thumbPadding = 2
+	local thumbWidth = max(6, trackWidth - thumbPadding * 2 + 2)
+	local thumbOffsetX = -1
+	local thumbX = trackX + thumbPadding + thumbOffsetX
+	local hoverBoost = 0
+	if scrollbarDrag.active then
+		hoverBoost = 0.35
+	elseif isThumbHovered then
+		hoverBoost = 0.25
+	elseif isHovered then
+		hoverBoost = 0.15
+	end
 
-        local function adjustHover(color, factor)
-                if not color then
-                        return nil
-                end
-                local alpha = color[4] == nil and 1 or color[4]
-                if not factor or factor <= 0 then
-                        local copy = copyColor(color)
-                        copy[4] = alpha
-                        return copy
-                end
-                local adjusted = lightenColor(color, factor)
-                adjusted[4] = alpha
-                return adjusted
-        end
+	local function adjustHover(color, factor)
+		if not color then
+			return nil
+		end
+		local alpha = color[4] == nil and 1 or color[4]
+		if not factor or factor <= 0 then
+			local copy = copyColor(color)
+			copy[4] = alpha
+			return copy
+		end
+		local adjusted = lightenColor(color, factor)
+		adjusted[4] = alpha
+		return adjusted
+	end
 
-        local snakePalette = SnakeCosmetics:getPaletteForSkin()
-        local baseBodyColor = (snakePalette and snakePalette.body) or snakeBodyColor
-        local bodyColor = adjustHover(baseBodyColor, hoverBoost)
+	local snakePalette = SnakeCosmetics:getPaletteForSkin()
+	local baseBodyColor = (snakePalette and snakePalette.body) or snakeBodyColor
+	local bodyColor = adjustHover(baseBodyColor, hoverBoost)
 
-        local paletteOverride = nil
-        if snakePalette then
-                paletteOverride = {
-                        body = bodyColor,
-                        outline = adjustHover(snakePalette.outline, hoverBoost * 0.5),
-                        glow = adjustHover(snakePalette.glow, hoverBoost * 0.35),
-                        glowEffect = snakePalette.glowEffect,
-                        overlay = snakePalette.overlay,
-                }
-        elseif hoverBoost > 0 then
-                paletteOverride = {body = bodyColor}
-        end
+	local paletteOverride = nil
+	if snakePalette then
+		paletteOverride = {
+			body = bodyColor,
+			outline = adjustHover(snakePalette.outline, hoverBoost * 0.5),
+			glow = adjustHover(snakePalette.glow, hoverBoost * 0.35),
+			glowEffect = snakePalette.glowEffect,
+			overlay = snakePalette.overlay,
+		}
+	elseif hoverBoost > 0 then
+		paletteOverride = {body = bodyColor}
+	end
 
-        UI.drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, {
-                amplitude = 0,
-                frequency = 1.2,
-                segmentCount = 18,
-                segmentScale = 0.95,
-                falloff = 0.4,
-                lengthScale = 1,
-                paletteOverride = paletteOverride,
-                flipVertical = true,
-                drawFace = true,
-                faceAtBottom = true,
-        })
+	UI.drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, {
+		amplitude = 0,
+		frequency = 1.2,
+		segmentCount = 18,
+		segmentScale = 0.95,
+		falloff = 0.4,
+		lengthScale = 1,
+		paletteOverride = paletteOverride,
+		flipVertical = true,
+		drawFace = true,
+		faceAtBottom = true,
+	})
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function computeLayout(sw, sh)
@@ -728,60 +728,60 @@ local function computeLayout(sw, sh)
 	local footerReserve = buttonHeight + buttonSpacing + scaledReserve
 	local marginBottom = menuLayout.marginBottom or 0
 	local baseBottomMargin = marginBottom + footerSpacing + buttonHeight
-        local bottomMargin = max(baseBottomMargin, footerReserve)
-        layout.bottomMargin = bottomMargin
+	local bottomMargin = max(baseBottomMargin, footerReserve)
+	layout.bottomMargin = bottomMargin
 
-        local viewportBottom = sh - bottomMargin
-        local bottomY = menuLayout.bottomY or (sh - marginBottom)
-        local backButtonY = bottomY - buttonHeight
-        layout.backButtonY = backButtonY
+	local viewportBottom = sh - bottomMargin
+	local bottomY = menuLayout.bottomY or (sh - marginBottom)
+	local backButtonY = bottomY - buttonHeight
+	layout.backButtonY = backButtonY
 
-        if backButtonY then
-                viewportBottom = min(viewportBottom, backButtonY - buttonSpacing * 0.5)
-        end
+	if backButtonY then
+		viewportBottom = min(viewportBottom, backButtonY - buttonSpacing * 0.5)
+	end
 
 	layout.startY = listPanelY + panelPaddingY
 	layout.viewportBottom = max(layout.startY, viewportBottom)
 	layout.viewportHeight = max(0, layout.viewportBottom - layout.startY)
 
-        layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
-        layout.scissorTop = max(menuLayout.marginTop or 0, layout.startY - SCROLL_SCISSOR_TOP_PADDING)
-        layout.scissorBottom = layout.viewportBottom
-        layout.scissorHeight = max(0, layout.scissorBottom - layout.scissorTop)
+	layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
+	layout.scissorTop = max(menuLayout.marginTop or 0, layout.startY - SCROLL_SCISSOR_TOP_PADDING)
+	layout.scissorBottom = layout.viewportBottom
+	layout.scissorHeight = max(0, layout.scissorBottom - layout.scissorTop)
 
-        layout.backButtonY = resolveBackButtonY(sw, sh, layout)
+	layout.backButtonY = resolveBackButtonY(sw, sh, layout)
 
-        if layout.backButtonY then
-                local spacingOffset = buttonSpacing * 0.5
-                local maxViewportBottom = sh - bottomMargin
+	if layout.backButtonY then
+		local spacingOffset = buttonSpacing * 0.5
+		local maxViewportBottom = sh - bottomMargin
 
-                for _ = 1, 3 do
-                        local desiredBottom = min(maxViewportBottom, layout.backButtonY - spacingOffset)
+		for _ = 1, 3 do
+			local desiredBottom = min(maxViewportBottom, layout.backButtonY - spacingOffset)
 
-                        if desiredBottom ~= layout.viewportBottom then
-                                layout.viewportBottom = max(layout.startY, desiredBottom)
-                                layout.viewportHeight = max(0, layout.viewportBottom - layout.startY)
-                                layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
-                                layout.scissorBottom = layout.viewportBottom
-                                layout.scissorHeight = max(0, layout.scissorBottom - layout.scissorTop)
-                        end
+			if desiredBottom ~= layout.viewportBottom then
+				layout.viewportBottom = max(layout.startY, desiredBottom)
+				layout.viewportHeight = max(0, layout.viewportBottom - layout.startY)
+				layout.panelHeight = layout.viewportHeight + panelPaddingY * 2
+				layout.scissorBottom = layout.viewportBottom
+				layout.scissorHeight = max(0, layout.scissorBottom - layout.scissorTop)
+			end
 
-                        local adjustedBackY = resolveBackButtonY(sw, sh, layout)
-                        if adjustedBackY == layout.backButtonY then
-                                break
-                        end
+			local adjustedBackY = resolveBackButtonY(sw, sh, layout)
+			if adjustedBackY == layout.backButtonY then
+				break
+			end
 
-                        layout.backButtonY = adjustedBackY
-                end
-        end
+			layout.backButtonY = adjustedBackY
+		end
+	end
 
-        return layout
+	return layout
 end
 
 local function updateScrollBounds(sw, sh, layout)
-        layout = layout or computeLayout(sw, sh)
+	layout = layout or computeLayout(sw, sh)
 
-        viewportHeight = layout.viewportHeight
+	viewportHeight = layout.viewportHeight
 
 	local y = layout.startY
 	local maxBottom = layout.startY
@@ -806,58 +806,58 @@ local function updateScrollBounds(sw, sh, layout)
 		scrollOffset = 0
 	end
 
-        return layout
+	return layout
 end
 
 local function setScrollOffset(newOffset)
-        if newOffset > 0 then
-                newOffset = 0
-        elseif newOffset < minScrollOffset then
-                newOffset = minScrollOffset
-        end
+	if newOffset > 0 then
+		newOffset = 0
+	elseif newOffset < minScrollOffset then
+		newOffset = minScrollOffset
+	end
 
-        if newOffset == scrollOffset then
-                return
-        end
+	if newOffset == scrollOffset then
+		return
+	end
 
-        scrollOffset = newOffset
+	scrollOffset = newOffset
 end
 
 local function setScrollProgress(progress)
-        progress = clamp(progress or 0, 0, 1)
+	progress = clamp(progress or 0, 0, 1)
 
-        local range = -minScrollOffset
-        if range <= 0 then
-                setScrollOffset(0)
-                return
-        end
+	local range = -minScrollOffset
+	if range <= 0 then
+		setScrollOffset(0)
+		return
+	end
 
-        setScrollOffset(-range * progress)
+	setScrollOffset(-range * progress)
 end
 
 local function applyScrollbarThumbPosition(thumbY)
-        if not scrollbarState.visible then
-                return
-        end
+	if not scrollbarState.visible then
+		return
+	end
 
-        local trackTop = scrollbarState.trackY
-        local travel = max(0, scrollbarState.trackHeight - scrollbarState.thumbHeight)
-        local clampedThumbY = clamp(thumbY, trackTop, trackTop + travel)
-        scrollbarState.thumbY = clampedThumbY
+	local trackTop = scrollbarState.trackY
+	local travel = max(0, scrollbarState.trackHeight - scrollbarState.thumbHeight)
+	local clampedThumbY = clamp(thumbY, trackTop, trackTop + travel)
+	scrollbarState.thumbY = clampedThumbY
 
-        if travel <= 0 then
-                setScrollProgress(0)
-                return
-        end
+	if travel <= 0 then
+		setScrollProgress(0)
+		return
+	end
 
-        local progress = (clampedThumbY - trackTop) / travel
-        setScrollProgress(progress)
+	local progress = (clampedThumbY - trackTop) / travel
+	setScrollProgress(progress)
 end
 
 local function scrollBy(amount)
-        if amount == 0 then
-                return
-        end
+	if amount == 0 then
+		return
+	end
 
 	scrollOffset = scrollOffset + amount
 
@@ -958,15 +958,15 @@ function AchievementsMenu:enter()
 
 	local sw, sh = Screen:get()
 
-        configureBackgroundEffect()
+	configureBackgroundEffect()
 
-        scrollOffset = 0
-        minScrollOffset = 0
-        scrollbarState.visible = false
-        scrollbarState.scrollRange = 0
-        scrollbarDrag.active = false
-        scrollbarDrag.grabOffset = 0
-        resetAnalogDirections()
+	scrollOffset = 0
+	minScrollOffset = 0
+	scrollbarState.visible = false
+	scrollbarState.scrollRange = 0
+	scrollbarDrag.active = false
+	scrollbarDrag.grabOffset = 0
+	resetAnalogDirections()
 
 	Face:set("idle")
 
@@ -1021,32 +1021,32 @@ function AchievementsMenu:enter()
 end
 
 function AchievementsMenu:update(dt)
-        local mx, my = UI.refreshCursor()
-        buttonList:updateHover(mx, my)
-        if scrollbarDrag.active then
-                if not scrollbarState.visible or not love.mouse.isDown(1) then
-                        scrollbarDrag.active = false
-                        scrollbarDrag.grabOffset = 0
-                else
-                        applyScrollbarThumbPosition(my - scrollbarDrag.grabOffset)
-                end
-        end
-        Face:update(dt)
-        updateHeldDpad(dt)
+	local mx, my = UI.refreshCursor()
+	buttonList:updateHover(mx, my)
+	if scrollbarDrag.active then
+		if not scrollbarState.visible or not love.mouse.isDown(1) then
+			scrollbarDrag.active = false
+			scrollbarDrag.grabOffset = 0
+		else
+			applyScrollbarThumbPosition(my - scrollbarDrag.grabOffset)
+		end
+	end
+	Face:update(dt)
+	updateHeldDpad(dt)
 end
 
 function AchievementsMenu:draw()
-        local sw, sh = Screen:get()
-        drawBackground(sw, sh)
+	local sw, sh = Screen:get()
+	drawBackground(sw, sh)
 
-        if not displayBlocks or #displayBlocks == 0 then
-                displayBlocks = Achievements:getDisplayOrder()
-        end
+	if not displayBlocks or #displayBlocks == 0 then
+		displayBlocks = Achievements:getDisplayOrder()
+	end
 
-        UI.refreshCursor()
+	UI.refreshCursor()
 
-        local layout = computeLayout(sw, sh)
-        layout = updateScrollBounds(sw, sh, layout)
+	local layout = computeLayout(sw, sh)
+	layout = updateScrollBounds(sw, sh, layout)
 
 	applyBackButtonLayout(layout, sw, sh)
 
@@ -1055,14 +1055,14 @@ function AchievementsMenu:draw()
 	local colors = UI.colors or {}
 	local titleColor = colors.text or Theme.textColor or {1, 1, 1, 1}
 	local subtleTextColor = colors.subtleText or withAlpha(titleColor, (titleColor[4] or 1) * 0.8)
-        printfWithShadow(Localization:get("achievements.title"), 0, layout.titleY, sw, "center", titleColor)
+	printfWithShadow(Localization:get("achievements.title"), 0, layout.titleY, sw, "center", titleColor)
 
 	local startY = layout.startY
 	local spacing = CARD_SPACING
 	local cardWidth = layout.cardWidth
 	local cardHeight = CARD_HEIGHT
 
-        local listX = layout.listX
+	local listX = layout.listX
 	local panelPaddingX = layout.panelPaddingX
 	local panelPaddingY = layout.panelPaddingY
 	local panelX = layout.panelX
@@ -1081,25 +1081,25 @@ function AchievementsMenu:draw()
 	local summaryProgressHeight = layout.summaryProgressHeight
 	local summaryLineHeight = layout.summaryLineHeight or UI.fonts.achieve:getHeight()
 
-        local summaryShadowOffset = UI.shadowOffset or 0
-        summaryShadowOffset = max(0, summaryShadowOffset - 2)
+	local summaryShadowOffset = UI.shadowOffset or 0
+	summaryShadowOffset = max(0, summaryShadowOffset - 2)
 
-        love.graphics.push("all")
-        UI.drawPanel(summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, {
-                radius = 24,
-                fill = panelColor,
-                alpha = 0.95,
-                borderColor = panelBorder,
-                borderWidth = 3,
-                highlightColor = highlightColor,
-                highlightAlpha = 1,
-                shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
-                shadowOffset = summaryShadowOffset,
-        })
+	love.graphics.push("all")
+	UI.drawPanel(summaryPanel.x, summaryPanel.y, summaryPanel.width, summaryPanel.height, {
+		radius = 24,
+		fill = panelColor,
+		alpha = 0.95,
+		borderColor = panelBorder,
+		borderWidth = 3,
+		highlightColor = highlightColor,
+		highlightAlpha = 1,
+		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
+		shadowOffset = summaryShadowOffset,
+	})
 
-        love.graphics.pop()
+	love.graphics.pop()
 
-        local totals = Achievements:getTotals()
+	local totals = Achievements:getTotals()
 	local unlockedLabel = Localization:get("achievements.summary.unlocked", {
 		unlocked = totals.unlocked,
 		total = totals.total,
@@ -1111,8 +1111,8 @@ function AchievementsMenu:draw()
 	local achieveFont = UI.fonts.achieve
 
 	love.graphics.setFont(achieveFont)
-        printfWithShadow(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left", titleColor)
-        printfWithShadow(completionLabel, summaryTextX, summaryTextY, summaryTextWidth, "right", titleColor)
+	printfWithShadow(unlockedLabel, summaryTextX, summaryTextY, summaryTextWidth, "left", titleColor)
+	printfWithShadow(completionLabel, summaryTextX, summaryTextY, summaryTextWidth, "right", titleColor)
 
 	local progressBarY = layout.summaryProgressY
 	setColor(darkenColor(panelColor, 0.4))
@@ -1123,22 +1123,22 @@ function AchievementsMenu:draw()
 		love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
 	end
 
-        local baseShadowOffset = UI.shadowOffset or 0
-        local panelShadowOffset = max(0, baseShadowOffset - 3)
+	local baseShadowOffset = UI.shadowOffset or 0
+	local panelShadowOffset = max(0, baseShadowOffset - 3)
 
-        love.graphics.push("all")
-        UI.drawPanel(panelX, panelY, panelWidth, panelHeight, {
-                radius = 28,
-                fill = panelColor,
-                alpha = 0.95,
-                borderColor = panelBorder,
-                borderWidth = 3,
-                highlightColor = highlightColor,
-                highlightAlpha = 1,
-                shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.9),
-                shadowOffset = panelShadowOffset,
-        })
-        love.graphics.pop()
+	love.graphics.push("all")
+	UI.drawPanel(panelX, panelY, panelWidth, panelHeight, {
+		radius = 28,
+		fill = panelColor,
+		alpha = 0.95,
+		borderColor = panelBorder,
+		borderWidth = 3,
+		highlightColor = highlightColor,
+		highlightAlpha = 1,
+		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.9),
+		shadowOffset = panelShadowOffset,
+	})
+	love.graphics.pop()
 
 	local clipX = panelX + panelPaddingX
 	local clipY = panelY + panelPaddingY
@@ -1150,9 +1150,9 @@ function AchievementsMenu:draw()
 	love.graphics.push()
 	love.graphics.translate(0, scrollOffset)
 
-        local y = startY
-        for _, block in ipairs(displayBlocks) do
-                for _, ach in ipairs(block.achievements) do
+	local y = startY
+	for _, block in ipairs(displayBlocks) do
+		for _, ach in ipairs(block.achievements) do
 			local unlocked = ach.unlocked
 			local goal = ach.goal or 0
 			local hiddenLocked = ach.hidden and not unlocked
@@ -1170,19 +1170,19 @@ function AchievementsMenu:draw()
 				cardBase = darkenColor(panelColor, 0.2)
 			end
 
-                        local borderTint = {0, 0, 0, 1}
+			local borderTint = {0, 0, 0, 1}
 
-                        love.graphics.push("all")
-                        UI.drawPanel(x, cardY, cardWidth, cardHeight, {
-                                radius = 18,
-                                fill = cardBase,
-                                borderColor = borderTint,
-                                borderWidth = 3,
-                                highlightColor = highlightColor,
-                                highlightAlpha = unlocked and 1 or 0.8,
-                                shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.3) * 0.9),
-                                shadowOffset = panelShadowOffset,
-                        })
+			love.graphics.push("all")
+			UI.drawPanel(x, cardY, cardWidth, cardHeight, {
+				radius = 18,
+				fill = cardBase,
+				borderColor = borderTint,
+				borderWidth = 3,
+				highlightColor = highlightColor,
+				highlightAlpha = unlocked and 1 or 0.8,
+				shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.3) * 0.9),
+				shadowOffset = panelShadowOffset,
+			})
 			love.graphics.pop()
 
 			if icon then
@@ -1211,12 +1211,12 @@ function AchievementsMenu:draw()
 				descriptionText = Localization:get(ach.descriptionKey)
 			end
 
-                        love.graphics.setFont(UI.fonts.achieve)
-                        printfWithShadow(titleText, textX, cardY + 12, cardWidth - 110, "left", titleColor)
+			love.graphics.setFont(UI.fonts.achieve)
+			printfWithShadow(titleText, textX, cardY + 12, cardWidth - 110, "left", titleColor)
 
-                        love.graphics.setFont(UI.fonts.body)
-                        local textWidth = cardWidth - 110
-                        printfWithShadow(descriptionText, textX, cardY + 40, textWidth, "left", subtleTextColor)
+			love.graphics.setFont(UI.fonts.body)
+			local textWidth = cardWidth - 110
+			printfWithShadow(descriptionText, textX, cardY + 40, textWidth, "left", subtleTextColor)
 
 			local rewardText = nil
 			if not hiddenLocked then
@@ -1228,10 +1228,10 @@ function AchievementsMenu:draw()
 			local barY = cardY + cardHeight - 24
 
 			if rewardText and rewardText ~= "" then
-                                love.graphics.setFont(UI.fonts.small)
-                                local rewardColor = withAlpha(subtleTextColor, (subtleTextColor[4] or 1) * 0.85)
-                                local rewardY = barY - (hasProgress and 36 or 24)
-                                printfWithShadow(rewardText, textX, rewardY, textWidth, "left", rewardColor)
+				love.graphics.setFont(UI.fonts.small)
+				local rewardColor = withAlpha(subtleTextColor, (subtleTextColor[4] or 1) * 0.85)
+				local rewardY = barY - (hasProgress and 36 or 24)
+				printfWithShadow(rewardText, textX, rewardY, textWidth, "left", rewardColor)
 			end
 
 			if hasProgress then
@@ -1261,72 +1261,72 @@ function AchievementsMenu:draw()
 	love.graphics.pop()
 	love.graphics.setScissor()
 
-        if contentHeight > viewportHeight then
-                local trackWidth = SCROLLBAR_TRACK_WIDTH
-                local trackInset = max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
-                local trackX = panelX + panelWidth + trackInset
-                local trackY = panelY - 1
-                local trackHeight = layout.panelHeight + 2
+	if contentHeight > viewportHeight then
+		local trackWidth = SCROLLBAR_TRACK_WIDTH
+		local trackInset = max(MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
+		local trackX = panelX + panelWidth + trackInset
+		local trackY = panelY - 1
+		local trackHeight = layout.panelHeight + 2
 
-                local scrollRange = -minScrollOffset
-                local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
+		local scrollRange = -minScrollOffset
+		local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
 
-				local minThumbHeight = 36
-				local thumbHeight = max(minThumbHeight, viewportHeight * (viewportHeight / contentHeight))
-				thumbHeight = min(thumbHeight, trackHeight)
+		local minThumbHeight = 36
+		local thumbHeight = max(minThumbHeight, viewportHeight * (viewportHeight / contentHeight))
+		thumbHeight = min(thumbHeight, trackHeight)
 
-				-- Clamp scrollProgress just to be safe
-				local scrollRange = -minScrollOffset
-				local scrollProgress = (scrollRange > 0) and (-scrollOffset / scrollRange) or 0
-				scrollProgress = clamp(scrollProgress, 0, 1)
+		-- Clamp scrollProgress just to be safe
+		local scrollRange = -minScrollOffset
+		local scrollProgress = (scrollRange > 0) and (-scrollOffset / scrollRange) or 0
+		scrollProgress = clamp(scrollProgress, 0, 1)
 
-				-- Offset compensation (snake art overhang)
-				local overhangInset = 12
+		-- Offset compensation (snake art overhang)
+		local overhangInset = 12
 
-				-- Compute center-clamped Y
-				local thumbCenterY = trackY + (trackHeight - thumbHeight) * scrollProgress + thumbHeight * 0.5
-				thumbCenterY = clamp(thumbCenterY, trackY + thumbHeight * 0.5 + overhangInset, trackY + trackHeight - thumbHeight * 0.5 - overhangInset)
+		-- Compute center-clamped Y
+		local thumbCenterY = trackY + (trackHeight - thumbHeight) * scrollProgress + thumbHeight * 0.5
+		thumbCenterY = clamp(thumbCenterY, trackY + thumbHeight * 0.5 + overhangInset, trackY + trackHeight - thumbHeight * 0.5 - overhangInset)
 
-				local thumbY = thumbCenterY - thumbHeight * 0.5
+		local thumbY = thumbCenterY - thumbHeight * 0.5
 
-                local mx, my = UI.getCursorPosition()
-                local isOverScrollbar = mx >= trackX and mx <= trackX + trackWidth and my >= trackY and my <= trackY + trackHeight
-                local isOverThumb = isOverScrollbar and my >= thumbY and my <= thumbY + thumbHeight
+		local mx, my = UI.getCursorPosition()
+		local isOverScrollbar = mx >= trackX and mx <= trackX + trackWidth and my >= trackY and my <= trackY + trackHeight
+		local isOverThumb = isOverScrollbar and my >= thumbY and my <= thumbY + thumbHeight
 
-                scrollbarState.visible = true
-                scrollbarState.trackX = trackX
-                scrollbarState.trackY = trackY
-                scrollbarState.trackWidth = trackWidth
-                scrollbarState.trackHeight = trackHeight
-                scrollbarState.thumbY = thumbY
-                scrollbarState.thumbHeight = thumbHeight
-                scrollbarState.scrollRange = scrollRange
+		scrollbarState.visible = true
+		scrollbarState.trackX = trackX
+		scrollbarState.trackY = trackY
+		scrollbarState.trackWidth = trackWidth
+		scrollbarState.trackHeight = trackHeight
+		scrollbarState.thumbY = thumbY
+		scrollbarState.thumbHeight = thumbHeight
+		scrollbarState.scrollRange = scrollRange
 
-                drawScrollbar(
-                        trackX,
-                        trackY,
-                        trackWidth,
-                        trackHeight,
-                        thumbY,
-                        thumbHeight,
-                        isOverScrollbar,
-                        isOverThumb or scrollbarDrag.active,
-                        panelColor
-                )
-        else
-                scrollbarState.visible = false
-                scrollbarState.scrollRange = 0
-                scrollbarState.trackX = 0
-                scrollbarState.trackY = 0
-                scrollbarState.trackWidth = 0
-                scrollbarState.trackHeight = 0
-                scrollbarState.thumbHeight = 0
-                scrollbarState.thumbY = 0
-                if scrollbarDrag.active then
-                        scrollbarDrag.active = false
-                        scrollbarDrag.grabOffset = 0
-                end
-        end
+		drawScrollbar(
+		trackX,
+		trackY,
+		trackWidth,
+		trackHeight,
+		thumbY,
+		thumbHeight,
+		isOverScrollbar,
+		isOverThumb or scrollbarDrag.active,
+		panelColor
+		)
+	else
+		scrollbarState.visible = false
+		scrollbarState.scrollRange = 0
+		scrollbarState.trackX = 0
+		scrollbarState.trackY = 0
+		scrollbarState.trackWidth = 0
+		scrollbarState.trackHeight = 0
+		scrollbarState.thumbHeight = 0
+		scrollbarState.thumbY = 0
+		if scrollbarDrag.active then
+			scrollbarDrag.active = false
+			scrollbarDrag.grabOffset = 0
+		end
+	end
 
 	for _, btn in buttonList:iter() do
 		if btn.textKey then
@@ -1338,47 +1338,47 @@ function AchievementsMenu:draw()
 end
 
 function AchievementsMenu:mousepressed(x, y, button)
-        if button == 1 and scrollbarState.visible then
-                local trackX = scrollbarState.trackX
-                local trackY = scrollbarState.trackY
-                local trackWidth = scrollbarState.trackWidth
-                local trackHeight = scrollbarState.trackHeight
+	if button == 1 and scrollbarState.visible then
+		local trackX = scrollbarState.trackX
+		local trackY = scrollbarState.trackY
+		local trackWidth = scrollbarState.trackWidth
+		local trackHeight = scrollbarState.trackHeight
 
-                if x >= trackX and x <= trackX + trackWidth and y >= trackY and y <= trackY + trackHeight then
-                        local thumbTop = scrollbarState.thumbY
-                        local thumbHeight = scrollbarState.thumbHeight
-                        local thumbBottom = thumbTop + thumbHeight
+		if x >= trackX and x <= trackX + trackWidth and y >= trackY and y <= trackY + trackHeight then
+			local thumbTop = scrollbarState.thumbY
+			local thumbHeight = scrollbarState.thumbHeight
+			local thumbBottom = thumbTop + thumbHeight
 
-                        if y >= thumbTop and y <= thumbBottom then
-                                scrollbarDrag.active = true
-                                scrollbarDrag.grabOffset = y - thumbTop
-                        else
-                                local travel = max(0, trackHeight - thumbHeight)
-                                if travel > 0 then
-                                        local targetThumbY = clamp(y - thumbHeight * 0.5, trackY, trackY + travel)
-                                        scrollbarDrag.active = true
-                                        scrollbarDrag.grabOffset = y - targetThumbY
-                                        applyScrollbarThumbPosition(targetThumbY)
-                                else
-                                        setScrollProgress(0)
-                                end
-                        end
+			if y >= thumbTop and y <= thumbBottom then
+				scrollbarDrag.active = true
+				scrollbarDrag.grabOffset = y - thumbTop
+			else
+				local travel = max(0, trackHeight - thumbHeight)
+				if travel > 0 then
+					local targetThumbY = clamp(y - thumbHeight * 0.5, trackY, trackY + travel)
+					scrollbarDrag.active = true
+					scrollbarDrag.grabOffset = y - targetThumbY
+					applyScrollbarThumbPosition(targetThumbY)
+				else
+					setScrollProgress(0)
+				end
+			end
 
-                        return
-                end
-        end
+			return
+		end
+	end
 
-        buttonList:mousepressed(x, y, button)
+	buttonList:mousepressed(x, y, button)
 end
 
 function AchievementsMenu:mousereleased(x, y, button)
-        if button == 1 and scrollbarDrag.active then
-                scrollbarDrag.active = false
-                scrollbarDrag.grabOffset = 0
-        end
+	if button == 1 and scrollbarDrag.active then
+		scrollbarDrag.active = false
+		scrollbarDrag.grabOffset = 0
+	end
 
-        local action = buttonList:mousereleased(x, y, button)
-        return action
+	local action = buttonList:mousereleased(x, y, button)
+	return action
 end
 
 function AchievementsMenu:wheelmoved(dx, dy)

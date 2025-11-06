@@ -192,32 +192,32 @@ function UpgradeVisuals:spawn(x, y, options)
 end
 
 function UpgradeVisuals:update(dt)
-        if dt <= 0 then return end
+	if dt <= 0 then return end
 
-        local effects = self.effects
-        local beforeCount = #effects
-        if beforeCount == 0 then return end
+	local effects = self.effects
+	local beforeCount = #effects
+	if beforeCount == 0 then return end
 
-        local writeIndex = 1
-        for readIndex = 1, beforeCount do
-                local effect = effects[readIndex]
-                effect.age = effect.age + dt
-                if effect.age < effect.life then
-                        if writeIndex ~= readIndex then
-                                effects[writeIndex] = effect
-                        end
-                        writeIndex = writeIndex + 1
-                end
-        end
+	local writeIndex = 1
+	for readIndex = 1, beforeCount do
+		local effect = effects[readIndex]
+		effect.age = effect.age + dt
+		if effect.age < effect.life then
+			if writeIndex ~= readIndex then
+				effects[writeIndex] = effect
+			end
+			writeIndex = writeIndex + 1
+		end
+	end
 
-        for index = writeIndex, beforeCount do
-                effects[index] = nil
-        end
+	for index = writeIndex, beforeCount do
+		effects[index] = nil
+	end
 
-        if self.logEffectCounts then
-                local afterCount = writeIndex - 1
-                print(string.format("[UpgradeVisuals] effects %d -> %d", beforeCount, afterCount))
-        end
+	if self.logEffectCounts then
+		local afterCount = writeIndex - 1
+		print(string.format("[UpgradeVisuals] effects %d -> %d", beforeCount, afterCount))
+	end
 end
 
 local function drawBadge(effect, progress)

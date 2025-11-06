@@ -19,7 +19,7 @@ local min = math.min
 local sin = math.sin
 
 local Menu = {
-    transitionDuration = 0.3,
+	transitionDuration = 0.3,
 }
 
 local ANALOG_DEADZONE = 0.3
@@ -173,207 +173,207 @@ local function getDayUnit(count)
 end
 
 local function formatResetCountdown(seconds)
-        if not seconds then
-                return nil
-        end
+	if not seconds then
+		return nil
+	end
 
-        seconds = max(0, floor(seconds))
+	seconds = max(0, floor(seconds))
 
-        local hours = floor(seconds / 3600)
-        local minutes = floor((seconds % 3600) / 60)
-        local secs = seconds % 60
+	local hours = floor(seconds / 3600)
+	local minutes = floor((seconds % 3600) / 60)
+	local secs = seconds % 60
 
-        if hours > 0 then
-                return string.format("%d:%02d:%02d", hours, minutes, secs)
-        end
+	if hours > 0 then
+		return string.format("%d:%02d:%02d", hours, minutes, secs)
+	end
 
-        return string.format("%d:%02d", minutes, secs)
+	return string.format("%d:%02d", minutes, secs)
 end
 
 local function stringifyValue(value)
-        local valueType = type(value)
-        if valueType == "table" then
-                local keys = {}
-                for key in pairs(value) do
-                        keys[#keys + 1] = tostring(key)
-                end
-                table.sort(keys)
+	local valueType = type(value)
+	if valueType == "table" then
+		local keys = {}
+		for key in pairs(value) do
+			keys[#keys + 1] = tostring(key)
+		end
+		table.sort(keys)
 
-                local parts = {}
-                for i = 1, #keys do
-                        local key = keys[i]
-                        parts[#parts + 1] = key .. "=" .. stringifyValue(value[key])
-                end
+		local parts = {}
+		for i = 1, #keys do
+			local key = keys[i]
+			parts[#parts + 1] = key .. "=" .. stringifyValue(value[key])
+		end
 
-                return "{" .. table.concat(parts, ",") .. "}"
-        end
+		return "{" .. table.concat(parts, ",") .. "}"
+	end
 
-        if valueType == "boolean" then
-                return value and "true" or "false"
-        end
+	if valueType == "boolean" then
+		return value and "true" or "false"
+	end
 
-        return tostring(value)
+	return tostring(value)
 end
 
 local function buildReplacementsSignature(replacements)
-        if not replacements then
-                return "__none"
-        end
+	if not replacements then
+		return "__none"
+	end
 
-        local keys = {}
-        for key in pairs(replacements) do
-                keys[#keys + 1] = tostring(key)
-        end
+	local keys = {}
+	for key in pairs(replacements) do
+		keys[#keys + 1] = tostring(key)
+	end
 
-        table.sort(keys)
+	table.sort(keys)
 
-        local parts = {}
-        for i = 1, #keys do
-                local key = keys[i]
-                parts[#parts + 1] = key .. "=" .. stringifyValue(replacements[key])
-        end
+	local parts = {}
+	for i = 1, #keys do
+		local key = keys[i]
+		parts[#parts + 1] = key .. "=" .. stringifyValue(replacements[key])
+	end
 
-        return table.concat(parts, "|")
+	return table.concat(parts, "|")
 end
 
 local function buildStatusBarSignature(statusBar)
-        if not statusBar then
-                return "__none"
-        end
+	if not statusBar then
+		return "__none"
+	end
 
-        local parts = {
-                tostring(statusBar.textKey or ""),
-                tostring(statusBar.ratio or 0),
-                buildReplacementsSignature(statusBar.replacements),
-        }
+	local parts = {
+		tostring(statusBar.textKey or ""),
+		tostring(statusBar.ratio or 0),
+		buildReplacementsSignature(statusBar.replacements),
+	}
 
-        return table.concat(parts, "|")
+	return table.concat(parts, "|")
 end
 
 local function buildChallengeSignature(challenge)
-        if not challenge then
-                return "__none"
-        end
+	if not challenge then
+		return "__none"
+	end
 
-        local parts = {
-                tostring(challenge.titleKey or ""),
-                tostring(challenge.descriptionKey or ""),
-                buildReplacementsSignature(challenge.descriptionReplacements),
-                tostring(challenge.xpReward or 0),
-                challenge.completed and "1" or "0",
-        }
+	local parts = {
+		tostring(challenge.titleKey or ""),
+		tostring(challenge.descriptionKey or ""),
+		buildReplacementsSignature(challenge.descriptionReplacements),
+		tostring(challenge.xpReward or 0),
+		challenge.completed and "1" or "0",
+	}
 
-        local statusBar = challenge.statusBar
-        if statusBar then
-                parts[#parts + 1] = tostring(statusBar.textKey or "")
-                parts[#parts + 1] = buildReplacementsSignature(statusBar.replacements)
-        else
-                parts[#parts + 1] = "__no_status"
-        end
+	local statusBar = challenge.statusBar
+	if statusBar then
+		parts[#parts + 1] = tostring(statusBar.textKey or "")
+		parts[#parts + 1] = buildReplacementsSignature(statusBar.replacements)
+	else
+		parts[#parts + 1] = "__no_status"
+	end
 
-        return table.concat(parts, "|")
+	return table.concat(parts, "|")
 end
 
 local function getDailyPanelCacheEntry(challenge, panelWidth, padding, bodyFont, progressFont)
-        if not challenge or not panelWidth or panelWidth <= 0 then
-                return nil
-        end
+	if not challenge or not panelWidth or panelWidth <= 0 then
+		return nil
+	end
 
-        local localeRevision = Localization:getRevision()
-        local challengeId = tostring(challenge.id or "__no_id")
-        local statusBar = challenge.statusBar
+	local localeRevision = Localization:getRevision()
+	local challengeId = tostring(challenge.id or "__no_id")
+	local statusBar = challenge.statusBar
 
-        local currentStreak = max(0, PlayerStats:get("dailyChallengeStreak") or 0)
-        local bestStreak = max(currentStreak, PlayerStats:get("dailyChallengeBestStreak") or 0)
+	local currentStreak = max(0, PlayerStats:get("dailyChallengeStreak") or 0)
+	local bestStreak = max(currentStreak, PlayerStats:get("dailyChallengeBestStreak") or 0)
 
-        local statusSignature = buildStatusBarSignature(statusBar)
-        local cacheKey = table.concat({challengeId, tostring(panelWidth), tostring(currentStreak), tostring(bestStreak), statusSignature}, "|")
+	local statusSignature = buildStatusBarSignature(statusBar)
+	local cacheKey = table.concat({challengeId, tostring(panelWidth), tostring(currentStreak), tostring(bestStreak), statusSignature}, "|")
 
-        local challengeSignature = buildChallengeSignature(challenge)
+	local challengeSignature = buildChallengeSignature(challenge)
 
-        local entry = dailyPanelCache[cacheKey]
-        if entry and entry.localeRevision == localeRevision and entry.challengeSignature == challengeSignature then
-                return entry
-        end
+	local entry = dailyPanelCache[cacheKey]
+	if entry and entry.localeRevision == localeRevision and entry.challengeSignature == challengeSignature then
+		return entry
+	end
 
-        local headerText = Localization:get("menu.daily_panel_header")
-        if challenge.xpReward and challenge.xpReward > 0 then
-                headerText = string.format("%s · +%d XP", headerText, challenge.xpReward)
-        end
+	local headerText = Localization:get("menu.daily_panel_header")
+	if challenge.xpReward and challenge.xpReward > 0 then
+		headerText = string.format("%s · +%d XP", headerText, challenge.xpReward)
+	end
 
-        local titleText = Localization:get(challenge.titleKey, challenge.descriptionReplacements)
-        local descriptionText = Localization:get(challenge.descriptionKey, challenge.descriptionReplacements)
+	local titleText = Localization:get(challenge.titleKey, challenge.descriptionReplacements)
+	local descriptionText = Localization:get(challenge.descriptionKey, challenge.descriptionReplacements)
 
-        local usableWidth = panelWidth - padding * 2
-        local _, descLines = bodyFont:getWrap(descriptionText, usableWidth)
-        local descLineCount = #descLines
-        local descHeight = descLineCount * bodyFont:getHeight()
+	local usableWidth = panelWidth - padding * 2
+	local _, descLines = bodyFont:getWrap(descriptionText, usableWidth)
+	local descLineCount = #descLines
+	local descHeight = descLineCount * bodyFont:getHeight()
 
-        local ratio = 0
-        local progressText = nil
-        local statusBarHeight = 0
+	local ratio = 0
+	local progressText = nil
+	local statusBarHeight = 0
 
-        if statusBar then
-                ratio = max(0, min(statusBar.ratio or 0, 1))
-                if statusBar.textKey then
-                        progressText = Localization:get(statusBar.textKey, statusBar.replacements)
-                end
-                statusBarHeight = 10 + 14
-                if progressText then
-                        statusBarHeight = statusBarHeight + progressFont:getHeight() + 6
-                end
-        end
+	if statusBar then
+		ratio = max(0, min(statusBar.ratio or 0, 1))
+		if statusBar.textKey then
+			progressText = Localization:get(statusBar.textKey, statusBar.replacements)
+		end
+		statusBarHeight = 10 + 14
+		if progressText then
+			statusBarHeight = statusBarHeight + progressFont:getHeight() + 6
+		end
+	end
 
-        local streakText
-        local streakLineCount = 0
-        local streakHeight = 0
+	local streakText
+	local streakLineCount = 0
+	local streakHeight = 0
 
-        if currentStreak > 0 then
-                streakLineArgs.streak = currentStreak
-                streakLineArgs.unit = getDayUnit(currentStreak)
-                local streakLine = Localization:get("menu.daily_panel_streak", streakLineArgs)
+	if currentStreak > 0 then
+		streakLineArgs.streak = currentStreak
+		streakLineArgs.unit = getDayUnit(currentStreak)
+		local streakLine = Localization:get("menu.daily_panel_streak", streakLineArgs)
 
-                bestLineArgs.best = bestStreak
-                bestLineArgs.unit = getDayUnit(bestStreak)
-                local bestLine = Localization:get("menu.daily_panel_best", bestLineArgs)
+		bestLineArgs.best = bestStreak
+		bestLineArgs.unit = getDayUnit(bestStreak)
+		local bestLine = Localization:get("menu.daily_panel_best", bestLineArgs)
 
-                local messageKey = challenge.completed and "menu.daily_panel_complete_message" or "menu.daily_panel_keep_alive"
-                local messageLine = Localization:get(messageKey)
+		local messageKey = challenge.completed and "menu.daily_panel_complete_message" or "menu.daily_panel_keep_alive"
+		local messageLine = Localization:get(messageKey)
 
-                streakText = string.format("%s (%s) - %s", streakLine, bestLine, messageLine)
-        else
-                streakText = Localization:get("menu.daily_panel_start")
-        end
+		streakText = string.format("%s (%s) - %s", streakLine, bestLine, messageLine)
+	else
+		streakText = Localization:get("menu.daily_panel_start")
+	end
 
-        if streakText then
-                local _, streakLinesWrapped = progressFont:getWrap(streakText, usableWidth)
-                streakLineCount = max(1, #streakLinesWrapped)
-                streakHeight = streakLineCount * progressFont:getHeight()
-        end
+	if streakText then
+		local _, streakLinesWrapped = progressFont:getWrap(streakText, usableWidth)
+		streakLineCount = max(1, #streakLinesWrapped)
+		streakHeight = streakLineCount * progressFont:getHeight()
+	end
 
-        entry = {
-                localeRevision = localeRevision,
-                challengeSignature = challengeSignature,
-                cacheKey = cacheKey,
-                headerText = headerText,
-                titleText = titleText,
-                descriptionText = descriptionText,
-                descriptionHeight = descHeight,
-                descriptionLineCount = descLineCount,
-                statusBarHeight = statusBarHeight,
-                progressText = progressText,
-                streakText = streakText,
-                streakHeight = streakHeight,
-                streakLineCount = streakLineCount,
-                ratio = ratio,
-                hasStatusBar = statusBar ~= nil,
-                currentStreak = currentStreak,
-                bestStreak = bestStreak,
-        }
+	entry = {
+		localeRevision = localeRevision,
+		challengeSignature = challengeSignature,
+		cacheKey = cacheKey,
+		headerText = headerText,
+		titleText = titleText,
+		descriptionText = descriptionText,
+		descriptionHeight = descHeight,
+		descriptionLineCount = descLineCount,
+		statusBarHeight = statusBarHeight,
+		progressText = progressText,
+		streakText = streakText,
+		streakHeight = streakHeight,
+		streakLineCount = streakLineCount,
+		ratio = ratio,
+		hasStatusBar = statusBar ~= nil,
+		currentStreak = currentStreak,
+		bestStreak = bestStreak,
+	}
 
-        dailyPanelCache[cacheKey] = entry
+	dailyPanelCache[cacheKey] = entry
 
-        return entry
+	return entry
 end
 
 local analogAxisActions = {
@@ -514,15 +514,15 @@ local function handleAnalogAxis(axis, value)
 end
 
 local function updateButtonTexts(revision)
-        local currentRevision = revision or Localization:getRevision()
+	local currentRevision = revision or Localization:getRevision()
 
-        for _, btn in ipairs(buttons) do
-                if btn.labelKey then
-                        btn.text = Localization:get(btn.labelKey)
-                end
-        end
+	for _, btn in ipairs(buttons) do
+		if btn.labelKey then
+			btn.text = Localization:get(btn.labelKey)
+		end
+	end
 
-        buttonLocaleRevision = currentRevision
+	buttonLocaleRevision = currentRevision
 end
 
 local function setColorWithAlpha(color, alpha)
@@ -597,46 +597,46 @@ function Menu:enter()
 
 	local defs = {}
 
-        for i, entry in ipairs(labels) do
-                local x = centerX - UI.spacing.buttonWidth / 2
-                local y = startY + (i - 1) * (UI.spacing.buttonHeight + effectiveSpacing)
+	for i, entry in ipairs(labels) do
+		local x = centerX - UI.spacing.buttonWidth / 2
+		local y = startY + (i - 1) * (UI.spacing.buttonHeight + effectiveSpacing)
 
-                defs[#defs + 1] = {
-                        id = "menuButton" .. i,
+		defs[#defs + 1] = {
+			id = "menuButton" .. i,
 			x = x,
 			y = y,
-                        w = UI.spacing.buttonWidth,
-                        h = UI.spacing.buttonHeight,
-                        labelKey = entry.key,
-                        action = entry.action,
-                        hovered = false,
-                        scale = 1,
-                        alpha = 0,
-                        offsetY = 50,
-                }
-        end
+			w = UI.spacing.buttonWidth,
+			h = UI.spacing.buttonHeight,
+			labelKey = entry.key,
+			action = entry.action,
+			hovered = false,
+			scale = 1,
+			alpha = 0,
+			offsetY = 50,
+		}
+	end
 
-        buttons = buttonList:reset(defs)
-        updateButtonTexts(Localization:getRevision())
+	buttons = buttonList:reset(defs)
+	updateButtonTexts(Localization:getRevision())
 end
 
 function Menu:update(dt)
-        t = t + dt
+	t = t + dt
 
-        local mx, my = UI.refreshCursor()
-        buttonList:updateHover(mx, my)
-        Tooltip:update(dt, mx, my)
+	local mx, my = UI.refreshCursor()
+	buttonList:updateHover(mx, my)
+	Tooltip:update(dt, mx, my)
 
 	if dailyChallenge then
 		dailyChallengeAnim = min(dailyChallengeAnim + dt * 2, 1)
 	end
 
-        updateDailyBarCelebration(dt, shouldCelebrateDailyChallenge())
+	updateDailyBarCelebration(dt, shouldCelebrateDailyChallenge())
 
-        local currentRevision = Localization:getRevision()
-        if buttonLocaleRevision ~= currentRevision then
-                updateButtonTexts(currentRevision)
-        end
+	local currentRevision = Localization:getRevision()
+	if buttonLocaleRevision ~= currentRevision then
+		updateButtonTexts(currentRevision)
+	end
 
 	for i, btn in ipairs(buttons) do
 		if btn.hovered then
@@ -666,17 +666,17 @@ function Menu:draw()
 
 	drawBackground(sw, sh)
 
-        local baseCellSize = 20
-        local baseSpacing = 10
-        local wordScale = 2
-        local sawScale = 2
-        local sawRadius = titleSaw.radius or 24
+	local baseCellSize = 20
+	local baseSpacing = 10
+	local wordScale = 2
+	local sawScale = 2
+	local sawRadius = titleSaw.radius or 24
 
-        local cellSize = baseCellSize * wordScale
-        local word = Localization:get("menu.title_word")
-        local spacing = baseSpacing * wordScale
-        local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
-        local ox = (sw - wordWidth) / 2
+	local cellSize = baseCellSize * wordScale
+	local word = Localization:get("menu.title_word")
+	local spacing = baseSpacing * wordScale
+	local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+	local ox = (sw - wordWidth) / 2
 
 	local baseOy = menuLayout.titleY or (sh * 0.2)
 	local buttonTop = buttons[1] and buttons[1].y or (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
@@ -687,27 +687,27 @@ function Menu:draw()
 	local additionalOffset = max(0, targetBottom - currentBottom)
 	local oy = max(0, baseOy + additionalOffset - LOGO_VERTICAL_LIFT)
 
-        if titleSaw and sawScale and sawRadius then
-                local desiredTrackLengthWorld = wordWidth + cellSize
-                local shortenedTrackLengthWorld = max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 126)
-                local adjustedTrackLengthWorld = shortenedTrackLengthWorld + 4
-                local targetTrackLengthBase = adjustedTrackLengthWorld / sawScale
-                if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
-                        titleSaw.trackLength = targetTrackLengthBase
-                end
+	if titleSaw and sawScale and sawRadius then
+		local desiredTrackLengthWorld = wordWidth + cellSize
+		local shortenedTrackLengthWorld = max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 126)
+		local adjustedTrackLengthWorld = shortenedTrackLengthWorld + 4
+		local targetTrackLengthBase = adjustedTrackLengthWorld / sawScale
+		if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
+			titleSaw.trackLength = targetTrackLengthBase
+		end
 
-                local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
-                local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
-                local slotThicknessWorld = slotThicknessBase * sawScale
+		local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
+		local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
+		local slotThicknessWorld = slotThicknessBase * sawScale
 
-                local targetLeft = ox - 15
-                local targetBottom = oy - 41
+		local targetLeft = ox - 15
+		local targetBottom = oy - 41
 
-                local sawX = targetLeft + trackLengthWorld / 2 - 4
-                local sawY = targetBottom - slotThicknessWorld / 2
+		local sawX = targetLeft + trackLengthWorld / 2 - 4
+		local sawY = targetBottom - slotThicknessWorld / 2
 
-                titleSaw:draw(sawX, sawY, sawScale)
-        end
+		titleSaw:draw(sawX, sawY, sawScale)
+	end
 
 	local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
 
@@ -718,11 +718,11 @@ function Menu:draw()
 		Face:draw(head.x, head.y, wordScale)
 	end
 
-        UI.refreshCursor()
+	UI.refreshCursor()
 
-        for _, btn in ipairs(buttons) do
-                if btn.alpha > 0 then
-                        UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
+	for _, btn in ipairs(buttons) do
+		if btn.alpha > 0 then
+			UI.registerButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.text)
 
 			love.graphics.push()
 			love.graphics.translate(btn.x + btn.w / 2, btn.y + btn.h / 2 + btn.offsetY)
@@ -741,11 +741,11 @@ function Menu:draw()
 	local versionInset = 15
 	local versionY = sh - versionHeight - versionInset
 	local versionX = versionInset
-        setColorWithAlpha(Theme.shadowColor, 0.6)
-        love.graphics.print(Localization:get("menu.version"), versionX + 1, versionY + 1)
-        setColorWithAlpha(Theme.textColor, 0.6)
-        love.graphics.print(Localization:get("menu.version"), versionX, versionY)
-        love.graphics.setColor(Theme.textColor)
+	setColorWithAlpha(Theme.shadowColor, 0.6)
+	love.graphics.print(Localization:get("menu.version"), versionX + 1, versionY + 1)
+	setColorWithAlpha(Theme.textColor, 0.6)
+	love.graphics.print(Localization:get("menu.version"), versionX, versionY)
+	love.graphics.setColor(Theme.textColor)
 
 	if dailyChallenge and dailyChallengeAnim > 0 then
 		local alpha = min(1, dailyChallengeAnim)
@@ -761,33 +761,33 @@ function Menu:draw()
 		local bodyFont = UI.fonts.body
 		local progressFont = UI.fonts.small
 
-                local dailyPanelEntry = getDailyPanelCacheEntry(dailyChallenge, panelWidth, padding, bodyFont, progressFont)
-                local headerText = dailyPanelEntry and dailyPanelEntry.headerText or ""
-                local titleText = dailyPanelEntry and dailyPanelEntry.titleText or ""
-                local descriptionText = dailyPanelEntry and dailyPanelEntry.descriptionText or ""
-                local descHeight = dailyPanelEntry and dailyPanelEntry.descriptionHeight or 0
-                local statusBarHeight = dailyPanelEntry and dailyPanelEntry.statusBarHeight or 0
-                local streakText = dailyPanelEntry and dailyPanelEntry.streakText or nil
-                local streakHeight = dailyPanelEntry and dailyPanelEntry.streakHeight or 0
-                local progressText = dailyPanelEntry and dailyPanelEntry.progressText or nil
-                local ratio = dailyPanelEntry and dailyPanelEntry.ratio or 0
+		local dailyPanelEntry = getDailyPanelCacheEntry(dailyChallenge, panelWidth, padding, bodyFont, progressFont)
+		local headerText = dailyPanelEntry and dailyPanelEntry.headerText or ""
+		local titleText = dailyPanelEntry and dailyPanelEntry.titleText or ""
+		local descriptionText = dailyPanelEntry and dailyPanelEntry.descriptionText or ""
+		local descHeight = dailyPanelEntry and dailyPanelEntry.descriptionHeight or 0
+		local statusBarHeight = dailyPanelEntry and dailyPanelEntry.statusBarHeight or 0
+		local streakText = dailyPanelEntry and dailyPanelEntry.streakText or nil
+		local streakHeight = dailyPanelEntry and dailyPanelEntry.streakHeight or 0
+		local progressText = dailyPanelEntry and dailyPanelEntry.progressText or nil
+		local ratio = dailyPanelEntry and dailyPanelEntry.ratio or 0
 
-                local panelHeight = padding * 2
-                + headerFont:getHeight()
-                + 6
-                + titleFont:getHeight()
-                + 10
-                + descHeight
-                + statusBarHeight
+		local panelHeight = padding * 2
+		+ headerFont:getHeight()
+		+ 6
+		+ titleFont:getHeight()
+		+ 10
+		+ descHeight
+		+ statusBarHeight
 
-                if streakText then
-                        panelHeight = panelHeight + 8 + streakHeight
-                end
+		if streakText then
+			panelHeight = panelHeight + 8 + streakHeight
+		end
 
 		local panelY = max(menuLayout.marginTop or 36, (menuLayout.bottomY or (sh - (menuLayout.marginBottom or 36))) - panelHeight) + panelOffsetY
 
-                local mx, my = UI.getCursorPosition()
-                local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
+		local mx, my = UI.getCursorPosition()
+		local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
 		if hovered then
 			local timeRemaining = DailyChallenges:getTimeUntilReset()
 			local tooltipText
@@ -820,63 +820,63 @@ function Menu:draw()
 		UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 14)
 
 		setColorWithAlpha(DAILY_PANEL_OUTLINE_COLOR, alpha)
-                love.graphics.setLineWidth(3)
-                love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 14, 14)
-                love.graphics.setLineWidth(1)
+		love.graphics.setLineWidth(3)
+		love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight, 14, 14)
+		love.graphics.setLineWidth(1)
 
 		local textX = panelX + padding
 		local textY = panelY + padding
 
 		love.graphics.setFont(headerFont)
-                setColorWithAlpha(Theme.shadowColor, alpha)
-                love.graphics.print(headerText, textX + 1, textY + 1)
-                setColorWithAlpha(Theme.textColor, alpha)
-                love.graphics.print(headerText, textX, textY)
+		setColorWithAlpha(Theme.shadowColor, alpha)
+		love.graphics.print(headerText, textX + 1, textY + 1)
+		setColorWithAlpha(Theme.textColor, alpha)
+		love.graphics.print(headerText, textX, textY)
 
-                textY = textY + headerFont:getHeight() + 6
+		textY = textY + headerFont:getHeight() + 6
 
-                love.graphics.setFont(titleFont)
-                setColorWithAlpha(Theme.shadowColor, alpha)
-                love.graphics.print(titleText, textX + 1, textY + 1)
-                setColorWithAlpha(Theme.textColor, alpha)
-                love.graphics.print(titleText, textX, textY)
+		love.graphics.setFont(titleFont)
+		setColorWithAlpha(Theme.shadowColor, alpha)
+		love.graphics.print(titleText, textX + 1, textY + 1)
+		setColorWithAlpha(Theme.textColor, alpha)
+		love.graphics.print(titleText, textX, textY)
 
-                textY = textY + titleFont:getHeight() + 10
+		textY = textY + titleFont:getHeight() + 10
 
-                love.graphics.setFont(bodyFont)
-                setColorWithAlpha(Theme.shadowColor, alpha)
-                love.graphics.printf(descriptionText, textX + 1, textY + 1, panelWidth - padding * 2)
-                setColorWithAlpha(Theme.textColor, alpha)
-                love.graphics.printf(descriptionText, textX, textY, panelWidth - padding * 2)
+		love.graphics.setFont(bodyFont)
+		setColorWithAlpha(Theme.shadowColor, alpha)
+		love.graphics.printf(descriptionText, textX + 1, textY + 1, panelWidth - padding * 2)
+		setColorWithAlpha(Theme.textColor, alpha)
+		love.graphics.printf(descriptionText, textX, textY, panelWidth - padding * 2)
 
-                textY = textY + descHeight
+		textY = textY + descHeight
 
-                if streakText then
-                        textY = textY + 8
-                        love.graphics.setFont(progressFont)
-                        local streakColor = Theme.textColor
-                        if dailyPanelEntry and dailyPanelEntry.currentStreak > 0 and not dailyChallenge.completed then
-                                streakColor = Theme.warningColor or Theme.accentTextColor or Theme.textColor
-                        end
-                        setColorWithAlpha(Theme.shadowColor, alpha)
-                        love.graphics.printf(streakText, textX + 1, textY + 1, panelWidth - padding * 2)
-                        setColorWithAlpha(streakColor, alpha)
-                        love.graphics.printf(streakText, textX, textY, panelWidth - padding * 2)
-                        textY = textY + streakHeight
-                        setColorWithAlpha(Theme.textColor, alpha)
-                end
+		if streakText then
+			textY = textY + 8
+			love.graphics.setFont(progressFont)
+			local streakColor = Theme.textColor
+			if dailyPanelEntry and dailyPanelEntry.currentStreak > 0 and not dailyChallenge.completed then
+				streakColor = Theme.warningColor or Theme.accentTextColor or Theme.textColor
+			end
+			setColorWithAlpha(Theme.shadowColor, alpha)
+			love.graphics.printf(streakText, textX + 1, textY + 1, panelWidth - padding * 2)
+			setColorWithAlpha(streakColor, alpha)
+			love.graphics.printf(streakText, textX, textY, panelWidth - padding * 2)
+			textY = textY + streakHeight
+			setColorWithAlpha(Theme.textColor, alpha)
+		end
 
-                if dailyPanelEntry and dailyPanelEntry.hasStatusBar then
-                        textY = textY + 10
-                        love.graphics.setFont(progressFont)
+		if dailyPanelEntry and dailyPanelEntry.hasStatusBar then
+			textY = textY + 10
+			love.graphics.setFont(progressFont)
 
-                        if progressText then
-                                setColorWithAlpha(Theme.shadowColor, alpha)
-                                love.graphics.print(progressText, textX + 1, textY + 1)
-                                setColorWithAlpha(Theme.textColor, alpha)
-                                love.graphics.print(progressText, textX, textY)
-                                textY = textY + progressFont:getHeight() + 6
-                        end
+			if progressText then
+				setColorWithAlpha(Theme.shadowColor, alpha)
+				love.graphics.print(progressText, textX + 1, textY + 1)
+				setColorWithAlpha(Theme.textColor, alpha)
+				love.graphics.print(progressText, textX, textY)
+				textY = textY + progressFont:getHeight() + 6
+			end
 
 			local barHeight = 14
 			local barWidth = panelWidth - padding * 2

@@ -18,9 +18,9 @@ local rockRng = love.math.newRandomGenerator()
 local nearbyScratch = {}
 
 local function clearArray(array)
-        for i = #array, 1, -1 do
-                array[i] = nil
-        end
+	for i = #array, 1, -1 do
+		array[i] = nil
+	end
 end
 
 local Rocks = {}
@@ -30,7 +30,7 @@ local lookupHasEntries = false
 local revision = 0
 
 local function bumpRevision()
-        revision = revision + 1
+	revision = revision + 1
 end
 
 Rocks.spawnChance = 0.25
@@ -238,12 +238,12 @@ function Rocks:spawn(x, y)
 		col = col,
 		row = row,
 	})
-        local rock = current[#current]
-        rock.shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999))
-        rock.highlightShape = buildRockHighlight(rock.shape)
+	local rock = current[#current]
+	rock.shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999))
+	rock.highlightShape = buildRockHighlight(rock.shape)
 
-        ensureLookupEntry(rock, col, row)
-        bumpRevision()
+	ensureLookupEntry(rock, col, row)
+	bumpRevision()
 end
 
 function Rocks:getAll()
@@ -269,10 +269,10 @@ function Rocks:reset()
 	current = {}
 	rockLookup = {}
 	lookupHasEntries = false
-        self.spawnChance = 0.25
-        self.shatterOnFruit = 0
-        self.shatterProgress = 0
-        bumpRevision()
+	self.spawnChance = 0.25
+	self.shatterOnFruit = 0
+	self.shatterProgress = 0
+	bumpRevision()
 end
 
 local function spawnShatterFX(x, y)
@@ -336,11 +336,11 @@ function Rocks:updateCell(rock, col, row)
 
 	removeLookupEntry(rock)
 
-        rock.col = col
-        rock.row = row
+	rock.col = col
+	rock.row = row
 
-        ensureLookupEntry(rock, col, row)
-        bumpRevision()
+	ensureLookupEntry(rock, col, row)
+	bumpRevision()
 end
 
 function Rocks:hasCellLookup()
@@ -348,12 +348,12 @@ function Rocks:hasCellLookup()
 end
 
 function Rocks:getNearby(col, row, radius)
-        local results = nearbyScratch
-        clearArray(results)
+	local results = nearbyScratch
+	clearArray(results)
 
-        if not (col and row) then
-                return results
-        end
+	if not (col and row) then
+		return results
+	end
 
 	radius = radius or 1
 
@@ -369,20 +369,20 @@ function Rocks:getNearby(col, row, radius)
 		return results
 	end
 
-        for c = col - radius, col + radius do
-                local column = rockLookup[c]
-                if column then
-                        for r = row - radius, row + radius do
-                                local rock = column[r]
-                                if rock then
-                                        results[#results + 1] = rock
-                                end
-                        end
-                end
-        end
+	for c = col - radius, col + radius do
+		local column = rockLookup[c]
+		if column then
+			for r = row - radius, row + radius do
+				local rock = column[r]
+				if rock then
+					results[#results + 1] = rock
+				end
+			end
+		end
+	end
 
-        -- NOTE: this table is reused internally; treat it as a transient buffer.
-        return results
+	-- NOTE: this table is reused internally; treat it as a transient buffer.
+	return results
 end
 
 function Rocks:destroy(target, opts)
@@ -394,15 +394,15 @@ function Rocks:destroy(target, opts)
 		spawnFX = true
 	end
 
-        for index, rock in ipairs(current) do
-                if rock == target then
-                        local removed = removeRockAt(index, spawnFX)
-                        if removed then
-                                bumpRevision()
-                        end
-                        return
-                end
-        end
+	for index, rock in ipairs(current) do
+		if rock == target then
+			local removed = removeRockAt(index, spawnFX)
+			if removed then
+				bumpRevision()
+			end
+			return
+		end
+	end
 end
 
 function Rocks:triggerHitFlash(target)
@@ -434,14 +434,14 @@ function Rocks:shatterNearest(x, y, count)
 			end
 		end
 
-                if not bestIndex then break end
+		if not bestIndex then break end
 
-                local shattered = removeRockAt(bestIndex, true)
-                if shattered then
-                        bumpRevision()
-                        Audio:playSound("rock_shatter")
+		local shattered = removeRockAt(bestIndex, true)
+		if shattered then
+			bumpRevision()
+			Audio:playSound("rock_shatter")
 
-                        local Upgrades = getUpgradesModule()
+			local Upgrades = getUpgradesModule()
 			if Upgrades and Upgrades.notify then
 				local fx = shattered.x or x
 				local fy = shattered.y or y
@@ -653,11 +653,11 @@ function Rocks:beginSlide(rock, startX, startY, targetX, targetY, options)
 	rock.tremorSlideTargetY = targetY or rock.y
 	rock.tremorSlideLift = options.lift or 10
 	rock.renderX = rock.tremorSlideStartX
-        rock.renderY = rock.tremorSlideStartY
+	rock.renderY = rock.tremorSlideStartY
 end
 
 function Rocks:getRevision()
-        return revision
+	return revision
 end
 
 return Rocks

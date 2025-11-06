@@ -123,25 +123,25 @@ local function handleBloomFruitExpired()
 end
 
 local function spawnDragonfruitBloomFruit(safeZone)
-        if not dragonfruitBloom.active then
-                return false
-        end
+	if not dragonfruitBloom.active then
+		return false
+	end
 
-        if (dragonfruitBloom.fruitsRemaining or 0) <= 0 then
-                dragonfruitBloom.pendingSpawn = false
-                return false
-        end
+	if (dragonfruitBloom.fruitsRemaining or 0) <= 0 then
+		dragonfruitBloom.pendingSpawn = false
+		return false
+	end
 
-        local safeZoneSnapshot = safeZone or dragonfruitBloom.safeZone
-        if not safeZoneSnapshot then
-                safeZoneSnapshot = Snake:getSafeZone(3)
-                dragonfruitBloom.safeZone = safeZoneSnapshot
-        end
+	local safeZoneSnapshot = safeZone or dragonfruitBloom.safeZone
+	if not safeZoneSnapshot then
+		safeZoneSnapshot = Snake:getSafeZone(3)
+		dragonfruitBloom.safeZone = safeZoneSnapshot
+	end
 
-        local options = {
-                isBonus = true,
-                countsForGoal = false,
-                eventTag = BLOOM_EVENT_TAG,
+	local options = {
+		isBonus = true,
+		countsForGoal = false,
+		eventTag = BLOOM_EVENT_TAG,
 	}
 
 	if BLOOM_FRUIT_LIFESPAN and BLOOM_FRUIT_LIFESPAN > 0 then
@@ -149,12 +149,12 @@ local function spawnDragonfruitBloomFruit(safeZone)
 		options.onExpire = handleBloomFruitExpired
 	end
 
-        Fruit:spawn(Snake:getSegments(), Rocks, safeZoneSnapshot, options)
-        dragonfruitBloom.fruitsRemaining = max(0, (dragonfruitBloom.fruitsRemaining or 0) - 1)
-        dragonfruitBloom.pendingSpawn = false
-        dragonfruitBloom.spawnCooldown = bloomRandomDelay()
-        dragonfruitBloom.activeFruitTag = BLOOM_EVENT_TAG
-        dragonfruitBloom.safeZone = safeZoneSnapshot
+	Fruit:spawn(Snake:getSegments(), Rocks, safeZoneSnapshot, options)
+	dragonfruitBloom.fruitsRemaining = max(0, (dragonfruitBloom.fruitsRemaining or 0) - 1)
+	dragonfruitBloom.pendingSpawn = false
+	dragonfruitBloom.spawnCooldown = bloomRandomDelay()
+	dragonfruitBloom.activeFruitTag = BLOOM_EVENT_TAG
+	dragonfruitBloom.safeZone = safeZoneSnapshot
 
 	Shaders.notify("specialEvent", {
 		type = BLOOM_EVENT_TAG,
@@ -207,7 +207,7 @@ local function startDragonfruitBloom(safeZone)
 		color = Theme.dragonfruitColor,
 	})
 
-        spawnDragonfruitBloomFruit(dragonfruitBloom.safeZone)
+	spawnDragonfruitBloomFruit(dragonfruitBloom.safeZone)
 
 	return true
 end
@@ -231,7 +231,7 @@ local function updateDragonfruitBloom(dt)
 	end
 
 	if dragonfruitBloom.pendingSpawn and dragonfruitBloom.spawnCooldown <= 0 and activeTag ~= BLOOM_EVENT_TAG then
-                if not spawnDragonfruitBloomFruit(dragonfruitBloom.safeZone) then
+		if not spawnDragonfruitBloomFruit(dragonfruitBloom.safeZone) then
 			dragonfruitBloom.pendingSpawn = false
 		end
 	end
@@ -254,38 +254,38 @@ local function getBaseWindow()
 end
 
 local function updateComboWindow()
-        if not comboState.windowDirty then
-                return
-        end
+	if not comboState.windowDirty then
+		return
+	end
 
-        comboState.baseWindow = getBaseWindow()
-        comboState.window = max(0.75, comboState.baseWindow)
-        comboState.timer = min(comboState.timer or 0, comboState.window)
-        comboState.windowDirty = false
+	comboState.baseWindow = getBaseWindow()
+	comboState.window = max(0.75, comboState.baseWindow)
+	comboState.timer = min(comboState.timer or 0, comboState.window)
+	comboState.windowDirty = false
 end
 
 if Upgrades and Upgrades.addEventHandler then
-        Upgrades:addEventHandler("upgradeAcquired", function(data, runState)
-                if runState and runState.effects and (runState.effects.comboWindowBonus or 0) ~= 0 then
-                        markComboWindowDirty()
-                        return
-                end
+	Upgrades:addEventHandler("upgradeAcquired", function(data, runState)
+		if runState and runState.effects and (runState.effects.comboWindowBonus or 0) ~= 0 then
+			markComboWindowDirty()
+			return
+		end
 
-                if not data or not data.upgrade then return end
+		if not data or not data.upgrade then return end
 
-                local effects = data.upgrade.effects
-                if effects and (effects.comboWindowBonus or 0) ~= 0 then
-                        markComboWindowDirty()
-                end
-        end)
+		local effects = data.upgrade.effects
+		if effects and (effects.comboWindowBonus or 0) ~= 0 then
+			markComboWindowDirty()
+		end
+	end)
 end
 
 local function syncComboToUI()
-        UI:setCombo(
-                comboState.count or 0,
-                comboState.timer or 0,
-                comboState.window or DEFAULT_COMBO_WINDOW
-        )
+	UI:setCombo(
+	comboState.count or 0,
+	comboState.timer or 0,
+	comboState.window or DEFAULT_COMBO_WINDOW
+	)
 end
 
 local function applyComboReward(x, y)
@@ -304,16 +304,16 @@ local function applyComboReward(x, y)
 	if comboCount >= 2 then
 		SessionStats:add("combosTriggered", 1)
 	end
-        Shaders.notify("comboChanged", {
-                combo = comboCount,
-                timer = comboState.timer or 0,
-                window = comboState.window or DEFAULT_COMBO_WINDOW,
-        })
-        markComboWindowDirty()
-        if comboState.windowDirty then
-                updateComboWindow()
-        end
-        syncComboToUI()
+	Shaders.notify("comboChanged", {
+		combo = comboCount,
+		timer = comboState.timer or 0,
+		window = comboState.window or DEFAULT_COMBO_WINDOW,
+	})
+	markComboWindowDirty()
+	if comboState.windowDirty then
+		updateComboWindow()
+	end
+	syncComboToUI()
 
 	if comboCount < 2 then
 		return
@@ -435,41 +435,41 @@ local function applyRunRewards(fruitType, x, y)
 end
 
 function FruitEvents.reset()
-        comboState.count = 0
-        comboState.timer = 0
-        comboState.baseOverride = DEFAULT_COMBO_WINDOW
-        comboState.baseWindow = DEFAULT_COMBO_WINDOW
-        comboState.window = DEFAULT_COMBO_WINDOW
-        comboState.best = 0
-        markComboWindowDirty()
-        if comboState.windowDirty then
-                updateComboWindow()
-        end
-        syncComboToUI()
-        Shaders.notify("comboLost", {reason = "reset"})
-        resetDragonfruitBloomState()
+	comboState.count = 0
+	comboState.timer = 0
+	comboState.baseOverride = DEFAULT_COMBO_WINDOW
+	comboState.baseWindow = DEFAULT_COMBO_WINDOW
+	comboState.window = DEFAULT_COMBO_WINDOW
+	comboState.best = 0
+	markComboWindowDirty()
+	if comboState.windowDirty then
+		updateComboWindow()
+	end
+	syncComboToUI()
+	Shaders.notify("comboLost", {reason = "reset"})
+	resetDragonfruitBloomState()
 end
 
 function FruitEvents.update(dt)
-        if comboState.windowDirty then
-                updateComboWindow()
-        end
-        if comboState.timer > 0 then
-                comboState.timer = max(0, comboState.timer - dt)
+	if comboState.windowDirty then
+		updateComboWindow()
+	end
+	if comboState.timer > 0 then
+		comboState.timer = max(0, comboState.timer - dt)
 
-                if comboState.timer == 0 then
-                        comboState.count = 0
-                        Shaders.notify("comboLost", {reason = "timeout"})
-                        markComboWindowDirty()
-                end
+		if comboState.timer == 0 then
+			comboState.count = 0
+			Shaders.notify("comboLost", {reason = "timeout"})
+			markComboWindowDirty()
+		end
 
-                if comboState.windowDirty then
-                        updateComboWindow()
-                end
-                syncComboToUI()
-        end
+		if comboState.windowDirty then
+			updateComboWindow()
+		end
+		syncComboToUI()
+	end
 
-        updateDragonfruitBloom(dt)
+	updateDragonfruitBloom(dt)
 end
 
 function FruitEvents.getComboCount()
@@ -477,15 +477,15 @@ function FruitEvents.getComboCount()
 end
 
 function FruitEvents.boostComboTimer(amount)
-        if not amount or amount <= 0 then return end
-        if comboState.windowDirty then
-                updateComboWindow()
-        end
-        comboState.timer = min(comboState.window or DEFAULT_COMBO_WINDOW, (comboState.timer or 0) + amount)
-        if comboState.windowDirty then
-                updateComboWindow()
-        end
-        syncComboToUI()
+	if not amount or amount <= 0 then return end
+	if comboState.windowDirty then
+		updateComboWindow()
+	end
+	comboState.timer = min(comboState.window or DEFAULT_COMBO_WINDOW, (comboState.timer or 0) + amount)
+	if comboState.windowDirty then
+		updateComboWindow()
+	end
+	syncComboToUI()
 	if (comboState.count or 0) >= 2 then
 		Shaders.notify("specialEvent", {
 			type = "comboBoost",
@@ -615,14 +615,14 @@ function FruitEvents.handleConsumption(x, y)
 		combo = comboState.count or 0,
 	})
 
-        local state = {
-                snakeScore = Score:get(),
-                snakeApplesEaten = Score:get(),
-                totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0,
-                totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
-                bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
-        }
-        Achievements:checkAll(state)
+	local state = {
+		snakeScore = Score:get(),
+		snakeApplesEaten = Score:get(),
+		totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0,
+		totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
+		bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
+	}
+	Achievements:checkAll(state)
 end
 
 return FruitEvents

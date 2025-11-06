@@ -68,22 +68,22 @@ local function drawAngryEye(cx, isLeft)
 end
 
 local function registerDrawer(name, drawer, options)
-        shapeDefinitions[name] = function()
-                if not (options and options.skipColor) then
-                        love.graphics.setColor(0, 0, 0, 1)
-                end
-                drawer()
-        end
+	shapeDefinitions[name] = function()
+		if not (options and options.skipColor) then
+			love.graphics.setColor(0, 0, 0, 1)
+		end
+		drawer()
+	end
 
-        if shapeCacheBuilt and rebuildShapeCache then
-                rebuildShapeCache()
-        end
+	if shapeCacheBuilt and rebuildShapeCache then
+		rebuildShapeCache()
+	end
 end
 
 local function buildShapeCache()
-        if shapeCacheBuilt then
-                return
-        end
+	if shapeCacheBuilt then
+		return
+	end
 
 	for name, definition in pairs(shapeDefinitions) do
 		local canvas = love.graphics.newCanvas(SHAPE_CANVAS_SIZE, SHAPE_CANVAS_SIZE)
@@ -117,20 +117,20 @@ local function buildShapeCache()
 end
 
 rebuildShapeCache = function()
-        if not shapeCacheBuilt then
-                return
-        end
+	if not shapeCacheBuilt then
+		return
+	end
 
-        for _, entry in pairs(shapeDrawers) do
-                if entry.image then
-                        entry.image:release()
-                end
-        end
+	for _, entry in pairs(shapeDrawers) do
+		if entry.image then
+			entry.image:release()
+		end
+	end
 
-        shapeDrawers = {}
-        shapeCacheBuilt = false
+	shapeDrawers = {}
+	shapeCacheBuilt = false
 
-        buildShapeCache()
+	buildShapeCache()
 end
 
 local function ensureShapeCache()
@@ -185,56 +185,56 @@ registerDrawer("angry", function()
 end)
 
 registerDrawer("blank", function()
-        local radius = EYE_RADIUS * currentEyeScale
-        local halfWidth = radius * 0.9
-        local lineWidth = radius * 0.55
+	local radius = EYE_RADIUS * currentEyeScale
+	local halfWidth = radius * 0.9
+	local lineWidth = radius * 0.55
 
-        love.graphics.setLineWidth(lineWidth)
-        love.graphics.line(
-        LEFT_EYE_CENTER_X - halfWidth,
-        EYE_CENTER_Y,
-        LEFT_EYE_CENTER_X + halfWidth,
-        EYE_CENTER_Y
-        )
-        love.graphics.line(
-        RIGHT_EYE_CENTER_X - halfWidth,
-        EYE_CENTER_Y,
-        RIGHT_EYE_CENTER_X + halfWidth,
-        EYE_CENTER_Y
-        )
+	love.graphics.setLineWidth(lineWidth)
+	love.graphics.line(
+	LEFT_EYE_CENTER_X - halfWidth,
+	EYE_CENTER_Y,
+	LEFT_EYE_CENTER_X + halfWidth,
+	EYE_CENTER_Y
+	)
+	love.graphics.line(
+	RIGHT_EYE_CENTER_X - halfWidth,
+	EYE_CENTER_Y,
+	RIGHT_EYE_CENTER_X + halfWidth,
+	EYE_CENTER_Y
+	)
 end)
 
 registerDrawer("shocked", function()
-        local outerRadius = EYE_RADIUS * currentEyeScale * 1.15
-        local circleSegments = 24
-        local outlineWidth = outerRadius * 0.4
-        local crossHalfWidth = outerRadius * 0.75
-        local crossHalfHeight = outerRadius * 0.75
-        local crossLineWidth = outerRadius * 0.32
+	local outerRadius = EYE_RADIUS * currentEyeScale * 1.15
+	local circleSegments = 24
+	local outlineWidth = outerRadius * 0.4
+	local crossHalfWidth = outerRadius * 0.75
+	local crossHalfHeight = outerRadius * 0.75
+	local crossLineWidth = outerRadius * 0.32
 
-        love.graphics.setLineWidth(outlineWidth)
-        love.graphics.setLineJoin("bevel")
-        love.graphics.circle("line", LEFT_EYE_CENTER_X, EYE_CENTER_Y, outerRadius, circleSegments)
-        love.graphics.circle("line", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, outerRadius, circleSegments)
+	love.graphics.setLineWidth(outlineWidth)
+	love.graphics.setLineJoin("bevel")
+	love.graphics.circle("line", LEFT_EYE_CENTER_X, EYE_CENTER_Y, outerRadius, circleSegments)
+	love.graphics.circle("line", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, outerRadius, circleSegments)
 
-        love.graphics.setLineWidth(crossLineWidth)
-        local function drawCross(cx)
-                love.graphics.line(
-                cx - crossHalfWidth,
-                EYE_CENTER_Y - crossHalfHeight,
-                cx + crossHalfWidth,
-                EYE_CENTER_Y + crossHalfHeight
-                )
-                love.graphics.line(
-                cx - crossHalfWidth,
-                EYE_CENTER_Y + crossHalfHeight,
-                cx + crossHalfWidth,
-                EYE_CENTER_Y - crossHalfHeight
-                )
-        end
+	love.graphics.setLineWidth(crossLineWidth)
+	local function drawCross(cx)
+		love.graphics.line(
+		cx - crossHalfWidth,
+		EYE_CENTER_Y - crossHalfHeight,
+		cx + crossHalfWidth,
+		EYE_CENTER_Y + crossHalfHeight
+		)
+		love.graphics.line(
+		cx - crossHalfWidth,
+		EYE_CENTER_Y + crossHalfHeight,
+		cx + crossHalfWidth,
+		EYE_CENTER_Y - crossHalfHeight
+		)
+	end
 
-        drawCross(LEFT_EYE_CENTER_X)
-        drawCross(RIGHT_EYE_CENTER_X)
+	drawCross(LEFT_EYE_CENTER_X)
+	drawCross(RIGHT_EYE_CENTER_X)
 end)
 
 Face.state = "idle"

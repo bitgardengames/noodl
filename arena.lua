@@ -335,13 +335,13 @@ function Arena:isInside(x, y)
 end
 
 function Arena:setFloorDecorations(floorNum, floorData)
-        if not floorNum and not floorData then
-                self._decorationConfig = nil
-                self._tileDecorations = nil
-                self._tileDecorationCanvas = nil
-                self:invalidateBorderGeometry()
-                return
-        end
+	if not floorNum and not floorData then
+		self._decorationConfig = nil
+		self._tileDecorations = nil
+		self._tileDecorationCanvas = nil
+		self:invalidateBorderGeometry()
+		return
+	end
 
 	local seed = os.time()
 	seed = seed + floor(Timer.getTime() * 1000)
@@ -366,20 +366,20 @@ local directions = {
 }
 
 function Arena:rebuildTileDecorations()
-        local config = self._decorationConfig
-        if not config then
-                self._tileDecorations = nil
-                self._tileDecorationCanvas = nil
-                return
-        end
+	local config = self._decorationConfig
+	if not config then
+		self._tileDecorations = nil
+		self._tileDecorationCanvas = nil
+		return
+	end
 
-        local cols = self.cols or 0
-        local rows = self.rows or 0
-        if cols <= 0 or rows <= 0 then
-                self._tileDecorations = nil
-                self._tileDecorationCanvas = nil
-                return
-        end
+	local cols = self.cols or 0
+	local rows = self.rows or 0
+	if cols <= 0 or rows <= 0 then
+		self._tileDecorations = nil
+		self._tileDecorationCanvas = nil
+		return
+	end
 
 	local palette = config.palette
 	local baseColor = getPaletteColor(palette, "arenaBG", Theme.arenaBG, 1)
@@ -581,129 +581,129 @@ function Arena:rebuildTileDecorations()
 		end
 	end
 
-        local staticDecorations = {}
-        local dynamicDecorations = {}
+	local staticDecorations = {}
+	local dynamicDecorations = {}
 
-        for i = 1, #decorations do
-                local deco = decorations[i]
-                if deco.fade then
-                        dynamicDecorations[#dynamicDecorations + 1] = deco
-                else
-                        staticDecorations[#staticDecorations + 1] = deco
-                end
-        end
+	for i = 1, #decorations do
+		local deco = decorations[i]
+		if deco.fade then
+			dynamicDecorations[#dynamicDecorations + 1] = deco
+		else
+			staticDecorations[#staticDecorations + 1] = deco
+		end
+	end
 
-        self._tileDecorations = {
-                static = staticDecorations,
-                dynamic = dynamicDecorations,
-        }
+	self._tileDecorations = {
+		static = staticDecorations,
+		dynamic = dynamicDecorations,
+	}
 
-        self:_rebuildTileDecorationCanvas()
+	self:_rebuildTileDecorationCanvas()
 
-        if safeZoneMap then
-                for key in pairs(safeZoneMap) do
-                        safeZoneMap[key] = nil
-                end
-                safeZoneMap = nil
-        end
+	if safeZoneMap then
+		for key in pairs(safeZoneMap) do
+			safeZoneMap[key] = nil
+		end
+		safeZoneMap = nil
+	end
 
 end
 
 function Arena:_rebuildTileDecorationCanvas()
-        local decorations = self._tileDecorations and self._tileDecorations.static
-        if not decorations or #decorations == 0 then
-                self._tileDecorationCanvas = nil
-                return
-        end
+	local decorations = self._tileDecorations and self._tileDecorations.static
+	if not decorations or #decorations == 0 then
+		self._tileDecorationCanvas = nil
+		return
+	end
 
-        local canvasWidth = ceil(self.width or 0)
-        local canvasHeight = ceil(self.height or 0)
-        if canvasWidth <= 0 or canvasHeight <= 0 then
-                self._tileDecorationCanvas = nil
-                return
-        end
+	local canvasWidth = ceil(self.width or 0)
+	local canvasHeight = ceil(self.height or 0)
+	if canvasWidth <= 0 or canvasHeight <= 0 then
+		self._tileDecorationCanvas = nil
+		return
+	end
 
-        local canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
+	local canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
 
-        love.graphics.push("all")
-        love.graphics.setCanvas(canvas)
-        love.graphics.clear(0, 0, 0, 0)
-        love.graphics.origin()
-        love.graphics.setBlendMode("alpha")
-        love.graphics.translate(-(self.x or 0), -(self.y or 0))
+	love.graphics.push("all")
+	love.graphics.setCanvas(canvas)
+	love.graphics.clear(0, 0, 0, 0)
+	love.graphics.origin()
+	love.graphics.setBlendMode("alpha")
+	love.graphics.translate(-(self.x or 0), -(self.y or 0))
 
-        for i = 1, #decorations do
-                local deco = decorations[i]
-                local color = deco.color
-                local rectWidth = deco.w or 0
-                local rectHeight = deco.h or 0
-                if color and rectWidth > 0 and rectHeight > 0 then
-                        local tileX, tileY = self:getTilePosition(deco.col, deco.row)
-                        local drawX = tileX + (deco.x or 0)
-                        local drawY = tileY + (deco.y or 0)
-                        love.graphics.setColor(color[1], color[2], color[3], color[4] or 1)
-                        love.graphics.rectangle("fill", drawX, drawY, rectWidth, rectHeight, deco.radius or 0, deco.radius or 0)
-                end
-        end
+	for i = 1, #decorations do
+		local deco = decorations[i]
+		local color = deco.color
+		local rectWidth = deco.w or 0
+		local rectHeight = deco.h or 0
+		if color and rectWidth > 0 and rectHeight > 0 then
+			local tileX, tileY = self:getTilePosition(deco.col, deco.row)
+			local drawX = tileX + (deco.x or 0)
+			local drawY = tileY + (deco.y or 0)
+			love.graphics.setColor(color[1], color[2], color[3], color[4] or 1)
+			love.graphics.rectangle("fill", drawX, drawY, rectWidth, rectHeight, deco.radius or 0, deco.radius or 0)
+		end
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 
-        self._tileDecorationCanvas = canvas
+	self._tileDecorationCanvas = canvas
 end
 
 function Arena:drawTileDecorations()
-        local decorationSets = self._tileDecorations
-        local staticCanvas = self._tileDecorationCanvas
-        local dynamicDecorations = decorationSets and decorationSets.dynamic
+	local decorationSets = self._tileDecorations
+	local staticCanvas = self._tileDecorationCanvas
+	local dynamicDecorations = decorationSets and decorationSets.dynamic
 
-        local hasDynamic = dynamicDecorations and #dynamicDecorations > 0
-        if not staticCanvas and not hasDynamic then
-                return
-        end
+	local hasDynamic = dynamicDecorations and #dynamicDecorations > 0
+	if not staticCanvas and not hasDynamic then
+		return
+	end
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("alpha")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("alpha")
 
-        if staticCanvas then
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(staticCanvas, self.x or 0, self.y or 0)
-        end
+	if staticCanvas then
+		love.graphics.setColor(1, 1, 1, 1)
+		love.graphics.draw(staticCanvas, self.x or 0, self.y or 0)
+	end
 
-        if hasDynamic then
-                local fadeTime
-                for i = 1, #dynamicDecorations do
-                        local fade = dynamicDecorations[i].fade
-                        if fade and fade.amplitude and fade.amplitude > 0 then
-                                fadeTime = Timer.getTime()
-                                break
-                        end
-                end
+	if hasDynamic then
+		local fadeTime
+		for i = 1, #dynamicDecorations do
+			local fade = dynamicDecorations[i].fade
+			if fade and fade.amplitude and fade.amplitude > 0 then
+				fadeTime = Timer.getTime()
+				break
+			end
+		end
 
-                for i = 1, #dynamicDecorations do
-                        local deco = dynamicDecorations[i]
-                        local color = deco.color
-                        local width = deco.w or 0
-                        local height = deco.h or 0
-                        if color and width > 0 and height > 0 then
-                                local tileX, tileY = self:getTilePosition(deco.col, deco.row)
-                                local drawX = tileX + (deco.x or 0)
-                                local drawY = tileY + (deco.y or 0)
-                                local alpha = color[4] or 1
-                                local fade = deco.fade
-                                if fade and fade.amplitude and fade.amplitude > 0 then
-                                        local time = fadeTime or Timer.getTime()
-                                        local oscillation = sin(time * (fade.speed or 1) + (fade.offset or 0))
-                                        local factor = 1 + oscillation * fade.amplitude
-                                        alpha = clamp01((fade.base or alpha) * factor)
-                                end
+		for i = 1, #dynamicDecorations do
+			local deco = dynamicDecorations[i]
+			local color = deco.color
+			local width = deco.w or 0
+			local height = deco.h or 0
+			if color and width > 0 and height > 0 then
+				local tileX, tileY = self:getTilePosition(deco.col, deco.row)
+				local drawX = tileX + (deco.x or 0)
+				local drawY = tileY + (deco.y or 0)
+				local alpha = color[4] or 1
+				local fade = deco.fade
+				if fade and fade.amplitude and fade.amplitude > 0 then
+					local time = fadeTime or Timer.getTime()
+					local oscillation = sin(time * (fade.speed or 1) + (fade.offset or 0))
+					local factor = 1 + oscillation * fade.amplitude
+					alpha = clamp01((fade.base or alpha) * factor)
+				end
 
-                                love.graphics.setColor(color[1], color[2], color[3], alpha)
-                                love.graphics.rectangle("fill", drawX, drawY, width, height, deco.radius or 0, deco.radius or 0)
-                        end
-                end
-        end
+				love.graphics.setColor(color[1], color[2], color[3], alpha)
+				love.graphics.rectangle("fill", drawX, drawY, width, height, deco.radius or 0, deco.radius or 0)
+			end
+		end
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 function Arena:_ensureArenaNoiseTexture()
@@ -1096,43 +1096,43 @@ function Arena:drawBorder()
 
 	local borderColor = Theme.arenaBorder
 	local colorHash = hashColor(borderColor)
-        local canvasWidth = love.graphics.getWidth()
-        local canvasHeight = love.graphics.getHeight()
-        local desiredBorderSamples = BORDER_CANVAS_MSAA or 0
+	local canvasWidth = love.graphics.getWidth()
+	local canvasHeight = love.graphics.getHeight()
+	local desiredBorderSamples = BORDER_CANVAS_MSAA or 0
 
-        local borderCanvas = nil
-        if desiredBorderSamples >= 2 then
-                local canvas, replaced, samples = SharedCanvas.ensureCanvas(self.borderCanvas, canvasWidth, canvasHeight, desiredBorderSamples)
-                if samples >= 2 then
-                        if canvas ~= self.borderCanvas then
-                                self.borderCanvas = canvas
-                        end
-                        borderCanvas = canvas
-                        self._borderCanvasSamples = samples
-                        if replaced then
-                                self:invalidateBorderGeometry()
-                        end
-                elseif self.borderCanvas then
-                        self.borderCanvas = nil
-                        self._borderCanvasSamples = nil
-                        self:invalidateBorderGeometry()
-                else
-                        self._borderCanvasSamples = nil
-                end
-        elseif self.borderCanvas then
-                self.borderCanvas = nil
-                self._borderCanvasSamples = nil
-                self:invalidateBorderGeometry()
-        else
-                self._borderCanvasSamples = nil
-        end
+	local borderCanvas = nil
+	if desiredBorderSamples >= 2 then
+		local canvas, replaced, samples = SharedCanvas.ensureCanvas(self.borderCanvas, canvasWidth, canvasHeight, desiredBorderSamples)
+		if samples >= 2 then
+			if canvas ~= self.borderCanvas then
+				self.borderCanvas = canvas
+			end
+			borderCanvas = canvas
+			self._borderCanvasSamples = samples
+			if replaced then
+				self:invalidateBorderGeometry()
+			end
+		elseif self.borderCanvas then
+			self.borderCanvas = nil
+			self._borderCanvasSamples = nil
+			self:invalidateBorderGeometry()
+		else
+			self._borderCanvasSamples = nil
+		end
+	elseif self.borderCanvas then
+		self.borderCanvas = nil
+		self._borderCanvasSamples = nil
+		self:invalidateBorderGeometry()
+	else
+		self._borderCanvasSamples = nil
+	end
 
-        if not borderCanvas then
-                self._borderCanvasSamples = nil
-        end
+	if not borderCanvas then
+		self._borderCanvasSamples = nil
+	end
 
-        self._borderLastCanvasWidth = canvasWidth
-        self._borderLastCanvasHeight = canvasHeight
+	self._borderLastCanvasWidth = canvasWidth
+	self._borderLastCanvasHeight = canvasHeight
 
 	local bounds = self._borderLastBounds
 	local needsRebuild = self.borderDirty
@@ -1400,32 +1400,32 @@ function Arena:spawnExit()
 	local snakeSegments = nil
 	local snakeSafeZone = nil
 	local headX, headY = nil, nil
-        local snakeSafeZoneLookup = nil
-        if Snake then
-                if Snake.getSegments then
-                        snakeSegments = Snake:getSegments()
-                end
-                if Snake.getSafeZone then
-                        snakeSafeZone = Snake:getSafeZone(3)
-                        if snakeSafeZone then
-                                snakeSafeZoneLookup = {}
-                                for _, cell in ipairs(snakeSafeZone) do
-                                        local col, row = cell[1], cell[2]
-                                        if col and row then
-                                                local rowLookup = snakeSafeZoneLookup[row]
-                                                if not rowLookup then
-                                                        rowLookup = {}
-                                                        snakeSafeZoneLookup[row] = rowLookup
-                                                end
-                                                rowLookup[col] = true
-                                        end
-                                end
-                        end
-                end
-                if Snake.getHead then
-                        headX, headY = Snake:getHead()
-                end
-        end
+	local snakeSafeZoneLookup = nil
+	if Snake then
+		if Snake.getSegments then
+			snakeSegments = Snake:getSegments()
+		end
+		if Snake.getSafeZone then
+			snakeSafeZone = Snake:getSafeZone(3)
+			if snakeSafeZone then
+				snakeSafeZoneLookup = {}
+				for _, cell in ipairs(snakeSafeZone) do
+					local col, row = cell[1], cell[2]
+					if col and row then
+						local rowLookup = snakeSafeZoneLookup[row]
+						if not rowLookup then
+							rowLookup = {}
+							snakeSafeZoneLookup[row] = rowLookup
+						end
+						rowLookup[col] = true
+					end
+				end
+			end
+		end
+		if Snake.getHead then
+			headX, headY = Snake:getHead()
+		end
+	end
 
 	local threshold = (SnakeUtils and SnakeUtils.SEGMENT_SIZE) or self.tileSize
 	local halfThreshold = threshold * 0.5
@@ -1450,14 +1450,14 @@ function Arena:spawnExit()
 			end
 		end
 
-                if snakeSafeZoneLookup then
-                        local rowLookup = snakeSafeZoneLookup[row]
-                        if rowLookup and rowLookup[col] then
-                                return false
-                        end
-                elseif snakeSafeZone and isTileInSafeZone(snakeSafeZone, col, row) then
-                        return false
-                end
+		if snakeSafeZoneLookup then
+			local rowLookup = snakeSafeZoneLookup[row]
+			if rowLookup and rowLookup[col] then
+				return false
+			end
+		elseif snakeSafeZone and isTileInSafeZone(snakeSafeZone, col, row) then
+			return false
+		end
 
 		if snakeSegments then
 			for _, seg in ipairs(snakeSegments) do

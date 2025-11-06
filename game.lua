@@ -63,222 +63,222 @@ local DEFAULT_SURGE_RIPPLE_COLOR = {1, 0.9, 0.55, 1}
 local TAIL_CHOP_FEEDBACK_COLOR = {0.98, 0.22, 0.24, 1}
 
 local function drawBackgroundLayer()
-        Arena:drawBackground()
+	Arena:drawBackground()
 end
 
 local function drawOverlayLayer()
-        if Arena.drawQueuedExit then
-                Arena:drawQueuedExit()
-        end
+	if Arena.drawQueuedExit then
+		Arena:drawQueuedExit()
+	end
 
-        Arena:drawBorder()
+	Arena:drawBorder()
 end
 
 local function drawMainLayer()
-        local game = currentGame
-        local renderState = currentRenderState
+	local game = currentGame
+	local renderState = currentRenderState
 
-        if not game then
-                return
-        end
+	if not game then
+		return
+	end
 
-        Fruit:draw()
-        Rocks:draw()
-        Saws:draw()
-        Darts:draw()
-        Lasers:draw()
+	Fruit:draw()
+	Rocks:draw()
+	Saws:draw()
+	Darts:draw()
+	Lasers:draw()
 
-        local isDescending = (renderState == "descending")
-        local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
+	local isDescending = (renderState == "descending")
+	local shouldDrawExitAfterSnake = (not isDescending and renderState ~= "dying" and renderState ~= "gameover")
 
-        if not isDescending and not shouldDrawExitAfterSnake then
-                Arena:drawExit()
-        end
+	if not isDescending and not shouldDrawExitAfterSnake then
+		Arena:drawExit()
+	end
 
-        if isDescending then
-                game:drawDescending()
-        elseif renderState == "dying" then
-                Death:draw()
-        elseif renderState ~= "gameover" then
-                Snake:draw()
-        end
+	if isDescending then
+		game:drawDescending()
+	elseif renderState == "dying" then
+		Death:draw()
+	elseif renderState ~= "gameover" then
+		Snake:draw()
+	end
 
-        if shouldDrawExitAfterSnake then
-                Arena:drawExit()
-        end
+	if shouldDrawExitAfterSnake then
+		Arena:drawExit()
+	end
 
-        Particles:draw()
-        Bombs:draw()
-        UpgradeVisuals:draw()
-        Popup:draw()
+	Particles:draw()
+	Bombs:draw()
+	UpgradeVisuals:draw()
+	Popup:draw()
 
-        RenderLayers:withLayer("overlay", drawOverlayLayer)
+	RenderLayers:withLayer("overlay", drawOverlayLayer)
 end
 
 local function easeOutCubic(t)
-        local inv = 1 - t
-        return 1 - inv * inv * inv
+	local inv = 1 - t
+	return 1 - inv * inv * inv
 end
 
 local function clamp(value, minimum, maximum)
-        if value < minimum then
-                return minimum
-        elseif value > maximum then
-                return maximum
-        end
-        return value
+	if value < minimum then
+		return minimum
+	elseif value > maximum then
+		return maximum
+	end
+	return value
 end
 
 local function circleSegments(radius)
-        return clamp(ceil(radius / 6), 12, 48)
+	return clamp(ceil(radius / 6), 12, 48)
 end
 
 local function updateScreenDimensions(self, width, height)
-        if width == nil or height == nil then
-                width = width or love.graphics.getWidth()
-                height = height or love.graphics.getHeight()
-        end
+	if width == nil or height == nil then
+		width = width or love.graphics.getWidth()
+		height = height or love.graphics.getHeight()
+	end
 
-        if width == nil or height == nil then
-                self.screenWidth = width
-                self.screenHeight = height
-                self.screenDiagonal = nil
-                return false
-        end
+	if width == nil or height == nil then
+		self.screenWidth = width
+		self.screenHeight = height
+		self.screenDiagonal = nil
+		return false
+	end
 
-        if width == self.screenWidth and height == self.screenHeight and self.screenDiagonal then
-                return false
-        end
+	if width == self.screenWidth and height == self.screenHeight and self.screenDiagonal then
+		return false
+	end
 
-        self.screenWidth = width
-        self.screenHeight = height
-        self.screenDiagonal = sqrt(width * width + height * height)
+	self.screenWidth = width
+	self.screenHeight = height
+	self.screenDiagonal = sqrt(width * width + height * height)
 
-        return true
+	return true
 end
 
 local function ensureTransitionTitleCanvas(self)
-        local width = max(1, ceil(self.screenWidth or love.graphics.getWidth() or 1))
-        local height = max(1, ceil(self.screenHeight or love.graphics.getHeight() or 1))
-        local canvas = self.transitionTitleCanvas
-        if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
-                canvas = love.graphics.newCanvas(width, height)
-                canvas:setFilter("linear", "linear")
-                self.transitionTitleCanvas = canvas
-        end
-        return canvas
+	local width = max(1, ceil(self.screenWidth or love.graphics.getWidth() or 1))
+	local height = max(1, ceil(self.screenHeight or love.graphics.getHeight() or 1))
+	local canvas = self.transitionTitleCanvas
+	if not canvas or canvas:getWidth() ~= width or canvas:getHeight() ~= height then
+		canvas = love.graphics.newCanvas(width, height)
+		canvas:setFilter("linear", "linear")
+		self.transitionTitleCanvas = canvas
+	end
+	return canvas
 end
 
 function Game:invalidateTransitionTitleCache()
-        if self.transitionTitleCache then
-                self.transitionTitleCache = nil
-        end
-        if self.transitionPromptCanvas then
-                self.transitionPromptCanvas = nil
-        end
+	if self.transitionTitleCache then
+		self.transitionTitleCache = nil
+	end
+	if self.transitionPromptCanvas then
+		self.transitionPromptCanvas = nil
+	end
 end
 
 function Game:refreshTransitionTitleCanvas(data)
-        local floorData = data and (data.transitionFloorData or self.currentFloorData) or self.currentFloorData
-        if not floorData then
-                self:invalidateTransitionTitleCache()
-                return nil
-        end
+	local floorData = data and (data.transitionFloorData or self.currentFloorData) or self.currentFloorData
+	if not floorData then
+		self:invalidateTransitionTitleCache()
+		return nil
+	end
 
-        local promptText
-        if data and data.transitionAwaitInput then
-                promptText = Localization:get("game.floor_intro.prompt")
-                if not promptText or promptText == "" then
-                        promptText = nil
-                end
-        end
+	local promptText
+	if data and data.transitionAwaitInput then
+		promptText = Localization:get("game.floor_intro.prompt")
+		if not promptText or promptText == "" then
+			promptText = nil
+		end
+	end
 
-        local titleCanvas = ensureTransitionTitleCanvas(self)
-        local width = titleCanvas:getWidth()
-        local height = titleCanvas:getHeight()
+	local titleCanvas = ensureTransitionTitleCanvas(self)
+	local width = titleCanvas:getWidth()
+	local height = titleCanvas:getHeight()
 
-        local promptCanvas = nil
-        if promptText then
-                promptCanvas = self.transitionPromptCanvas
-                if not promptCanvas or promptCanvas:getWidth() ~= width or promptCanvas:getHeight() ~= height then
-                        promptCanvas = love.graphics.newCanvas(width, height)
-                        promptCanvas:setFilter("linear", "linear")
-                        self.transitionPromptCanvas = promptCanvas
-                end
-        else
-                self.transitionPromptCanvas = nil
-        end
+	local promptCanvas = nil
+	if promptText then
+		promptCanvas = self.transitionPromptCanvas
+		if not promptCanvas or promptCanvas:getWidth() ~= width or promptCanvas:getHeight() ~= height then
+			promptCanvas = love.graphics.newCanvas(width, height)
+			promptCanvas:setFilter("linear", "linear")
+			self.transitionPromptCanvas = promptCanvas
+		end
+	else
+		self.transitionPromptCanvas = nil
+	end
 
-        local cache = self.transitionTitleCache
-        if cache
-                and cache.canvas == titleCanvas
-                and cache.floorData == floorData
-                and cache.promptText == promptText
-                and cache.width == width
-                and cache.height == height
-                and cache.promptCanvas == (promptText and self.transitionPromptCanvas or nil) then
-                return cache
-        end
+	local cache = self.transitionTitleCache
+	if cache
+	and cache.canvas == titleCanvas
+	and cache.floorData == floorData
+	and cache.promptText == promptText
+	and cache.width == width
+	and cache.height == height
+	and cache.promptCanvas == (promptText and self.transitionPromptCanvas or nil) then
+		return cache
+	end
 
-        local shadow = Theme.shadowColor or DEFAULT_SHADOW_COLOR
-        local shadowAlpha = shadow[4] or 0.5
+	local shadow = Theme.shadowColor or DEFAULT_SHADOW_COLOR
+	local shadowAlpha = shadow[4] or 0.5
 
-        love.graphics.push("all")
-        love.graphics.setCanvas({titleCanvas, stencil = true})
-        love.graphics.clear(0, 0, 0, 0)
-        love.graphics.origin()
-        love.graphics.setBlendMode("alpha")
+	love.graphics.push("all")
+	love.graphics.setCanvas({titleCanvas, stencil = true})
+	love.graphics.clear(0, 0, 0, 0)
+	love.graphics.origin()
+	love.graphics.setBlendMode("alpha")
 
-        love.graphics.setFont(UI.fonts.title)
-        local titleY = (self.screenHeight or height) / 2 - 90
-        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
-        love.graphics.printf(floorData.name or "", 2, titleY + 2, self.screenWidth or width, "center")
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf(floorData.name or "", 0, titleY, self.screenWidth or width, "center")
+	love.graphics.setFont(UI.fonts.title)
+	local titleY = (self.screenHeight or height) / 2 - 90
+	love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
+	love.graphics.printf(floorData.name or "", 2, titleY + 2, self.screenWidth or width, "center")
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.printf(floorData.name or "", 0, titleY, self.screenWidth or width, "center")
 
-        if floorData.flavor and floorData.flavor ~= "" then
-                love.graphics.setFont(UI.fonts.button)
-                local flavorY = titleY + UI.fonts.title:getHeight() + 32
-                love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha * 0.95)
-                love.graphics.printf(floorData.flavor, 2, flavorY + 2, self.screenWidth or width, "center")
-                love.graphics.setColor(1, 1, 1, 0.95)
-                love.graphics.printf(floorData.flavor, 0, flavorY, self.screenWidth or width, "center")
-        end
+	if floorData.flavor and floorData.flavor ~= "" then
+		love.graphics.setFont(UI.fonts.button)
+		local flavorY = titleY + UI.fonts.title:getHeight() + 32
+		love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha * 0.95)
+		love.graphics.printf(floorData.flavor, 2, flavorY + 2, self.screenWidth or width, "center")
+		love.graphics.setColor(1, 1, 1, 0.95)
+		love.graphics.printf(floorData.flavor, 0, flavorY, self.screenWidth or width, "center")
+	end
 
-        love.graphics.setCanvas()
-        love.graphics.pop()
+	love.graphics.setCanvas()
+	love.graphics.pop()
 
-        if promptCanvas then
-                love.graphics.push("all")
-                love.graphics.setCanvas({promptCanvas, stencil = true})
-                love.graphics.clear(0, 0, 0, 0)
-                love.graphics.origin()
-                love.graphics.setBlendMode("alpha")
+	if promptCanvas then
+		love.graphics.push("all")
+		love.graphics.setCanvas({promptCanvas, stencil = true})
+		love.graphics.clear(0, 0, 0, 0)
+		love.graphics.origin()
+		love.graphics.setBlendMode("alpha")
 
-                local promptFont = UI.fonts.prompt or UI.fonts.body
-                love.graphics.setFont(promptFont)
-                local promptY = (self.screenHeight or height) - promptFont:getHeight() * 2.2
-                love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
-                love.graphics.printf(promptText, 2, promptY + 2, self.screenWidth or width, "center")
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(promptText, 0, promptY, self.screenWidth or width, "center")
+		local promptFont = UI.fonts.prompt or UI.fonts.body
+		love.graphics.setFont(promptFont)
+		local promptY = (self.screenHeight or height) - promptFont:getHeight() * 2.2
+		love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
+		love.graphics.printf(promptText, 2, promptY + 2, self.screenWidth or width, "center")
+		love.graphics.setColor(1, 1, 1, 1)
+		love.graphics.printf(promptText, 0, promptY, self.screenWidth or width, "center")
 
-                love.graphics.setCanvas()
-                love.graphics.pop()
-        end
+		love.graphics.setCanvas()
+		love.graphics.pop()
+	end
 
-        cache = {
-                canvas = titleCanvas,
-                promptCanvas = promptCanvas,
-                floorData = floorData,
-                promptText = promptText,
-                width = width,
-                height = height,
-        }
+	cache = {
+		canvas = titleCanvas,
+		promptCanvas = promptCanvas,
+		floorData = floorData,
+		promptText = promptText,
+		width = width,
+		height = height,
+	}
 
-        self.transitionTitleCache = cache
+	self.transitionTitleCache = cache
 
-        return cache
+	return cache
 end
 
 local RUN_ACTIVE_STATES = {
@@ -287,32 +287,32 @@ local RUN_ACTIVE_STATES = {
 }
 
 local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
-        Face,
-        Popup,
-        Fruit,
-        Rocks,
-        Lasers,
-        Darts,
-        Saws,
-        Arena,
-        Particles,
-        Bombs,
-        UpgradeVisuals,
+	Face,
+	Popup,
+	Fruit,
+	Rocks,
+	Lasers,
+	Darts,
+	Saws,
+	Arena,
+	Particles,
+	Bombs,
+	UpgradeVisuals,
 	Achievements,
 	FloatingText,
 	Score,
 })
 
 local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
-        Face,
-        Popup,
-        Arena,
-        Darts,
-        Particles,
-        Bombs,
-        UpgradeVisuals,
-        Achievements,
-        FloatingText,
+	Face,
+	Popup,
+	Arena,
+	Darts,
+	Particles,
+	Bombs,
+	UpgradeVisuals,
+	Achievements,
+	FloatingText,
 	Score,
 })
 
@@ -370,10 +370,10 @@ local function updateFeedbackState(self, dt)
 	state.panicTimer = max(0, (state.panicTimer or 0) - dt)
 	state.dangerPulseTimer = (state.dangerPulseTimer or 0) + dt
 
-        if (state.impactTimer or 0) <= 0 then
-                state.impactRipple = nil
-                state.skipImpactFlash = nil
-        end
+	if (state.impactTimer or 0) <= 0 then
+		state.impactRipple = nil
+		state.skipImpactFlash = nil
+	end
 
 	if (state.surgeTimer or 0) <= 0 then
 		state.surgeRipple = nil
@@ -409,77 +409,77 @@ local function drawFeedbackOverlay(self)
 	local impactDuration = state.impactDuration or 1
 	local impactPeak = state.impactPeak or 0
 
-        if impactTimer > 0 and impactPeak > 0 then
-                local progress = max(0, min(1, impactTimer / impactDuration))
-                local intensity = impactPeak * (progress ^ 0.7)
-                local age = 1 - progress
+	if impactTimer > 0 and impactPeak > 0 then
+		local progress = max(0, min(1, impactTimer / impactDuration))
+		local intensity = impactPeak * (progress ^ 0.7)
+		local age = 1 - progress
 
-                love.graphics.push("all")
-                love.graphics.setBlendMode("add")
-                if not state.skipImpactFlash then
-                        love.graphics.setColor(1, 1, 1, 0.22 * intensity)
-                        love.graphics.rectangle("fill", -12, -12, screenW + 24, screenH + 24)
+		love.graphics.push("all")
+		love.graphics.setBlendMode("add")
+		if not state.skipImpactFlash then
+			love.graphics.setColor(1, 1, 1, 0.22 * intensity)
+			love.graphics.rectangle("fill", -12, -12, screenW + 24, screenH + 24)
 
-                        love.graphics.setColor(1, 0.78, 0.45, 0.32 * intensity)
-                        local inset = 10 + intensity * 8
-                        love.graphics.setLineWidth(3 + intensity * 6)
-                        love.graphics.rectangle("line", inset, inset, screenW - inset * 2, screenH - inset * 2, 28, 28)
-                end
+			love.graphics.setColor(1, 0.78, 0.45, 0.32 * intensity)
+			local inset = 10 + intensity * 8
+			love.graphics.setLineWidth(3 + intensity * 6)
+			love.graphics.rectangle("line", inset, inset, screenW - inset * 2, screenH - inset * 2, 28, 28)
+		end
 
-                local ripple = state.impactRipple
-                if ripple then
-                        local rx = ripple.x or screenW * 0.5
-                        local ry = ripple.y or screenH * 0.5
+		local ripple = state.impactRipple
+		if ripple then
+			local rx = ripple.x or screenW * 0.5
+			local ry = ripple.y or screenH * 0.5
 			local baseRadius = ripple.baseRadius or 52
-                        local color = ripple.color or DEFAULT_IMPACT_RIPPLE_COLOR
+			local color = ripple.color or DEFAULT_IMPACT_RIPPLE_COLOR
 			local ringRadius = baseRadius + easeOutExpo(age) * (140 + intensity * 80)
 			local fillRadius = baseRadius * (0.55 + age * 0.6)
 
-                        love.graphics.setLineWidth(2.5 + intensity * 4)
-                        love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.55 * intensity)
-                        love.graphics.circle("line", rx, ry, ringRadius, circleSegments(ringRadius))
+			love.graphics.setLineWidth(2.5 + intensity * 4)
+			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.55 * intensity)
+			love.graphics.circle("line", rx, ry, ringRadius, circleSegments(ringRadius))
 
-                        love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.22 * intensity)
-                        love.graphics.circle("fill", rx, ry, fillRadius, circleSegments(fillRadius))
+			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.22 * intensity)
+			love.graphics.circle("fill", rx, ry, fillRadius, circleSegments(fillRadius))
 		end
 
 		love.graphics.pop()
 	end
 
-        local surgeTimer = state.surgeTimer or 0
-        local surgeDuration = state.surgeDuration or 1
-        local surgePeak = state.surgePeak or 0
-        if surgeTimer > 0 and surgePeak > 0 then
-                local progress = max(0, min(1, surgeTimer / surgeDuration))
-                local intensity = surgePeak * (progress ^ 0.8)
-                local expansion = 1 - progress
+	local surgeTimer = state.surgeTimer or 0
+	local surgeDuration = state.surgeDuration or 1
+	local surgePeak = state.surgePeak or 0
+	if surgeTimer > 0 and surgePeak > 0 then
+		local progress = max(0, min(1, surgeTimer / surgeDuration))
+		local intensity = surgePeak * (progress ^ 0.8)
+		local expansion = 1 - progress
 
-                love.graphics.push("all")
-                love.graphics.setBlendMode("add")
-                local radius = self.screenDiagonal
-                if not radius then
-                        radius = sqrt(screenW * screenW + screenH * screenH)
-                        self.screenDiagonal = radius
-                end
-                love.graphics.setColor(1, 0.9, 0.5, 0.22 * intensity)
-                love.graphics.setLineWidth(2 + intensity * 6)
-                local surgeRingRadius = radius * (0.6 + expansion * 0.26)
-                love.graphics.circle("line", screenW * 0.5, screenH * 0.5, surgeRingRadius, circleSegments(surgeRingRadius))
+		love.graphics.push("all")
+		love.graphics.setBlendMode("add")
+		local radius = self.screenDiagonal
+		if not radius then
+			radius = sqrt(screenW * screenW + screenH * screenH)
+			self.screenDiagonal = radius
+		end
+		love.graphics.setColor(1, 0.9, 0.5, 0.22 * intensity)
+		love.graphics.setLineWidth(2 + intensity * 6)
+		local surgeRingRadius = radius * (0.6 + expansion * 0.26)
+		love.graphics.circle("line", screenW * 0.5, screenH * 0.5, surgeRingRadius, circleSegments(surgeRingRadius))
 		local ripple = state.surgeRipple
 		if ripple then
 			local rx = ripple.x or screenW * 0.5
 			local ry = ripple.y or screenH * 0.5
 			local baseRadius = ripple.baseRadius or 48
-                        local color = ripple.color or DEFAULT_SURGE_RIPPLE_COLOR
+			local color = ripple.color or DEFAULT_SURGE_RIPPLE_COLOR
 			local eased = easeOutCubic(1 - progress)
 			local ringRadius = baseRadius + eased * (160 + intensity * 90)
-                        love.graphics.setLineWidth(2 + intensity * 4)
-                        love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.35 * intensity)
-                        love.graphics.circle("line", rx, ry, ringRadius, circleSegments(ringRadius))
+			love.graphics.setLineWidth(2 + intensity * 4)
+			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.35 * intensity)
+			love.graphics.circle("line", rx, ry, ringRadius, circleSegments(ringRadius))
 
-                        love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.18 * intensity)
-                        local fillRadius = baseRadius * (0.4 + eased * 0.6)
-                        love.graphics.circle("fill", rx, ry, fillRadius, circleSegments(fillRadius))
+			love.graphics.setColor(color[1], color[2], color[3], (color[4] or 1) * 0.18 * intensity)
+			local fillRadius = baseRadius * (0.4 + eased * 0.6)
+			love.graphics.circle("fill", rx, ry, fillRadius, circleSegments(fillRadius))
 		end
 
 		love.graphics.pop()
@@ -505,16 +505,16 @@ local function drawFeedbackOverlay(self)
 end
 
 local function resolveFeedbackPosition(self, options)
-        local x, y
+	local x, y
 
-        if options then
-                x = options.hitX or options.x or options.headX or options.snakeX
-                y = options.hitY or options.y or options.headY or options.snakeY
-        end
+	if options then
+		x = options.hitX or options.x or options.headX or options.snakeX
+		y = options.hitY or options.y or options.headY or options.snakeY
+	end
 
-        if not (x and y) and Snake and Snake.getHead then
-                x, y = Snake:getHead()
-        end
+	if not (x and y) and Snake and Snake.getHead then
+		x, y = Snake:getHead()
+	end
 
 	if not (x and y) then
 		local w = self.screenWidth or love.graphics.getWidth() or 0
@@ -543,84 +543,84 @@ function Game:applyHitStop(intensity, duration)
 end
 
 function Game:triggerImpactFeedback(strength, options)
-        local state = ensureFeedbackState(self)
-        strength = max(strength or 0, 0)
+	local state = ensureFeedbackState(self)
+	strength = max(strength or 0, 0)
 
 	local duration = 0.28 + strength * 0.24
 	state.impactDuration = duration
 	state.impactTimer = duration
 
-        local spike = 0.55 + strength * 0.65
-        state.impactPeak = min(1.25, max(state.impactPeak or 0, spike))
-        state.panicBurst = min(1.35, (state.panicBurst or 0) + 0.35 + strength * 0.4)
+	local spike = 0.55 + strength * 0.65
+	state.impactPeak = min(1.25, max(state.impactPeak or 0, spike))
+	state.panicBurst = min(1.35, (state.panicBurst or 0) + 0.35 + strength * 0.4)
 
-        local skipFlash = options and options.skipFlash
-        if skipFlash then
-                state.skipImpactFlash = true
-        else
-                state.skipImpactFlash = nil
-        end
+	local skipFlash = options and options.skipFlash
+	if skipFlash then
+		state.skipImpactFlash = true
+	else
+		state.skipImpactFlash = nil
+	end
 
-        local impactRipple = state.impactRipple or {}
-        local rx, ry = resolveFeedbackPosition(self, options)
-        impactRipple.x = rx
-        impactRipple.y = ry
-        impactRipple.baseRadius = (options and options.radius) or impactRipple.baseRadius or 54
-        impactRipple.color = cloneColor(options and options.color, DEFAULT_IMPACT_RIPPLE_COLOR, impactRipple.color)
+	local impactRipple = state.impactRipple or {}
+	local rx, ry = resolveFeedbackPosition(self, options)
+	impactRipple.x = rx
+	impactRipple.y = ry
+	impactRipple.baseRadius = (options and options.radius) or impactRipple.baseRadius or 54
+	impactRipple.color = cloneColor(options and options.color, DEFAULT_IMPACT_RIPPLE_COLOR, impactRipple.color)
 	state.impactRipple = impactRipple
 
 	local hitStopStrength = 0.3 + strength * 0.35
 	local hitStopDuration = 0.08 + strength * 0.08
 	self:applyHitStop(hitStopStrength, hitStopDuration)
 
-        if not skipFlash and Shaders and Shaders.notify then
-                Shaders.notify("specialEvent", {
-                        type = "danger",
-                        strength = min(1.2, 0.45 + strength * 0.55),
-                })
-        end
+	if not skipFlash and Shaders and Shaders.notify then
+		Shaders.notify("specialEvent", {
+			type = "danger",
+			strength = min(1.2, 0.45 + strength * 0.55),
+		})
+	end
 end
 
 local TAIL_HAZARD_SHAKE = {
-        saw = 0.18,
-        laser = 0.16,
-        dart = 0.14,
+	saw = 0.18,
+	laser = 0.16,
+	dart = 0.14,
 }
 
 function Game:triggerScreenShake(amount)
-        if Settings.screenShake == false then
-                return
-        end
+	if Settings.screenShake == false then
+		return
+	end
 
-        amount = max(amount or 0, 0)
-        if amount <= 0 then
-                return
-        end
+	amount = max(amount or 0, 0)
+	if amount <= 0 then
+		return
+	end
 
-        local effects = self.Effects
-        if effects and effects.shake then
-                effects:shake(amount)
-        end
+	local effects = self.Effects
+	if effects and effects.shake then
+		effects:shake(amount)
+	end
 end
 
 function Game:triggerTailChopShake(cause)
-        local amount = TAIL_HAZARD_SHAKE[cause or ""] or TAIL_HAZARD_SHAKE.saw
-        self:triggerScreenShake(amount)
+	local amount = TAIL_HAZARD_SHAKE[cause or ""] or TAIL_HAZARD_SHAKE.saw
+	self:triggerScreenShake(amount)
 end
 
 function Game:triggerTailChopFeedback(cause, x, y)
-        self:triggerTailChopShake(cause)
+	self:triggerTailChopShake(cause)
 
-        local feedbackOptions = {
-                x = x,
-                y = y,
-                color = TAIL_CHOP_FEEDBACK_COLOR,
-                radius = 60,
-                skipFlash = true,
-        }
+	local feedbackOptions = {
+		x = x,
+		y = y,
+		color = TAIL_CHOP_FEEDBACK_COLOR,
+		radius = 60,
+		skipFlash = true,
+	}
 
-        local strength = 0.42
-        self:triggerImpactFeedback(strength, feedbackOptions)
+	local strength = 0.42
+	self:triggerImpactFeedback(strength, feedbackOptions)
 end
 
 local cachedMouseInterface
@@ -856,13 +856,13 @@ local function updateRunTimers(self, dt)
 end
 
 local function updateSystems(systems, dt)
-        local handlers = ModuleUtil.getHookHandlers(systems, "update")
-        if handlers then
-                ModuleUtil.runCachedHandlers(handlers, "update", dt)
-                return
-        end
+	local handlers = ModuleUtil.getHookHandlers(systems, "update")
+	if handlers then
+		ModuleUtil.runCachedHandlers(handlers, "update", dt)
+		return
+	end
 
-        ModuleUtil.runHook(systems, "update", dt)
+	ModuleUtil.runHook(systems, "update", dt)
 end
 
 local function updateGlobalSystems(dt)
@@ -895,7 +895,7 @@ local function drawShadowedText(font, text, x, y, width, align, alpha)
 	end
 
 	love.graphics.setFont(font)
-        local shadow = Theme.shadowColor or DEFAULT_SHADOW_COLOR
+	local shadow = Theme.shadowColor or DEFAULT_SHADOW_COLOR
 	local shadowAlpha = (shadow[4] or 1) * alpha
 	love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
 	love.graphics.printf(text, x + 2, y + 2, width, align)
@@ -950,37 +950,37 @@ function Game:load(options)
 	self.floor = requestedFloor
 	self.runTimer = 0
 	self.floorTimer = 0
-        self.pauseReturnState = nil
+	self.pauseReturnState = nil
 
-        self.mouseCursorState = nil
+	self.mouseCursorState = nil
 
-        self:invalidateTransitionTitleCache()
+	self:invalidateTransitionTitleCache()
 
-        Screen:update()
-        updateScreenDimensions(self, Screen:get())
-        Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
+	Screen:update()
+	updateScreenDimensions(self, Screen:get())
+	Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
 
 	Score:load()
 	Upgrades:beginRun()
 	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
 	Face:set("idle")
 
-        self.transition = TransitionManager.new(self)
-        self.input = GameInput.new(self, self.transition)
-        self.input:resetAxes()
+	self.transition = TransitionManager.new(self)
+	self.input = GameInput.new(self, self.transition)
+	self.input:resetAxes()
 
-        resetFeedbackState(self)
+	resetFeedbackState(self)
 
-        self.singleTouchDeath = true
+	self.singleTouchDeath = true
 
-        self.hudIndicatorRefreshInterval = 1 / 30
-        self.hudIndicatorActiveRefreshInterval = 1 / 60
-        self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshInterval
+	self.hudIndicatorRefreshInterval = 1 / 30
+	self.hudIndicatorActiveRefreshInterval = 1 / 60
+	self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshInterval
 
-        if Snake.adrenaline then
-                Snake.adrenaline.active = false
-                Snake.adrenaline.suppressVisuals = nil
-        end
+	if Snake.adrenaline then
+		Snake.adrenaline.active = false
+		Snake.adrenaline.suppressVisuals = nil
+	end
 
 	self:setupFloor(self.floor)
 
@@ -992,32 +992,32 @@ function Game:load(options)
 end
 
 function Game:reset()
-        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-        Face:set("idle")
-        self.state = "playing"
-        self.floor = self.startFloor or 1
-        self.runTimer = 0
-        self.floorTimer = 0
-        self.pauseReturnState = nil
+	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+	Face:set("idle")
+	self.state = "playing"
+	self.floor = self.startFloor or 1
+	self.runTimer = 0
+	self.floorTimer = 0
+	self.pauseReturnState = nil
 
-        self.mouseCursorState = nil
+	self.mouseCursorState = nil
 
-        self.deathHoldTimer = nil
-        self.deathHoldDuration = nil
+	self.deathHoldTimer = nil
+	self.deathHoldDuration = nil
 
-        self:invalidateTransitionTitleCache()
+	self:invalidateTransitionTitleCache()
 
-        resetFeedbackState(self)
+	resetFeedbackState(self)
 
-        self.hudIndicatorRefreshInterval = 1 / 30
-        self.hudIndicatorActiveRefreshInterval = 1 / 60
-        self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshInterval
+	self.hudIndicatorRefreshInterval = 1 / 30
+	self.hudIndicatorActiveRefreshInterval = 1 / 60
+	self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshInterval
 
-        if self.transition then
-                self.transition:reset()
-        end
+	if self.transition then
+		self.transition:reset()
+	end
 
-        if self.input then
+	if self.input then
 		self.input:resetAxes()
 	end
 end
@@ -1046,15 +1046,15 @@ function Game:leave()
 end
 
 function Game:beginDeath()
-        if self.state ~= "dying" then
-                self.state = "dying"
-                Snake:setDead(true)
-                local trail = Snake:getSegments()
-                Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
-                Audio:playSound("death")
-                self.deathHoldTimer = nil
-                self.deathHoldDuration = DEATH_HOLD_DURATION
-        end
+	if self.state ~= "dying" then
+		self.state = "dying"
+		Snake:setDead(true)
+		local trail = Snake:getSegments()
+		Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
+		Audio:playSound("death")
+		self.deathHoldTimer = nil
+		self.deathHoldDuration = DEATH_HOLD_DURATION
+	end
 end
 
 function Game:applyDamage(amount, cause, context)
@@ -1168,14 +1168,14 @@ function Game:updateDescending(dt)
 		Saws:update(dt)
 	end
 
-        local tailX, tailY, tail = Snake:getTail()
-        if not tail then
-                Snake:finishDescending()
-                self:startFloorTransition(true)
-                return
-        end
+	local tailX, tailY, tail = Snake:getTail()
+	if not tail then
+		Snake:finishDescending()
+		self:startFloorTransition(true)
+		return
+	end
 
-        local dx, dy = tailX - self.hole.x, tailY - self.hole.y
+	local dx, dy = tailX - self.hole.x, tailY - self.hole.y
 	local dist = sqrt(dx * dx + dy * dy)
 	if dist < self.hole.radius then
 		local finalFloor = #Floors
@@ -1224,9 +1224,9 @@ function Game:updateGameplay(dt)
 		return
 	end
 
-        if moveResult == "scored" then
-                local fruitX, fruitY = Fruit:getDrawPosition()
-                FruitEvents.handleConsumption(fruitX, fruitY)
+	if moveResult == "scored" then
+		local fruitX, fruitY = Fruit:getDrawPosition()
+		FruitEvents.handleConsumption(fruitX, fruitY)
 
 		local goalReached = UI:isGoalReached()
 		if goalReached then
@@ -1262,59 +1262,59 @@ function Game:handleDeath(dt)
 		return
 	end
 
-        Death:update(dt)
-        if not Death:isFinished() then
-                self.deathHoldTimer = nil
-                return
-        end
+	Death:update(dt)
+	if not Death:isFinished() then
+		self.deathHoldTimer = nil
+		return
+	end
 
-        local holdDuration = self.deathHoldDuration or DEATH_HOLD_DURATION or 0
-        if holdDuration > 0 then
-                self.deathHoldTimer = (self.deathHoldTimer or 0) + dt
-                if self.deathHoldTimer < holdDuration then
-                        return
-                end
-        end
+	local holdDuration = self.deathHoldDuration or DEATH_HOLD_DURATION or 0
+	if holdDuration > 0 then
+		self.deathHoldTimer = (self.deathHoldTimer or 0) + dt
+		if self.deathHoldTimer < holdDuration then
+			return
+		end
+	end
 
-        self.deathHoldTimer = nil
-        self.deathHoldDuration = nil
+	self.deathHoldTimer = nil
+	self.deathHoldDuration = nil
 
-        Achievements:save()
-        local result = Score:handleGameOver(self.deathCause)
-        if result then
-                return {state = "gameover", data = result}
+	Achievements:save()
+	local result = Score:handleGameOver(self.deathCause)
+	if result then
+		return {state = "gameover", data = result}
 	end
 end
 
 local function drawPlayfieldLayers(self, stateOverride)
-        local renderState = stateOverride or self.state
+	local renderState = stateOverride or self.state
 
-        RenderLayers:begin(self.screenWidth or love.graphics.getWidth(), self.screenHeight or love.graphics.getHeight())
+	RenderLayers:begin(self.screenWidth or love.graphics.getWidth(), self.screenHeight or love.graphics.getHeight())
 
-        currentGame = self
-        currentRenderState = renderState
+	currentGame = self
+	currentRenderState = renderState
 
-        RenderLayers:withLayer("background", drawBackgroundLayer)
+	RenderLayers:withLayer("background", drawBackgroundLayer)
 
-        Death:applyShake()
+	Death:applyShake()
 
-        local needsMainStencil = false
-        if renderState == "descending" then
-                needsMainStencil = true
-        else
-                if Saws and Saws.needsStencil and Saws:needsStencil() then
-                        needsMainStencil = true
-                elseif Snake and Snake.needsStencil and Snake:needsStencil() then
-                        needsMainStencil = true
-                end
-        end
+	local needsMainStencil = false
+	if renderState == "descending" then
+		needsMainStencil = true
+	else
+		if Saws and Saws.needsStencil and Saws:needsStencil() then
+			needsMainStencil = true
+		elseif Snake and Snake.needsStencil and Snake:needsStencil() then
+			needsMainStencil = true
+		end
+	end
 
-        RenderLayers:withLayer("main", drawMainLayer, needsMainStencil)
+	RenderLayers:withLayer("main", drawMainLayer, needsMainStencil)
 
-        RenderLayers:present()
+	RenderLayers:present()
 
-        currentGame = nil
-        currentRenderState = nil
+	currentGame = nil
+	currentRenderState = nil
 end
 
 local function drawInterfaceLayers(self)
@@ -1411,62 +1411,62 @@ local function drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
 end
 
 local function drawTransitionFloorIntro(self, timer, duration, data)
-        local floorData = data.transitionFloorData or self.currentFloorData
-        if not floorData then
-                return
-        end
+	local floorData = data.transitionFloorData or self.currentFloorData
+	if not floorData then
+		return
+	end
 
-        love.graphics.setColor(1, 1, 1, 1)
-        drawPlayfieldLayers(self, "playing")
+	love.graphics.setColor(1, 1, 1, 1)
+	drawPlayfieldLayers(self, "playing")
 
-        local totalDuration = duration or 0
-        local progress = totalDuration > 0 and clamp01(timer / totalDuration) or 1
-        local awaitingConfirm = data.transitionAwaitInput and not data.transitionIntroConfirmed
-        local visualProgress = progress
-        if awaitingConfirm then
-                visualProgress = min(visualProgress, 0.7)
-        end
+	local totalDuration = duration or 0
+	local progress = totalDuration > 0 and clamp01(timer / totalDuration) or 1
+	local awaitingConfirm = data.transitionAwaitInput and not data.transitionIntroConfirmed
+	local visualProgress = progress
+	if awaitingConfirm then
+		visualProgress = min(visualProgress, 0.7)
+	end
 
-        local appearProgress = min(1, visualProgress / 0.28)
-        local appear = easeOutCubic(appearProgress)
-        local dissolveProgress = visualProgress > 0.48 and clamp01((visualProgress - 0.48) / 0.4) or 0
-        if awaitingConfirm then
-                dissolveProgress = 0
-        end
-        local overlayAlpha = 0.8 * (1 - 0.55 * dissolveProgress)
-        local highlightAlpha = appear * (1 - dissolveProgress)
+	local appearProgress = min(1, visualProgress / 0.28)
+	local appear = easeOutCubic(appearProgress)
+	local dissolveProgress = visualProgress > 0.48 and clamp01((visualProgress - 0.48) / 0.4) or 0
+	if awaitingConfirm then
+		dissolveProgress = 0
+	end
+	local overlayAlpha = 0.8 * (1 - 0.55 * dissolveProgress)
+	local highlightAlpha = appear * (1 - dissolveProgress)
 
-        love.graphics.setColor(0, 0, 0, overlayAlpha)
-        love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+	love.graphics.setColor(0, 0, 0, overlayAlpha)
+	love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
 
-        local cache = self:refreshTransitionTitleCanvas(data)
-        local titleCanvas = cache and cache.canvas
-        local promptCanvas = cache and cache.promptCanvas
-        local titleOffset = (1 - appear) * 36
+	local cache = self:refreshTransitionTitleCanvas(data)
+	local titleCanvas = cache and cache.canvas
+	local promptCanvas = cache and cache.promptCanvas
+	local titleOffset = (1 - appear) * 36
 
-        local canvasAlpha = 1 - clamp01(dissolveProgress)
-        if titleCanvas and highlightAlpha > 0 and canvasAlpha > 0 then
-                love.graphics.push("all")
-                love.graphics.translate(0, titleOffset)
-                love.graphics.setColor(1, 1, 1, highlightAlpha * canvasAlpha)
-                love.graphics.draw(titleCanvas, 0, 0)
-                love.graphics.pop()
-        end
+	local canvasAlpha = 1 - clamp01(dissolveProgress)
+	if titleCanvas and highlightAlpha > 0 and canvasAlpha > 0 then
+		love.graphics.push("all")
+		love.graphics.translate(0, titleOffset)
+		love.graphics.setColor(1, 1, 1, highlightAlpha * canvasAlpha)
+		love.graphics.draw(titleCanvas, 0, 0)
+		love.graphics.pop()
+	end
 
-        if promptCanvas and canvasAlpha > 0 then
-                local promptFade = 1 - clamp01((visualProgress - 0.72) / 0.18)
-                local promptAlpha = highlightAlpha * promptFade * canvasAlpha
-                if promptAlpha > 0 then
-                        love.graphics.setColor(1, 1, 1, promptAlpha)
-                        love.graphics.draw(promptCanvas, 0, 0)
-                end
-        end
+	if promptCanvas and canvasAlpha > 0 then
+		local promptFade = 1 - clamp01((visualProgress - 0.72) / 0.18)
+		local promptAlpha = highlightAlpha * promptFade * canvasAlpha
+		if promptAlpha > 0 then
+			love.graphics.setColor(1, 1, 1, promptAlpha)
+			love.graphics.draw(promptCanvas, 0, 0)
+		end
+	end
 
-        drawTransitionNotes(self, 999, 1, nil)
+	drawTransitionNotes(self, 999, 1, nil)
 
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(1, 1, 1, 1)
 
-        return true
+	return true
 end
 
 function Game:drawTransition()
@@ -1477,27 +1477,27 @@ function Game:drawTransition()
 	local phase = self.transition:getPhase()
 	local timer = self.transition:getTimer() or 0
 	local duration = self.transition:getDuration() or 0
-        local data = self.transition:getData() or EMPTY_TABLE
+	local data = self.transition:getData() or EMPTY_TABLE
 
-        if phase == "fadeout" then
-                self:invalidateTransitionTitleCache()
-                if drawTransitionFadeOut(self, timer, duration) then
-                        return
-                end
-        elseif phase == "shop" then
-                self:invalidateTransitionTitleCache()
-                if drawTransitionShop(self, timer) then
-                        return
-                end
-        elseif phase == "floorintro" then
-                if drawTransitionFloorIntro(self, timer, duration, data) then
-                        return
-                end
-                self:invalidateTransitionTitleCache()
-        elseif phase == "fadein" then
-                self:invalidateTransitionTitleCache()
-                drawPlayfieldLayers(self, "playing")
-                drawInterfaceLayers(self)
+	if phase == "fadeout" then
+		self:invalidateTransitionTitleCache()
+		if drawTransitionFadeOut(self, timer, duration) then
+			return
+		end
+	elseif phase == "shop" then
+		self:invalidateTransitionTitleCache()
+		if drawTransitionShop(self, timer) then
+			return
+		end
+	elseif phase == "floorintro" then
+		if drawTransitionFloorIntro(self, timer, duration, data) then
+			return
+		end
+		self:invalidateTransitionTitleCache()
+	elseif phase == "fadein" then
+		self:invalidateTransitionTitleCache()
+		drawPlayfieldLayers(self, "playing")
+		drawInterfaceLayers(self)
 
 		local progress
 		if not duration or duration <= 0 then
@@ -1595,46 +1595,46 @@ function Game:update(dt)
 		self:updateGameplay(scaledDt)
 	end
 
-        self:updateEntities(scaledDt)
+	self:updateEntities(scaledDt)
 
-        local refreshInterval = self.hudIndicatorRefreshInterval or (1 / 30)
-        local activeRefreshInterval = self.hudIndicatorActiveRefreshInterval or refreshInterval
+	local refreshInterval = self.hudIndicatorRefreshInterval or (1 / 30)
+	local activeRefreshInterval = self.hudIndicatorActiveRefreshInterval or refreshInterval
 
-        local adrenaline = Snake and Snake.adrenaline
-        local dash = Snake and Snake.dash
+	local adrenaline = Snake and Snake.adrenaline
+	local dash = Snake and Snake.dash
 
-        if adrenaline and adrenaline.active then
-                refreshInterval = min(refreshInterval, activeRefreshInterval)
-        end
+	if adrenaline and adrenaline.active then
+		refreshInterval = min(refreshInterval, activeRefreshInterval)
+	end
 
-        if dash and (dash.active or (dash.cooldownTimer or 0) > 0) then
-                refreshInterval = min(refreshInterval, activeRefreshInterval)
-        end
+	if dash and (dash.active or (dash.cooldownTimer or 0) > 0) then
+		refreshInterval = min(refreshInterval, activeRefreshInterval)
+	end
 
-        self.hudIndicatorRefreshTimer = (self.hudIndicatorRefreshTimer or 0) + scaledDt
+	self.hudIndicatorRefreshTimer = (self.hudIndicatorRefreshTimer or 0) + scaledDt
 
-        local shouldRefresh = Upgrades.hudIndicatorsDirty or false
-        if self.hudIndicatorRefreshTimer >= refreshInterval then
-                shouldRefresh = true
-        end
+	local shouldRefresh = Upgrades.hudIndicatorsDirty or false
+	if self.hudIndicatorRefreshTimer >= refreshInterval then
+		shouldRefresh = true
+	end
 
-        if shouldRefresh then
-                local upgradeIndicators, indicatorsUpdated = Upgrades:getHUDIndicators()
-                if indicatorsUpdated then
-                        UI:setUpgradeIndicators(upgradeIndicators)
-                end
+	if shouldRefresh then
+		local upgradeIndicators, indicatorsUpdated = Upgrades:getHUDIndicators()
+		if indicatorsUpdated then
+			UI:setUpgradeIndicators(upgradeIndicators)
+		end
 
-                if self.hudIndicatorRefreshTimer >= refreshInterval then
-                        self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshTimer % refreshInterval
-                else
-                        self.hudIndicatorRefreshTimer = 0
-                end
-        end
+		if self.hudIndicatorRefreshTimer >= refreshInterval then
+			self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshTimer % refreshInterval
+		else
+			self.hudIndicatorRefreshTimer = 0
+		end
+	end
 
-        local result = self:handleDeath(scaledDt)
-        if result then
-                return result
-        end
+	local result = self:handleDeath(scaledDt)
+	if result then
+		return result
+	end
 end
 
 function Game:setupFloor(floorNum)
@@ -1667,10 +1667,10 @@ function Game:setupFloor(floorNum)
 end
 
 function Game:draw()
-        love.graphics.clear()
+	love.graphics.clear()
 
-        if Arena.drawBackdrop then
-                Arena:drawBackdrop(self.screenWidth, self.screenHeight)
+	if Arena.drawBackdrop then
+		Arena:drawBackdrop(self.screenWidth, self.screenHeight)
 	else
 		love.graphics.setColor(Theme.bgColor)
 		love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
@@ -1682,15 +1682,15 @@ function Game:draw()
 		return
 	end
 
-        drawPlayfieldLayers(self)
-        drawInterfaceLayers(self)
+	drawPlayfieldLayers(self)
+	drawInterfaceLayers(self)
 end
 
 function Game:resize(width, height)
-        if updateScreenDimensions(self, width, height) then
-                Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
-                self:invalidateTransitionTitleCache()
-        end
+	if updateScreenDimensions(self, width, height) then
+		Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
+		self:invalidateTransitionTitleCache()
+	end
 end
 
 function Game:keypressed(key)

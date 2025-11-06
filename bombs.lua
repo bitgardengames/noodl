@@ -224,17 +224,17 @@ local function advanceBomb(bomb, dt)
 end
 
 function Bombs:load()
-        bombs = bombs or {}
-        self.bombs = bombs
+	bombs = bombs or {}
+	self.bombs = bombs
 end
 
 function Bombs:reset()
-        bombs = {}
-        self.bombs = bombs
+	bombs = {}
+	self.bombs = bombs
 end
 
 function Bombs:getAll()
-        return bombs
+	return bombs
 end
 
 function Bombs:update(dt)
@@ -253,13 +253,13 @@ local function drawFuse(bomb, tileSize)
 	local fuseLength = tileSize * 0.65
 	local baseX = bomb.x
 	local baseY = bomb.y
-        local flicker = sin((bomb.timer or 0) * 22)
-        local colorIndex = floor(((bomb.timer or 0) * 20) % 2)
-        local color = colorIndex == 0 and FUSE_COLOR_A or FUSE_COLOR_B
+	local flicker = sin((bomb.timer or 0) * 22)
+	local colorIndex = floor(((bomb.timer or 0) * 20) % 2)
+	local color = colorIndex == 0 and FUSE_COLOR_A or FUSE_COLOR_B
 
-        love.graphics.setLineWidth(2)
-        love.graphics.setColor(color[1], color[2], color[3], color[4])
-        love.graphics.line(baseX, baseY - tileSize * 0.3, baseX + FUSE_DIR_X * fuseLength, baseY + FUSE_DIR_Y * fuseLength)
+	love.graphics.setLineWidth(2)
+	love.graphics.setColor(color[1], color[2], color[3], color[4])
+	love.graphics.line(baseX, baseY - tileSize * 0.3, baseX + FUSE_DIR_X * fuseLength, baseY + FUSE_DIR_Y * fuseLength)
 
 	local sparkRadius = tileSize * 0.11 * (1 + 0.25 * flicker)
 	love.graphics.setColor(color[1], color[2], color[3], 0.85)

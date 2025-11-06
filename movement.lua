@@ -131,35 +131,35 @@ local SAW_SHIELD_BURST_OPTIONS = {
 }
 
 local LASER_SHIELD_BURST_OPTIONS = {
-        count = 10,
-        speed = 80,
-        speedVariance = 30,
-        life = 0.25,
-        size = 2.5,
-        color = {1.0, 0.55, 0.25, 1},
-        spread = pi * 2,
-        angleJitter = pi,
-        drag = 3.4,
-        gravity = 120,
-        scaleMin = 0.45,
-        scaleVariance = 0.4,
-        fadeTo = 0,
+	count = 10,
+	speed = 80,
+	speedVariance = 30,
+	life = 0.25,
+	size = 2.5,
+	color = {1.0, 0.55, 0.25, 1},
+	spread = pi * 2,
+	angleJitter = pi,
+	drag = 3.4,
+	gravity = 120,
+	scaleMin = 0.45,
+	scaleVariance = 0.4,
+	fadeTo = 0,
 }
 
 local DART_SHIELD_BURST_OPTIONS = {
-        count = 9,
-        speed = 95,
-        speedVariance = 40,
-        life = 0.28,
-        size = 2.9,
-        color = {1.0, 0.74, 0.28, 1},
-        spread = pi * 2,
-        angleJitter = pi * 0.85,
-        drag = 3.6,
-        gravity = 140,
-        scaleMin = 0.5,
-        scaleVariance = 0.35,
-        fadeTo = 0.04,
+	count = 9,
+	speed = 95,
+	speedVariance = 40,
+	life = 0.28,
+	size = 2.9,
+	color = {1.0, 0.74, 0.28, 1},
+	spread = pi * 2,
+	angleJitter = pi * 0.85,
+	drag = 3.6,
+	gravity = 140,
+	scaleMin = 0.5,
+	scaleVariance = 0.35,
+	fadeTo = 0.04,
 }
 
 local shieldStatMap = {
@@ -178,16 +178,16 @@ local shieldStatMap = {
 		run = "runShieldSawParries",
 		achievements = {"sawParry"},
 	},
-        laser = {
-                lifetime = "shieldSawParries",
-                run = "runShieldSawParries",
-                achievements = {"sawParry"},
-        },
-        dart = {
-                lifetime = "shieldSawParries",
-                run = "runShieldSawParries",
-                achievements = {"sawParry"},
-        },
+	laser = {
+		lifetime = "shieldSawParries",
+		run = "runShieldSawParries",
+		achievements = {"sawParry"},
+	},
+	dart = {
+		lifetime = "shieldSawParries",
+		run = "runShieldSawParries",
+		achievements = {"sawParry"},
+	},
 }
 
 local function recordShieldEvent(cause)
@@ -220,46 +220,46 @@ local function aabb(ax, ay, aw, ah, bx, by, bw, bh)
 end
 
 local function computeFallbackAxisDirection(component, clampedValue, centerValue)
-        if component and component ~= 0 then
-                return component > 0 and 1 or -1
-        end
+	if component and component ~= 0 then
+		return component > 0 and 1 or -1
+	end
 
-        if clampedValue <= centerValue then
-                return 1
-        end
+	if clampedValue <= centerValue then
+		return 1
+	end
 
-        return -1
+	return -1
 end
 
 local function rerouteAlongWall(headX, headY, left, right, top, bottom)
-        local centerX, centerY
-        if left and right and top and bottom then
-                centerX = (left + right) / 2
-                centerY = (top + bottom) / 2
-        else
-                local ax, ay, aw, ah = Arena:getBounds()
-                local inset = Arena.tileSize / 2
-                left = ax + inset
-                right = ax + aw - inset
-                top = ay + inset
-                bottom = ay + ah - inset
-                centerX = ax + aw / 2
-                centerY = ay + ah / 2
-        end
+	local centerX, centerY
+	if left and right and top and bottom then
+		centerX = (left + right) / 2
+		centerY = (top + bottom) / 2
+	else
+		local ax, ay, aw, ah = Arena:getBounds()
+		local inset = Arena.tileSize / 2
+		left = ax + inset
+		right = ax + aw - inset
+		top = ay + inset
+		bottom = ay + ah - inset
+		centerX = ax + aw / 2
+		centerY = ay + ah / 2
+	end
 
-        local clampedX = max(left, min(right, headX or left))
-        local clampedY = max(top, min(bottom, headY or top))
+	local clampedX = max(left, min(right, headX or left))
+	local clampedY = max(top, min(bottom, headY or top))
 
-        local hitLeft = (headX or clampedX) <= left
-        local hitRight = (headX or clampedX) >= right
-        local hitTop = (headY or clampedY) <= top
-        local hitBottom = (headY or clampedY) >= bottom
+	local hitLeft = (headX or clampedX) <= left
+	local hitRight = (headX or clampedX) >= right
+	local hitTop = (headY or clampedY) <= top
+	local hitBottom = (headY or clampedY) >= bottom
 
-        local dir = Snake:getDirection() or {x = 0, y = 0}
-        local newDirX, newDirY = dir.x or 0, dir.y or 0
+	local dir = Snake:getDirection() or {x = 0, y = 0}
+	local newDirX, newDirY = dir.x or 0, dir.y or 0
 
-        local fallbackVerticalDir = computeFallbackAxisDirection(dir.y, clampedY, centerY)
-        local fallbackHorizontalDir = computeFallbackAxisDirection(dir.x, clampedX, centerX)
+	local fallbackVerticalDir = computeFallbackAxisDirection(dir.y, clampedY, centerY)
+	local fallbackHorizontalDir = computeFallbackAxisDirection(dir.x, clampedX, centerX)
 
 	local collidedHorizontal = hitLeft or hitRight
 	local collidedVertical = hitTop or hitBottom
@@ -268,41 +268,41 @@ local function rerouteAlongWall(headX, headY, left, right, top, bottom)
 	if collidedHorizontal and collidedVertical then
 		if horizontalDominant then
 			newDirX = 0
-                        local slide = fallbackVerticalDir
-                        if hitTop and slide < 0 then
-                                slide = 1
-                        elseif hitBottom and slide > 0 then
-                                slide = -1
+			local slide = fallbackVerticalDir
+			if hitTop and slide < 0 then
+				slide = 1
+			elseif hitBottom and slide > 0 then
+				slide = -1
 			end
 			newDirY = slide
 		else
 			newDirY = 0
-                        local slide = fallbackHorizontalDir
-                        if hitLeft and slide < 0 then
-                                slide = 1
-                        elseif hitRight and slide > 0 then
-                                slide = -1
+			local slide = fallbackHorizontalDir
+			if hitLeft and slide < 0 then
+				slide = 1
+			elseif hitRight and slide > 0 then
+				slide = -1
 			end
 			newDirX = slide
 		end
 	else
 		if collidedHorizontal then
 			newDirX = 0
-                        local slide = fallbackVerticalDir
-                        if hitTop and slide < 0 then
-                                slide = 1
-                        elseif hitBottom and slide > 0 then
-                                slide = -1
+			local slide = fallbackVerticalDir
+			if hitTop and slide < 0 then
+				slide = 1
+			elseif hitBottom and slide > 0 then
+				slide = -1
 			end
 			newDirY = slide
 		end
 
 		if collidedVertical then
 			newDirY = 0
-                        local slide = fallbackHorizontalDir
-                        if hitLeft and slide < 0 then
-                                slide = 1
-                        elseif hitRight and slide > 0 then
+			local slide = fallbackHorizontalDir
+			if hitLeft and slide < 0 then
+				slide = 1
+			elseif hitRight and slide > 0 then
 				slide = -1
 			end
 			newDirX = slide
@@ -412,26 +412,26 @@ local function portalThroughWall(headX, headY)
 		end
 	end
 
-        if not (exitX and exitY) then
-                local margin = max(4, math.floor(Arena.tileSize * 0.3))
-                if horizontalDist >= verticalDist then
-                        if outLeft then
-                                exitX = clamp(right - margin, left + margin, right - margin)
-                        else
-                                exitX = clamp(left + margin, left + margin, right - margin)
-                        end
-                        exitY = clamp(headY, top + margin, bottom - margin)
-                else
-                        if outTop then
-                                exitY = clamp(bottom - margin, top + margin, bottom - margin)
-                        else
-                                exitY = clamp(top + margin, top + margin, bottom - margin)
-                        end
-                        exitX = clamp(headX, left + margin, right - margin)
-                end
+	if not (exitX and exitY) then
+		local margin = max(4, math.floor(Arena.tileSize * 0.3))
+		if horizontalDist >= verticalDist then
+			if outLeft then
+				exitX = clamp(right - margin, left + margin, right - margin)
+			else
+				exitX = clamp(left + margin, left + margin, right - margin)
+			end
+			exitY = clamp(headY, top + margin, bottom - margin)
+		else
+			if outTop then
+				exitY = clamp(bottom - margin, top + margin, bottom - margin)
+			else
+				exitY = clamp(top + margin, top + margin, bottom - margin)
+			end
+			exitX = clamp(headX, left + margin, right - margin)
+		end
 
-                entryPortalX, entryPortalY = entryX, entryY
-        end
+		entryPortalX, entryPortalY = entryX, entryY
+	end
 
 	local dx = (exitX or headX) - headX
 	local dy = (exitY or headY) - headY
@@ -479,41 +479,41 @@ local function portalThroughWall(headX, headY)
 		Particles:spawnBurst(newHeadX, newHeadY, PORTAL_EXIT_BURST_OPTIONS)
 	end
 
-        return newHeadX, newHeadY
+	return newHeadX, newHeadY
 end
 
 local function relocateHead(headX, headY, targetX, targetY)
-        if not (targetX and targetY) then
-                return headX, headY
-        end
+	if not (targetX and targetY) then
+		return headX, headY
+	end
 
-        local deltaX = 0
-        local deltaY = 0
-        if headX and headY then
-                deltaX = targetX - headX
-                deltaY = targetY - headY
-        end
+	local deltaX = 0
+	local deltaY = 0
+	if headX and headY then
+		deltaX = targetX - headX
+		deltaY = targetY - headY
+	end
 
-        local moved = false
-        if Snake.translate and (deltaX ~= 0 or deltaY ~= 0) then
-                Snake:translate(deltaX, deltaY, {resetMoveProgress = true})
-                moved = true
-        elseif Snake.setHeadPosition then
-                Snake:setHeadPosition(targetX, targetY)
-                moved = true
-        end
+	local moved = false
+	if Snake.translate and (deltaX ~= 0 or deltaY ~= 0) then
+		Snake:translate(deltaX, deltaY, {resetMoveProgress = true})
+		moved = true
+	elseif Snake.setHeadPosition then
+		Snake:setHeadPosition(targetX, targetY)
+		moved = true
+	end
 
-        if Snake.resetMovementProgress then
-                Snake:resetMovementProgress()
-        end
+	if Snake.resetMovementProgress then
+		Snake:resetMovementProgress()
+	end
 
-        if moved then
-                local newHeadX, newHeadY = Snake:getHead()
-                headX = newHeadX or targetX
-                headY = newHeadY or targetY
-        end
+	if moved then
+		local newHeadX, newHeadY = Snake:getHead()
+		headX = newHeadX or targetX
+		headY = newHeadY or targetY
+	end
 
-        return headX, headY
+	return headX, headY
 end
 
 local function handleWallCollision(headX, headY)
@@ -534,14 +534,14 @@ local function handleWallCollision(headX, headY)
 	local top = ay + inset
 	local bottom = ay + ah - inset
 
-        if not Snake:consumeShield() then
-                local safeX = clamp(headX, left, right)
-                local safeY = clamp(headY, top, bottom)
-                local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY, left, right, top, bottom)
-                local clampedX = reroutedX or safeX
-                local clampedY = reroutedY or safeY
-                headX, headY = relocateHead(headX, headY, clampedX, clampedY)
-                clampedX, clampedY = headX, headY
+	if not Snake:consumeShield() then
+		local safeX = clamp(headX, left, right)
+		local safeY = clamp(headY, top, bottom)
+		local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY, left, right, top, bottom)
+		local clampedX = reroutedX or safeX
+		local clampedY = reroutedY or safeY
+		headX, headY = relocateHead(headX, headY, clampedX, clampedY)
+		clampedX, clampedY = headX, headY
 		local dir = Snake.getDirection and Snake:getDirection() or {x = 0, y = 0}
 
 		return clampedX, clampedY, "wall", {
@@ -556,12 +556,12 @@ local function handleWallCollision(headX, headY)
 		}
 	end
 
-        local reroutedX, reroutedY = rerouteAlongWall(headX, headY, left, right, top, bottom)
-        local clampedX = reroutedX or clamp(headX, left, right)
-        local clampedY = reroutedY or clamp(headY, top, bottom)
-        headX, headY = relocateHead(headX, headY, clampedX, clampedY)
+	local reroutedX, reroutedY = rerouteAlongWall(headX, headY, left, right, top, bottom)
+	local clampedX = reroutedX or clamp(headX, left, right)
+	local clampedY = reroutedY or clamp(headY, top, bottom)
+	headX, headY = relocateHead(headX, headY, clampedX, clampedY)
 
-        Particles:spawnBurst(headX, headY, WALL_SHIELD_BURST_OPTIONS)
+	Particles:spawnBurst(headX, headY, WALL_SHIELD_BURST_OPTIONS)
 
 	Audio:playSound("shield_wall")
 
@@ -575,49 +575,49 @@ local function handleWallCollision(headX, headY)
 end
 
 local function handleRockCollision(headX, headY, headCol, headRow, rockRevision)
-        local headSize = max(0, SEGMENT_SIZE - ROCK_COLLISION_INSET * 2)
-        local halfHeadSize = headSize / 2
-        local headLeft = headX - halfHeadSize
-        local headTop = headY - halfHeadSize
-        local allRocks = Rocks.getAll and Rocks:getAll() or nil
+	local headSize = max(0, SEGMENT_SIZE - ROCK_COLLISION_INSET * 2)
+	local halfHeadSize = headSize / 2
+	local headLeft = headX - halfHeadSize
+	local headTop = headY - halfHeadSize
+	local allRocks = Rocks.getAll and Rocks:getAll() or nil
 
-        if not allRocks or #allRocks == 0 then
-                return
-        end
+	if not allRocks or #allRocks == 0 then
+		return
+	end
 
-        local candidates = allRocks
-        local hasLookup = Rocks.hasCellLookup and Rocks:hasCellLookup()
+	local candidates = allRocks
+	local hasLookup = Rocks.hasCellLookup and Rocks:hasCellLookup()
 
-        if hasLookup and Rocks.getNearby and headCol and headRow then
-                local revision = rockRevision or (Rocks.getRevision and Rocks:getRevision()) or nil
+	if hasLookup and Rocks.getNearby and headCol and headRow then
+		local revision = rockRevision or (Rocks.getRevision and Rocks:getRevision()) or nil
 
-                if revision and cachedRockRevision == revision and cachedRockHeadCol == headCol and cachedRockHeadRow == headRow then
-                        candidates = cachedRockCandidates
-                else
-                        cachedRockRevision = revision
-                        cachedRockHeadCol = headCol
-                        cachedRockHeadRow = headRow
+		if revision and cachedRockRevision == revision and cachedRockHeadCol == headCol and cachedRockHeadRow == headRow then
+			candidates = cachedRockCandidates
+		else
+			cachedRockRevision = revision
+			cachedRockHeadCol = headCol
+			cachedRockHeadRow = headRow
 
-                        for i = #cachedRockCandidates, 1, -1 do
-                                cachedRockCandidates[i] = nil
-                        end
+			for i = #cachedRockCandidates, 1, -1 do
+				cachedRockCandidates[i] = nil
+			end
 
-                        local nearby = Rocks:getNearby(headCol, headRow, 1)
-                        if nearby and #nearby > 0 then
-                                for i = 1, #nearby do
-                                        cachedRockCandidates[i] = nearby[i]
-                                end
-                        end
+			local nearby = Rocks:getNearby(headCol, headRow, 1)
+			if nearby and #nearby > 0 then
+				for i = 1, #nearby do
+					cachedRockCandidates[i] = nearby[i]
+				end
+			end
 
-                        candidates = cachedRockCandidates
-                end
+			candidates = cachedRockCandidates
+		end
 
-                if not candidates or #candidates == 0 then
-                        candidates = allRocks
-                end
-        end
+		if not candidates or #candidates == 0 then
+			candidates = allRocks
+		end
+	end
 
-        for _, rock in ipairs(candidates or {}) do
+	for _, rock in ipairs(candidates or {}) do
 		local rockCenterX = rock and (rock.renderX or rock.x) or 0
 		local rockCenterY = rock and (rock.renderY or rock.y) or 0
 		local rockWidth = max(0, (rock and rock.w or SEGMENT_SIZE) - ROCK_COLLISION_INSET * 2)
@@ -745,9 +745,9 @@ local function handleSawCollision(headX, headY, hazardGraceActive)
 end
 
 local function handleLaserCollision(headX, headY, hazardGraceActive)
-        if not Lasers or not Lasers.checkCollision then
-                return
-        end
+	if not Lasers or not Lasers.checkCollision then
+		return
+	end
 
 	if hazardGraceActive then
 		return
@@ -810,89 +810,89 @@ local function handleLaserCollision(headX, headY, hazardGraceActive)
 		recordShieldEvent("laser")
 	end
 
-        return
+	return
 end
 
 local function handleDartCollision(headX, headY, hazardGraceActive)
-        if not Darts or not Darts.checkCollision then
-                return
-        end
+	if not Darts or not Darts.checkCollision then
+		return
+	end
 
 	if hazardGraceActive then
 		return
 	end
 
-        local dartHit = Darts:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
-        if not dartHit then
-                return
-        end
+	local dartHit = Darts:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+	if not dartHit then
+		return
+	end
 
-        local shielded = Snake:consumeShield()
-        local survived = shielded
+	local shielded = Snake:consumeShield()
+	local survived = shielded
 
-        if not survived and Snake.consumeStoneSkinSawGrace then
-                survived = Snake:consumeStoneSkinSawGrace()
-        end
+	if not survived and Snake.consumeStoneSkinSawGrace then
+		survived = Snake:consumeStoneSkinSawGrace()
+	end
 
-        local impactX = dartHit.dartX or dartHit.lastImpactX or dartHit.endX or headX
-        local impactY = dartHit.dartY or dartHit.lastImpactY or dartHit.endY or headY
+	local impactX = dartHit.dartX or dartHit.lastImpactX or dartHit.endX or headX
+	local impactY = dartHit.dartY or dartHit.lastImpactY or dartHit.endY or headY
 
-        if not survived then
-                local pushX, pushY = 0, 0
-                local dx = (headX or impactX) - impactX
-                local dy = (headY or impactY) - impactY
-                local dist = sqrt(dx * dx + dy * dy)
-                local pushDist = SEGMENT_SIZE * 0.85
-                if dist > 1e-4 then
-                        pushX = (dx / dist) * pushDist
-                        pushY = (dy / dist) * pushDist
-                else
-                        if dartHit.dir == "horizontal" then
-                                pushX = -(dartHit.facing or 1) * pushDist
-                        else
-                                pushY = -(dartHit.facing or 1) * pushDist
-                        end
-                end
+	if not survived then
+		local pushX, pushY = 0, 0
+		local dx = (headX or impactX) - impactX
+		local dy = (headY or impactY) - impactY
+		local dist = sqrt(dx * dx + dy * dy)
+		local pushDist = SEGMENT_SIZE * 0.85
+		if dist > 1e-4 then
+			pushX = (dx / dist) * pushDist
+			pushY = (dy / dist) * pushDist
+		else
+			if dartHit.dir == "horizontal" then
+				pushX = -(dartHit.facing or 1) * pushDist
+			else
+				pushY = -(dartHit.facing or 1) * pushDist
+			end
+		end
 
-                if Darts and Darts.onSnakeImpact then
-                        Darts:onSnakeImpact(dartHit, impactX, impactY)
-                end
+		if Darts and Darts.onSnakeImpact then
+			Darts:onSnakeImpact(dartHit, impactX, impactY)
+		end
 
-                return "hit", "dart", {
-                        pushX = pushX,
-                        pushY = pushY,
-                        grace = DAMAGE_GRACE,
-                        shake = 0.28,
-                }
-        end
+		return "hit", "dart", {
+			pushX = pushX,
+			pushY = pushY,
+			grace = DAMAGE_GRACE,
+			shake = 0.28,
+		}
+	end
 
-        Darts:onShieldedHit(dartHit, impactX, impactY)
+	Darts:onShieldedHit(dartHit, impactX, impactY)
 
-        Particles:spawnBurst(headX, headY, DART_SHIELD_BURST_OPTIONS)
+	Particles:spawnBurst(headX, headY, DART_SHIELD_BURST_OPTIONS)
 
-        Audio:playSound("shield_saw")
+	Audio:playSound("shield_saw")
 
-        if Snake.onShieldConsumed then
-                Snake:onShieldConsumed(headX, headY, "dart")
-        end
+	if Snake.onShieldConsumed then
+		Snake:onShieldConsumed(headX, headY, "dart")
+	end
 
-        if Snake.chopTailByHazard then
-                Snake:chopTailByHazard("dart")
-        elseif Snake.chopTailBySaw then
-                Snake:chopTailBySaw()
-        end
+	if Snake.chopTailByHazard then
+		Snake:chopTailByHazard("dart")
+	elseif Snake.chopTailBySaw then
+		Snake:chopTailBySaw()
+	end
 
-        Snake:beginHazardGrace()
+	Snake:beginHazardGrace()
 
-        if shielded then
-                recordShieldEvent("dart")
-        end
+	if shielded then
+		recordShieldEvent("dart")
+	end
 
-        return
+	return
 end
 
 function Movement:reset()
-        Snake:resetPosition()
+	Snake:resetPosition()
 end
 
 function Movement:update(dt)
@@ -947,16 +947,16 @@ function Movement:update(dt)
 			return "hit", wallCause, wallContext
 		end
 
-                local headCol, headRow
-                if Arena and Arena.getTileFromWorld then
-                        headCol, headRow = Arena:getTileFromWorld(headX, headY)
-                end
+		local headCol, headRow
+		if Arena and Arena.getTileFromWorld then
+			headCol, headRow = Arena:getTileFromWorld(headX, headY)
+		end
 
-                local rockRevision = Rocks.getRevision and Rocks:getRevision() or nil
-                local state, stateCause, stateContext = handleRockCollision(headX, headY, headCol, headRow, rockRevision)
-                if state then
-                        return state, stateCause, stateContext
-                end
+		local rockRevision = Rocks.getRevision and Rocks:getRevision() or nil
+		local state, stateCause, stateContext = handleRockCollision(headX, headY, headCol, headRow, rockRevision)
+		if state then
+			return state, stateCause, stateContext
+		end
 
 		if not hazardGraceActive and laserEmitterCount > 0 then
 			local laserState, laserCause, laserContext = handleLaserCollision(headX, headY, hazardGraceActive)

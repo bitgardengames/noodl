@@ -41,59 +41,59 @@ local stormBoltCenterCapacity = 0
 local titanSigilVertices = {0, 0, 0, 0, 0, 0, 0, 0}
 
 local function ensureBufferCapacity(buffer, capacity, needed)
-        if capacity < needed then
-                for i = capacity + 1, needed do
-                        buffer[i] = 0
-                end
-                capacity = needed
-        end
-        return capacity
+	if capacity < needed then
+		for i = capacity + 1, needed do
+			buffer[i] = 0
+		end
+		capacity = needed
+	end
+	return capacity
 end
 
 local function trimBuffer(buffer, used, capacity)
-        if used < capacity then
-                for i = used + 1, capacity do
-                        buffer[i] = nil
-                end
-        end
+	if used < capacity then
+		for i = used + 1, capacity do
+			buffer[i] = nil
+		end
+	end
 end
 
 local applyOverlay
 local drawTrailSegmentToCanvas
 
 local function rebuildGlowSprite()
-        local size = max(8, glowSpriteResolution)
-        local imageData = love.image.newImageData(size, size)
-        local center = (size - 1) * 0.5
-        local radius = max(center, 1)
+	local size = max(8, glowSpriteResolution)
+	local imageData = love.image.newImageData(size, size)
+	local center = (size - 1) * 0.5
+	local radius = max(center, 1)
 
-        for y = 0, size - 1 do
-                for x = 0, size - 1 do
-                        local dx = (x - center) / radius
-                        local dy = (y - center) / radius
-                        local dist = sqrt(dx * dx + dy * dy)
-                        local fade = 0
+	for y = 0, size - 1 do
+		for x = 0, size - 1 do
+			local dx = (x - center) / radius
+			local dy = (y - center) / radius
+			local dist = sqrt(dx * dx + dy * dy)
+			local fade = 0
 
-                        if dist < 1 then
-                                local falloff = 1 - dist
-                                fade = falloff * falloff
-                        end
+			if dist < 1 then
+				local falloff = 1 - dist
+				fade = falloff * falloff
+			end
 
-                        imageData:setPixel(x, y, fade, fade, fade, fade)
-                end
-        end
+			imageData:setPixel(x, y, fade, fade, fade, fade)
+		end
+	end
 
-        local sprite = love.graphics.newImage(imageData)
-        sprite:setFilter("linear", "linear")
-        glowSprite = sprite
+	local sprite = love.graphics.newImage(imageData)
+	sprite:setFilter("linear", "linear")
+	glowSprite = sprite
 end
 
 local function ensureGlowSprite()
-        if not glowSprite then
-                rebuildGlowSprite()
-        end
+	if not glowSprite then
+		rebuildGlowSprite()
+	end
 
-        return glowSprite
+	return glowSprite
 end
 
 local overlayShaderSources = {
@@ -626,27 +626,27 @@ local overlayShaderSources = {
 local overlayShaderCache = {}
 
 local function safeResolveShader(typeId)
-        local cached = overlayShaderCache[typeId]
-        if cached ~= nil then
-                return cached
-        end
+	local cached = overlayShaderCache[typeId]
+	if cached ~= nil then
+		return cached
+	end
 
-        local source = overlayShaderSources[typeId]
-        if not source then
-                overlayShaderCache[typeId] = false
-                return nil
-        end
+	local source = overlayShaderSources[typeId]
+	if not source then
+		overlayShaderCache[typeId] = false
+		return nil
+	end
 
-        local ok, shader = pcall(love.graphics.newShader, source)
-        if not ok then
-                print("[snakedraw] failed to build overlay shader", typeId, shader)
-                overlayShaderCache[typeId] = false
-                return nil
-        end
+	local ok, shader = pcall(love.graphics.newShader, source)
+	if not ok then
+		print("[snakedraw] failed to build overlay shader", typeId, shader)
+		overlayShaderCache[typeId] = false
+		return nil
+	end
 
-        overlayShaderCache[typeId] = shader
-        resetShaderUniformCache(shader)
-        return shader
+	overlayShaderCache[typeId] = shader
+	resetShaderUniformCache(shader)
+	return shader
 end
 
 local function accumulateBounds(accumulator, coords, hx, hy)
@@ -719,22 +719,22 @@ local function finalizeBounds(bounds, half)
 end
 
 local function ensureSnakeCanvas(width, height)
-        if width <= 0 or height <= 0 then
-                return nil
-        end
+	if width <= 0 or height <= 0 then
+		return nil
+	end
 
-        if not snakeCanvas then
-                snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
-        else
-                local currentWidth = snakeCanvas:getWidth()
-                local currentHeight = snakeCanvas:getHeight()
-                if width > currentWidth or height > currentHeight then
-                        local newWidth = max(width, currentWidth)
-                        local newHeight = max(height, currentHeight)
-                        snakeCanvas = love.graphics.newCanvas(newWidth, newHeight, {msaa = 8})
-                end
-        end
-        return snakeCanvas
+	if not snakeCanvas then
+		snakeCanvas = love.graphics.newCanvas(width, height, {msaa = 8})
+	else
+		local currentWidth = snakeCanvas:getWidth()
+		local currentHeight = snakeCanvas:getHeight()
+		if width > currentWidth or height > currentHeight then
+			local newWidth = max(width, currentWidth)
+			local newHeight = max(height, currentHeight)
+			snakeCanvas = love.graphics.newCanvas(newWidth, newHeight, {msaa = 8})
+		end
+	end
+	return snakeCanvas
 end
 
 
@@ -843,73 +843,73 @@ local lastOverlayShader = nil
 local lastOverlayType = nil
 
 local function resetShaderUniformCache(shader)
-        if shader then
-                overlayUniformCache[shader] = nil
-        end
+	if shader then
+		overlayUniformCache[shader] = nil
+	end
 end
 
 local function getShaderUniformCache(shader)
-        local cache = overlayUniformCache[shader]
-        if not cache then
-                cache = {}
-                overlayUniformCache[shader] = cache
-        end
-        return cache
+	local cache = overlayUniformCache[shader]
+	if not cache then
+		cache = {}
+		overlayUniformCache[shader] = cache
+	end
+	return cache
 end
 
 local function copyVectorUniform(src, dest)
-        dest = dest or {}
-        for i = 1, #src do
-                dest[i] = src[i]
-        end
-        for i = #src + 1, #dest do
-                dest[i] = nil
-        end
-        return dest
+	dest = dest or {}
+	for i = 1, #src do
+		dest[i] = src[i]
+	end
+	for i = #src + 1, #dest do
+		dest[i] = nil
+	end
+	return dest
 end
 
 local function sendUniformIfChanged(shader, cache, name, value)
-        if value == nil then
-                return
-        end
+	if value == nil then
+		return
+	end
 
-        local valueType = type(value)
-        if valueType == "table" then
-                local cached = cache[name]
-                local changed = false
+	local valueType = type(value)
+	if valueType == "table" then
+		local cached = cache[name]
+		local changed = false
 
-                if not cached then
-                        changed = true
-                else
-                        if #cached ~= #value then
-                                changed = true
-                        else
-                                for i = 1, #value do
-                                        if cached[i] ~= value[i] then
-                                                changed = true
-                                                break
-                                        end
-                                end
-                        end
-                end
+		if not cached then
+			changed = true
+		else
+			if #cached ~= #value then
+				changed = true
+			else
+				for i = 1, #value do
+					if cached[i] ~= value[i] then
+						changed = true
+						break
+					end
+				end
+			end
+		end
 
-                if changed then
-                        shader:send(name, value)
-                        cache[name] = copyVectorUniform(value, cached)
-                end
-        else
-                if cache[name] ~= value then
-                        shader:send(name, value)
-                        cache[name] = value
-                end
-        end
+		if changed then
+			shader:send(name, value)
+			cache[name] = copyVectorUniform(value, cached)
+		end
+	else
+		if cache[name] ~= value then
+			shader:send(name, value)
+			cache[name] = value
+		end
+	end
 end
 
 local function resolveColor(color, fallback, out)
-        local target = out or {}
-        if type(color) == "table" then
-                target[1] = color[1] or 0
-                target[2] = color[2] or 0
+	local target = out or {}
+	if type(color) == "table" then
+		target[1] = color[1] or 0
+		target[2] = color[2] or 0
 		target[3] = color[3] or 0
 		target[4] = color[4] or 1
 		return target
@@ -933,106 +933,106 @@ applyOverlay = function(canvas, config, drawX, drawY)
 		return false
 	end
 
-        local time = Timer.getTime()
+	local time = Timer.getTime()
 
-        local colors = config.colors or {}
-        local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor(), nil, overlayPrimaryColor)
-        local secondary = resolveColor(colors.secondary or SnakeCosmetics:getGlowColor(), nil, overlaySecondaryColor)
-        local tertiary = resolveColor(colors.tertiary or secondary, nil, overlayTertiaryColor)
+	local colors = config.colors or {}
+	local primary = resolveColor(colors.primary or colors.color or SnakeCosmetics:getBodyColor(), nil, overlayPrimaryColor)
+	local secondary = resolveColor(colors.secondary or SnakeCosmetics:getGlowColor(), nil, overlaySecondaryColor)
+	local tertiary = resolveColor(colors.tertiary or secondary, nil, overlayTertiaryColor)
 
-        if shader ~= lastOverlayShader or config.type ~= lastOverlayType then
-                resetShaderUniformCache(shader)
-        end
-        lastOverlayShader = shader
-        lastOverlayType = config.type
+	if shader ~= lastOverlayShader or config.type ~= lastOverlayType then
+		resetShaderUniformCache(shader)
+	end
+	lastOverlayShader = shader
+	lastOverlayType = config.type
 
-        local uniformCache = getShaderUniformCache(shader)
+	local uniformCache = getShaderUniformCache(shader)
 
-        shader:send("time", time)
-        sendUniformIfChanged(shader, uniformCache, "intensity", config.intensity or 0.5)
-        sendUniformIfChanged(shader, uniformCache, "colorA", primary)
-        sendUniformIfChanged(shader, uniformCache, "colorB", secondary)
+	shader:send("time", time)
+	sendUniformIfChanged(shader, uniformCache, "intensity", config.intensity or 0.5)
+	sendUniformIfChanged(shader, uniformCache, "colorA", primary)
+	sendUniformIfChanged(shader, uniformCache, "colorB", secondary)
 
-        if config.type == "stripes" then
-                sendUniformIfChanged(shader, uniformCache, "frequency", config.frequency or 18)
-                sendUniformIfChanged(shader, uniformCache, "speed", config.speed or 0.6)
-                sendUniformIfChanged(shader, uniformCache, "angle", math.rad(config.angle or 45))
-        elseif config.type == "holo" then
-                sendUniformIfChanged(shader, uniformCache, "speed", config.speed or 1.0)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "auroraVeil" then
-                sendUniformIfChanged(shader, uniformCache, "curtainDensity", config.curtainDensity or 6.5)
-                sendUniformIfChanged(shader, uniformCache, "driftSpeed", config.driftSpeed or 0.7)
-                sendUniformIfChanged(shader, uniformCache, "parallax", config.parallax or 1.4)
-                sendUniformIfChanged(shader, uniformCache, "shimmerStrength", config.shimmerStrength or 0.6)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "ionStorm" then
-                sendUniformIfChanged(shader, uniformCache, "boltFrequency", config.boltFrequency or 8.5)
-                sendUniformIfChanged(shader, uniformCache, "flashFrequency", config.flashFrequency or 5.2)
-                sendUniformIfChanged(shader, uniformCache, "haze", config.haze or 0.6)
-                sendUniformIfChanged(shader, uniformCache, "turbulence", config.turbulence or 1.2)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "petalBloom" then
-                sendUniformIfChanged(shader, uniformCache, "petalCount", config.petalCount or 8.0)
-                sendUniformIfChanged(shader, uniformCache, "pulseSpeed", config.pulseSpeed or 1.8)
-                sendUniformIfChanged(shader, uniformCache, "trailStrength", config.trailStrength or 0.45)
-                sendUniformIfChanged(shader, uniformCache, "bloomStrength", config.bloomStrength or 0.65)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "abyssalPulse" then
-                sendUniformIfChanged(shader, uniformCache, "swirlDensity", config.swirlDensity or 7.0)
-                sendUniformIfChanged(shader, uniformCache, "glimmerFrequency", config.glimmerFrequency or 3.5)
-                sendUniformIfChanged(shader, uniformCache, "darkness", config.darkness or 0.25)
-                sendUniformIfChanged(shader, uniformCache, "driftSpeed", config.driftSpeed or 0.9)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "chronoWeave" then
-                sendUniformIfChanged(shader, uniformCache, "ringDensity", config.ringDensity or 9.0)
-                sendUniformIfChanged(shader, uniformCache, "timeFlow", config.timeFlow or 2.4)
-                sendUniformIfChanged(shader, uniformCache, "weaveStrength", config.weaveStrength or 1.0)
-                sendUniformIfChanged(shader, uniformCache, "phaseOffset", config.phaseOffset or 0.0)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "gildedFacet" then
-                sendUniformIfChanged(shader, uniformCache, "facetDensity", config.facetDensity or 14.0)
-                sendUniformIfChanged(shader, uniformCache, "sparkleDensity", config.sparkleDensity or 12.0)
-                sendUniformIfChanged(shader, uniformCache, "beamSpeed", config.beamSpeed or 1.4)
-                sendUniformIfChanged(shader, uniformCache, "reflectionStrength", config.reflectionStrength or 0.6)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "voidEcho" then
-                sendUniformIfChanged(shader, uniformCache, "veilFrequency", config.veilFrequency or 7.2)
-                sendUniformIfChanged(shader, uniformCache, "echoSpeed", config.echoSpeed or 1.2)
-                sendUniformIfChanged(shader, uniformCache, "phaseShift", config.phaseShift or 0.4)
-                sendUniformIfChanged(shader, uniformCache, "riftIntensity", config.riftIntensity or 0.4)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "constellationDrift" then
-                sendUniformIfChanged(shader, uniformCache, "starDensity", config.starDensity or 6.5)
-                sendUniformIfChanged(shader, uniformCache, "driftSpeed", config.driftSpeed or 1.2)
-                sendUniformIfChanged(shader, uniformCache, "parallax", config.parallax or 0.6)
-                sendUniformIfChanged(shader, uniformCache, "twinkleStrength", config.twinkleStrength or 0.8)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "crystalBloom" then
-                sendUniformIfChanged(shader, uniformCache, "shardDensity", config.shardDensity or 6.0)
-                sendUniformIfChanged(shader, uniformCache, "sweepSpeed", config.sweepSpeed or 1.1)
-                sendUniformIfChanged(shader, uniformCache, "refractionStrength", config.refractionStrength or 0.7)
-                sendUniformIfChanged(shader, uniformCache, "veinStrength", config.veinStrength or 0.6)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "emberForge" then
-                sendUniformIfChanged(shader, uniformCache, "emberFrequency", config.emberFrequency or 8.0)
-                sendUniformIfChanged(shader, uniformCache, "emberSpeed", config.emberSpeed or 1.6)
-                sendUniformIfChanged(shader, uniformCache, "emberGlow", config.emberGlow or 0.7)
-                sendUniformIfChanged(shader, uniformCache, "slagDarkness", config.slagDarkness or 0.35)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "mechanicalScan" then
-                sendUniformIfChanged(shader, uniformCache, "scanSpeed", config.scanSpeed or 1.8)
-                sendUniformIfChanged(shader, uniformCache, "gearFrequency", config.gearFrequency or 12.0)
-                sendUniformIfChanged(shader, uniformCache, "gearParallax", config.gearParallax or 1.2)
-                sendUniformIfChanged(shader, uniformCache, "servoIntensity", config.servoIntensity or 0.6)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        elseif config.type == "tidalChorus" then
-                sendUniformIfChanged(shader, uniformCache, "waveFrequency", config.waveFrequency or 6.5)
-                sendUniformIfChanged(shader, uniformCache, "crestSpeed", config.crestSpeed or 1.4)
-                sendUniformIfChanged(shader, uniformCache, "chorusStrength", config.chorusStrength or 0.6)
-                sendUniformIfChanged(shader, uniformCache, "depthShift", config.depthShift or 0.0)
-                sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
-        end
+	if config.type == "stripes" then
+		sendUniformIfChanged(shader, uniformCache, "frequency", config.frequency or 18)
+		sendUniformIfChanged(shader, uniformCache, "speed", config.speed or 0.6)
+		sendUniformIfChanged(shader, uniformCache, "angle", math.rad(config.angle or 45))
+	elseif config.type == "holo" then
+		sendUniformIfChanged(shader, uniformCache, "speed", config.speed or 1.0)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "auroraVeil" then
+		sendUniformIfChanged(shader, uniformCache, "curtainDensity", config.curtainDensity or 6.5)
+		sendUniformIfChanged(shader, uniformCache, "driftSpeed", config.driftSpeed or 0.7)
+		sendUniformIfChanged(shader, uniformCache, "parallax", config.parallax or 1.4)
+		sendUniformIfChanged(shader, uniformCache, "shimmerStrength", config.shimmerStrength or 0.6)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "ionStorm" then
+		sendUniformIfChanged(shader, uniformCache, "boltFrequency", config.boltFrequency or 8.5)
+		sendUniformIfChanged(shader, uniformCache, "flashFrequency", config.flashFrequency or 5.2)
+		sendUniformIfChanged(shader, uniformCache, "haze", config.haze or 0.6)
+		sendUniformIfChanged(shader, uniformCache, "turbulence", config.turbulence or 1.2)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "petalBloom" then
+		sendUniformIfChanged(shader, uniformCache, "petalCount", config.petalCount or 8.0)
+		sendUniformIfChanged(shader, uniformCache, "pulseSpeed", config.pulseSpeed or 1.8)
+		sendUniformIfChanged(shader, uniformCache, "trailStrength", config.trailStrength or 0.45)
+		sendUniformIfChanged(shader, uniformCache, "bloomStrength", config.bloomStrength or 0.65)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "abyssalPulse" then
+		sendUniformIfChanged(shader, uniformCache, "swirlDensity", config.swirlDensity or 7.0)
+		sendUniformIfChanged(shader, uniformCache, "glimmerFrequency", config.glimmerFrequency or 3.5)
+		sendUniformIfChanged(shader, uniformCache, "darkness", config.darkness or 0.25)
+		sendUniformIfChanged(shader, uniformCache, "driftSpeed", config.driftSpeed or 0.9)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "chronoWeave" then
+		sendUniformIfChanged(shader, uniformCache, "ringDensity", config.ringDensity or 9.0)
+		sendUniformIfChanged(shader, uniformCache, "timeFlow", config.timeFlow or 2.4)
+		sendUniformIfChanged(shader, uniformCache, "weaveStrength", config.weaveStrength or 1.0)
+		sendUniformIfChanged(shader, uniformCache, "phaseOffset", config.phaseOffset or 0.0)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "gildedFacet" then
+		sendUniformIfChanged(shader, uniformCache, "facetDensity", config.facetDensity or 14.0)
+		sendUniformIfChanged(shader, uniformCache, "sparkleDensity", config.sparkleDensity or 12.0)
+		sendUniformIfChanged(shader, uniformCache, "beamSpeed", config.beamSpeed or 1.4)
+		sendUniformIfChanged(shader, uniformCache, "reflectionStrength", config.reflectionStrength or 0.6)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "voidEcho" then
+		sendUniformIfChanged(shader, uniformCache, "veilFrequency", config.veilFrequency or 7.2)
+		sendUniformIfChanged(shader, uniformCache, "echoSpeed", config.echoSpeed or 1.2)
+		sendUniformIfChanged(shader, uniformCache, "phaseShift", config.phaseShift or 0.4)
+		sendUniformIfChanged(shader, uniformCache, "riftIntensity", config.riftIntensity or 0.4)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "constellationDrift" then
+		sendUniformIfChanged(shader, uniformCache, "starDensity", config.starDensity or 6.5)
+		sendUniformIfChanged(shader, uniformCache, "driftSpeed", config.driftSpeed or 1.2)
+		sendUniformIfChanged(shader, uniformCache, "parallax", config.parallax or 0.6)
+		sendUniformIfChanged(shader, uniformCache, "twinkleStrength", config.twinkleStrength or 0.8)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "crystalBloom" then
+		sendUniformIfChanged(shader, uniformCache, "shardDensity", config.shardDensity or 6.0)
+		sendUniformIfChanged(shader, uniformCache, "sweepSpeed", config.sweepSpeed or 1.1)
+		sendUniformIfChanged(shader, uniformCache, "refractionStrength", config.refractionStrength or 0.7)
+		sendUniformIfChanged(shader, uniformCache, "veinStrength", config.veinStrength or 0.6)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "emberForge" then
+		sendUniformIfChanged(shader, uniformCache, "emberFrequency", config.emberFrequency or 8.0)
+		sendUniformIfChanged(shader, uniformCache, "emberSpeed", config.emberSpeed or 1.6)
+		sendUniformIfChanged(shader, uniformCache, "emberGlow", config.emberGlow or 0.7)
+		sendUniformIfChanged(shader, uniformCache, "slagDarkness", config.slagDarkness or 0.35)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "mechanicalScan" then
+		sendUniformIfChanged(shader, uniformCache, "scanSpeed", config.scanSpeed or 1.8)
+		sendUniformIfChanged(shader, uniformCache, "gearFrequency", config.gearFrequency or 12.0)
+		sendUniformIfChanged(shader, uniformCache, "gearParallax", config.gearParallax or 1.2)
+		sendUniformIfChanged(shader, uniformCache, "servoIntensity", config.servoIntensity or 0.6)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	elseif config.type == "tidalChorus" then
+		sendUniformIfChanged(shader, uniformCache, "waveFrequency", config.waveFrequency or 6.5)
+		sendUniformIfChanged(shader, uniformCache, "crestSpeed", config.crestSpeed or 1.4)
+		sendUniformIfChanged(shader, uniformCache, "chorusStrength", config.chorusStrength or 0.6)
+		sendUniformIfChanged(shader, uniformCache, "depthShift", config.depthShift or 0.0)
+		sendUniformIfChanged(shader, uniformCache, "colorC", tertiary)
+	end
 
 	love.graphics.push("all")
 	love.graphics.setShader(shader)
@@ -1062,165 +1062,165 @@ local segmentVectorCache = setmetatable({}, { __mode = "k" })
 local segmentVectorFrame = setmetatable({}, { __mode = "k" })
 
 local function buildSegmentVectors(trail)
-        if not trail then
-                return nil
-        end
+	if not trail then
+		return nil
+	end
 
-        local cached = segmentVectorCache[trail]
-        if currentCoordsFrame > 0 and segmentVectorFrame[trail] == currentCoordsFrame and cached then
-                return cached
-        end
+	local cached = segmentVectorCache[trail]
+	if currentCoordsFrame > 0 and segmentVectorFrame[trail] == currentCoordsFrame and cached then
+		return cached
+	end
 
-        local data = cached or {
-                posX = {},
-                posY = {},
-                dirX = {},
-                dirY = {},
-                perpX = {},
-                perpY = {},
-                len = {},
-                _lastCount = 0,
-        }
+	local data = cached or {
+		posX = {},
+		posY = {},
+		dirX = {},
+		dirY = {},
+		perpX = {},
+		perpY = {},
+		len = {},
+		_lastCount = 0,
+	}
 
-        local posX = data.posX
-        local posY = data.posY
-        local dirX = data.dirX
-        local dirY = data.dirY
-        local perpX = data.perpX
-        local perpY = data.perpY
-        local len = data.len
+	local posX = data.posX
+	local posY = data.posY
+	local dirX = data.dirX
+	local dirY = data.dirY
+	local perpX = data.perpX
+	local perpY = data.perpY
+	local len = data.len
 
-        local count = #trail
-        for i = 1, count do
-                local x, y = ptXY(trail[i])
-                posX[i] = x
-                posY[i] = y
-        end
+	local count = #trail
+	for i = 1, count do
+		local x, y = ptXY(trail[i])
+		posX[i] = x
+		posY[i] = y
+	end
 
-        for i = 1, count - 1 do
-                local x1, y1 = posX[i], posY[i]
-                local x2, y2 = posX[i + 1], posY[i + 1]
-                if x1 and y1 and x2 and y2 then
-                        local dx = x2 - x1
-                        local dy = y2 - y1
-                        local segLen = sqrt(dx * dx + dy * dy)
-                        len[i] = segLen
-                        if segLen > 1e-6 then
-                                local nx = dx / segLen
-                                local ny = dy / segLen
-                                dirX[i] = nx
-                                dirY[i] = ny
-                                perpX[i] = -ny
-                                perpY[i] = nx
-                        else
-                                dirX[i], dirY[i], perpX[i], perpY[i] = 0, 0, 0, 0
-                        end
-                else
-                        len[i] = 0
-                        dirX[i], dirY[i], perpX[i], perpY[i] = 0, 0, 0, 0
-                end
-        end
+	for i = 1, count - 1 do
+		local x1, y1 = posX[i], posY[i]
+		local x2, y2 = posX[i + 1], posY[i + 1]
+		if x1 and y1 and x2 and y2 then
+			local dx = x2 - x1
+			local dy = y2 - y1
+			local segLen = sqrt(dx * dx + dy * dy)
+			len[i] = segLen
+			if segLen > 1e-6 then
+				local nx = dx / segLen
+				local ny = dy / segLen
+				dirX[i] = nx
+				dirY[i] = ny
+				perpX[i] = -ny
+				perpY[i] = nx
+			else
+				dirX[i], dirY[i], perpX[i], perpY[i] = 0, 0, 0, 0
+			end
+		else
+			len[i] = 0
+			dirX[i], dirY[i], perpX[i], perpY[i] = 0, 0, 0, 0
+		end
+	end
 
-        local previousCount = data._lastCount or 0
-        for i = count + 1, previousCount do
-                posX[i], posY[i], dirX[i], dirY[i], perpX[i], perpY[i], len[i] = nil, nil, nil, nil, nil, nil, nil
-        end
+	local previousCount = data._lastCount or 0
+	for i = count + 1, previousCount do
+		posX[i], posY[i], dirX[i], dirY[i], perpX[i], perpY[i], len[i] = nil, nil, nil, nil, nil, nil, nil
+	end
 
-        if count >= 1 then
-                dirX[count], dirY[count], perpX[count], perpY[count], len[count] = nil, nil, nil, nil, nil
-        end
+	if count >= 1 then
+		dirX[count], dirY[count], perpX[count], perpY[count], len[count] = nil, nil, nil, nil, nil
+	end
 
-        data._lastCount = count
-        segmentVectorCache[trail] = data
-        segmentVectorFrame[trail] = currentCoordsFrame
+	data._lastCount = count
+	segmentVectorCache[trail] = data
+	segmentVectorFrame[trail] = currentCoordsFrame
 
-        return data
+	return data
 end
 
 local function resolveSegmentSpan(trail, vectors, startIndex, endIndex)
-        if not (trail and startIndex and endIndex) then
-                return nil
-        end
+	if not (trail and startIndex and endIndex) then
+		return nil
+	end
 
-        if endIndex < startIndex then
-                startIndex, endIndex = endIndex, startIndex
-        end
+	if endIndex < startIndex then
+		startIndex, endIndex = endIndex, startIndex
+	end
 
-        local posX, posY
-        if vectors then
-                posX = vectors.posX
-                posY = vectors.posY
-        end
+	local posX, posY
+	if vectors then
+		posX = vectors.posX
+		posY = vectors.posY
+	end
 
-        local x1 = posX and posX[startIndex]
-        local y1 = posY and posY[startIndex]
-        local x2 = posX and posX[endIndex]
-        local y2 = posY and posY[endIndex]
+	local x1 = posX and posX[startIndex]
+	local y1 = posY and posY[startIndex]
+	local x2 = posX and posX[endIndex]
+	local y2 = posY and posY[endIndex]
 
-        if not (x1 and y1) then
-                local seg = trail[startIndex]
-                x1, y1 = ptXY(seg)
-        end
+	if not (x1 and y1) then
+		local seg = trail[startIndex]
+		x1, y1 = ptXY(seg)
+	end
 
-        if not (x2 and y2) then
-                local seg = trail[endIndex]
-                x2, y2 = ptXY(seg)
-        end
+	if not (x2 and y2) then
+		local seg = trail[endIndex]
+		x2, y2 = ptXY(seg)
+	end
 
-        if not (x1 and y1 and x2 and y2) then
-                return nil
-        end
+	if not (x1 and y1 and x2 and y2) then
+		return nil
+	end
 
-        if endIndex <= startIndex then
-                return x1, y1, x2, y2, 0, 0, 0, 0, 0
-        end
+	if endIndex <= startIndex then
+		return x1, y1, x2, y2, 0, 0, 0, 0, 0
+	end
 
-        local dirX, dirY, perpX, perpY, length = 0, 0, 0, 0, 0
+	local dirX, dirY, perpX, perpY, length = 0, 0, 0, 0, 0
 
-        if vectors then
-                if endIndex == startIndex + 1 then
-                        dirX = vectors.dirX[startIndex] or 0
-                        dirY = vectors.dirY[startIndex] or 0
-                        perpX = vectors.perpX[startIndex] or 0
-                        perpY = vectors.perpY[startIndex] or 0
-                        length = vectors.len[startIndex] or 0
-                else
-                        local totalX, totalY = 0, 0
-                        for i = startIndex, endIndex - 1 do
-                                local segLen = vectors.len[i]
-                                if segLen and segLen > 0 then
-                                        local nx = vectors.dirX[i] or 0
-                                        local ny = vectors.dirY[i] or 0
-                                        totalX = totalX + nx * segLen
-                                        totalY = totalY + ny * segLen
-                                end
-                        end
-                        length = sqrt(totalX * totalX + totalY * totalY)
-                        if length > 1e-6 then
-                                dirX = totalX / length
-                                dirY = totalY / length
-                                perpX = -dirY
-                                perpY = dirX
-                        end
-                end
-        end
+	if vectors then
+		if endIndex == startIndex + 1 then
+			dirX = vectors.dirX[startIndex] or 0
+			dirY = vectors.dirY[startIndex] or 0
+			perpX = vectors.perpX[startIndex] or 0
+			perpY = vectors.perpY[startIndex] or 0
+			length = vectors.len[startIndex] or 0
+		else
+			local totalX, totalY = 0, 0
+			for i = startIndex, endIndex - 1 do
+				local segLen = vectors.len[i]
+				if segLen and segLen > 0 then
+					local nx = vectors.dirX[i] or 0
+					local ny = vectors.dirY[i] or 0
+					totalX = totalX + nx * segLen
+					totalY = totalY + ny * segLen
+				end
+			end
+			length = sqrt(totalX * totalX + totalY * totalY)
+			if length > 1e-6 then
+				dirX = totalX / length
+				dirY = totalY / length
+				perpX = -dirY
+				perpY = dirX
+			end
+		end
+	end
 
-        if length <= 0 then
-                local dx = x2 - x1
-                local dy = y2 - y1
-                length = sqrt(dx * dx + dy * dy)
-                if length > 1e-6 then
-                        dirX = dx / length
-                        dirY = dy / length
-                        perpX = -dirY
-                        perpY = dirX
-                end
-        elseif (perpX == 0 and perpY == 0) and (dirX ~= 0 or dirY ~= 0) then
-                perpX = -dirY
-                perpY = dirX
-        end
+	if length <= 0 then
+		local dx = x2 - x1
+		local dy = y2 - y1
+		length = sqrt(dx * dx + dy * dy)
+		if length > 1e-6 then
+			dirX = dx / length
+			dirY = dy / length
+			perpX = -dirY
+			perpY = dirX
+		end
+	elseif (perpX == 0 and perpY == 0) and (dirX ~= 0 or dirY ~= 0) then
+		perpX = -dirY
+		perpY = dirX
+	end
 
-        return x1, y1, x2, y2, dirX, dirY, perpX, perpY, length
+	return x1, y1, x2, y2, dirX, dirY, perpX, perpY, length
 end
 
 -- polyline coords {x1,y1,x2,y2,...}
@@ -1427,55 +1427,55 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 end
 
 drawSoftGlow = function(x, y, radius, r, g, b, a, blendMode)
-        if radius <= 0 then return end
+	if radius <= 0 then return end
 
-        local sprite = ensureGlowSprite()
-        if not sprite then return end
+	local sprite = ensureGlowSprite()
+	if not sprite then return end
 
-        local colorR = r or 0
-        local colorG = g or 0
-        local colorB = b or 0
-        local colorA = a or 1
-        local mode = blendMode or "add"
+	local colorR = r or 0
+	local colorG = g or 0
+	local colorB = b or 0
+	local colorA = a or 1
+	local mode = blendMode or "add"
 
-        local previousBlendMode, previousAlphaMode = love.graphics.getBlendMode()
-        local previousR, previousG, previousB, previousA = love.graphics.getColor()
+	local previousBlendMode, previousAlphaMode = love.graphics.getBlendMode()
+	local previousR, previousG, previousB, previousA = love.graphics.getColor()
 
-        local targetBlendMode, targetAlphaMode
-        if mode == "alpha" then
-                targetBlendMode, targetAlphaMode = "alpha", "premultiplied"
-        else
-                targetBlendMode, targetAlphaMode = "add", nil
-        end
+	local targetBlendMode, targetAlphaMode
+	if mode == "alpha" then
+		targetBlendMode, targetAlphaMode = "alpha", "premultiplied"
+	else
+		targetBlendMode, targetAlphaMode = "add", nil
+	end
 
-        if previousBlendMode ~= targetBlendMode or previousAlphaMode ~= targetAlphaMode then
-                if targetAlphaMode then
-                        love.graphics.setBlendMode(targetBlendMode, targetAlphaMode)
-                else
-                        love.graphics.setBlendMode(targetBlendMode)
-                end
-        end
+	if previousBlendMode ~= targetBlendMode or previousAlphaMode ~= targetAlphaMode then
+		if targetAlphaMode then
+			love.graphics.setBlendMode(targetBlendMode, targetAlphaMode)
+		else
+			love.graphics.setBlendMode(targetBlendMode)
+		end
+	end
 
-        if mode == "alpha" then
-                love.graphics.setColor(colorR * colorA, colorG * colorA, colorB * colorA, colorA)
-        else
-                love.graphics.setColor(colorR, colorG, colorB, colorA)
-        end
+	if mode == "alpha" then
+		love.graphics.setColor(colorR * colorA, colorG * colorA, colorB * colorA, colorA)
+	else
+		love.graphics.setColor(colorR, colorG, colorB, colorA)
+	end
 
-        local spriteWidth, spriteHeight = sprite:getWidth(), sprite:getHeight()
-        local scaleX = (radius * 2) / spriteWidth
-        local scaleY = (radius * 2) / spriteHeight
-        love.graphics.draw(sprite, x, y, 0, scaleX, scaleY, spriteWidth * 0.5, spriteHeight * 0.5)
+	local spriteWidth, spriteHeight = sprite:getWidth(), sprite:getHeight()
+	local scaleX = (radius * 2) / spriteWidth
+	local scaleY = (radius * 2) / spriteHeight
+	love.graphics.draw(sprite, x, y, 0, scaleX, scaleY, spriteWidth * 0.5, spriteHeight * 0.5)
 
-        love.graphics.setColor(previousR, previousG, previousB, previousA)
+	love.graphics.setColor(previousR, previousG, previousB, previousA)
 
-        if previousBlendMode ~= targetBlendMode or previousAlphaMode ~= targetAlphaMode then
-                if previousAlphaMode then
-                        love.graphics.setBlendMode(previousBlendMode, previousAlphaMode)
-                else
-                        love.graphics.setBlendMode(previousBlendMode)
-                end
-        end
+	if previousBlendMode ~= targetBlendMode or previousAlphaMode ~= targetAlphaMode then
+		if previousAlphaMode then
+			love.graphics.setBlendMode(previousBlendMode, previousAlphaMode)
+		else
+			love.graphics.setBlendMode(previousBlendMode)
+		end
+	end
 end
 
 local function drawPortalHole(hole, isExit)
@@ -1848,67 +1848,67 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 	local time = data.time or Timer.getTime()
 	local stride = max(1, floor(#trail / (4 + stacks * 2)))
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        local steps = 6
-        local requiredPoints = (steps + 1) * 2
-        zephyrPointCapacity = ensureBufferCapacity(zephyrPoints, zephyrPointCapacity, requiredPoints)
+	local steps = 6
+	local requiredPoints = (steps + 1) * 2
+	zephyrPointCapacity = ensureBufferCapacity(zephyrPoints, zephyrPointCapacity, requiredPoints)
 
-        local segmentVectors = buildSegmentVectors(trail)
+	local segmentVectors = buildSegmentVectors(trail)
 
-        for i = 1, #trail - stride do
-                local nextIndex = i + stride
-                local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
-                if x1 and y1 and x2 and y2 then
-                        if not dirX or not dirY or length < 1e-4 then
-                                dirX, dirY = 0, -1
-                                perpX, perpY = 1, 0
-                        elseif not (perpX and perpY) then
-                                perpX, perpY = -dirY, dirX
-                        end
+	for i = 1, #trail - stride do
+		local nextIndex = i + stride
+		local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
+		if x1 and y1 and x2 and y2 then
+			if not dirX or not dirY or length < 1e-4 then
+				dirX, dirY = 0, -1
+				perpX, perpY = 1, 0
+			elseif not (perpX and perpY) then
+				perpX, perpY = -dirY, dirX
+			end
 
-                        local progress = (i - 1) / max(#trail - stride, 1)
-                        local sway = sin(time * (4.8 + stacks * 0.4) + i * 0.7) * SEGMENT_SIZE * (0.22 + 0.12 * intensity)
-                        local crest = sin(time * 2.6 + i) * SEGMENT_SIZE * 0.1
-                        local ctrlX = (x1 + x2) * 0.5 + perpX * sway
-                        local ctrlY = (y1 + y2) * 0.5 + perpY * sway
+			local progress = (i - 1) / max(#trail - stride, 1)
+			local sway = sin(time * (4.8 + stacks * 0.4) + i * 0.7) * SEGMENT_SIZE * (0.22 + 0.12 * intensity)
+			local crest = sin(time * 2.6 + i) * SEGMENT_SIZE * 0.1
+			local ctrlX = (x1 + x2) * 0.5 + perpX * sway
+			local ctrlY = (y1 + y2) * 0.5 + perpY * sway
 
-                        local points = zephyrPoints
-                        local pointIndex = 1
-                        for step = 0, steps do
-                                local t = step / steps
-                                local inv = 1 - t
-                                local bx = inv * inv * x1 + 2 * inv * t * ctrlX + t * t * x2
-                                local by = inv * inv * y1 + 2 * inv * t * ctrlY + t * t * y2
-                                local peak = 1 - abs(0.5 - t) * 2
-                                bx = bx + perpX * crest * peak * 0.8
-                                by = by + perpY * crest * peak * 0.8
-                                points[pointIndex] = bx
-                                points[pointIndex + 1] = by
-                                pointIndex = pointIndex + 2
-                        end
+			local points = zephyrPoints
+			local pointIndex = 1
+			for step = 0, steps do
+				local t = step / steps
+				local inv = 1 - t
+				local bx = inv * inv * x1 + 2 * inv * t * ctrlX + t * t * x2
+				local by = inv * inv * y1 + 2 * inv * t * ctrlY + t * t * y2
+				local peak = 1 - abs(0.5 - t) * 2
+				bx = bx + perpX * crest * peak * 0.8
+				by = by + perpY * crest * peak * 0.8
+				points[pointIndex] = bx
+				points[pointIndex + 1] = by
+				pointIndex = pointIndex + 2
+			end
 
-                        local pointCount = pointIndex - 1
-                        local sanitizedPointCount = pointCount - (pointCount % 2)
-                        if sanitizedPointCount ~= pointCount then
-                                points[sanitizedPointCount + 1] = nil
-                        end
-                        pointCount = sanitizedPointCount
+			local pointCount = pointIndex - 1
+			local sanitizedPointCount = pointCount - (pointCount % 2)
+			if sanitizedPointCount ~= pointCount then
+				points[sanitizedPointCount + 1] = nil
+			end
+			pointCount = sanitizedPointCount
 
-                        local fade = 1 - progress * 0.7
-                        if pointCount >= 4 then
-                                trimBuffer(points, pointCount, zephyrPointCapacity)
+			local fade = 1 - progress * 0.7
+			if pointCount >= 4 then
+				trimBuffer(points, pointCount, zephyrPointCapacity)
 
-                                love.graphics.setColor(0.62, 0.88, 1.0, (0.14 + 0.24 * intensity) * fade)
-                                love.graphics.setLineWidth(1.5 + intensity * 1.2)
-                                love.graphics.line(points, 1, pointCount)
-                        end
+				love.graphics.setColor(0.62, 0.88, 1.0, (0.14 + 0.24 * intensity) * fade)
+				love.graphics.setLineWidth(1.5 + intensity * 1.2)
+				love.graphics.line(points, 1, pointCount)
+			end
 
-                        love.graphics.setColor(0.92, 0.98, 1.0, (0.08 + 0.18 * intensity) * fade)
-                        love.graphics.circle("fill", x2, y2, SEGMENT_SIZE * 0.14, 12)
-                end
-        end
+			love.graphics.setColor(0.92, 0.98, 1.0, (0.08 + 0.18 * intensity) * fade)
+			love.graphics.circle("fill", x2, y2, SEGMENT_SIZE * 0.14, 12)
+		end
+	end
 
 	local ratio = data.ratio
 	if not ratio or ratio <= 0 then
@@ -1980,84 +1980,84 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 
-        local segments = 3
-        local boltPoints = (segments + 2) * 2
-        stormBoltCapacity = ensureBufferCapacity(stormBolt, stormBoltCapacity, boltPoints)
+	local segments = 3
+	local boltPoints = (segments + 2) * 2
+	stormBoltCapacity = ensureBufferCapacity(stormBolt, stormBoltCapacity, boltPoints)
 
-        local segmentVectors = buildSegmentVectors(trail)
+	local segmentVectors = buildSegmentVectors(trail)
 
-        local centers = stormBoltCenters
-        local centerCount = 0
-        local previousCenterCapacity = stormBoltCenterCapacity
+	local centers = stormBoltCenters
+	local centerCount = 0
+	local previousCenterCapacity = stormBoltCenterCapacity
 
-        local boltLineWidth = 2.2 + intensity * 1.2
-        local boltColorR, boltColorG, boltColorB, boltAlpha = 0.32, 0.68, 1.0, 0.2 + 0.32 * intensity
-        local flareColorR, flareColorG, flareColorB, flareAlpha = 0.9, 0.96, 1.0, 0.16 + 0.26 * intensity
-        local flareRadius = SEGMENT_SIZE * (0.16 + 0.08 * intensity)
+	local boltLineWidth = 2.2 + intensity * 1.2
+	local boltColorR, boltColorG, boltColorB, boltAlpha = 0.32, 0.68, 1.0, 0.2 + 0.32 * intensity
+	local flareColorR, flareColorG, flareColorB, flareAlpha = 0.9, 0.96, 1.0, 0.16 + 0.26 * intensity
+	local flareRadius = SEGMENT_SIZE * (0.16 + 0.08 * intensity)
 
-        love.graphics.setColor(boltColorR, boltColorG, boltColorB, boltAlpha)
-        love.graphics.setLineWidth(boltLineWidth)
+	love.graphics.setColor(boltColorR, boltColorG, boltColorB, boltAlpha)
+	love.graphics.setLineWidth(boltLineWidth)
 
-        for i = 1, #trail - stride, stride do
-                local nextIndex = i + stride
-                local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
-                if x1 and y1 and x2 and y2 then
-                        if not dirX or not dirY or length < 1e-4 then
-                                dirX, dirY = 0, 1
-                                perpX, perpY = -1, 0
-                                length = 0
-                        elseif not (perpX and perpY) then
-                                perpX, perpY = -dirY, dirX
-                        end
+	for i = 1, #trail - stride, stride do
+		local nextIndex = i + stride
+		local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
+		if x1 and y1 and x2 and y2 then
+			if not dirX or not dirY or length < 1e-4 then
+				dirX, dirY = 0, 1
+				perpX, perpY = -1, 0
+				length = 0
+			elseif not (perpX and perpY) then
+				perpX, perpY = -dirY, dirX
+			end
 
-                        local bolt = stormBolt
-                        local boltCount = 2
-                        bolt[1] = x1
-                        bolt[2] = y1
-                        for segIdx = 1, segments do
-                                local t = segIdx / (segments + 1)
-                                local offset = sin(time * 8 + i * 0.45 + segIdx * 1.2) * SEGMENT_SIZE * 0.3 * intensity
-                                local px = x1 + dirX * length * t + perpX * offset
-                                local py = y1 + dirY * length * t + perpY * offset
-                                boltCount = boltCount + 2
-                                bolt[boltCount - 1] = px
-                                bolt[boltCount] = py
-                        end
-                        boltCount = boltCount + 2
-                        bolt[boltCount - 1] = x2
-                        bolt[boltCount] = y2
+			local bolt = stormBolt
+			local boltCount = 2
+			bolt[1] = x1
+			bolt[2] = y1
+			for segIdx = 1, segments do
+				local t = segIdx / (segments + 1)
+				local offset = sin(time * 8 + i * 0.45 + segIdx * 1.2) * SEGMENT_SIZE * 0.3 * intensity
+				local px = x1 + dirX * length * t + perpX * offset
+				local py = y1 + dirY * length * t + perpY * offset
+				boltCount = boltCount + 2
+				bolt[boltCount - 1] = px
+				bolt[boltCount] = py
+			end
+			boltCount = boltCount + 2
+			bolt[boltCount - 1] = x2
+			bolt[boltCount] = y2
 
-                        trimBuffer(bolt, boltCount, stormBoltCapacity)
+			trimBuffer(bolt, boltCount, stormBoltCapacity)
 
-                        love.graphics.line(bolt, 1, boltCount)
+			love.graphics.line(bolt, 1, boltCount)
 
-                        local cx = (x1 + x2) * 0.5
-                        local cy = (y1 + y2) * 0.5
-                        centerCount = centerCount + 1
-                        centers[centerCount] = cx
-                        centerCount = centerCount + 1
-                        centers[centerCount] = cy
-                end
-        end
+			local cx = (x1 + x2) * 0.5
+			local cy = (y1 + y2) * 0.5
+			centerCount = centerCount + 1
+			centers[centerCount] = cx
+			centerCount = centerCount + 1
+			centers[centerCount] = cy
+		end
+	end
 
-        for idx = centerCount + 1, previousCenterCapacity do
-                centers[idx] = nil
-        end
-        stormBoltCenterCapacity = centerCount
+	for idx = centerCount + 1, previousCenterCapacity do
+		centers[idx] = nil
+	end
+	stormBoltCenterCapacity = centerCount
 
-        if centerCount >= 2 then
-                love.graphics.setColor(flareColorR, flareColorG, flareColorB, flareAlpha)
-                for idx = 1, centerCount, 2 do
-                        local cx = centers[idx]
-                        local cy = centers[idx + 1]
-                        if cx and cy then
-                                love.graphics.circle("fill", cx, cy, flareRadius)
-                        end
-                end
-        end
+	if centerCount >= 2 then
+		love.graphics.setColor(flareColorR, flareColorG, flareColorB, flareAlpha)
+		for idx = 1, centerCount, 2 do
+			local cx = centers[idx]
+			local cy = centers[idx + 1]
+			if cx and cy then
+				love.graphics.circle("fill", cx, cy, flareRadius)
+			end
+		end
+	end
 
-        if primed then
-                local headSeg = trail[1]
+	if primed then
+		local headSeg = trail[1]
 		local hx, hy = ptXY(headSeg)
 		if hx and hy then
 			love.graphics.setColor(0.38, 0.74, 1.0, 0.24 + 0.34 * intensity)
@@ -2082,53 +2082,53 @@ local function drawTitanbloodSigils(trail, SEGMENT_SIZE, data)
 
 	love.graphics.push("all")
 
-        local segmentVectors = buildSegmentVectors(trail)
+	local segmentVectors = buildSegmentVectors(trail)
 
-        for i = 2, sigilCount + 1 do
-                local prevIndex = i - 1
-                local xPrev, yPrev, xCurr, yCurr, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, prevIndex, i)
-                if xCurr and yCurr and xPrev and yPrev then
-                        if not dirX or not dirY or length < 1e-4 then
-                                dirX, dirY = 0, 1
-                                perpX, perpY = -1, 0
-                        elseif not (perpX and perpY) then
-                                perpX, perpY = -dirY, dirX
-                        end
-                        local progress = (i - 2) / max(sigilCount - 1, 1)
-                        local fade = 1 - progress * 0.6
-                        local sway = sin(time * 2.6 + i * 0.8) * SEGMENT_SIZE * 0.12 * fade
-                        local offset = SEGMENT_SIZE * (0.45 + 0.08 * min(stacks, 4))
-                        local cx = xCurr + perpX * (offset + sway)
-                        local cy = yCurr + perpY * (offset + sway)
+	for i = 2, sigilCount + 1 do
+		local prevIndex = i - 1
+		local xPrev, yPrev, xCurr, yCurr, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, prevIndex, i)
+		if xCurr and yCurr and xPrev and yPrev then
+			if not dirX or not dirY or length < 1e-4 then
+				dirX, dirY = 0, 1
+				perpX, perpY = -1, 0
+			elseif not (perpX and perpY) then
+				perpX, perpY = -dirY, dirX
+			end
+			local progress = (i - 2) / max(sigilCount - 1, 1)
+			local fade = 1 - progress * 0.6
+			local sway = sin(time * 2.6 + i * 0.8) * SEGMENT_SIZE * 0.12 * fade
+			local offset = SEGMENT_SIZE * (0.45 + 0.08 * min(stacks, 4))
+			local cx = xCurr + perpX * (offset + sway)
+			local cy = yCurr + perpY * (offset + sway)
 
-                        love.graphics.push()
-                        love.graphics.translate(cx, cy)
-                        love.graphics.rotate(atan2(dirY, dirX))
+			love.graphics.push()
+			love.graphics.translate(cx, cy)
+			love.graphics.rotate(atan2(dirY, dirX))
 
-                        local base = SEGMENT_SIZE * (0.28 + 0.08 * min(stacks, 3))
-                        love.graphics.setColor(0.32, 0.02, 0.08, (0.16 + 0.24 * intensity) * fade)
-                        love.graphics.ellipse("fill", 0, 0, base * 1.2, base * 0.55)
+			local base = SEGMENT_SIZE * (0.28 + 0.08 * min(stacks, 3))
+			love.graphics.setColor(0.32, 0.02, 0.08, (0.16 + 0.24 * intensity) * fade)
+			love.graphics.ellipse("fill", 0, 0, base * 1.2, base * 0.55)
 
-                        local scale = base * (1.1 + 0.45 * intensity)
-                        local vertices = titanSigilVertices
-                        vertices[1] = 0
-                        vertices[2] = -scale * 0.6
-                        vertices[3] = scale * 0.45
-                        vertices[4] = 0
-                        vertices[5] = 0
-                        vertices[6] = scale * 0.6
-                        vertices[7] = -scale * 0.45
-                        vertices[8] = 0
+			local scale = base * (1.1 + 0.45 * intensity)
+			local vertices = titanSigilVertices
+			vertices[1] = 0
+			vertices[2] = -scale * 0.6
+			vertices[3] = scale * 0.45
+			vertices[4] = 0
+			vertices[5] = 0
+			vertices[6] = scale * 0.6
+			vertices[7] = -scale * 0.45
+			vertices[8] = 0
 
-                        love.graphics.setColor(0.82, 0.14, 0.22, (0.22 + 0.3 * intensity) * fade)
-                        love.graphics.polygon("fill", vertices)
-                        love.graphics.setColor(1.0, 0.52, 0.4, (0.2 + 0.28 * intensity) * fade)
-                        love.graphics.setLineWidth(1.4)
-                        love.graphics.polygon("line", vertices)
+			love.graphics.setColor(0.82, 0.14, 0.22, (0.22 + 0.3 * intensity) * fade)
+			love.graphics.polygon("fill", vertices)
+			love.graphics.setColor(1.0, 0.52, 0.4, (0.2 + 0.28 * intensity) * fade)
+			love.graphics.setLineWidth(1.4)
+			love.graphics.polygon("line", vertices)
 
-                        love.graphics.pop()
-                end
-        end
+			love.graphics.pop()
+		end
+	end
 
 	love.graphics.pop()
 end
@@ -2150,38 +2150,38 @@ local function drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, data)
 	love.graphics.push("all")
 	love.graphics.setBlendMode("add")
 
-        local segmentVectors = buildSegmentVectors(trail)
+	local segmentVectors = buildSegmentVectors(trail)
 
-        for i = 1, orbCount do
-                local progress = (i - 0.5) / orbCount
-                local idxFloat = 1 + progress * max(#trail - 1, 1)
-                local index = floor(idxFloat)
-                local frac = idxFloat - index
-                local nextIndex = min(#trail, index + 1)
-                local px, py, nx, ny, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, index, nextIndex)
-                if px and py and nx and ny then
-                        if not dirX or not dirY or length < 1e-4 then
-                                dirX, dirY = 0, 1
-                                perpX, perpY = -1, 0
-                        elseif not (perpX and perpY) then
-                                perpX, perpY = -dirY, dirX
-                        end
-                        local x = px + (nx - px) * frac
-                        local y = py + (ny - py) * frac
-                        local swirl = pulse * 1.4 + progress * pi * 4
-                        local offset = sin(swirl) * baseRadius * (0.52 + intensity * 0.4)
-                        local drift = cos(swirl * 0.8) * baseRadius * 0.18
-                        local ax = x + perpX * offset + dirX * drift
-                        local ay = y + perpY * offset + dirY * drift
-                        local fade = 1 - progress * 0.6
-                        local orbRadius = SEGMENT_SIZE * (0.16 + 0.12 * intensity * fade)
+	for i = 1, orbCount do
+		local progress = (i - 0.5) / orbCount
+		local idxFloat = 1 + progress * max(#trail - 1, 1)
+		local index = floor(idxFloat)
+		local frac = idxFloat - index
+		local nextIndex = min(#trail, index + 1)
+		local px, py, nx, ny, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, index, nextIndex)
+		if px and py and nx and ny then
+			if not dirX or not dirY or length < 1e-4 then
+				dirX, dirY = 0, 1
+				perpX, perpY = -1, 0
+			elseif not (perpX and perpY) then
+				perpX, perpY = -dirY, dirX
+			end
+			local x = px + (nx - px) * frac
+			local y = py + (ny - py) * frac
+			local swirl = pulse * 1.4 + progress * pi * 4
+			local offset = sin(swirl) * baseRadius * (0.52 + intensity * 0.4)
+			local drift = cos(swirl * 0.8) * baseRadius * 0.18
+			local ax = x + perpX * offset + dirX * drift
+			local ay = y + perpY * offset + dirY * drift
+			local fade = 1 - progress * 0.6
+			local orbRadius = SEGMENT_SIZE * (0.16 + 0.12 * intensity * fade)
 
-                        love.graphics.setColor(0.32, 0.2, 0.52, 0.24 * intensity * fade)
-                        love.graphics.circle("fill", ax, ay, orbRadius * 1.4)
-                        love.graphics.setColor(0.68, 0.56, 0.94, 0.18 * intensity * fade)
-                        love.graphics.circle("line", ax, ay, orbRadius * 1.9)
-                end
-        end
+			love.graphics.setColor(0.32, 0.2, 0.52, 0.24 * intensity * fade)
+			love.graphics.circle("fill", ax, ay, orbRadius * 1.4)
+			love.graphics.setColor(0.68, 0.56, 0.94, 0.18 * intensity * fade)
+			love.graphics.circle("line", ax, ay, orbRadius * 1.9)
+		end
+	end
 
 	love.graphics.pop()
 end
@@ -2198,74 +2198,74 @@ local function drawPhoenixEchoTrail(trail, SEGMENT_SIZE, data)
 
 	local time = data.time or Timer.getTime()
 
-        love.graphics.push("all")
-        love.graphics.setBlendMode("add")
+	love.graphics.push("all")
+	love.graphics.setBlendMode("add")
 
-        local segmentVectors = buildSegmentVectors(trail)
+	local segmentVectors = buildSegmentVectors(trail)
 
-        local wingSegments = min(#trail - 1, 8 + charges * 3)
-        for i = 1, wingSegments do
-                local nextIndex = i + 1
-                local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
-                if x1 and y1 and x2 and y2 then
-                        if not dirX or not dirY or length < 1e-4 then
-                                dirX, dirY = 0, 1
-                                perpX, perpY = -1, 0
-                        elseif not (perpX and perpY) then
-                                perpX, perpY = -dirY, dirX
-                        end
-                        local progress = (i - 1) / max(1, wingSegments - 1)
-                        local fade = 1 - progress * 0.6
-                        local width = SEGMENT_SIZE * (0.32 + 0.14 * heat + 0.06 * charges)
-                        local lengthScale = SEGMENT_SIZE * (0.7 + 0.25 * heat + 0.1 * charges)
-                        local flutter = sin(time * 7 + i * 0.55) * width * 0.35
-                        local baseX = x1 - dirX * SEGMENT_SIZE * 0.25 + perpX * flutter
-                        local baseY = y1 - dirY * SEGMENT_SIZE * 0.25 + perpY * flutter
-                        local tipX = baseX + dirX * lengthScale
-                        local tipY = baseY + dirY * lengthScale
-                        local leftX = baseX + perpX * width
-                        local leftY = baseY + perpY * width
-                        local rightX = baseX - perpX * width
-                        local rightY = baseY - perpY * width
+	local wingSegments = min(#trail - 1, 8 + charges * 3)
+	for i = 1, wingSegments do
+		local nextIndex = i + 1
+		local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, i, nextIndex)
+		if x1 and y1 and x2 and y2 then
+			if not dirX or not dirY or length < 1e-4 then
+				dirX, dirY = 0, 1
+				perpX, perpY = -1, 0
+			elseif not (perpX and perpY) then
+				perpX, perpY = -dirY, dirX
+			end
+			local progress = (i - 1) / max(1, wingSegments - 1)
+			local fade = 1 - progress * 0.6
+			local width = SEGMENT_SIZE * (0.32 + 0.14 * heat + 0.06 * charges)
+			local lengthScale = SEGMENT_SIZE * (0.7 + 0.25 * heat + 0.1 * charges)
+			local flutter = sin(time * 7 + i * 0.55) * width * 0.35
+			local baseX = x1 - dirX * SEGMENT_SIZE * 0.25 + perpX * flutter
+			local baseY = y1 - dirY * SEGMENT_SIZE * 0.25 + perpY * flutter
+			local tipX = baseX + dirX * lengthScale
+			local tipY = baseY + dirY * lengthScale
+			local leftX = baseX + perpX * width
+			local leftY = baseY + perpY * width
+			local rightX = baseX - perpX * width
+			local rightY = baseY - perpY * width
 
-                        love.graphics.setColor(1.0, 0.58, 0.22, (0.18 + 0.3 * heat) * fade)
-                        love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
-                        love.graphics.setColor(1.0, 0.82, 0.32, (0.12 + 0.22 * heat) * fade)
-                        love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
-                        love.graphics.setColor(1.0, 0.42, 0.12, (0.16 + 0.28 * heat) * fade)
-                        love.graphics.circle("fill", tipX, tipY, SEGMENT_SIZE * (0.15 + 0.08 * heat))
-                end
-        end
+			love.graphics.setColor(1.0, 0.58, 0.22, (0.18 + 0.3 * heat) * fade)
+			love.graphics.polygon("fill", leftX, leftY, tipX, tipY, rightX, rightY)
+			love.graphics.setColor(1.0, 0.82, 0.32, (0.12 + 0.22 * heat) * fade)
+			love.graphics.polygon("line", leftX, leftY, tipX, tipY, rightX, rightY)
+			love.graphics.setColor(1.0, 0.42, 0.12, (0.16 + 0.28 * heat) * fade)
+			love.graphics.circle("fill", tipX, tipY, SEGMENT_SIZE * (0.15 + 0.08 * heat))
+		end
+	end
 
-        local emberCount = min(32, (#trail - 2) * 2 + charges * 4)
-        for i = 1, emberCount do
-                local progress = (i - 0.5) / emberCount
-                local idxFloat = 1 + progress * max(#trail - 2, 1)
-                local index = floor(idxFloat)
-                local frac = idxFloat - index
-                local nextIndex = min(#trail, index + 1)
-                local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, index, nextIndex)
-                if x1 and y1 and x2 and y2 then
-                        if not dirX or not dirY or length < 1e-4 then
-                                dirX, dirY = 0, 1
-                                perpX, perpY = -1, 0
-                        elseif not (perpX and perpY) then
-                                perpX, perpY = -dirY, dirX
-                        end
-                        local x = x1 + (x2 - x1) * frac
-                        local y = y1 + (y2 - y1) * frac
-                        local sway = sin(time * 5.2 + i) * SEGMENT_SIZE * 0.22 * heat
-                        local lift = cos(time * 3.4 + i * 0.8) * SEGMENT_SIZE * 0.28
-                        local fx = x + perpX * sway + dirX * lift * 0.25
-                        local fy = y + perpY * sway + dirY * lift
-                        local fade = 0.5 + 0.5 * (1 - progress)
+	local emberCount = min(32, (#trail - 2) * 2 + charges * 4)
+	for i = 1, emberCount do
+		local progress = (i - 0.5) / emberCount
+		local idxFloat = 1 + progress * max(#trail - 2, 1)
+		local index = floor(idxFloat)
+		local frac = idxFloat - index
+		local nextIndex = min(#trail, index + 1)
+		local x1, y1, x2, y2, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, index, nextIndex)
+		if x1 and y1 and x2 and y2 then
+			if not dirX or not dirY or length < 1e-4 then
+				dirX, dirY = 0, 1
+				perpX, perpY = -1, 0
+			elseif not (perpX and perpY) then
+				perpX, perpY = -dirY, dirX
+			end
+			local x = x1 + (x2 - x1) * frac
+			local y = y1 + (y2 - y1) * frac
+			local sway = sin(time * 5.2 + i) * SEGMENT_SIZE * 0.22 * heat
+			local lift = cos(time * 3.4 + i * 0.8) * SEGMENT_SIZE * 0.28
+			local fx = x + perpX * sway + dirX * lift * 0.25
+			local fy = y + perpY * sway + dirY * lift
+			local fade = 0.5 + 0.5 * (1 - progress)
 
-                        love.graphics.setColor(1.0, 0.5, 0.16, (0.12 + 0.2 * heat) * fade)
-                        love.graphics.circle("fill", fx, fy, SEGMENT_SIZE * (0.1 + 0.05 * heat * fade))
-                        love.graphics.setColor(1.0, 0.86, 0.42, (0.08 + 0.16 * heat) * fade)
-                        love.graphics.circle("line", fx, fy, SEGMENT_SIZE * (0.14 + 0.06 * heat))
-                end
-        end
+			love.graphics.setColor(1.0, 0.5, 0.16, (0.12 + 0.2 * heat) * fade)
+			love.graphics.circle("fill", fx, fy, SEGMENT_SIZE * (0.1 + 0.05 * heat * fade))
+			love.graphics.setColor(1.0, 0.86, 0.42, (0.08 + 0.16 * heat) * fade)
+			love.graphics.circle("line", fx, fy, SEGMENT_SIZE * (0.14 + 0.06 * heat))
+		end
+	end
 
 	local headSeg = trail[1]
 	local hx, hy = ptXY(headSeg)
@@ -2520,46 +2520,46 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 	local baseRadius = SEGMENT_SIZE * (0.85 + 0.3 * intensity)
 	drawSoftGlow(hx, hy, baseRadius * (1.35 + 0.25 * intensity), 1, 0.78, 0.32, 0.25 + 0.35 * intensity)
 
-        local dirX, dirY = 0, -1
-        local head = trail and trail[1]
-        if head and (head.dirX or head.dirY) then
-                dirX = head.dirX or dirX
-                dirY = head.dirY or dirY
-        end
+	local dirX, dirY = 0, -1
+	local head = trail and trail[1]
+	if head and (head.dirX or head.dirY) then
+		dirX = head.dirX or dirX
+		dirY = head.dirY or dirY
+	end
 
-        local segmentVectors = buildSegmentVectors(trail)
-        local nextIndex = trail and #trail >= 2 and 2 or 1
-        local length
-        if head and nextIndex and nextIndex > 0 then
-                local hx1, hy1, hx2, hy2, cachedDirX, cachedDirY, _, _, segLen = resolveSegmentSpan(trail, segmentVectors, 1, nextIndex)
-                if hx1 and hy1 and hx2 and hy2 then
-                        if cachedDirX and cachedDirY and segLen and segLen > 1e-4 then
-                                dirX, dirY = cachedDirX, cachedDirY
-                                length = segLen
-                        else
-                                local dx, dy = hx2 - hx1, hy2 - hy1
-                                if dx ~= 0 or dy ~= 0 then
-                                        local len = sqrt(dx * dx + dy * dy)
-                                        if len > 1e-4 then
-                                                dirX, dirY = dx / len, dy / len
-                                                length = len
-                                        end
-                                end
-                        end
-                end
-        end
+	local segmentVectors = buildSegmentVectors(trail)
+	local nextIndex = trail and #trail >= 2 and 2 or 1
+	local length
+	if head and nextIndex and nextIndex > 0 then
+		local hx1, hy1, hx2, hy2, cachedDirX, cachedDirY, _, _, segLen = resolveSegmentSpan(trail, segmentVectors, 1, nextIndex)
+		if hx1 and hy1 and hx2 and hy2 then
+			if cachedDirX and cachedDirY and segLen and segLen > 1e-4 then
+				dirX, dirY = cachedDirX, cachedDirY
+				length = segLen
+			else
+				local dx, dy = hx2 - hx1, hy2 - hy1
+				if dx ~= 0 or dy ~= 0 then
+					local len = sqrt(dx * dx + dy * dy)
+					if len > 1e-4 then
+						dirX, dirY = dx / len, dy / len
+						length = len
+					end
+				end
+			end
+		end
+	end
 
-        if not length then
-                local norm = sqrt(dirX * dirX + dirY * dirY)
-                if norm > 1e-4 then
-                        dirX, dirY = dirX / norm, dirY / norm
-                end
-        end
+	if not length then
+		local norm = sqrt(dirX * dirX + dirY * dirY)
+		if norm > 1e-4 then
+			dirX, dirY = dirX / norm, dirY / norm
+		end
+	end
 
-        local angle
-        if atan2 then
-                angle = atan2(dirY, dirX)
-        else
+	local angle
+	if atan2 then
+		angle = atan2(dirY, dirX)
+	else
 		angle = atan(dirY, dirX)
 	end
 
@@ -2593,15 +2593,15 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 		love.graphics.setBlendMode("alpha")
 	end
 
-        love.graphics.setColor(1, 0.68, 0.2, 0.22 + 0.4 * intensity)
-        local sparks = 6
-        love.graphics.setLineWidth(1.25)
-        for i = 1, sparks do
-                local offset = time * (data.active and 7 or 3.5) + (i / sparks) * pi * 2
-                local inner = baseRadius * 0.5
-                local outer = baseRadius * (1.1 + 0.1 * sin(time * 4 + i))
-                love.graphics.line(cos(offset) * inner, sin(offset) * inner, cos(offset) * outer, sin(offset) * outer)
-        end
+	love.graphics.setColor(1, 0.68, 0.2, 0.22 + 0.4 * intensity)
+	local sparks = 6
+	love.graphics.setLineWidth(1.25)
+	for i = 1, sparks do
+		local offset = time * (data.active and 7 or 3.5) + (i / sparks) * pi * 2
+		local inner = baseRadius * 0.5
+		local outer = baseRadius * (1.1 + 0.1 * sin(time * 4 + i))
+		love.graphics.line(cos(offset) * inner, sin(offset) * inner, cos(offset) * outer, sin(offset) * outer)
+	end
 
 	love.graphics.pop()
 end
@@ -2650,31 +2650,31 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 	if getHead then
 		hx, hy = getHead()
 	end
-        if not (hx and hy) then
-                hx, hy = ptXY(head)
-        end
+	if not (hx and hy) then
+		hx, hy = ptXY(head)
+	end
 
-        local faceAtBottom = options and options.faceAtBottom
-        if faceAtBottom then
-                local bottomX, bottomY = hx, hy
-                if trail then
-                        for i = 1, segmentCount do
-                                local point = trail[i]
-                                if point then
-                                        local px, py = ptXY(point)
-                                        if px and py then
-                                                if not bottomY or py > bottomY then
-                                                        bottomX, bottomY = px, py
-                                                end
-                                        end
-                                end
-                        end
-                end
+	local faceAtBottom = options and options.faceAtBottom
+	if faceAtBottom then
+		local bottomX, bottomY = hx, hy
+		if trail then
+			for i = 1, segmentCount do
+				local point = trail[i]
+				if point then
+					local px, py = ptXY(point)
+					if px and py then
+						if not bottomY or py > bottomY then
+							bottomX, bottomY = px, py
+						end
+					end
+				end
+			end
+		end
 
-                if bottomX and bottomY then
-                        hx, hy = bottomX, bottomY
-                end
-        end
+		if bottomX and bottomY then
+			hx, hy = bottomX, bottomY
+		end
+	end
 
 	local portalInfo = options and options.portalAnimation
 	if portalInfo then
@@ -2923,13 +2923,13 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 end
 
 function SnakeDraw.setGlowSpriteResolution(resolution)
-        if not resolution then return end
+	if not resolution then return end
 
-        local target = max(8, floor(resolution))
-        if target ~= glowSpriteResolution then
-                glowSpriteResolution = target
-                glowSprite = nil
-        end
+	local target = max(8, floor(resolution))
+	if target ~= glowSpriteResolution then
+		glowSpriteResolution = target
+		glowSprite = nil
+	end
 end
 
 return SnakeDraw

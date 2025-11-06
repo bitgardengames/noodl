@@ -24,24 +24,24 @@ local abs = math.abs
 local insert = table.insert
 
 local SHOP_RARITY_RANK = {
-        common = 1,
-        uncommon = 2,
-        rare = 3,
-        epic = 4,
-        legendary = 5,
+	common = 1,
+	uncommon = 2,
+	rare = 3,
+	epic = 4,
+	legendary = 5,
 }
 
 local Upgrades = {
-        cachedIndicators = nil,
-        hudIndicatorsDirty = true,
+	cachedIndicators = nil,
+	hudIndicatorsDirty = true,
 }
 
 local decorateCard
 
 function Upgrades:markHUDIndicatorsDirty()
-        self.hudIndicatorsDirty = true
-        self.cachedIndicators = nil
-        self.hudIndicatorSnapshot = nil
+	self.hudIndicatorsDirty = true
+	self.cachedIndicators = nil
+	self.hudIndicatorSnapshot = nil
 end
 local poolById = {}
 local upgradeSchema = DataSchemas.upgradeDefinition
@@ -53,167 +53,167 @@ local celebrateUpgrade = UpgradeHelpers.celebrateUpgrade
 local getEventPosition = UpgradeHelpers.getEventPosition
 
 local function getRarityInfo(rarity)
-        return rarities[rarity or "common"] or rarities.common
+	return rarities[rarity or "common"] or rarities.common
 end
 
 local function calculateWeight(upgrade)
-        local rarityInfo = getRarityInfo(upgrade.rarity)
-        local rarityWeight = rarityInfo.weight or 1
-        return rarityWeight * (upgrade.weight or 1)
+	local rarityInfo = getRarityInfo(upgrade.rarity)
+	local rarityWeight = rarityInfo.weight or 1
+	return rarityWeight * (upgrade.weight or 1)
 end
 
 local getStacks
 
 local function getStacks(state, id)
-        if not state or not id then
-                return 0
-        end
+	if not state or not id then
+		return 0
+	end
 
-        local method = state.getStacks
-        if type(method) == "function" then
-                return method(state, id)
-        end
+	local method = state.getStacks
+	if type(method) == "function" then
+		return method(state, id)
+	end
 
-        local takenSet = state.takenSet
-        if not takenSet then
-                return 0
-        end
+	local takenSet = state.takenSet
+	if not takenSet then
+		return 0
+	end
 
-        return takenSet[id] or 0
+	return takenSet[id] or 0
 end
 
 local RunState = {}
 RunState.__index = RunState
 
 local function markHUDIndicatorsDirty()
-        if Upgrades and Upgrades.markHUDIndicatorsDirty then
-                Upgrades:markHUDIndicatorsDirty()
-        end
+	if Upgrades and Upgrades.markHUDIndicatorsDirty then
+		Upgrades:markHUDIndicatorsDirty()
+	end
 end
 
 local function attachObservedTable(state, key)
-        local container = rawget(state, key)
-        if type(container) ~= "table" then
-                return container
-        end
+	local container = rawget(state, key)
+	if type(container) ~= "table" then
+		return container
+	end
 
-        local meta = getmetatable(container)
-        if meta and meta.__hudIndicatorObserver == key then
-                return container
-        end
+	local meta = getmetatable(container)
+	if meta and meta.__hudIndicatorObserver == key then
+		return container
+	end
 
-        meta = {
-                __newindex = function(t, field, value)
-                        rawset(t, field, value)
-                        markHUDIndicatorsDirty()
-                end,
-                __hudIndicatorObserver = key,
-        }
+	meta = {
+		__newindex = function(t, field, value)
+			rawset(t, field, value)
+			markHUDIndicatorsDirty()
+		end,
+		__hudIndicatorObserver = key,
+	}
 
-        setmetatable(container, meta)
-        return container
+	setmetatable(container, meta)
+	return container
 end
 
 local function valuesEqual(a, b)
-        if a == b then
-                return true
-        end
+	if a == b then
+		return true
+	end
 
-        local typeA = type(a)
-        local typeB = type(b)
-        if typeA == "number" and typeB == "number" then
-                return abs(a - b) < 1e-3
-        end
+	local typeA = type(a)
+	local typeB = type(b)
+	if typeA == "number" and typeB == "number" then
+		return abs(a - b) < 1e-3
+	end
 
-        return false
+	return false
 end
 
 local function dynamicStateChanged(previous, current)
-        if previous == current then
-                return false
-        end
+	if previous == current then
+		return false
+	end
 
-        if not previous then
-                for _, value in pairs(current) do
-                        if value ~= nil then
-                                return true
-                        end
-                end
-                return false
-        end
+	if not previous then
+		for _, value in pairs(current) do
+			if value ~= nil then
+				return true
+			end
+		end
+		return false
+	end
 
-        if not current then
-                for _, value in pairs(previous) do
-                        if value ~= nil then
-                                return true
-                        end
-                end
-                return false
-        end
+	if not current then
+		for _, value in pairs(previous) do
+			if value ~= nil then
+				return true
+			end
+		end
+		return false
+	end
 
-        for key, value in pairs(current) do
-                if not valuesEqual(previous[key], value) then
-                        return true
-                end
-        end
+	for key, value in pairs(current) do
+		if not valuesEqual(previous[key], value) then
+			return true
+		end
+	end
 
-        for key in pairs(previous) do
-                if current[key] == nil then
-                        return true
-                end
-        end
+	for key in pairs(previous) do
+		if current[key] == nil then
+			return true
+		end
+	end
 
-        return false
+	return false
 end
 
 local function captureHUDDynamicState(state)
-        local snapshot = {}
+	local snapshot = {}
 
-        local adrenaline = Snake.adrenaline
-        snapshot.adrenalineTaken = getStacks(state, "adrenaline_surge") > 0
-        snapshot.adrenalineActive = adrenaline and adrenaline.active or false
-        snapshot.adrenalineTimer = adrenaline and adrenaline.timer or 0
-        snapshot.adrenalineDuration = adrenaline and adrenaline.duration or 0
+	local adrenaline = Snake.adrenaline
+	snapshot.adrenalineTaken = getStacks(state, "adrenaline_surge") > 0
+	snapshot.adrenalineActive = adrenaline and adrenaline.active or false
+	snapshot.adrenalineTimer = adrenaline and adrenaline.timer or 0
+	snapshot.adrenalineDuration = adrenaline and adrenaline.duration or 0
 
-        local dashState = Snake.getDashState and Snake:getDashState() or nil
-        snapshot.dashPresent = dashState ~= nil
-        if dashState then
-                snapshot.dashActive = dashState.active or false
-                snapshot.dashTimer = dashState.timer or 0
-                snapshot.dashDuration = dashState.duration or 0
-                snapshot.dashCooldownTimer = dashState.cooldownTimer or 0
-                snapshot.dashCooldown = dashState.cooldown or 0
-        end
+	local dashState = Snake.getDashState and Snake:getDashState() or nil
+	snapshot.dashPresent = dashState ~= nil
+	if dashState then
+		snapshot.dashActive = dashState.active or false
+		snapshot.dashTimer = dashState.timer or 0
+		snapshot.dashDuration = dashState.duration or 0
+		snapshot.dashCooldownTimer = dashState.cooldownTimer or 0
+		snapshot.dashCooldown = dashState.cooldown or 0
+	end
 
-        local timeState = Snake.getTimeDilationState and Snake:getTimeDilationState() or nil
-        snapshot.timePresent = timeState ~= nil
-        if timeState then
-                snapshot.timeActive = timeState.active or false
-                snapshot.timeTimer = timeState.timer or 0
-                snapshot.timeDuration = timeState.duration or 0
-                snapshot.timeCooldownTimer = timeState.cooldownTimer or 0
-                snapshot.timeCooldown = timeState.cooldown or 0
-                snapshot.timeFloorCharges = timeState.floorCharges or 0
-                snapshot.timeMaxFloorUses = timeState.maxFloorUses or 0
-        end
+	local timeState = Snake.getTimeDilationState and Snake:getTimeDilationState() or nil
+	snapshot.timePresent = timeState ~= nil
+	if timeState then
+		snapshot.timeActive = timeState.active or false
+		snapshot.timeTimer = timeState.timer or 0
+		snapshot.timeDuration = timeState.duration or 0
+		snapshot.timeCooldownTimer = timeState.cooldownTimer or 0
+		snapshot.timeCooldown = timeState.cooldown or 0
+		snapshot.timeFloorCharges = timeState.floorCharges or 0
+		snapshot.timeMaxFloorUses = timeState.maxFloorUses or 0
+	end
 
-        return snapshot
+	return snapshot
 end
 
 RunState.__newindex = function(self, key, value)
-        rawset(self, key, value)
-        if key == "counters" or key == "takenSet" then
-                if type(value) == "table" then
-                        attachObservedTable(self, key)
-                end
-                markHUDIndicatorsDirty()
-        end
+	rawset(self, key, value)
+	if key == "counters" or key == "takenSet" then
+		if type(value) == "table" then
+			attachObservedTable(self, key)
+		end
+		markHUDIndicatorsDirty()
+	end
 end
 
 function RunState.new(defaults)
-        local state = {
-                takenOrder = {},
-                takenSet = {},
+	local state = {
+		takenOrder = {},
+		takenSet = {},
 		tags = {},
 		counters = {},
 		handlers = {},
@@ -221,12 +221,12 @@ function RunState.new(defaults)
 		baseline = {},
 	}
 
-        local instance = setmetatable(state, RunState)
-        attachObservedTable(instance, "counters")
-        attachObservedTable(instance, "takenSet")
-        markHUDIndicatorsDirty()
+	local instance = setmetatable(state, RunState)
+	attachObservedTable(instance, "counters")
+	attachObservedTable(instance, "takenSet")
+	markHUDIndicatorsDirty()
 
-        return instance
+	return instance
 end
 
 function RunState:getStacks(id)
@@ -242,9 +242,9 @@ function RunState:addStacks(id, amount)
 		return
 	end
 
-        amount = amount or 1
-        self.takenSet[id] = (self.takenSet[id] or 0) + amount
-        markHUDIndicatorsDirty()
+	amount = amount or 1
+	self.takenSet[id] = (self.takenSet[id] or 0) + amount
+	markHUDIndicatorsDirty()
 end
 
 function RunState:hasUpgrade(id)
@@ -266,20 +266,20 @@ function RunState:addHandler(event, handler)
 end
 
 function RunState:notify(event, data)
-        local handlers = self.handlers[event]
-        if not handlers then
-                return
-        end
+	local handlers = self.handlers[event]
+	if not handlers then
+		return
+	end
 
-        local handled = false
-        for _, fn in ipairs(handlers) do
-                fn(data, self)
-                handled = true
-        end
+	local handled = false
+	for _, fn in ipairs(handlers) do
+		fn(data, self)
+		handled = true
+	end
 
-        if handled then
-                markHUDIndicatorsDirty()
-        end
+	if handled then
+		markHUDIndicatorsDirty()
+	end
 end
 
 local POCKET_SPRINGS_FRUIT_TARGET = 20
@@ -421,37 +421,37 @@ local function getSawCenters(limit)
 end
 
 local function getLaserEmitterDetails(limit)
-        if not Lasers or not Lasers.iterateEmitters then
-                return {}
-        end
+	if not Lasers or not Lasers.iterateEmitters then
+		return {}
+	end
 
-        local targets = {}
-        local maxCount = limit
-        if maxCount and maxCount <= 0 then
-                maxCount = nil
-        end
-        Lasers:iterateEmitters(function(beam)
-                if not beam then
-                        return
-                end
+	local targets = {}
+	local maxCount = limit
+	if maxCount and maxCount <= 0 then
+		maxCount = nil
+	end
+	Lasers:iterateEmitters(function(beam)
+		if not beam then
+			return
+		end
 
-                local x = beam.x
-                local y = beam.y
-                if x and y then
-                        targets[#targets + 1] = {
-                                x = x,
-                                y = y,
-                                dir = beam.dir,
-                                facing = beam.facing,
-                        }
+		local x = beam.x
+		local y = beam.y
+		if x and y then
+			targets[#targets + 1] = {
+				x = x,
+				y = y,
+				dir = beam.dir,
+				facing = beam.facing,
+			}
 
-                        if maxCount and #targets >= maxCount then
-                                return true
-                        end
-                end
-        end)
+			if maxCount and #targets >= maxCount then
+				return true
+			end
+		end
+	end)
 
-        return targets
+	return targets
 end
 
 local function arenaHasGrid()
@@ -617,46 +617,46 @@ local function computeLaserFacing(dir, col, row)
 end
 
 local function pushNearbyLasers(originCol, originRow, positions)
-        if not Lasers or not Lasers.iterateEmitters or not arenaHasGrid() then
-                return false
-        end
+	if not Lasers or not Lasers.iterateEmitters or not arenaHasGrid() then
+		return false
+	end
 
-        local moved = false
-        Lasers:iterateEmitters(function(beam)
-                local col, row = beam and beam.col, beam and beam.row
-                if col and row then
-                        local candidates = getPushCandidates(col, row, originCol, originRow)
-                        if candidates then
-                                for _, candidate in ipairs(candidates) do
-                                        local targetCol, targetRow = candidate[1], candidate[2]
-                                        if isCellOpen(targetCol, targetRow) then
-                                                local startX, startY = beam.x, beam.y
+	local moved = false
+	Lasers:iterateEmitters(function(beam)
+		local col, row = beam and beam.col, beam and beam.row
+		if col and row then
+			local candidates = getPushCandidates(col, row, originCol, originRow)
+			if candidates then
+				for _, candidate in ipairs(candidates) do
+					local targetCol, targetRow = candidate[1], candidate[2]
+					if isCellOpen(targetCol, targetRow) then
+						local startX, startY = beam.x, beam.y
 
-                                                SnakeUtils.setOccupied(col, row, false)
+						SnakeUtils.setOccupied(col, row, false)
 
-                                                local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
-                                                beam.col = targetCol
-                                                beam.row = targetRow
-                                                beam.x = centerX
-                                                beam.y = centerY
-                                                beam.facing = computeLaserFacing(beam.dir, targetCol, targetRow)
+						local centerX, centerY = Arena:getCenterOfTile(targetCol, targetRow)
+						beam.col = targetCol
+						beam.row = targetRow
+						beam.x = centerX
+						beam.y = centerY
+						beam.facing = computeLaserFacing(beam.dir, targetCol, targetRow)
 
-                                                Lasers:beginEmitterSlide(beam, startX, startY, centerX, centerY, {
-                                                        duration = TREMOR_BLOOM_SLIDE_DURATION,
-                                                })
+						Lasers:beginEmitterSlide(beam, startX, startY, centerX, centerY, {
+							duration = TREMOR_BLOOM_SLIDE_DURATION,
+						})
 
-                                                SnakeUtils.setOccupied(targetCol, targetRow, true)
+						SnakeUtils.setOccupied(targetCol, targetRow, true)
 
-                                                addPosition(positions, centerX, centerY)
-                                                moved = true
-                                                break
-                                        end
-                                end
-                        end
-                end
-        end)
+						addPosition(positions, centerX, centerY)
+						moved = true
+						break
+					end
+				end
+			end
+		end
+	end)
 
-        return moved
+	return moved
 end
 
 local function nudgeSawAlongTrack(saw, originCol, originRow, positions)
@@ -1415,8 +1415,8 @@ pool = {
 			end,
 		},
 	}),
-        register({
-                id = "extra_bite",
+	register({
+		id = "extra_bite",
 		nameKey = "upgrades.extra_bite.name",
 		descKey = "upgrades.extra_bite.description",
 		rarity = "common",
@@ -1663,14 +1663,14 @@ pool = {
 					return
 				end
 
-                                local duration = (data and data.duration) or CIRCUIT_BREAKER_STALL_DURATION
-                                Lasers:stall(duration, {
-                                        cause = data and data.cause or nil,
-                                        source = "circuit_breaker",
-                                        positionLimit = 2,
-                                })
+				local duration = (data and data.duration) or CIRCUIT_BREAKER_STALL_DURATION
+				Lasers:stall(duration, {
+					cause = data and data.cause or nil,
+					source = "circuit_breaker",
+					positionLimit = 2,
+				})
 
-                                Darts:stall(duration)
+				Darts:stall(duration)
 
 				local sparkColor = {1, 0.58, 0.32, 1}
 				local baseOptions = {
@@ -1926,9 +1926,9 @@ pool = {
 				local dropX = hx - dirX * tileSize
 				local dropY = hy - dirY * tileSize
 
-                                if dropX and dropY then
-                                        Bombs:spawnBomb(dropX, dropY)
-                                end
+				if dropX and dropY then
+					Bombs:spawnBomb(dropX, dropY)
+				end
 			end,
 		},
 	}),
@@ -2227,130 +2227,130 @@ pool = {
 		rarity = "rare",
 		tags = {"utility", "risk", "shop"},
 		allowDuplicates = true,
-                onAcquire = function(state, context, card)
-                        local runState = state
-                        local minimumRank = 0
-                        if runState and runState.effects then
-                                local effects = runState.effects
-                                if type(effects.shopMinimumRarityRank) == "number" then
-                                        minimumRank = effects.shopMinimumRarityRank
-                                elseif effects.shopMinimumRarity and SHOP_RARITY_RANK[effects.shopMinimumRarity] then
-                                        minimumRank = SHOP_RARITY_RANK[effects.shopMinimumRarity]
-                                end
-                        end
+		onAcquire = function(state, context, card)
+			local runState = state
+			local minimumRank = 0
+			if runState and runState.effects then
+				local effects = runState.effects
+				if type(effects.shopMinimumRarityRank) == "number" then
+					minimumRank = effects.shopMinimumRarityRank
+				elseif effects.shopMinimumRarity and SHOP_RARITY_RANK[effects.shopMinimumRarity] then
+					minimumRank = SHOP_RARITY_RANK[effects.shopMinimumRarity]
+				end
+			end
 
-                        local function defaultReveal()
-                                return {
-                                        revealDelay = 1.15,
-                                        revealApproachDuration = 0.55,
-                                        revealShakeDuration = 0.5,
-                                        revealFlashInDuration = 0.22,
-                                        revealFlashOutDuration = 0.48,
-                                        revealShakeMagnitude = 9,
-                                        revealShakeFrequency = 26,
-                                        revealApplyThreshold = 0.6,
-                                        revealPostPauseDuration = 0.65,
-                                        revealAnimation = "mystery_card",
-                                }
-                        end
+			local function defaultReveal()
+				return {
+					revealDelay = 1.15,
+					revealApproachDuration = 0.55,
+					revealShakeDuration = 0.5,
+					revealFlashInDuration = 0.22,
+					revealFlashOutDuration = 0.48,
+					revealShakeMagnitude = 9,
+					revealShakeFrequency = 26,
+					revealApplyThreshold = 0.6,
+					revealPostPauseDuration = 0.65,
+					revealAnimation = "mystery_card",
+				}
+			end
 
-                        local function buildAvailable(allowTaken)
-                                local available = {}
-                                local totalWeight = 0
-                                for _, upgrade in ipairs(pool) do
-                                        if upgrade.id ~= "mystery_card" and Upgrades:canOffer(upgrade, context, allowTaken) then
-                                                local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
-                                                if rarityRank >= minimumRank then
-                                                        local weight = calculateWeight(upgrade)
-                                                        totalWeight = totalWeight + weight
-                                                        available[#available + 1] = {upgrade = upgrade, weight = weight}
-                                                end
-                                        end
-                                end
+			local function buildAvailable(allowTaken)
+				local available = {}
+				local totalWeight = 0
+				for _, upgrade in ipairs(pool) do
+					if upgrade.id ~= "mystery_card" and Upgrades:canOffer(upgrade, context, allowTaken) then
+						local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
+						if rarityRank >= minimumRank then
+							local weight = calculateWeight(upgrade)
+							totalWeight = totalWeight + weight
+							available[#available + 1] = {upgrade = upgrade, weight = weight}
+						end
+					end
+				end
 
-                                return available, totalWeight
-                        end
+				return available, totalWeight
+			end
 
-                        local available, totalWeight = buildAvailable(false)
-                        if #available == 0 then
-                                available, totalWeight = buildAvailable(true)
-                        end
+			local available, totalWeight = buildAvailable(false)
+			if #available == 0 then
+				available, totalWeight = buildAvailable(true)
+			end
 
-                        if totalWeight <= 0 or #available == 0 then
-                                return defaultReveal()
-                        end
+			if totalWeight <= 0 or #available == 0 then
+				return defaultReveal()
+			end
 
-                        local roll = love.math.random() * totalWeight
-                        local cumulative = 0
-                        local chosenUpgrade
-                        for _, entry in ipairs(available) do
-                                cumulative = cumulative + entry.weight
-                                if roll <= cumulative then
-                                        chosenUpgrade = entry.upgrade
-                                        break
-                                end
-                        end
+			local roll = love.math.random() * totalWeight
+			local cumulative = 0
+			local chosenUpgrade
+			for _, entry in ipairs(available) do
+				cumulative = cumulative + entry.weight
+				if roll <= cumulative then
+					chosenUpgrade = entry.upgrade
+					break
+				end
+			end
 
-                        if not chosenUpgrade and #available > 0 then
-                                chosenUpgrade = available[#available].upgrade
-                        end
+			if not chosenUpgrade and #available > 0 then
+				chosenUpgrade = available[#available].upgrade
+			end
 
-                        if not chosenUpgrade then
-                                return defaultReveal()
-                        end
+			if not chosenUpgrade then
+				return defaultReveal()
+			end
 
-                        local grantedCard = {upgrade = chosenUpgrade}
-                        Upgrades:acquire(grantedCard, context)
+			local grantedCard = {upgrade = chosenUpgrade}
+			Upgrades:acquire(grantedCard, context)
 
-                        local decorated = decorateCard and decorateCard(chosenUpgrade)
-                        if card and decorated then
-                                card.id = decorated.id
-                                card.upgrade = chosenUpgrade
-                                card.name = decorated.name
-                                card.desc = decorated.desc
-                                card.rarity = decorated.rarity
-                                card.rarityColor = decorated.rarityColor
-                                card.rarityLabel = decorated.rarityLabel
-                                card.restockShop = decorated.restockShop
-                        elseif card then
-                                card.upgrade = chosenUpgrade
-                                card.rarity = chosenUpgrade.rarity
-                                card.restockShop = chosenUpgrade.restockShop
-                        end
-                        local revealInfo = {
-                                rarity = chosenUpgrade.rarity,
-                                revealDelay = 1.15,
-                                revealApproachDuration = 0.55,
-                                revealShakeDuration = 0.5,
-                                revealFlashInDuration = 0.22,
-                                revealFlashOutDuration = 0.48,
-                                revealShakeMagnitude = 9,
-                                revealShakeFrequency = 26,
-                                revealApplyThreshold = 0.6,
-                                revealPostPauseDuration = 0.65,
-                                revealAnimation = "mystery_card",
-                        }
+			local decorated = decorateCard and decorateCard(chosenUpgrade)
+			if card and decorated then
+				card.id = decorated.id
+				card.upgrade = chosenUpgrade
+				card.name = decorated.name
+				card.desc = decorated.desc
+				card.rarity = decorated.rarity
+				card.rarityColor = decorated.rarityColor
+				card.rarityLabel = decorated.rarityLabel
+				card.restockShop = decorated.restockShop
+			elseif card then
+				card.upgrade = chosenUpgrade
+				card.rarity = chosenUpgrade.rarity
+				card.restockShop = chosenUpgrade.restockShop
+			end
+			local revealInfo = {
+				rarity = chosenUpgrade.rarity,
+				revealDelay = 1.15,
+				revealApproachDuration = 0.55,
+				revealShakeDuration = 0.5,
+				revealFlashInDuration = 0.22,
+				revealFlashOutDuration = 0.48,
+				revealShakeMagnitude = 9,
+				revealShakeFrequency = 26,
+				revealApplyThreshold = 0.6,
+				revealPostPauseDuration = 0.65,
+				revealAnimation = "mystery_card",
+			}
 
-                        if decorated then
-                                revealInfo.rarityColor = decorated.rarityColor
-                                revealInfo.rarityLabel = decorated.rarityLabel
-                        end
+			if decorated then
+				revealInfo.rarityColor = decorated.rarityColor
+				revealInfo.rarityLabel = decorated.rarityLabel
+			end
 
-                        if chosenUpgrade.nameKey then
-                                revealInfo.nameKey = chosenUpgrade.nameKey
-                        elseif decorated then
-                                revealInfo.name = decorated.name
-                        end
+			if chosenUpgrade.nameKey then
+				revealInfo.nameKey = chosenUpgrade.nameKey
+			elseif decorated then
+				revealInfo.name = decorated.name
+			end
 
-                        if chosenUpgrade.descKey then
-                                revealInfo.descKey = chosenUpgrade.descKey
-                        elseif decorated then
-                                revealInfo.desc = decorated.desc
-                        end
+			if chosenUpgrade.descKey then
+				revealInfo.descKey = chosenUpgrade.descKey
+			elseif decorated then
+				revealInfo.desc = decorated.desc
+			end
 
-                        return revealInfo
-                end,
-        }),
+			return revealInfo
+		end,
+	}),
 
 	register({
 		id = "verdant_bonds",
@@ -2744,8 +2744,8 @@ pool = {
 }
 
 function Upgrades:beginRun()
-        self.runState = newRunState()
-        self:markHUDIndicatorsDirty()
+	self.runState = newRunState()
+	self:markHUDIndicatorsDirty()
 end
 
 function Upgrades:getEffect(name)
@@ -2799,28 +2799,28 @@ function Upgrades:addEventHandler(event, handler)
 end
 
 function Upgrades:notify(event, data)
-        local state = self.runState
-        if not state then return end
+	local state = self.runState
+	if not state then return end
 
-        if state.notify then
-                state:notify(event, data)
-                return
-        end
+	if state.notify then
+		state:notify(event, data)
+		return
+	end
 
-        local handlers = state.handlers and state.handlers[event]
-        if not handlers then return end
-        local handled = false
-        for _, handler in ipairs(handlers) do
-                handler(data, state)
-                handled = true
-        end
-        if handled then
-                self:markHUDIndicatorsDirty()
-        end
+	local handlers = state.handlers and state.handlers[event]
+	if not handlers then return end
+	local handled = false
+	for _, handler in ipairs(handlers) do
+		handler(data, state)
+		handled = true
+	end
+	if handled then
+		self:markHUDIndicatorsDirty()
+	end
 end
 
 Bombs:setExplosionCallback(function(event)
-        handleVolatileBloomExplosion(event)
+	handleVolatileBloomExplosion(event)
 end)
 
 local function clamp(value, min, max)
@@ -2830,25 +2830,25 @@ local function clamp(value, min, max)
 end
 
 function Upgrades:getHUDIndicators()
-        local state = self.runState
-        local dynamicSnapshot = captureHUDDynamicState(state)
+	local state = self.runState
+	local dynamicSnapshot = captureHUDDynamicState(state)
 
-        if not self.hudIndicatorsDirty and dynamicStateChanged(self.hudIndicatorSnapshot, dynamicSnapshot) then
-                self.hudIndicatorsDirty = true
-                self.cachedIndicators = nil
-        end
+	if not self.hudIndicatorsDirty and dynamicStateChanged(self.hudIndicatorSnapshot, dynamicSnapshot) then
+		self.hudIndicatorsDirty = true
+		self.cachedIndicators = nil
+	end
 
-        if not self.hudIndicatorsDirty and self.cachedIndicators then
-                return self.cachedIndicators, false
-        end
+	if not self.hudIndicatorsDirty and self.cachedIndicators then
+		return self.cachedIndicators, false
+	end
 
-        local indicators = {}
-        if not state then
-                self.cachedIndicators = indicators
-                self.hudIndicatorsDirty = false
-                self.hudIndicatorSnapshot = dynamicSnapshot
-                return indicators, true
-        end
+	local indicators = {}
+	if not state then
+		self.cachedIndicators = indicators
+		self.hudIndicatorsDirty = false
+		self.hudIndicatorSnapshot = dynamicSnapshot
+		return indicators, true
+	end
 
 	local function hasUpgrade(id)
 		return getStacks(state, id) > 0
@@ -3015,25 +3015,25 @@ function Upgrades:getHUDIndicators()
 		phoenixCharges = state.counters.phoenixEchoCharges or 0
 	end
 
-        if phoenixCharges > 0 then
-                local label = Localization:get("upgrades.phoenix_echo.name")
-                insert(indicators, {
-                        id = "phoenix_echo",
-                        label = label,
-                        accentColor = {1.0, 0.62, 0.32, 1},
+	if phoenixCharges > 0 then
+		local label = Localization:get("upgrades.phoenix_echo.name")
+		insert(indicators, {
+			id = "phoenix_echo",
+			label = label,
+			accentColor = {1.0, 0.62, 0.32, 1},
 			stackCount = phoenixCharges,
 			charge = nil,
 			status = nil,
 			icon = "phoenix",
 			showBar = false,
 		})
-        end
+	end
 
-        self.cachedIndicators = indicators
-        self.hudIndicatorsDirty = false
-        self.hudIndicatorSnapshot = dynamicSnapshot
+	self.cachedIndicators = indicators
+	self.hudIndicatorsDirty = false
+	self.hudIndicatorSnapshot = dynamicSnapshot
 
-        return indicators, true
+	return indicators, true
 end
 
 function Upgrades:recordFloorReplaySnapshot(game)
@@ -3499,44 +3499,44 @@ function Upgrades:getShowcaseCardForUnlock(unlock)
 end
 
 function Upgrades:getRandom(n, context)
-        local state = self.runState or newRunState()
+	local state = self.runState or newRunState()
 
-        local minimumRank = 0
-        if state and state.effects then
-                local effects = state.effects
-                if type(effects.shopMinimumRarityRank) == "number" then
-                        minimumRank = effects.shopMinimumRarityRank
-                elseif effects.shopMinimumRarity and SHOP_RARITY_RANK[effects.shopMinimumRarity] then
-                        minimumRank = SHOP_RARITY_RANK[effects.shopMinimumRarity]
-                end
-        end
+	local minimumRank = 0
+	if state and state.effects then
+		local effects = state.effects
+		if type(effects.shopMinimumRarityRank) == "number" then
+			minimumRank = effects.shopMinimumRarityRank
+		elseif effects.shopMinimumRarity and SHOP_RARITY_RANK[effects.shopMinimumRarity] then
+			minimumRank = SHOP_RARITY_RANK[effects.shopMinimumRarity]
+		end
+	end
 
-        local available = {}
-        local totalWeight = 0
-        for _, upgrade in ipairs(pool) do
-                if self:canOffer(upgrade, context, false) then
-                        local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
-                        if rarityRank >= minimumRank then
-                                local weight = calculateWeight(upgrade)
-                                totalWeight = totalWeight + weight
-                                insert(available, {upgrade = upgrade, weight = weight})
-                        end
-                end
-        end
+	local available = {}
+	local totalWeight = 0
+	for _, upgrade in ipairs(pool) do
+		if self:canOffer(upgrade, context, false) then
+			local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
+			if rarityRank >= minimumRank then
+				local weight = calculateWeight(upgrade)
+				totalWeight = totalWeight + weight
+				insert(available, {upgrade = upgrade, weight = weight})
+			end
+		end
+	end
 
-        if #available == 0 then
-                totalWeight = 0
-                for _, upgrade in ipairs(pool) do
-                        if self:canOffer(upgrade, context, true) then
-                                local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
-                                if rarityRank >= minimumRank then
-                                        local weight = calculateWeight(upgrade)
-                                        totalWeight = totalWeight + weight
-                                        insert(available, {upgrade = upgrade, weight = weight})
-                                end
-                        end
-                end
-        end
+	if #available == 0 then
+		totalWeight = 0
+		for _, upgrade in ipairs(pool) do
+			if self:canOffer(upgrade, context, true) then
+				local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
+				if rarityRank >= minimumRank then
+					local weight = calculateWeight(upgrade)
+					totalWeight = totalWeight + weight
+					insert(available, {upgrade = upgrade, weight = weight})
+				end
+			end
+		end
+	end
 
 	local cards = {}
 	n = min(n or 3, #available)
@@ -3576,29 +3576,29 @@ function Upgrades:getRandom(n, context)
 			local rareChoices = {}
 			for _, upgrade in ipairs(pool) do
 				if upgrade.rarity == "rare" and self:canOffer(upgrade, context, false) then
-                                        local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
+					local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
 					if rarityRank >= minimumRank then
 						insert(rareChoices, upgrade)
 					end
 				end
 			end
 
-                        if #rareChoices == 0 then
-                                for _, upgrade in ipairs(pool) do
-                                        if upgrade.rarity == "rare" and self:canOffer(upgrade, context, true) then
-                                                local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
-                                                if rarityRank >= minimumRank then
-                                                        insert(rareChoices, upgrade)
-                                                end
-                                        end
-                                end
-                        end
+			if #rareChoices == 0 then
+				for _, upgrade in ipairs(pool) do
+					if upgrade.rarity == "rare" and self:canOffer(upgrade, context, true) then
+						local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
+						if rarityRank >= minimumRank then
+							insert(rareChoices, upgrade)
+						end
+					end
+				end
+			end
 
 			if #rareChoices > 0 then
 				local replacementIndex
 				local lowestRank
-                                for index, card in ipairs(cards) do
-                                        local rank = SHOP_RARITY_RANK[card.rarity] or 0
+				for index, card in ipairs(cards) do
+					local rank = SHOP_RARITY_RANK[card.rarity] or 0
 					if not replacementIndex or rank < lowestRank then
 						replacementIndex = index
 						lowestRank = rank
@@ -3615,7 +3615,7 @@ function Upgrades:getRandom(n, context)
 		end
 	end
 
-        return cards
+	return cards
 end
 
 local function applyRevealToCard(card, revealInfo)

@@ -250,16 +250,16 @@ local function drawShader(effect, x, y, w, h, intensity, sendUniforms, drawOptio
 		end
 	end
 
-        local previousShader = love.graphics.getShader()
-        local r, g, b, a = love.graphics.getColor()
+	local previousShader = love.graphics.getShader()
+	local r, g, b, a = love.graphics.getColor()
 
-        love.graphics.setShader(shader)
-        love.graphics.setColor(tint[1], tint[2], tint[3], tint[4] or 1)
-        love.graphics.rectangle("fill", x, y, w, h, radiusX, radiusY)
-        love.graphics.setShader(previousShader)
-        love.graphics.setColor(r, g, b, a)
+	love.graphics.setShader(shader)
+	love.graphics.setColor(tint[1], tint[2], tint[3], tint[4] or 1)
+	love.graphics.rectangle("fill", x, y, w, h, radiusX, radiusY)
+	love.graphics.setShader(previousShader)
+	love.graphics.setColor(r, g, b, a)
 
-        return true
+	return true
 end
 
 local effectDefinitions = {}

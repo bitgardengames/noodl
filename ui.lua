@@ -43,15 +43,15 @@ UI.combo = {
 }
 
 UI.shields = {
-        count = 0,
-        display = 0,
-        popDuration = 0.32,
-        popTimer = 0,
-        shakeDuration = 0.45,
-        shakeTimer = 0,
-        flashDuration = 0.4,
-        flashTimer = 0,
-        lastDirection = 0,
+	count = 0,
+	display = 0,
+	popDuration = 0.32,
+	popTimer = 0,
+	shakeDuration = 0.45,
+	shakeTimer = 0,
+	flashDuration = 0.4,
+	flashTimer = 0,
+	lastDirection = 0,
 }
 
 UI._shieldLocaleRevision = nil
@@ -60,14 +60,14 @@ UI._shieldStatusKey = nil
 UI._shieldStatusText = nil
 
 UI.upgradeIndicators = {
-        items = {},
-        order = {},
-        layout = {},
-        visibleList = {},
-        _iterationList = {},
-        _iterationSeen = {},
-        _removeBuffer = {},
-        _listDirty = true,
+	items = {},
+	order = {},
+	layout = {},
+	visibleList = {},
+	_iterationList = {},
+	_iterationSeen = {},
+	_removeBuffer = {},
+	_listDirty = true,
 }
 
 local BASE_SCREEN_WIDTH = 1920
@@ -147,105 +147,105 @@ local snakeTrailBuffer = {}
 local snakeTrailCount = 0
 
 local function drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, config)
-        if not config then
-                return false
-        end
+	if not config then
+		return false
+	end
 
-        if config == true then
-                config = {}
-        elseif type(config) ~= "table" then
-                return false
-        end
+	if config == true then
+		config = {}
+	elseif type(config) ~= "table" then
+		return false
+	end
 
-        if thumbWidth <= 0 or thumbHeight <= 0 then
-                return false
-        end
+	if thumbWidth <= 0 or thumbHeight <= 0 then
+		return false
+	end
 
-        if not SnakeDraw then
-                SnakeDraw = require("snakedraw")
-        end
+	if not SnakeDraw then
+		SnakeDraw = require("snakedraw")
+	end
 
-        local amplitude = max(0, config.amplitude or 0.65)
-        local frequency = config.frequency or 2.1
-        local segments = max(3, config.segmentCount or 24)
-        local falloff = config.falloff or 0.6
-        local phase = config.phase or 0
-        local headOffset = config.headOffset or 0
-        local lengthScale = config.lengthScale or config.tailLength or 1
-        local allowOverflow = not not config.allowOverflow
-        local flipVertical = not not config.flipVertical
+	local amplitude = max(0, config.amplitude or 0.65)
+	local frequency = config.frequency or 2.1
+	local segments = max(3, config.segmentCount or 24)
+	local falloff = config.falloff or 0.6
+	local phase = config.phase or 0
+	local headOffset = config.headOffset or 0
+	local lengthScale = config.lengthScale or config.tailLength or 1
+	local allowOverflow = not not config.allowOverflow
+	local flipVertical = not not config.flipVertical
 
-        local headY = thumbY + headOffset * thumbHeight
-        local totalLength = thumbHeight * lengthScale
-        if not allowOverflow then
-                totalLength = min(totalLength, thumbHeight)
-        end
-        totalLength = max(thumbHeight * 0.7, totalLength)
+	local headY = thumbY + headOffset * thumbHeight
+	local totalLength = thumbHeight * lengthScale
+	if not allowOverflow then
+		totalLength = min(totalLength, thumbHeight)
+	end
+	totalLength = max(thumbHeight * 0.7, totalLength)
 
-        local thumbBottom = thumbY + thumbHeight
-        local tailEnd = headY + totalLength
-        if not allowOverflow and tailEnd > thumbBottom then
-                local overshoot = tailEnd - thumbBottom
-                headY = headY - overshoot
-                if headY < thumbY then
-                        headY = thumbY
-                        totalLength = thumbBottom - headY
-                        if totalLength <= 0 then
-                                return false
-                        end
-                end
-        end
+	local thumbBottom = thumbY + thumbHeight
+	local tailEnd = headY + totalLength
+	if not allowOverflow and tailEnd > thumbBottom then
+		local overshoot = tailEnd - thumbBottom
+		headY = headY - overshoot
+		if headY < thumbY then
+			headY = thumbY
+			totalLength = thumbBottom - headY
+			if totalLength <= 0 then
+				return false
+			end
+		end
+	end
 
-        local centerX = thumbX + thumbWidth * 0.5 + (config.offsetX or 0)
-        local halfWidth = thumbWidth * 0.5
+	local centerX = thumbX + thumbWidth * 0.5 + (config.offsetX or 0)
+	local halfWidth = thumbWidth * 0.5
 
-        for step = 0, segments do
-                local t = step / segments
-                local wave = sin(t * pi * frequency + phase)
-                local waveFalloff = max(0, 1 - t * falloff)
-                local amp = halfWidth * amplitude * waveFalloff
-                local px = centerX + wave * amp
-                local py = headY + totalLength * t
+	for step = 0, segments do
+		local t = step / segments
+		local wave = sin(t * pi * frequency + phase)
+		local waveFalloff = max(0, 1 - t * falloff)
+		local amp = halfWidth * amplitude * waveFalloff
+		local px = centerX + wave * amp
+		local py = headY + totalLength * t
 
-                if flipVertical then
-                        local relative = py - thumbY
-                        py = thumbY + thumbHeight - relative
-                end
+		if flipVertical then
+			local relative = py - thumbY
+			py = thumbY + thumbHeight - relative
+		end
 
-                local point = snakeTrailBuffer[step + 1]
-                if not point then
-                        point = {}
-                        snakeTrailBuffer[step + 1] = point
-                end
+		local point = snakeTrailBuffer[step + 1]
+		if not point then
+			point = {}
+			snakeTrailBuffer[step + 1] = point
+		end
 
-                point.x = px
-                point.y = py
-                point.drawX = px
-                point.drawY = py
-        end
+		point.x = px
+		point.y = py
+		point.drawX = px
+		point.drawY = py
+	end
 
-        local newCount = segments + 1
-        for i = newCount + 1, snakeTrailCount do
-                snakeTrailBuffer[i] = nil
-        end
-        snakeTrailCount = newCount
+	local newCount = segments + 1
+	for i = newCount + 1, snakeTrailCount do
+		snakeTrailBuffer[i] = nil
+	end
+	snakeTrailCount = newCount
 
-        local segmentSize = config.segmentSize or (thumbWidth * (config.segmentScale or 1.05))
-        if not segmentSize or segmentSize <= 0 then
-                segmentSize = max(thumbWidth * 0.9, 6)
-        end
+	local segmentSize = config.segmentSize or (thumbWidth * (config.segmentScale or 1.05))
+	if not segmentSize or segmentSize <= 0 then
+		segmentSize = max(thumbWidth * 0.9, 6)
+	end
 
-        RenderLayers:begin(love.graphics.getWidth(), love.graphics.getHeight())
-        SnakeDraw.run(snakeTrailBuffer, snakeTrailCount, segmentSize, 0, nil, 0, 0, nil, config)
-        RenderLayers:present()
+	RenderLayers:begin(love.graphics.getWidth(), love.graphics.getHeight())
+	SnakeDraw.run(snakeTrailBuffer, snakeTrailCount, segmentSize, 0, nil, 0, 0, nil, config)
+	RenderLayers:present()
 
-        return true
+	return true
 end
 
 local function clamp01(value)
-        if value < 0 then return 0 end
-        if value > 1 then return 1 end
-        return value
+	if value < 0 then return 0 end
+	if value > 1 then return 1 end
+	return value
 end
 
 local function lerp(a, b, t)
@@ -291,67 +291,67 @@ local function lightenColor(color, amount, out)
 end
 
 local function darkenColor(color, amount, out)
-        local target = out or {}
-        if not color then
-                target[1], target[2], target[3], target[4] = 0, 0, 0, 1
-                return target
-        end
+	local target = out or {}
+	if not color then
+		target[1], target[2], target[3], target[4] = 0, 0, 0, 1
+		return target
+	end
 
-        local a = color[4] or 1
-        target[1] = color[1] * amount
-        target[2] = color[2] * amount
-        target[3] = color[3] * amount
-        target[4] = a
+	local a = color[4] or 1
+	target[1] = color[1] * amount
+	target[2] = color[2] * amount
+	target[3] = color[3] * amount
+	target[4] = a
 
-        return target
+	return target
 end
 
 local function drawAlignedBorder(mode, x, y, w, h, radius, borderWidth)
-        local drawX, drawY, drawW, drawH = x, y, w, h
-        if borderWidth and borderWidth > 0 then
-                local remainder = borderWidth % 2
-                if abs(remainder - 1) < 1e-6 then
-                        drawX = drawX + 0.5
-                        drawY = drawY + 0.5
-                        drawW = max(drawW - 1, 0)
-                        drawH = max(drawH - 1, 0)
-                end
-        end
+	local drawX, drawY, drawW, drawH = x, y, w, h
+	if borderWidth and borderWidth > 0 then
+		local remainder = borderWidth % 2
+		if abs(remainder - 1) < 1e-6 then
+			drawX = drawX + 0.5
+			drawY = drawY + 0.5
+			drawW = max(drawW - 1, 0)
+			drawH = max(drawH - 1, 0)
+		end
+	end
 
-        love.graphics.rectangle(mode, drawX, drawY, drawW, drawH, radius, radius)
+	love.graphics.rectangle(mode, drawX, drawY, drawW, drawH, radius, radius)
 end
 
 local function setColor(color, alphaMultiplier)
-        if not color then
-                love.graphics.setColor(1, 1, 1, alphaMultiplier or 1)
-                return
-        end
+	if not color then
+		love.graphics.setColor(1, 1, 1, alphaMultiplier or 1)
+		return
+	end
 
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] or 1
-        love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
+	local r = color[1] or 1
+	local g = color[2] or 1
+	local b = color[3] or 1
+	local a = color[4] or 1
+	love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
 end
 
 function UI.refreshCursor(x, y)
-        if x ~= nil and y ~= nil then
-                UI._cursorX = x
-                UI._cursorY = y
-        else
-                UI._cursorX, UI._cursorY = love.mouse.getPosition()
-        end
+	if x ~= nil and y ~= nil then
+		UI._cursorX = x
+		UI._cursorY = y
+	else
+		UI._cursorX, UI._cursorY = love.mouse.getPosition()
+	end
 
-        return UI._cursorX, UI._cursorY
+	return UI._cursorX, UI._cursorY
 end
 
 function UI.getCursorPosition()
-        local x, y = UI._cursorX, UI._cursorY
-        if x == nil or y == nil then
-                return UI.refreshCursor()
-        end
+	local x, y = UI._cursorX, UI._cursorY
+	if x == nil or y == nil then
+		return UI.refreshCursor()
+	end
 
-        return x, y
+	return x, y
 end
 
 -- Button states
@@ -360,111 +360,111 @@ UI._buttonList = {}
 UI._buttonIndex = {}
 
 local function createButtonState()
-        return {
-                pressed = false,
-                anim = 0,
-                hoverAnim = 0,
-                focusAnim = 0,
-                hoverTarget = 0,
-                glow = 0,
-                popProgress = 0,
-        }
+	return {
+		pressed = false,
+		anim = 0,
+		hoverAnim = 0,
+		focusAnim = 0,
+		hoverTarget = 0,
+		glow = 0,
+		popProgress = 0,
+	}
 end
 
 local function addButtonToList(id, btn)
-        if not id or not btn then return end
+	if not id or not btn then return end
 
-        btn._id = id
+	btn._id = id
 
-        local index = UI._buttonIndex[id]
-        if not index then
-                index = #UI._buttonList + 1
-                UI._buttonList[index] = btn
-                UI._buttonIndex[id] = index
-        else
-                UI._buttonList[index] = btn
-        end
+	local index = UI._buttonIndex[id]
+	if not index then
+		index = #UI._buttonList + 1
+		UI._buttonList[index] = btn
+		UI._buttonIndex[id] = index
+	else
+		UI._buttonList[index] = btn
+	end
 end
 
 local function removeButtonFromList(id)
-        local index = UI._buttonIndex[id]
-        if not index then return end
+	local index = UI._buttonIndex[id]
+	if not index then return end
 
-        local lastIndex = #UI._buttonList
-        if lastIndex <= 0 then
-                UI._buttonIndex[id] = nil
-                return
-        end
-        local lastButton = UI._buttonList[lastIndex]
+	local lastIndex = #UI._buttonList
+	if lastIndex <= 0 then
+		UI._buttonIndex[id] = nil
+		return
+	end
+	local lastButton = UI._buttonList[lastIndex]
 
-        if index ~= lastIndex then
-                UI._buttonList[index] = lastButton
-                if lastButton then
-                        UI._buttonIndex[lastButton._id] = index
-                end
-        end
+	if index ~= lastIndex then
+		UI._buttonList[index] = lastButton
+		if lastButton then
+			UI._buttonIndex[lastButton._id] = index
+		end
+	end
 
-        UI._buttonList[lastIndex] = nil
-        UI._buttonIndex[id] = nil
+	UI._buttonList[lastIndex] = nil
+	UI._buttonIndex[id] = nil
 end
 
 local function rebuildUpgradeIterationList(container)
-        local list = container._iterationList or {}
-        container._iterationList = list
+	local list = container._iterationList or {}
+	container._iterationList = list
 
-        local seen = container._iterationSeen or {}
-        container._iterationSeen = seen
+	local seen = container._iterationSeen or {}
+	container._iterationSeen = seen
 
-        local items = container.items or {}
-        local count = 0
+	local items = container.items or {}
+	local count = 0
 
-        if container.order then
-                for _, id in ipairs(container.order) do
-                        local item = items[id]
-                        if item then
-                                count = count + 1
-                                list[count] = item
-                                seen[id] = true
-                        end
-                end
-        end
+	if container.order then
+		for _, id in ipairs(container.order) do
+			local item = items[id]
+			if item then
+				count = count + 1
+				list[count] = item
+				seen[id] = true
+			end
+		end
+	end
 
-        for id, item in pairs(items) do
-                if not seen[id] then
-                        count = count + 1
-                        list[count] = item
-                end
-        end
+	for id, item in pairs(items) do
+		if not seen[id] then
+			count = count + 1
+			list[count] = item
+		end
+	end
 
-        for key in pairs(seen) do
-                seen[key] = nil
-        end
+	for key in pairs(seen) do
+		seen[key] = nil
+	end
 
-        for i = count + 1, #list do
-                list[i] = nil
-        end
+	for i = count + 1, #list do
+		list[i] = nil
+	end
 
-        container._listDirty = false
+	container._listDirty = false
 end
 
 function UI.clearButtons()
-        UI.buttons = {}
-        UI._buttonList = {}
-        UI._buttonIndex = {}
+	UI.buttons = {}
+	UI._buttonList = {}
+	UI._buttonIndex = {}
 end
 
 function UI.setButtonFocus(id, focused)
-        if not id then return end
+	if not id then return end
 
-        local btn = UI.buttons[id]
-        if not btn then
-                btn = createButtonState()
-                UI.buttons[id] = btn
-        end
+	local btn = UI.buttons[id]
+	if not btn then
+		btn = createButtonState()
+		UI.buttons[id] = btn
+	end
 
-        addButtonToList(id, btn)
+	addButtonToList(id, btn)
 
-        btn.focused = focused or nil
+	btn.focused = focused or nil
 end
 
 local function round(value)
@@ -749,13 +749,13 @@ function UI.drawPanel(x, y, w, h, opts)
 	if shadowOffset and shadowOffset ~= 0 then
 		setColor(opts.shadowColor or UI.colors.shadow, opts.shadowAlpha or 1)
 		love.graphics.rectangle(
-			"fill",
-			x + shadowOffset - shadowPadding,
-			y + shadowOffset - shadowPadding,
-			w + shadowPadding * 2,
-			h + shadowPadding * 2,
-			shadowRadius,
-			shadowRadius
+		"fill",
+		x + shadowOffset - shadowPadding,
+		y + shadowOffset - shadowPadding,
+		w + shadowPadding * 2,
+		h + shadowPadding * 2,
+		shadowRadius,
+		shadowRadius
 		)
 	end
 
@@ -784,13 +784,13 @@ function UI.drawPanel(x, y, w, h, opts)
 		end
 	end
 
-        if opts.border ~= false then
-                local borderColor = opts.borderColor or UI.colors.border or UI.colors.panelBorder
-                setColor(borderColor, alphaMultiplier)
-                love.graphics.setLineWidth(borderWidth)
-                drawAlignedBorder("line", x, y, w, h, radius, borderWidth)
-                love.graphics.setLineWidth(1)
-        end
+	if opts.border ~= false then
+		local borderColor = opts.borderColor or UI.colors.border or UI.colors.panelBorder
+		setColor(borderColor, alphaMultiplier)
+		love.graphics.setLineWidth(borderWidth)
+		drawAlignedBorder("line", x, y, w, h, radius, borderWidth)
+		love.graphics.setLineWidth(1)
+	end
 
 	if opts.focused then
 		local focusRadius = radius + (opts.focusRadiusOffset or 4)
@@ -800,13 +800,13 @@ function UI.drawPanel(x, y, w, h, opts)
 		local focusWidth = opts.focusWidth or 3
 		love.graphics.setLineWidth(focusWidth)
 		drawAlignedBorder(
-			"line",
-			x - focusPadding,
-			y - focusPadding,
-			w + focusPadding * 2,
-			h + focusPadding * 2,
-			focusRadius,
-			focusWidth
+		"line",
+		x - focusPadding,
+		y - focusPadding,
+		w + focusPadding * 2,
+		h + focusPadding * 2,
+		focusRadius,
+		focusWidth
 		)
 		love.graphics.setLineWidth(1)
 	end
@@ -895,21 +895,21 @@ function UI.drawSlider(id, x, y, w, value, opts)
 		focusAlpha = opts.focusAlpha,
 	})
 
-        local label = opts.label
-        if label then
-                local labelOptions = {
-                        fontKey = opts.labelFont or "body",
-                        color = opts.labelColor or UI.colors.text,
-                        shadow = opts.labelShadow,
-                        dropShadow = opts.labelDropShadow,
-                        shadowOffset = opts.labelShadowOffset,
-                        shadowOffsetX = opts.labelShadowOffsetX,
-                        shadowOffsetY = opts.labelShadowOffsetY,
-                        shadowColor = opts.labelShadowColor,
-                        shadowAlpha = opts.labelShadowAlpha,
-                }
-                UI.drawLabel(label, x + padding, y + padding, w - padding * 2, opts.labelAlign or "left", labelOptions)
-        end
+	local label = opts.label
+	if label then
+		local labelOptions = {
+			fontKey = opts.labelFont or "body",
+			color = opts.labelColor or UI.colors.text,
+			shadow = opts.labelShadow,
+			dropShadow = opts.labelDropShadow,
+			shadowOffset = opts.labelShadowOffset,
+			shadowOffsetX = opts.labelShadowOffsetX,
+			shadowOffsetY = opts.labelShadowOffsetY,
+			shadowColor = opts.labelShadowColor,
+			shadowAlpha = opts.labelShadowAlpha,
+		}
+		UI.drawLabel(label, x + padding, y + padding, w - padding * 2, opts.labelAlign or "left", labelOptions)
+	end
 
 	local sliderValue = clamp01(value or 0)
 	local trackX = x + padding
@@ -924,46 +924,46 @@ function UI.drawSlider(id, x, y, w, value, opts)
 		love.graphics.rectangle("fill", trackX, trackY, trackW * sliderValue, trackHeight, trackHeight / 2, trackHeight / 2)
 	end
 
-        local handleX = trackX + trackW * sliderValue
-        local handleY = trackY + trackHeight / 2
+	local handleX = trackX + trackW * sliderValue
+	local handleY = trackY + trackHeight / 2
 
-        local handleFill = opts.handleColor or UI.colors.text
-        local handleOutline = opts.handleOutlineColor or UI.colors.border or UI.colors.panelBorder
-        local prevLineWidth = love.graphics.getLineWidth()
+	local handleFill = opts.handleColor or UI.colors.text
+	local handleOutline = opts.handleOutlineColor or UI.colors.border or UI.colors.panelBorder
+	local prevLineWidth = love.graphics.getLineWidth()
 
-        setColor(handleFill)
-        love.graphics.circle("fill", handleX, handleY, handleRadius)
+	setColor(handleFill)
+	love.graphics.circle("fill", handleX, handleY, handleRadius)
 
-        love.graphics.setLineWidth(3)
-        setColor(handleOutline)
-        love.graphics.circle("line", handleX, handleY, handleRadius)
-        love.graphics.setLineWidth(prevLineWidth or 1)
+	love.graphics.setLineWidth(3)
+	setColor(handleOutline)
+	love.graphics.circle("line", handleX, handleY, handleRadius)
+	love.graphics.setLineWidth(prevLineWidth or 1)
 
-        if opts.showValue ~= false then
-                local valueFont = UI.fonts[opts.valueFont or "small"]
-                local percentText = opts.valueText or string.format("%d%%", floor(sliderValue * 100 + 0.5))
-                local valueTop = trackY - (valueFont and valueFont:getHeight() or 14) - 6
-                local valueOptions = {
-                        font = valueFont,
-                        color = opts.valueColor or UI.colors.subtleText,
-                        shadow = opts.valueShadow,
-                        dropShadow = opts.valueDropShadow,
-                        shadowOffset = opts.valueShadowOffset,
-                        shadowOffsetX = opts.valueShadowOffsetX,
-                        shadowOffsetY = opts.valueShadowOffsetY,
-                        shadowColor = opts.valueShadowColor,
-                        shadowAlpha = opts.valueShadowAlpha,
-                }
-                UI.drawLabel(percentText, trackX, valueTop, trackW, "right", valueOptions)
-        end
+	if opts.showValue ~= false then
+		local valueFont = UI.fonts[opts.valueFont or "small"]
+		local percentText = opts.valueText or string.format("%d%%", floor(sliderValue * 100 + 0.5))
+		local valueTop = trackY - (valueFont and valueFont:getHeight() or 14) - 6
+		local valueOptions = {
+			font = valueFont,
+			color = opts.valueColor or UI.colors.subtleText,
+			shadow = opts.valueShadow,
+			dropShadow = opts.valueDropShadow,
+			shadowOffset = opts.valueShadowOffset,
+			shadowOffsetX = opts.valueShadowOffsetX,
+			shadowOffsetY = opts.valueShadowOffsetY,
+			shadowColor = opts.valueShadowColor,
+			shadowAlpha = opts.valueShadowAlpha,
+		}
+		UI.drawLabel(percentText, trackX, valueTop, trackW, "right", valueOptions)
+	end
 
-        love.graphics.setLineWidth(1)
+	love.graphics.setLineWidth(1)
 
-        return trackX, trackY, trackW, trackHeight, handleRadius
+	return trackX, trackY, trackW, trackHeight, handleRadius
 end
 
 function UI.drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, config)
-        return drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, config)
+	return drawSnakeScrollbarThumb(thumbX, thumbY, thumbWidth, thumbHeight, config)
 end
 
 -- Easing
@@ -973,34 +973,34 @@ end
 
 -- Register a button (once per frame in your draw code)
 function UI.registerButton(id, x, y, w, h, text)
-        local btn = UI.buttons[id]
-        if not btn then
-                btn = createButtonState()
-                UI.buttons[id] = btn
-        end
+	local btn = UI.buttons[id]
+	if not btn then
+		btn = createButtonState()
+		UI.buttons[id] = btn
+	end
 
-        addButtonToList(id, btn)
+	addButtonToList(id, btn)
 
-        local bounds = btn.bounds
-        if not bounds then
-                bounds = {}
-                btn.bounds = bounds
-        end
-        bounds.x = x
-        bounds.y = y
-        bounds.w = w
-        bounds.h = h
-        btn.text = text
+	local bounds = btn.bounds
+	if not bounds then
+		bounds = {}
+		btn.bounds = bounds
+	end
+	bounds.x = x
+	bounds.y = y
+	bounds.w = w
+	bounds.h = h
+	btn.text = text
 end
 
 function UI.unregisterButton(id)
-        if not id then return end
+	if not id then return end
 
-        if UI.buttons[id] then
-                UI.buttons[id] = nil
-        end
+	if UI.buttons[id] then
+		UI.buttons[id] = nil
+	end
 
-        removeButtonFromList(id)
+	removeButtonFromList(id)
 end
 
 -- Draw button (render only)
@@ -1011,8 +1011,8 @@ function UI.drawButton(id)
 	local b = btn.bounds
 	local s = UI.spacing
 
-        local mx, my = UI.getCursorPosition()
-        local hoveredByMouse = UI.isHovered(b.x, b.y, b.w, b.h, mx, my)
+	local mx, my = UI.getCursorPosition()
+	local hoveredByMouse = UI.isHovered(b.x, b.y, b.w, b.h, mx, my)
 	local displayHover = hoveredByMouse or btn.focused
 
 	if displayHover and not btn.wasHovered then
@@ -1054,18 +1054,18 @@ function UI.drawButton(id)
 		shadowOffset = UI.shadowOffset
 	end
 
-        if shadowOffset and shadowOffset ~= 0 then
-                local shadowOffsetX = shadowOffset - 2
-                local shadowOffsetY = shadowOffset - 2
+	if shadowOffset and shadowOffset ~= 0 then
+		local shadowOffsetX = shadowOffset - 2
+		local shadowOffsetY = shadowOffset - 2
 		setColor(UI.colors.shadow)
 		love.graphics.rectangle(
-			"fill",
-			b.x + shadowOffsetX - shadowPadding,
-			b.y + shadowOffsetY + yOffset - shadowPadding,
-			b.w + shadowPadding * 2,
-			b.h + shadowPadding * 2,
-			shadowRadius,
-			shadowRadius
+		"fill",
+		b.x + shadowOffsetX - shadowPadding,
+		b.y + shadowOffsetY + yOffset - shadowPadding,
+		b.w + shadowPadding * 2,
+		b.h + shadowPadding * 2,
+		shadowRadius,
+		shadowRadius
 		)
 	end
 
@@ -1147,38 +1147,38 @@ end
 
 -- Mouse press
 function UI:mousepressed(x, y, button)
-        UI.refreshCursor(x, y)
-        if button == 1 then
-                for _, btn in ipairs(UI._buttonList) do
-                        local id = btn._id
-                        if id then
-                                local b = btn.bounds
-                                if b and UI.isHovered(b.x, b.y, b.w, b.h, x, y) then
-                                        btn.pressed = true
-                                        Audio:playSound("click")
-                                        return id
-                                end
-                        end
-                end
-        end
+	UI.refreshCursor(x, y)
+	if button == 1 then
+		for _, btn in ipairs(UI._buttonList) do
+			local id = btn._id
+			if id then
+				local b = btn.bounds
+				if b and UI.isHovered(b.x, b.y, b.w, b.h, x, y) then
+					btn.pressed = true
+					Audio:playSound("click")
+					return id
+				end
+			end
+		end
+	end
 end
 
 -- Mouse release
 function UI:mousereleased(x, y, button)
-        UI.refreshCursor(x, y)
-        if button == 1 then
-                for _, btn in ipairs(UI._buttonList) do
-                        if btn.pressed then
-                                btn.pressed = false
-                                local b = btn.bounds
-                                if b and UI.isHovered(b.x, b.y, b.w, b.h, x, y) then
-                                        btn.popTimer = 0
-                                        btn.popProgress = 0
-                                        return btn._id -- valid click
-                                end
-                        end
-                end
-        end
+	UI.refreshCursor(x, y)
+	if button == 1 then
+		for _, btn in ipairs(UI._buttonList) do
+			if btn.pressed then
+				btn.pressed = false
+				local b = btn.bounds
+				if b and UI.isHovered(b.x, b.y, b.w, b.h, x, y) then
+					btn.popTimer = 0
+					btn.popProgress = 0
+					return btn._id -- valid click
+				end
+			end
+		end
+	end
 end
 
 function UI:reset()
@@ -1322,12 +1322,12 @@ function UI:celebrateGoal()
 end
 
 function UI:update(dt)
-        for _, button in ipairs(UI._buttonList) do
-                local hoverTarget = button.hoverTarget or 0
-                local focusTarget = button.focused and 1 or 0
-                button.anim = approachExp(button.anim or 0, button.pressed and 1 or 0, dt, 18)
-                if hoverTarget > 0 then
-                        button.hoverAnim = approachExp(button.hoverAnim or 0, hoverTarget, dt, 12)
+	for _, button in ipairs(UI._buttonList) do
+		local hoverTarget = button.hoverTarget or 0
+		local focusTarget = button.focused and 1 or 0
+		button.anim = approachExp(button.anim or 0, button.pressed and 1 or 0, dt, 18)
+		if hoverTarget > 0 then
+			button.hoverAnim = approachExp(button.hoverAnim or 0, hoverTarget, dt, 12)
 		else
 			button.hoverAnim = 0
 		end
@@ -1460,80 +1460,80 @@ function UI:update(dt)
 		end
 	end
 
-        local container = self.upgradeIndicators
-        if container and container.items then
-                local smoothing = min(dt * 8, 1)
-                if container._listDirty then
-                        rebuildUpgradeIterationList(container)
-                end
+	local container = self.upgradeIndicators
+	if container and container.items then
+		local smoothing = min(dt * 8, 1)
+		if container._listDirty then
+			rebuildUpgradeIterationList(container)
+		end
 
-                local list = container._iterationList or {}
-                local removeBuffer = container._removeBuffer or {}
-                container._removeBuffer = removeBuffer
-                local removeCount = 0
-                local lastRemoveCount = container._removeCount or 0
+		local list = container._iterationList or {}
+		local removeBuffer = container._removeBuffer or {}
+		container._removeBuffer = removeBuffer
+		local removeCount = 0
+		local lastRemoveCount = container._removeCount or 0
 
-                for i = 1, #list do
-                        local item = list[i]
-                        item.visibility = item.visibility or 0
-                        local targetVis = item.targetVisibility or 0
-                        item.visibility = lerp(item.visibility, targetVis, smoothing)
+		for i = 1, #list do
+			local item = list[i]
+			item.visibility = item.visibility or 0
+			local targetVis = item.targetVisibility or 0
+			item.visibility = lerp(item.visibility, targetVis, smoothing)
 
-                        if item.targetProgress ~= nil then
-                                item.displayProgress = item.displayProgress or item.targetProgress or 0
-                                item.displayProgress = lerp(item.displayProgress, item.targetProgress, smoothing)
-                        else
-                                item.displayProgress = nil
-                        end
+			if item.targetProgress ~= nil then
+				item.displayProgress = item.displayProgress or item.targetProgress or 0
+				item.displayProgress = lerp(item.displayProgress, item.targetProgress, smoothing)
+			else
+				item.displayProgress = nil
+			end
 
-                        if item.visibility <= 0.01 and targetVis <= 0 then
-                                removeCount = removeCount + 1
-                                removeBuffer[removeCount] = item
-                        end
-                end
+			if item.visibility <= 0.01 and targetVis <= 0 then
+				removeCount = removeCount + 1
+				removeBuffer[removeCount] = item
+			end
+		end
 
-                if removeCount > 0 then
-                        for i = 1, removeCount do
-                                local item = removeBuffer[i]
-                                if item and item.id then
-                                        container.items[item.id] = nil
-                                end
-                                removeBuffer[i] = nil
-                        end
-                        if lastRemoveCount > removeCount then
-                                for i = removeCount + 1, lastRemoveCount do
-                                        removeBuffer[i] = nil
-                                end
-                        end
-                        container._removeCount = removeCount
-                        container._listDirty = true
-                        rebuildUpgradeIterationList(container)
-                        list = container._iterationList or {}
-                else
-                        if lastRemoveCount > 0 then
-                                for i = 1, lastRemoveCount do
-                                        removeBuffer[i] = nil
-                                end
-                        end
-                        container._removeCount = 0
-                end
+		if removeCount > 0 then
+			for i = 1, removeCount do
+				local item = removeBuffer[i]
+				if item and item.id then
+					container.items[item.id] = nil
+				end
+				removeBuffer[i] = nil
+			end
+			if lastRemoveCount > removeCount then
+				for i = removeCount + 1, lastRemoveCount do
+					removeBuffer[i] = nil
+				end
+			end
+			container._removeCount = removeCount
+			container._listDirty = true
+			rebuildUpgradeIterationList(container)
+			list = container._iterationList or {}
+		else
+			if lastRemoveCount > 0 then
+				for i = 1, lastRemoveCount do
+					removeBuffer[i] = nil
+				end
+			end
+			container._removeCount = 0
+		end
 
-                local visibleList = container.visibleList
-                if visibleList then
-                        local count = 0
-                        for i = 1, #list do
-                                local item = list[i]
-                                if item and clamp01(item.visibility or 0) > 0.01 then
-                                        count = count + 1
-                                        visibleList[count] = item
-                                end
-                        end
+		local visibleList = container.visibleList
+		if visibleList then
+			local count = 0
+			for i = 1, #list do
+				local item = list[i]
+				if item and clamp01(item.visibility or 0) > 0.01 then
+					count = count + 1
+					visibleList[count] = item
+				end
+			end
 
-                        for i = count + 1, #visibleList do
-                                visibleList[i] = nil
-                        end
-                end
-        end
+			for i = count + 1, #visibleList do
+				visibleList[i] = nil
+			end
+		end
+	end
 
 end
 
@@ -1661,21 +1661,21 @@ function UI:setUpgradeIndicators(indicators)
 		end
 	end
 
-        for id, item in pairs(items) do
-                if not seen[id] then
-                        item.targetVisibility = 0
-                end
-        end
+	for id, item in pairs(items) do
+		if not seen[id] then
+			item.targetVisibility = 0
+		end
+	end
 
-        container._listDirty = true
+	container._listDirty = true
 
-        if container._removeBuffer then
-                local maxCount = container._removeCount or #container._removeBuffer
-                for i = 1, maxCount do
-                        container._removeBuffer[i] = nil
-                end
-        end
-        container._removeCount = 0
+	if container._removeBuffer then
+		local maxCount = container._removeCount or #container._removeBuffer
+		for i = 1, maxCount do
+			container._removeBuffer[i] = nil
+		end
+	end
+	container._removeCount = 0
 end
 
 local function drawComboIndicator(self)
@@ -1761,17 +1761,17 @@ Graphics state usage:
 * font: temporarily switches fonts for overlay labels
 ]]
 local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
-        local accent = accentColor or ICON_ACCENT_DEFAULT
+	local accent = accentColor or ICON_ACCENT_DEFAULT
 
-        local originalR, originalG, originalB, originalA = love.graphics.getColor()
-        local originalLineWidth = love.graphics.getLineWidth()
-        local originalFont = love.graphics.getFont()
+	local originalR, originalG, originalB, originalA = love.graphics.getColor()
+	local originalLineWidth = love.graphics.getLineWidth()
+	local originalFont = love.graphics.getFont()
 
-        love.graphics.push()
-        love.graphics.translate(x, y)
+	love.graphics.push()
+	love.graphics.translate(x, y)
 
-        love.graphics.setColor(0, 0, 0, 0.3)
-        love.graphics.circle("fill", 3, 4, radius + 3, 28)
+	love.graphics.setColor(0, 0, 0, 0.3)
+	love.graphics.circle("fill", 3, 4, radius + 3, 28)
 
 	local base = darkenColor(accent, 0.6, ICON_COLOR_BASE)
 	love.graphics.setColor(base[1], base[2], base[3], base[4] or 1)
@@ -1910,13 +1910,13 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		local fontKey = overlay.font or "small"
 		local paddingX = overlay.paddingX or 6
 		local paddingY = overlay.paddingY or 2
-                local overlayPreviousFont = love.graphics.getFont()
-                UI.setFont(fontKey)
-                local font = love.graphics.getFont()
-                local text = tostring(overlay.text)
-                local textWidth = font:getWidth(text)
-                local boxWidth = textWidth + paddingX * 2
-                local boxHeight = font:getHeight() + paddingY * 2
+		local overlayPreviousFont = love.graphics.getFont()
+		UI.setFont(fontKey)
+		local font = love.graphics.getFont()
+		local text = tostring(overlay.text)
+		local textWidth = font:getWidth(text)
+		local boxWidth = textWidth + paddingX * 2
+		local boxHeight = font:getHeight() + paddingY * 2
 		local position = overlay.position or "bottomRight"
 		local anchorX, anchorY
 
@@ -1955,18 +1955,18 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.setColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
 		local textY = boxY + (boxHeight - font:getHeight()) * 0.5
 		love.graphics.printf(text, boxX, textY, boxWidth, "center")
-                if overlayPreviousFont then
-                        love.graphics.setFont(overlayPreviousFont)
-                end
-        end
+		if overlayPreviousFont then
+			love.graphics.setFont(overlayPreviousFont)
+		end
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 
-        love.graphics.setLineWidth(originalLineWidth)
-        if originalFont then
-                love.graphics.setFont(originalFont)
-        end
-        love.graphics.setColor(originalR, originalG, originalB, originalA)
+	love.graphics.setLineWidth(originalLineWidth)
+	if originalFont then
+		love.graphics.setFont(originalFont)
+	end
+	love.graphics.setColor(originalR, originalG, originalB, originalA)
 end
 
 local SHIELD_ACCENT_READY = {0.55, 0.82, 1.0, 1.0}
@@ -1974,69 +1974,69 @@ local SHIELD_ACCENT_DEPLETED = {1.0, 0.55, 0.45, 1.0}
 local SHIELD_OVERLAY_BACKGROUND = {0, 0, 0, 0.92}
 
 local function buildShieldIndicator(self)
-        local shields = self.shields
-        if not shields then return nil end
+	local shields = self.shields
+	if not shields then return nil end
 
-        local rawCount = shields.count
+	local rawCount = shields.count
 	if rawCount == nil then
 		rawCount = shields.display
 	end
 
-        local count = max(0, floor((rawCount or 0) + 0.5))
+	local count = max(0, floor((rawCount or 0) + 0.5))
 
-        if count <= 0 then
-                return nil
-        end
+	if count <= 0 then
+		return nil
+	end
 
-        local accent = SHIELD_ACCENT_READY
-        local statusKey = "ready"
+	local accent = SHIELD_ACCENT_READY
+	local statusKey = "ready"
 
-        if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
-                accent = SHIELD_ACCENT_DEPLETED
-                statusKey = "depleted"
-        end
+	if (shields.lastDirection or 0) < 0 and (shields.flashTimer or 0) > 0 then
+		accent = SHIELD_ACCENT_DEPLETED
+		statusKey = "depleted"
+	end
 
-        local revision = Localization:getRevision()
-        local needsRefresh = (self._shieldLocaleRevision ~= revision)
-        if not needsRefresh then
-                local cachedStatusKey = self._shieldStatusKey or "ready"
-                if cachedStatusKey ~= statusKey then
-                        needsRefresh = true
-                end
-        end
+	local revision = Localization:getRevision()
+	local needsRefresh = (self._shieldLocaleRevision ~= revision)
+	if not needsRefresh then
+		local cachedStatusKey = self._shieldStatusKey or "ready"
+		if cachedStatusKey ~= statusKey then
+			needsRefresh = true
+		end
+	end
 
-        if needsRefresh then
-                self._shieldLocaleRevision = revision
-                self._shieldStatusKey = statusKey
-                self._shieldLabel = Localization:get("upgrades.hud.shields")
-                if statusKey ~= "ready" then
-                        self._shieldStatusText = Localization:get("upgrades.hud." .. statusKey)
-                else
-                        self._shieldStatusText = nil
-                end
-        end
+	if needsRefresh then
+		self._shieldLocaleRevision = revision
+		self._shieldStatusKey = statusKey
+		self._shieldLabel = Localization:get("upgrades.hud.shields")
+		if statusKey ~= "ready" then
+			self._shieldStatusText = Localization:get("upgrades.hud." .. statusKey)
+		else
+			self._shieldStatusText = nil
+		end
+	end
 
-        local overlayBackground = lightenColor(accent, 0.1, SHIELD_OVERLAY_BACKGROUND)
-        overlayBackground[4] = 0.92
+	local overlayBackground = lightenColor(accent, 0.1, SHIELD_OVERLAY_BACKGROUND)
+	overlayBackground[4] = 0.92
 
-        return {
-                id = "__shields",
-                label = self._shieldLabel,
-                icon = "shield",
-                accentColor = accent,
-                iconOverlay = {
-                        text = count,
-                        position = "center",
+	return {
+		id = "__shields",
+		label = self._shieldLabel,
+		icon = "shield",
+		accentColor = accent,
+		iconOverlay = {
+			text = count,
+			position = "center",
 			font = "badge",
 			paddingX = 8,
-                        paddingY = 4,
-                        backgroundColor = overlayBackground,
-                        textColor = Theme.textColor,
-                },
-                status = self._shieldStatusText,
-                showBar = false,
-                visibility = 1,
-        }
+			paddingY = 4,
+			backgroundColor = overlayBackground,
+			textColor = Theme.textColor,
+		},
+		status = self._shieldStatusText,
+		showBar = false,
+		visibility = 1,
+	}
 end
 
 local UPGRADE_BAR_FILL_COLOR = {0, 0, 0, 1}
@@ -2049,169 +2049,169 @@ Graphics state usage:
 * font: switches between UI fonts for labels, stacks, and charge text
 ]]
 local function drawUpgradeIndicatorEntry(cursor, layout, colors, entry)
-        if not entry then
-                return cursor.y
-        end
+	if not entry then
+		return cursor.y
+	end
 
-        local visibility = clamp01(entry.visibility or 1)
-        if visibility <= 0.01 then
-                return cursor.y
-        end
+	local visibility = clamp01(entry.visibility or 1)
+	if visibility <= 0.01 then
+		return cursor.y
+	end
 
-        local accent = entry.accentColor or Theme.panelBorder or ICON_ACCENT_DEFAULT
-        local hasBar = entry.showBar and entry.displayProgress ~= nil
-        local panelHeight = layout.baseHeight + (hasBar and 8 or 0)
+	local accent = entry.accentColor or Theme.panelBorder or ICON_ACCENT_DEFAULT
+	local hasBar = entry.showBar and entry.displayProgress ~= nil
+	local panelHeight = layout.baseHeight + (hasBar and 8 or 0)
 
-        local drawY = cursor.y
-        local x = cursor.x
-        local width = layout.width
+	local drawY = cursor.y
+	local x = cursor.x
+	local width = layout.width
 
-        local originalR, originalG, originalB, originalA = love.graphics.getColor()
-        local originalLineWidth = love.graphics.getLineWidth()
-        local originalFont = love.graphics.getFont()
+	local originalR, originalG, originalB, originalA = love.graphics.getColor()
+	local originalLineWidth = love.graphics.getLineWidth()
+	local originalFont = love.graphics.getFont()
 
-        love.graphics.setColor(0, 0, 0, 0.4 * visibility)
-        love.graphics.rectangle("fill", x + 4, drawY + 6, width, panelHeight, 14, 14)
+	love.graphics.setColor(0, 0, 0, 0.4 * visibility)
+	love.graphics.rectangle("fill", x + 4, drawY + 6, width, panelHeight, 14, 14)
 
-        local panelColor = Theme.arenaBG or Theme.panelColor or DEFAULT_UPGRADE_PANEL_COLOR
-        love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * (0.95 * visibility))
-        love.graphics.rectangle("fill", x, drawY, width, panelHeight, 14, 14)
+	local panelColor = Theme.arenaBG or Theme.panelColor or DEFAULT_UPGRADE_PANEL_COLOR
+	love.graphics.setColor(panelColor[1], panelColor[2], panelColor[3], (panelColor[4] or 1) * (0.95 * visibility))
+	love.graphics.rectangle("fill", x, drawY, width, panelHeight, 14, 14)
 
-        local border = colors.border or UI.colors.border
-        love.graphics.setColor(border[1], border[2], border[3], (border[4] or 1) * visibility)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", x, drawY, width, panelHeight, 14, 14)
+	local border = colors.border or UI.colors.border
+	love.graphics.setColor(border[1], border[2], border[3], (border[4] or 1) * visibility)
+	love.graphics.setLineWidth(2)
+	love.graphics.rectangle("line", x, drawY, width, panelHeight, 14, 14)
 
-        local iconRadius = layout.iconRadius
-        local iconX = x + iconRadius + 14
-        local iconY = drawY + iconRadius + 12
-        drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius, entry.iconOverlay)
+	local iconRadius = layout.iconRadius
+	local iconX = x + iconRadius + 14
+	local iconY = drawY + iconRadius + 12
+	drawIndicatorIcon(entry.icon or "circle", accent, iconX, iconY, iconRadius, entry.iconOverlay)
 
-        local textX = iconX + iconRadius + 12
-        local textWidth = max(60, width - (textX - x) - 14)
-        local chargeFont = UI.fonts.body
-        local chargeFontHeight = (chargeFont and chargeFont:getHeight()) or 16
+	local textX = iconX + iconRadius + 12
+	local textWidth = max(60, width - (textX - x) - 14)
+	local chargeFont = UI.fonts.body
+	local chargeFontHeight = (chargeFont and chargeFont:getHeight()) or 16
 
-        local showLabel = entry.hideLabel ~= true and entry.label and entry.label ~= ""
-        local labelTop = drawY + 16
+	local showLabel = entry.hideLabel ~= true and entry.label and entry.label ~= ""
+	local labelTop = drawY + 16
 
-        if showLabel then
-                UI.setFont("body")
-                love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], visibility)
-                love.graphics.printf(entry.label, textX, labelTop, textWidth, "left")
-        end
+	if showLabel then
+		UI.setFont("body")
+		love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], visibility)
+		love.graphics.printf(entry.label, textX, labelTop, textWidth, "left")
+	end
 
-        if entry.stackCount and entry.stackCount > 0 then
-                local stackText = entry.stackCount
-                if type(stackText) == "number" then
-                        if stackText > 1 then
-                                stackText = "×" .. tostring(stackText)
-                        else
-                                stackText = tostring(stackText)
-                        end
-                else
-                        stackText = tostring(stackText)
-                end
-                UI.setFont("body")
-                love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.9 * visibility)
-                love.graphics.printf(stackText, textX, labelTop, textWidth, "right")
-        end
+	if entry.stackCount and entry.stackCount > 0 then
+		local stackText = entry.stackCount
+		if type(stackText) == "number" then
+			if stackText > 1 then
+				stackText = "×" .. tostring(stackText)
+			else
+				stackText = tostring(stackText)
+			end
+		else
+			stackText = tostring(stackText)
+		end
+		UI.setFont("body")
+		love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.9 * visibility)
+		love.graphics.printf(stackText, textX, labelTop, textWidth, "right")
+	end
 
-        if hasBar then
-                local progress = clamp01(entry.displayProgress or 0)
-                local iconBarWidth = layout.iconBarWidth or (iconRadius * 1.8)
-                if entry.chargeLabel and chargeFont and chargeFont.getWidth then
-                        local labelWidth = chargeFont:getWidth(entry.chargeLabel)
-                        iconBarWidth = max(iconBarWidth, labelWidth + 16)
-                end
-                local iconBarHeight = layout.iconBarHeight or max(4, floor(layout.barHeight))
-                local barX = iconX - iconBarWidth * 0.5
-                local desiredBarY = iconY + iconRadius + 6
-                local reservedSpace = entry.chargeLabel and (chargeFontHeight + 8) or 6
-                local maxBarY = drawY + panelHeight - iconBarHeight - reservedSpace
-                local barY = min(desiredBarY, maxBarY)
+	if hasBar then
+		local progress = clamp01(entry.displayProgress or 0)
+		local iconBarWidth = layout.iconBarWidth or (iconRadius * 1.8)
+		if entry.chargeLabel and chargeFont and chargeFont.getWidth then
+			local labelWidth = chargeFont:getWidth(entry.chargeLabel)
+			iconBarWidth = max(iconBarWidth, labelWidth + 16)
+		end
+		local iconBarHeight = layout.iconBarHeight or max(4, floor(layout.barHeight))
+		local barX = iconX - iconBarWidth * 0.5
+		local desiredBarY = iconY + iconRadius + 6
+		local reservedSpace = entry.chargeLabel and (chargeFontHeight + 8) or 6
+		local maxBarY = drawY + panelHeight - iconBarHeight - reservedSpace
+		local barY = min(desiredBarY, maxBarY)
 
-                love.graphics.setColor(0, 0, 0, 0.28 * visibility)
-                love.graphics.rectangle("fill", barX, barY, iconBarWidth, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
+		love.graphics.setColor(0, 0, 0, 0.28 * visibility)
+		love.graphics.rectangle("fill", barX, barY, iconBarWidth, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
 
-                local fill = lightenColor(accent, 0.05, UPGRADE_BAR_FILL_COLOR)
-                love.graphics.setColor(fill[1], fill[2], fill[3], (fill[4] or 1) * 0.85 * visibility)
-                love.graphics.rectangle("fill", barX, barY, iconBarWidth * progress, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
+		local fill = lightenColor(accent, 0.05, UPGRADE_BAR_FILL_COLOR)
+		love.graphics.setColor(fill[1], fill[2], fill[3], (fill[4] or 1) * 0.85 * visibility)
+		love.graphics.rectangle("fill", barX, barY, iconBarWidth * progress, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
 
-                local outline = lightenColor(accent, 0.3, UPGRADE_BAR_OUTLINE_COLOR)
-                love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1) * 0.9 * visibility)
-                love.graphics.setLineWidth(1)
-                love.graphics.rectangle("line", barX, barY, iconBarWidth, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
+		local outline = lightenColor(accent, 0.3, UPGRADE_BAR_OUTLINE_COLOR)
+		love.graphics.setColor(outline[1], outline[2], outline[3], (outline[4] or 1) * 0.9 * visibility)
+		love.graphics.setLineWidth(1)
+		love.graphics.rectangle("line", barX, barY, iconBarWidth, iconBarHeight, iconBarHeight * 0.5, iconBarHeight * 0.5)
 
-                if entry.chargeLabel then
-                        UI.setFont("body")
-                        love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.9 * visibility)
-                        local labelY = barY + iconBarHeight + 4
-                        love.graphics.printf(entry.chargeLabel, barX, labelY, iconBarWidth, "center")
-                end
-        elseif entry.chargeLabel then
-                UI.setFont("body")
-                love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.9 * visibility)
-                local labelY = drawY + panelHeight - chargeFontHeight - 12
-                love.graphics.printf(entry.chargeLabel, textX, labelY, textWidth, "right")
-        end
+		if entry.chargeLabel then
+			UI.setFont("body")
+			love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.9 * visibility)
+			local labelY = barY + iconBarHeight + 4
+			love.graphics.printf(entry.chargeLabel, barX, labelY, iconBarWidth, "center")
+		end
+	elseif entry.chargeLabel then
+		UI.setFont("body")
+		love.graphics.setColor(Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], 0.9 * visibility)
+		local labelY = drawY + panelHeight - chargeFontHeight - 12
+		love.graphics.printf(entry.chargeLabel, textX, labelY, textWidth, "right")
+	end
 
-        love.graphics.setLineWidth(originalLineWidth)
-        if originalFont then
-                love.graphics.setFont(originalFont)
-        end
-        love.graphics.setColor(originalR, originalG, originalB, originalA)
+	love.graphics.setLineWidth(originalLineWidth)
+	if originalFont then
+		love.graphics.setFont(originalFont)
+	end
+	love.graphics.setColor(originalR, originalG, originalB, originalA)
 
-        return cursor.y + panelHeight + layout.spacing
+	return cursor.y + panelHeight + layout.spacing
 end
 
 function UI:drawUpgradeIndicators()
-        local container = self.upgradeIndicators
-        if not container or not container.items then return end
+	local container = self.upgradeIndicators
+	if not container or not container.items then return end
 
-        local entries = container.visibleList or {}
-        local shieldEntry = buildShieldIndicator(self)
+	local entries = container.visibleList or {}
+	local shieldEntry = buildShieldIndicator(self)
 
-        if (#entries == 0) and not shieldEntry then
-                return
-        end
+	if (#entries == 0) and not shieldEntry then
+		return
+	end
 
-        local containerLayout = container.layout or {}
-        local width = containerLayout.width or 252
-        local spacing = containerLayout.spacing or 12
-        local baseHeight = containerLayout.baseHeight or 64
-        local barHeight = containerLayout.barHeight or 10
-        local iconRadius = containerLayout.iconRadius or 18
-        local margin = containerLayout.margin or 24
+	local containerLayout = container.layout or {}
+	local width = containerLayout.width or 252
+	local spacing = containerLayout.spacing or 12
+	local baseHeight = containerLayout.baseHeight or 64
+	local barHeight = containerLayout.barHeight or 10
+	local iconRadius = containerLayout.iconRadius or 18
+	local margin = containerLayout.margin or 24
 
-        local screenW = love.graphics.getWidth()
-        local x = screenW - width - margin
-        local cursor = {
-                x = x,
-                y = margin,
-        }
+	local screenW = love.graphics.getWidth()
+	local x = screenW - width - margin
+	local cursor = {
+		x = x,
+		y = margin,
+	}
 
-        local layout = {
-                width = width,
-                spacing = spacing,
-                baseHeight = baseHeight,
-                barHeight = barHeight,
-                iconRadius = iconRadius,
-                iconBarWidth = containerLayout.iconBarWidth,
-                iconBarHeight = containerLayout.iconBarHeight,
-        }
+	local layout = {
+		width = width,
+		spacing = spacing,
+		baseHeight = baseHeight,
+		barHeight = barHeight,
+		iconRadius = iconRadius,
+		iconBarWidth = containerLayout.iconBarWidth,
+		iconBarHeight = containerLayout.iconBarHeight,
+	}
 
-        local colors = {
-                border = UI.colors.border,
-        }
+	local colors = {
+		border = UI.colors.border,
+	}
 
-        if shieldEntry then
-                cursor.y = drawUpgradeIndicatorEntry(cursor, layout, colors, shieldEntry)
-        end
+	if shieldEntry then
+		cursor.y = drawUpgradeIndicatorEntry(cursor, layout, colors, shieldEntry)
+	end
 
-        for i = 1, #entries do
-                cursor.y = drawUpgradeIndicatorEntry(cursor, layout, colors, entries[i])
-        end
+	for i = 1, #entries do
+		cursor.y = drawUpgradeIndicatorEntry(cursor, layout, colors, entries[i])
+	end
 end
 
 
@@ -2271,7 +2271,7 @@ function UI:drawFruitSockets()
 		love.graphics.rectangle("fill", panelX + shadowOffsetX, panelY + shadowOffsetY, panelW, panelH, 12, 12)
 	end
 
-        local basePanelColor = Theme.arenaBG or Theme.panelColor or DEFAULT_SOCKET_PANEL_COLOR
+	local basePanelColor = Theme.arenaBG or Theme.panelColor or DEFAULT_SOCKET_PANEL_COLOR
 	local panelColor = basePanelColor
 	if goalFlash > 0 then
 		panelColor = lightenColor(panelColor, 0.25 * goalFlash)
@@ -2293,7 +2293,7 @@ function UI:drawFruitSockets()
 	local socketFill = lightenColor(basePanelColor, 0.45, SOCKET_FILL_COLOR)
 	local socketOutline = lightenColor(UI.colors.panelBorder or Theme.textColor, 0.2, SOCKET_OUTLINE_COLOR)
 
-        local highlightColor = (UI.colors and UI.colors.highlight) or Theme.highlightColor or DEFAULT_HIGHLIGHT_COLOR
+	local highlightColor = (UI.colors and UI.colors.highlight) or Theme.highlightColor or DEFAULT_HIGHLIGHT_COLOR
 
 	for i = 1, self.fruitRequired do
 		local row = floor((i - 1) / perRow)
@@ -2487,10 +2487,10 @@ function UI:drawFruitSockets()
 end
 
 function UI:draw()
-        self:refreshCursor()
-        -- draw socket grid
-        self:drawFruitSockets()
-        self:drawUpgradeIndicators()
+	self:refreshCursor()
+	-- draw socket grid
+	self:drawFruitSockets()
+	self:drawUpgradeIndicators()
 	drawComboIndicator(self)
 end
 
