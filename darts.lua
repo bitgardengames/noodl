@@ -700,7 +700,6 @@ local function drawEmitter(emitter)
 
 	local flash = clamp01(emitter.flashTimer or 0)
 	local strength = clamp01(emitter.telegraphStrength or 0)
-	local time = Timer.getTime()
 	local shadowColor = Theme.shadowColor or {0, 0, 0, 0.45}
 
 	local shadowAlpha = clamp01((shadowColor[4] or 0.45) * (0.55 + strength * 0.25 + flash * 0.2))
@@ -725,22 +724,6 @@ local function drawEmitter(emitter)
 	love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], accentAlpha)
 	love.graphics.rectangle("line", baseX + 2, baseY + 2, tileSize - 4, tileSize - 4, 4, 4)
 
-	if strength > 0 then
-		local spin = (time * 2.5 + (emitter.randomOffset or 0)) % (math.pi * 2)
-		local ringRadius = tileSize * 0.46 + sin(time * 3.2 + (emitter.randomOffset or 0)) * (tileSize * 0.05)
-		love.graphics.setLineWidth(2)
-		love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.28 + flash * 0.4 + strength * 0.4)
-		for i = 0, 2 do
-			local angle = spin + i * (math.pi * 2 / 3)
-			love.graphics.arc("line", "open", centerX, centerY, ringRadius, angle - 0.34, angle + 0.34, 16)
-		end
-		love.graphics.setLineWidth(1)
-
-		local telegraphAlpha = clamp01((telegraphColor[4] or 1) * (0.25 + strength * 0.45 + flash * 0.2))
-		love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], telegraphAlpha)
-		love.graphics.circle("line", centerX, centerY, ringRadius * 0.7, 18)
-	end
-
 	local muzzleOffset = tileSize * 0.34
 	local muzzleRadius = tileSize * 0.18
 	local muzzleX = centerX
@@ -758,14 +741,6 @@ local function drawEmitter(emitter)
 
 	love.graphics.setColor(0, 0, 0, 0.55 + flash * 0.25)
 	love.graphics.circle("line", muzzleX, muzzleY, muzzleRadius, 16)
-
-	if strength > 0 then
-		local telegraphAlpha = clamp01((telegraphColor[4] or 1) * (0.35 + strength * 0.45 + flash * 0.2))
-		love.graphics.setColor(telegraphColor[1], telegraphColor[2], telegraphColor[3], telegraphAlpha)
-		love.graphics.setLineWidth(1.5 + strength * 1.5)
-		love.graphics.circle("line", muzzleX, muzzleY, muzzleRadius + tileSize * (0.04 + strength * 0.08), 16)
-		love.graphics.setLineWidth(1)
-	end
 
 	if flash > 0 then
 		love.graphics.setColor(1, 1, 1, 0.3 * flash)
