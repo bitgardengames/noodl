@@ -2117,31 +2117,7 @@ function GameOver:update(dt)
 	if level > previousLevel then
 		anim.levelPopDuration = anim.levelPopDuration or 0.65
 		anim.levelPopTimer = 0
-		for levelReached = previousLevel + 1, level do
-			anim.levelFlash = 0.9
-			addCelebration(anim, {
-				type = "level",
-				title = Localization:get("gameover.meta_progress_level_up", {level = levelReached}),
-				subtitle = Localization:get("gameover.meta_progress_level_up_subtitle"),
-				color = Theme.progressColor or {1, 1, 1, 1},
-				duration = 5.5,
-			})
-			Audio:playSound("goal_reached")
-
-			local unlockList = anim.levelUnlocks[levelReached]
-			if unlockList then
-				for _, unlock in ipairs(unlockList) do
-					addCelebration(anim, {
-						type = "unlock",
-						title = Localization:get("gameover.meta_progress_unlock_header", {name = unlock.name or "???"}),
-						subtitle = unlock.description or "",
-						color = Theme.achieveColor or {1, 1, 1, 1},
-						duration = 6,
-					})
-					self:_queueUnlockOverlay(unlock)
-				end
-			end
-		end
+		anim.levelFlash = 0.9
 	end
 
 	anim.displayedLevel = level
@@ -2190,14 +2166,6 @@ function GameOver:update(dt)
 		for _, milestone in ipairs(anim.pendingMilestones) do
 			if not milestone.triggered and (anim.displayedTotal or 0) >= (milestone.threshold or 0) then
 				milestone.triggered = true
-				addCelebration(anim, {
-					type = "milestone",
-					title = Localization:get("gameover.meta_progress_milestone_header"),
-					subtitle = Localization:get("gameover.meta_progress_milestone", {threshold = milestone.threshold}),
-					color = Theme.achieveColor or {1, 1, 1, 1},
-					duration = 6.5,
-				})
-				Audio:playSound("achievement")
 			end
 		end
 	end
