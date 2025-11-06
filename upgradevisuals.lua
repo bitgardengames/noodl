@@ -1070,7 +1070,7 @@ local variantDrawers = {
 	coiled_focus = drawCoiledFocus,
 	adrenaline_rush = drawAdrenalineRush,
 	molting_reflex = drawMoltingReflex,
-        resonant_shell = drawResonantShell,
+	resonant_shell = drawResonantShell,
 	abyssal_catalyst = drawAbyssalCatalyst,
 }
 

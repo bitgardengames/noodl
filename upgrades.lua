@@ -1405,8 +1405,8 @@ pool = {
 			end,
 		},
 	}),
-        register({
-                id = "molting_reflex",
+	register({
+		id = "molting_reflex",
 		nameKey = "upgrades.molting_reflex.name",
 		descKey = "upgrades.molting_reflex.description",
 		rarity = "uncommon",

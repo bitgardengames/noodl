@@ -141,7 +141,7 @@ local english = {
 					title = "Floor Speedrunner",
 					description = "Clear any floor in under ${seconds} seconds.",
 					progress = "Fastest floor: ${best} (Target ${target})",
-                                        complete = "Blazing clear!",
+					complete = "Blazing clear!",
 				},
 				pace_setter = {
 					title = "Pace Setter",
@@ -522,8 +522,8 @@ local english = {
 				name = "Tempest Ward",
 				description = "After collecting twenty fruit, forge a single shield charge.",
 			},
-                        molting_reflex = {
-                                name = "Molting Reflex",
+			molting_reflex = {
+				name = "Molting Reflex",
 				description = "Shields trigger a 60% adrenaline surge.",
 			},
 			mystery_card = {

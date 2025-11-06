@@ -373,11 +373,11 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 	local thumbX = trackX + thumbPadding + thumbOffsetX
 	local hoverBoost = 0
 	if scrollbarDrag.active then
-	  hoverBoost = 0.35
+		hoverBoost = 0.35
 	elseif isThumbHovered then
-	  hoverBoost = 0.25
+		hoverBoost = 0.25
 	elseif isHovered then
-	  hoverBoost = 0.15
+		hoverBoost = 0.15
 	end
 
 	local function adjustHover(color, factor)
@@ -2164,10 +2164,10 @@ local function drawStatsList(sw, sh)
 	local scissorReduction = 12
 
 	love.graphics.setScissor(
-		listX - 20,
-		clipY - 10 + scissorOffsetY,
-		CARD_WIDTH + 40,
-		clipH + 20 - scissorReduction
+	listX - 20,
+	clipY - 10 + scissorOffsetY,
+	CARD_WIDTH + 40,
+	clipH + 20 - scissorReduction
 	)
 
 	if #statsEntries == 0 then
@@ -2245,15 +2245,15 @@ local function drawStatsList(sw, sh)
 
 	if scrollbarState.visible then
 		drawScrollbar(
-			scrollbarState.trackX,
-			scrollbarState.trackY,
-			scrollbarState.trackWidth,
-			scrollbarState.trackHeight,
-			scrollbarState.thumbY,
-			scrollbarState.thumbHeight,
-			false,
-			false,
-			Theme.panelColor
+		scrollbarState.trackX,
+		scrollbarState.trackY,
+		scrollbarState.trackWidth,
+		scrollbarState.trackHeight,
+		scrollbarState.thumbY,
+		scrollbarState.thumbHeight,
+		false,
+		false,
+		Theme.panelColor
 		)
 	end
 end
