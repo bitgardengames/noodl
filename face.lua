@@ -243,10 +243,24 @@ Face.timer = 0
 -- for passive blinking
 Face.blinkCooldown = 0
 Face.savedState = "idle"
+Face.restoreState = nil
+
+function Face:override(state, duration)
+	local previous = {
+		state = self.state,
+		timer = self.timer,
+		restoreState = self.restoreState,
+	}
+
+	self.restoreState = previous
+	self.state = state or "idle"
+	self.timer = duration or 0
+end
 
 function Face:set(state, duration)
 	self.state = state or "idle"
 	self.timer = duration or 0
+	self.restoreState = nil
 end
 
 function Face:update(dt)
@@ -254,13 +268,22 @@ function Face:update(dt)
 	if self.timer > 0 then
 		self.timer = self.timer - dt
 		if self.timer <= 0 then
+			local restore = self.restoreState
+			self.restoreState = restore and restore.restoreState or nil
 			-- if blinking, restore the previous state
 			if self.state == "blink" then
 				self.state = self.savedState
+				self.timer = 0
+			elseif restore then
+				self.state = restore.state or "idle"
+				self.timer = restore.timer or 0
+				if self.timer <= 0 and not self.restoreState then
+					self.state = self.state or "idle"
+				end
 			else
 				self.state = "idle"
+				self.timer = 0
 			end
-			self.timer = 0
 		end
 		return
 	end
@@ -272,6 +295,7 @@ function Face:update(dt)
 		self.savedState = self.state
 		self.state = "blink"
 		self.timer = 0.1   -- keep blink visible for 0.1s
+		self.restoreState = nil
 		self.blinkCooldown = love.math.random(3.5, 5.5)
 	end
 end

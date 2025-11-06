@@ -25,13 +25,6 @@ local Snake = {}
 local sqrt = math.sqrt
 local max = math.max
 local EMPTY_TABLE = {}
-local HIGH_PRIORITY_FACE_STATES = {
-	veryHappy = true,
-	angry = true,
-	sad = true,
-	blank = true
-}
-
 local spawnGluttonsWakeRock
 local crystallizeGluttonsWakeSegments
 local removeSnakeBodySpatialEntry
@@ -4278,13 +4271,18 @@ function Snake:chopTailByHazard(cause)
 		local chopY = tailSegment and tailSegment.drawY
 
 		if Face then
+			local shockDuration = 1.3
 			local activeState = Face.state
 			if activeState == "blink" then
 				activeState = Face.savedState or activeState
 			end
 
-			if not HIGH_PRIORITY_FACE_STATES[activeState] then
-				Face:set("shocked", 1.3)
+			if activeState == "shocked" then
+				Face.timer = max(Face.timer or 0, shockDuration)
+			elseif Face.override then
+				Face:override("shocked", shockDuration)
+			else
+				Face:set("shocked", shockDuration)
 			end
 		end
 
