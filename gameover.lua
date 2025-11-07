@@ -444,86 +444,33 @@ local function spawnFruitAnimation(anim)
 		color = copyColor(streakColor)
 	end
 
-	local sparkleChance = 0
-	if (anim.bonusXP or 0) > 0 then
-		sparkleChance = sparkleChance + 0.2
-	end
-	if streakColor then
-		sparkleChance = sparkleChance + 0.15
-	end
+	local centerX = metrics.centerX or 0
+	local centerY = metrics.centerY or 0
+	local radius = metrics.outerRadius or metrics.radius or 56
+	local launchOffsetX = randomRange(-radius * 0.6, radius * 0.6)
+	local launchLift = max(radius * 0.8, 54)
+	local launchX = centerX + launchOffsetX
+	local launchY = centerY - radius - launchLift
+	local controlX = (launchX + centerX) / 2 + randomRange(-radius * 0.25, radius * 0.25)
+	local controlY = min(launchY, centerY) - max(radius * 0.75, 48)
 
-	local sparkleColor
-	if sparkleChance > 0 and love.math.random() < sparkleChance then
-		color = lightenColor(color, 0.28)
-		color[4] = (color[4] or 1)
-		local tintSource = streakColor or color
-		sparkleColor = withAlpha(lightenColor(copyColor(tintSource), 0.45), 0.9)
-	end
-
-	local fruit
-	if metrics.style == "radial" then
-		local centerX = metrics.centerX or 0
-		local centerY = metrics.centerY or 0
-		local radius = metrics.outerRadius or metrics.radius or 56
-		local launchOffsetX = randomRange(-radius * 0.6, radius * 0.6)
-		local launchLift = max(radius * 0.8, 54)
-		local launchX = centerX + launchOffsetX
-		local launchY = centerY - radius - launchLift
-		local controlX = (launchX + centerX) / 2 + randomRange(-radius * 0.25, radius * 0.25)
-		local controlY = min(launchY, centerY) - max(radius * 0.75, 48)
-
-		fruit = {
-			timer = 0,
-			duration = randomRange(0.55, 0.85),
-			startX = launchX,
-			startY = launchY,
-			controlX = controlX,
-			controlY = controlY,
-			endX = centerX,
-			endY = centerY,
-			scaleStart = randomRange(0.42, 0.52),
-			scalePeak = randomRange(0.68, 0.82),
-			scaleEnd = randomRange(0.50, 0.64),
-			wobbleSeed = love.math.random() * pi * 2,
-			wobbleSpeed = randomRange(4.5, 6.5),
-			color = color,
-			splashAngle = clamp(anim.visualPercent or 0, 0, 1),
-			sparkle = sparkleColor ~= nil,
-			sparkleColor = sparkleColor,
-			sparkleSpin = randomRange(2.4, 3.4),
-			sparkleOffset = love.math.random() * pi * 2,
-		}
-	else
-		local launchX = metrics.x + metrics.width * 0.5
-		local launchY = metrics.y - max(metrics.height * 2.2, 72)
-
-		local endX = metrics.x + metrics.width * 0.5
-		local endY = metrics.y + metrics.height * 0.5
-		local apexLift = max(metrics.height * 1.35, 64)
-		local controlX = (launchX + endX) / 2
-		local controlY = min(launchY, endY) - apexLift
-
-		fruit = {
-			timer = 0,
-			duration = randomRange(0.55, 0.85),
-			startX = launchX,
-			startY = launchY,
-			controlX = controlX,
-			controlY = controlY,
-			endX = endX,
-			endY = endY,
-			scaleStart = randomRange(0.42, 0.52),
-			scalePeak = randomRange(0.68, 0.82),
-			scaleEnd = randomRange(0.50, 0.64),
-			wobbleSeed = love.math.random() * pi * 2,
-			wobbleSpeed = randomRange(4.5, 6.5),
-			color = color,
-			sparkle = sparkleColor ~= nil,
-			sparkleColor = sparkleColor,
-			sparkleSpin = randomRange(2.6, 3.8),
-			sparkleOffset = love.math.random() * pi * 2,
-		}
-	end
+	local fruit = {
+		timer = 0,
+		duration = randomRange(0.55, 0.85),
+		startX = launchX,
+		startY = launchY,
+		controlX = controlX,
+		controlY = controlY,
+		endX = centerX,
+		endY = centerY,
+		scaleStart = randomRange(0.42, 0.52),
+		scalePeak = randomRange(0.68, 0.82),
+		scaleEnd = randomRange(0.50, 0.64),
+		wobbleSeed = love.math.random() * pi * 2,
+		wobbleSpeed = randomRange(4.5, 6.5),
+		color = color,
+		splashAngle = clamp(anim.visualPercent or 0, 0, 1),
+	}
 
 	anim.fruitAnimations = anim.fruitAnimations or {}
 	insert(anim.fruitAnimations, fruit)
@@ -671,31 +618,6 @@ local function drawFruitAnimations(anim)
 
 			love.graphics.setColor(highlight[1], highlight[2], highlight[3], (highlight[4] or 0.7) * fadeMul)
 			love.graphics.circle("fill", pathX - radius * 0.35, pathY + wobble * 2 - radius * 0.45, radius * 0.45, 24)
-		end
-
-		if fruit.sparkle and fadeMul > 0 then
-			local sparkleColor = fruit.sparkleColor or {1, 1, 1, 0.9}
-			local shimmer = sin((fruit.timer or 0) * (fruit.sparkleSpin or 3.1) + (fruit.sparkleOffset or 0)) * 0.5 + 0.5
-			local sparkleAlpha = (sparkleColor[4] or 1) * fadeMul * (0.6 + 0.4 * shimmer)
-			if sparkleAlpha > 0.01 then
-				local prevMode, prevAlphaMode = love.graphics.getBlendMode()
-				love.graphics.setBlendMode("add", "alphamultiply")
-				love.graphics.setColor(sparkleColor[1] or 1, sparkleColor[2] or 1, sparkleColor[3] or 1, sparkleAlpha)
-
-				local rayCount = 4
-				local rayLength = radius * (1.2 + shimmer * 0.4)
-				love.graphics.setLineWidth(1.3)
-				for ray = 0, rayCount - 1 do
-					local angle = (ray / rayCount) * pi * 2 + (fruit.sparkleOffset or 0)
-					local dx = math.cos(angle) * rayLength
-					local dy = sin(angle) * rayLength
-					love.graphics.line(pathX, pathY + wobble * 2, pathX + dx, pathY + wobble * 2 + dy)
-				end
-				love.graphics.setLineWidth(1)
-				love.graphics.circle("fill", pathX, pathY + wobble * 2, radius * 0.35 * (0.8 + 0.4 * shimmer), 18)
-				love.graphics.setBlendMode(prevMode, prevAlphaMode)
-				love.graphics.setColor(1, 1, 1, 1)
-			end
 		end
 
 		love.graphics.setLineWidth(1)
