@@ -6,7 +6,7 @@ function love.conf(t)
 	t.modules.physics = false
 	t.modules.touch = false
 
-	t.identity = "noodl"
+	t.identity = "Noodl"
 	t.window.title = "Noodl"
 	t.window.icon = "Assets/Snake.png"
 end
