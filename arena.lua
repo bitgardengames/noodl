@@ -12,7 +12,6 @@ local max = math.max
 local min = math.min
 local pi = math.pi
 local sin = math.sin
-local sqrt = math.sqrt
 
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
@@ -63,14 +62,6 @@ local function getHighlightColor(color)
 	end
 
 	return updateHighlightColor(cached, color)
-end
-
-local function normalizeCellCoordinate(value)
-	if value == nil then
-		return nil
-	end
-
-	return floor(value + 0.5)
 end
 
 local function mixChannel(base, target, amount)

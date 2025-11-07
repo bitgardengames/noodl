@@ -32,8 +32,6 @@ local SUMMARY_HIGHLIGHT_INSET = 16
 local CARD_SPACING = 140
 local CARD_WIDTH = 600
 local CARD_HEIGHT = 120
--- Allow extra headroom in the scroll scissor so the category headers drawn
--- slightly above the first card remain visible when at the top of the list.
 local SCROLL_SCISSOR_TOP_PADDING = 64
 local SCROLL_SPEED = 60
 local BASE_PANEL_PADDING_X = 40
@@ -238,55 +236,6 @@ local function clamp01(value)
 		return 1
 	end
 	return value
-end
-
-local function lightenColor(color, amount)
-	if not color then
-		return {1, 1, 1, 1}
-	end
-
-	amount = clamp01(amount or 0)
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] or 1
-
-	return {
-		r + (1 - r) * amount,
-		g + (1 - g) * amount,
-		b + (1 - b) * amount,
-		a,
-	}
-end
-
-local function darkenColor(color, amount)
-	if not color then
-		return {0, 0, 0, 1}
-	end
-
-	amount = clamp01(amount or 0)
-	local factor = 1 - amount
-	local a = color[4] or 1
-
-	return {
-		(color[1] or 0) * factor,
-		(color[2] or 0) * factor,
-		(color[3] or 0) * factor,
-		a,
-	}
-end
-
-local function withAlpha(color, alpha)
-	if not color then
-		return {1, 1, 1, alpha or 1}
-	end
-
-	return {
-		color[1] or 1,
-		color[2] or 1,
-		color[3] or 1,
-		alpha or (color[4] or 1),
-	}
 end
 
 local function setColor(color, alphaOverride)
