@@ -143,12 +143,6 @@ local english = {
 					progress = "Fastest floor: ${best} (Target ${target})",
 					complete = "Blazing clear!",
 				},
-				pace_setter = {
-					title = "Pace Setter",
-					description = "Maintain an average pace of ${pace} tiles per minute.",
-					progress = "Current pace: ${pace}/${goal} (Tiles: ${tiles}, Minutes: ${minutes})",
-					complete = "Steady sprint! Pace hit ${pace} tiles per minute.",
-				},
 				combo_harvester = {
 					title = "Combo Harvester",
 					description = "Trigger combos after hoarding ${fruit_batch} fruit ${goal} times in one run.",

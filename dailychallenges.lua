@@ -764,57 +764,6 @@ DailyChallenges.challenges = {
 		xpReward = 110,
 	},
 	{
-		id = "pace_setter",
-		titleKey = "menu.daily.pace_setter.title",
-		descriptionKey = "menu.daily.pace_setter.description",
-		goal = 240,
-		progressKey = "menu.daily.pace_setter.progress",
-		completeKey = "menu.daily.pace_setter.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local tiles = getStatValue(statsSource, "tilesTravelled", context)
-			local timeAlive = getStatValue(statsSource, "timeAlive", context)
-			if timeAlive <= 0 then
-				return 0
-			end
-
-			return floor((tiles / timeAlive) * 60)
-		end,
-		getRunValue = function(self, statsSource)
-			local tiles = getStatValue(statsSource, "tilesTravelled")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
-			if timeAlive <= 0 then
-				return 0
-			end
-
-			return floor((tiles / timeAlive) * 60)
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local tiles = getStatValue(statsSource, "tilesTravelled", context)
-			local timeAlive = getStatValue(statsSource, "timeAlive", context)
-			local minutes = timeAlive / 60
-			local pace = 0
-			if timeAlive > 0 then
-				pace = floor((tiles / timeAlive) * 60)
-			end
-
-			return {
-				current = pace,
-				goal = goal or 0,
-				pace = pace,
-				tiles = floor(tiles + 0.5),
-				minutes = string.format("%.1f", max(minutes, 0)),
-			}
-		end,
-		descriptionReplacements = function(self, current, goal)
-			return {
-				pace = goal or self.goal or 0,
-			}
-		end,
-		xpReward = 105,
-	},
-	{
 		id = "combo_harvester",
 		titleKey = "menu.daily.combo_harvester.title",
 		descriptionKey = "menu.daily.combo_harvester.description",
