@@ -722,33 +722,33 @@ local function finalizeBounds(bounds, half)
 end
 
 local function ensureSnakeCanvas(width, height)
-        if width <= 0 or height <= 0 then
-                return nil
-        end
+	if width <= 0 or height <= 0 then
+		return nil
+	end
 
-        local targetWidth = width
-        local targetHeight = height
+	local targetWidth = width
+	local targetHeight = height
 
-        if snakeCanvas then
-                if width > snakeCanvasWidth or height > snakeCanvasHeight then
-                        targetWidth = max(width, snakeCanvasWidth)
-                        targetHeight = max(height, snakeCanvasHeight)
-                else
-                        targetWidth = snakeCanvasWidth
-                        targetHeight = snakeCanvasHeight
-                end
-        end
+	if snakeCanvas then
+		if width > snakeCanvasWidth or height > snakeCanvasHeight then
+			targetWidth = max(width, snakeCanvasWidth)
+			targetHeight = max(height, snakeCanvasHeight)
+		else
+			targetWidth = snakeCanvasWidth
+			targetHeight = snakeCanvasHeight
+		end
+	end
 
-        local canvas, replaced = SharedCanvas.ensureCanvas(snakeCanvas, targetWidth, targetHeight)
-        if canvas then
-                snakeCanvas = canvas
-                if replaced or snakeCanvasWidth ~= canvas:getWidth() or snakeCanvasHeight ~= canvas:getHeight() then
-                        snakeCanvasWidth = canvas:getWidth()
-                        snakeCanvasHeight = canvas:getHeight()
-                end
-        end
+	local canvas, replaced = SharedCanvas.ensureCanvas(snakeCanvas, targetWidth, targetHeight)
+	if canvas then
+		snakeCanvas = canvas
+		if replaced or snakeCanvasWidth ~= canvas:getWidth() or snakeCanvasHeight ~= canvas:getHeight() then
+			snakeCanvasWidth = canvas:getWidth()
+			snakeCanvasHeight = canvas:getHeight()
+		end
+	end
 
-        return snakeCanvas
+	return snakeCanvas
 end
 
 
@@ -2947,4 +2947,3 @@ function SnakeDraw.setGlowSpriteResolution(resolution)
 end
 
 return SnakeDraw
-

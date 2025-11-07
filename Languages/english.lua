@@ -217,12 +217,12 @@ local english = {
 			display_mode = "Display Mode",
 			display_mode_fullscreen = "Fullscreen",
 			display_mode_windowed = "Windowed",
-                        windowed_resolution = "Windowed Resolution",
-                        resolution_note_steam_deck = "Steam Deck",
-                        toggle_vsync = "Vertical Sync",
-                        msaa_samples = "Anti-Aliasing (MSAA)",
-                        msaa_samples_off = "0x (Off)",
-                        toggle_music = "Toggle Music",
+			windowed_resolution = "Windowed Resolution",
+			resolution_note_steam_deck = "Steam Deck",
+			toggle_vsync = "Vertical Sync",
+			msaa_samples = "Anti-Aliasing (MSAA)",
+			msaa_samples_off = "0x (Off)",
+			toggle_music = "Toggle Music",
 			toggle_sfx = "Toggle Sound FX",
 			music_volume = "Music Volume",
 			sfx_volume = "SFX Volume",
@@ -692,4 +692,3 @@ local english = {
 }
 
 return english
-

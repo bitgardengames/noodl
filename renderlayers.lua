@@ -48,14 +48,14 @@ local function sanitizeLayerSamples(samples)
 end
 
 local function ensureLayerOptions(name)
-        local options = layerOptions[name]
-        if not options then
-                options = {}
-                layerOptions[name] = options
-        end
+	local options = layerOptions[name]
+	if not options then
+		options = {}
+		layerOptions[name] = options
+	end
 
-        if options.msaaSamples ~= nil then
-                options.msaaSamples = sanitizeLayerSamples(options.msaaSamples)
+	if options.msaaSamples ~= nil then
+		options.msaaSamples = sanitizeLayerSamples(options.msaaSamples)
 	end
 
 	return options
@@ -323,4 +323,3 @@ function RenderLayers:present()
 end
 
 return RenderLayers
-

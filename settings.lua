@@ -4,10 +4,10 @@ local DEFAULTS = {
 	muteMusic = false,
 	muteSFX = false,
 	language = "english",
-        displayMode = "fullscreen",
-        resolution = "1280x720",
-        vsync = true,
-        msaaSamples = 4,
+	displayMode = "fullscreen",
+	resolution = "1280x720",
+	vsync = true,
+	msaaSamples = 4,
 	screenShake = true,
 	bloodEnabled = true,
 	showFPS = false,
@@ -91,9 +91,8 @@ function Settings:load()
 end
 
 function Settings:save()
-        local data = "return " .. serializeSettings(Settings)
-        return love.filesystem.write(saveFile, data)
+	local data = "return " .. serializeSettings(Settings)
+	return love.filesystem.write(saveFile, data)
 end
 
 return Settings
-

@@ -231,8 +231,8 @@ local function resetAnalogAxis()
 	analogAxisDirections.vertical = nil
 end
 
-local MYSTERY_REVEAL_EXTRA_HOLD = 1.2
-local MYSTERY_REVEAL_EXTRA_POST_PAUSE = 1
+local MYSTERY_REVEAL_EXTRA_HOLD = 1.6
+local MYSTERY_REVEAL_EXTRA_POST_PAUSE = 1.6
 
 local function updateMysteryReveal(self, card, state, dt)
 	if not dt or dt <= 0 then return end
@@ -250,30 +250,30 @@ local function updateMysteryReveal(self, card, state, dt)
 		return
 	end
 
-        if pending and not reveal then
-                reveal = {
-                        phase = "approach",
-                        timer = 0,
-                        white = 0,
-                        shakeOffset = 0,
-                        shakeRotation = 0,
-                        applied = false,
-                        info = pending,
-                        approachDuration = pending.revealApproachDuration or pending.revealDelay or 0.55,
-                        shakeDuration = pending.revealShakeDuration or 0.5,
-                        flashInDuration = pending.revealFlashInDuration or 0.22,
-                        flashOutDuration = pending.revealFlashOutDuration or 0.45,
-                        shakeMagnitude = pending.revealShakeMagnitude or 9,
-                        shakeFrequency = pending.revealShakeFrequency or 26,
-                        applyThreshold = pending.revealApplyThreshold or 0.6,
-                        postPauseDuration = (pending.revealPostPauseDuration or pending.revealPostPauseDelay or 0) + MYSTERY_REVEAL_EXTRA_POST_PAUSE,
-                        postPauseTimer = 0,
-                        focusBoost = 0,
-                }
-                state.mysteryReveal = reveal
-                state.revealHoldTimer = nil
-        else
-                reveal = state.mysteryReveal
+	if pending and not reveal then
+		reveal = {
+			phase = "approach",
+			timer = 0,
+			white = 0,
+			shakeOffset = 0,
+			shakeRotation = 0,
+			applied = false,
+			info = pending,
+			approachDuration = pending.revealApproachDuration or pending.revealDelay or 0.55,
+			shakeDuration = pending.revealShakeDuration or 0.5,
+			flashInDuration = pending.revealFlashInDuration or 0.22,
+			flashOutDuration = pending.revealFlashOutDuration or 0.45,
+			shakeMagnitude = pending.revealShakeMagnitude or 9,
+			shakeFrequency = pending.revealShakeFrequency or 26,
+			applyThreshold = pending.revealApplyThreshold or 0.6,
+			postPauseDuration = (pending.revealPostPauseDuration or pending.revealPostPauseDelay or 0) + MYSTERY_REVEAL_EXTRA_POST_PAUSE,
+			postPauseTimer = 0,
+			focusBoost = 0,
+		}
+		state.mysteryReveal = reveal
+		state.revealHoldTimer = nil
+	else
+		reveal = state.mysteryReveal
 	end
 
 	if not reveal then return end
@@ -287,63 +287,63 @@ local function updateMysteryReveal(self, card, state, dt)
 
 	reveal.timer = (reveal.timer or 0) + dt
 
-        if reveal.phase == "approach" then
-                reveal.white = 0
-                reveal.shakeOffset = 0
-                reveal.shakeRotation = 0
-                local duration = reveal.approachDuration or 0
-                if duration <= 0 then
-                        reveal.focusBoost = 1
-                        reveal.phase = "shake"
-                        reveal.timer = 0
-                else
-                        local progress = min(1, reveal.timer / duration)
-                        local ease = progress * progress * (3 - 2 * progress)
-                        reveal.focusBoost = ease
-                        if reveal.timer >= duration then
-                                reveal.focusBoost = 1
-                                reveal.phase = "shake"
-                                reveal.timer = 0
-                        end
-                end
-                return
-        end
+	if reveal.phase == "approach" then
+		reveal.white = 0
+		reveal.shakeOffset = 0
+		reveal.shakeRotation = 0
+		local duration = reveal.approachDuration or 0
+		if duration <= 0 then
+			reveal.focusBoost = 1
+			reveal.phase = "shake"
+			reveal.timer = 0
+		else
+			local progress = min(1, reveal.timer / duration)
+			local ease = progress * progress * (3 - 2 * progress)
+			reveal.focusBoost = ease
+			if reveal.timer >= duration then
+				reveal.focusBoost = 1
+				reveal.phase = "shake"
+				reveal.timer = 0
+			end
+		end
+		return
+	end
 
-        if reveal.phase == "shake" then
-                local duration = reveal.shakeDuration or 0
-                if duration <= 0 then
-                        reveal.phase = "flashIn"
-                        reveal.timer = 0
-                        reveal.shakeOffset = 0
-                        reveal.shakeRotation = 0
-                        reveal.focusBoost = 1
-                else
-                        local progress = min(1, reveal.timer / duration)
-                        local amplitude = (1 - progress) * (reveal.shakeMagnitude or 8)
-                        local frequency = reveal.shakeFrequency or 24
-                        reveal.shakeOffset = sin(reveal.timer * frequency) * amplitude
+	if reveal.phase == "shake" then
+		local duration = reveal.shakeDuration or 0
+		if duration <= 0 then
+			reveal.phase = "flashIn"
+			reveal.timer = 0
+			reveal.shakeOffset = 0
+			reveal.shakeRotation = 0
+			reveal.focusBoost = 1
+		else
+			local progress = min(1, reveal.timer / duration)
+			local amplitude = (1 - progress) * (reveal.shakeMagnitude or 8)
+			local frequency = reveal.shakeFrequency or 24
+			reveal.shakeOffset = sin(reveal.timer * frequency) * amplitude
 			reveal.shakeRotation = sin(reveal.timer * frequency * 0.55) * amplitude * 0.02
 			if reveal.timer >= duration then
-                                reveal.phase = "flashIn"
-                                reveal.timer = 0
-                                reveal.shakeOffset = 0
-                                reveal.shakeRotation = 0
-                                reveal.focusBoost = 1
-                        end
-                end
-                return
-        end
+				reveal.phase = "flashIn"
+				reveal.timer = 0
+				reveal.shakeOffset = 0
+				reveal.shakeRotation = 0
+				reveal.focusBoost = 1
+			end
+		end
+		return
+	end
 
 	if reveal.phase == "flashIn" then
-                local duration = reveal.flashInDuration or 0
-                local progress = duration <= 0 and 1 or min(1, reveal.timer / duration)
-                reveal.white = progress
-                reveal.focusBoost = 1
-                if not reveal.applied and (duration <= 0 or reveal.timer >= duration * (reveal.applyThreshold or 0.6)) then
-                        Upgrades:applyCardReveal(card, info)
-                        reveal.applied = true
-                end
-                if duration <= 0 or reveal.timer >= duration then
+		local duration = reveal.flashInDuration or 0
+		local progress = duration <= 0 and 1 or min(1, reveal.timer / duration)
+		reveal.white = progress
+		reveal.focusBoost = 1
+		if not reveal.applied and (duration <= 0 or reveal.timer >= duration * (reveal.applyThreshold or 0.6)) then
+			Upgrades:applyCardReveal(card, info)
+			reveal.applied = true
+		end
+		if duration <= 0 or reveal.timer >= duration then
 			reveal.phase = "flashOut"
 			reveal.timer = 0
 		end
@@ -352,14 +352,14 @@ local function updateMysteryReveal(self, card, state, dt)
 
 	if reveal.phase == "flashOut" then
 		local duration = reveal.flashOutDuration or 0
-                if duration <= 0 then
-                        reveal.white = 0
-                        reveal.focusBoost = 1
-                        if (reveal.postPauseDuration or 0) > 0 then
-                                reveal.phase = "postPause"
-                                reveal.timer = 0
-                                reveal.postPauseTimer = 0
-                        else
+		if duration <= 0 then
+			reveal.white = 0
+			reveal.focusBoost = 1
+			if (reveal.postPauseDuration or 0) > 0 then
+				reveal.phase = "postPause"
+				reveal.timer = 0
+				reveal.postPauseTimer = 0
+			else
 				reveal.phase = "done"
 				reveal.timer = 0
 			end
@@ -367,13 +367,13 @@ local function updateMysteryReveal(self, card, state, dt)
 			local progress = min(1, reveal.timer / duration)
 			reveal.white = 1 - progress
 			if reveal.timer >= duration then
-                                reveal.white = 0
-                                reveal.focusBoost = 1
-                                if (reveal.postPauseDuration or 0) > 0 then
-                                        reveal.phase = "postPause"
-                                        reveal.timer = 0
-                                        reveal.postPauseTimer = 0
-                                else
+				reveal.white = 0
+				reveal.focusBoost = 1
+				if (reveal.postPauseDuration or 0) > 0 then
+					reveal.phase = "postPause"
+					reveal.timer = 0
+					reveal.postPauseTimer = 0
+				else
 					reveal.phase = "done"
 					reveal.timer = 0
 				end
@@ -384,16 +384,16 @@ local function updateMysteryReveal(self, card, state, dt)
 		return
 	end
 
-        if reveal.phase == "postPause" then
-                reveal.white = 0
-                reveal.shakeOffset = 0
-                reveal.shakeRotation = 0
-                reveal.focusBoost = 1
-                local duration = reveal.postPauseDuration or 0
-                if duration <= 0 then
-                        reveal.phase = "done"
-                        reveal.timer = 0
-                        return
+	if reveal.phase == "postPause" then
+		reveal.white = 0
+		reveal.shakeOffset = 0
+		reveal.shakeRotation = 0
+		reveal.focusBoost = 1
+		local duration = reveal.postPauseDuration or 0
+		if duration <= 0 then
+			reveal.phase = "done"
+			reveal.timer = 0
+			return
 		end
 
 		reveal.postPauseTimer = (reveal.postPauseTimer or 0) + dt
@@ -402,19 +402,19 @@ local function updateMysteryReveal(self, card, state, dt)
 			reveal.timer = 0
 		end
 		return
-        end
+	end
 
-        if reveal.phase == "done" then
-                reveal.white = 0
-                reveal.shakeOffset = 0
-                reveal.shakeRotation = 0
-                if reveal.focusBoost then
-                        reveal.focusBoost = max(0, reveal.focusBoost - dt * 2.6)
-                        if reveal.focusBoost <= 0.001 then
-                                reveal.focusBoost = 0
-                        end
-                end
-        end
+	if reveal.phase == "done" then
+		reveal.white = 0
+		reveal.shakeOffset = 0
+		reveal.shakeRotation = 0
+		if reveal.focusBoost then
+			reveal.focusBoost = max(0, reveal.focusBoost - dt * 2.6)
+			if reveal.focusBoost <= 0.001 then
+				reveal.focusBoost = 0
+			end
+		end
+	end
 end
 
 local function handleAnalogAxis(self, axis, value)
@@ -1861,20 +1861,20 @@ function Shop:draw(screenW, screenH)
 			end
 		end
 
-                local focus = state and state.focus or 0
-                local fadeOut = state and state.fadeOut or 0
-                local focusEase = focus * focus * (3 - 2 * focus)
-                local revealFocus = 0
-                if revealState then
-                        local boost = revealState.focusBoost or 0
-                        revealFocus = max(0, min(1, boost))
-                end
-                local combinedFocus = max(focusEase, revealFocus)
-                local fadeEase = fadeOut * fadeOut * (3 - 2 * fadeOut)
-                local discardData = (state and state.discardActive and state.discard and self.restocking) and state.discard or nil
-                local discardOffsetX, discardOffsetY, discardRotation = 0, 0, 0
-                if discardData then
-                        local fadeT = max(0, min(1, fadeOut))
+		local focus = state and state.focus or 0
+		local fadeOut = state and state.fadeOut or 0
+		local focusEase = focus * focus * (3 - 2 * focus)
+		local revealFocus = 0
+		if revealState then
+			local boost = revealState.focusBoost or 0
+			revealFocus = max(0, min(1, boost))
+		end
+		local combinedFocus = max(focusEase, revealFocus)
+		local fadeEase = fadeOut * fadeOut * (3 - 2 * fadeOut)
+		local discardData = (state and state.discardActive and state.discard and self.restocking) and state.discard or nil
+		local discardOffsetX, discardOffsetY, discardRotation = 0, 0, 0
+		if discardData then
+			local fadeT = max(0, min(1, fadeOut))
 			local time = discardData.duration and discardData.duration > 0 and min(1, (discardData.clock or 0) / discardData.duration) or fadeT
 			local discardEase = fadeT * fadeT * (3 - 2 * fadeT)
 			local motionEase = time * time * (3 - 2 * time)
@@ -1890,28 +1890,28 @@ function Shop:draw(screenW, screenH)
 			alpha = alpha * (1 - 0.7 * discardEase)
 		end
 
-                local cardSelected = card == self.selected
-                if cardSelected or combinedFocus > 0 then
-                        local focusAmount = combinedFocus
-                        yOffset = yOffset + 46 * focusAmount
-                        scale = scale * (1 + 0.35 * focusAmount)
-                        alpha = min(1, alpha * (1 + 0.6 * focusAmount))
-                        -- Make sure the selected card renders at full opacity while it
-                        -- animates toward the center. Without this clamp the focus easing
-                        -- could leave it slightly translucent until the animation fully
-                        -- completes, which felt like a bug. Forcing alpha to 1 keeps the
-                        -- spotlighted card crisp for the whole animation.
-                        if cardSelected or revealFocus > 0 then
-                                alpha = 1
-                        end
-                end
+		local cardSelected = card == self.selected
+		if cardSelected or combinedFocus > 0 then
+			local focusAmount = combinedFocus
+			yOffset = yOffset + 46 * focusAmount
+			scale = scale * (1 + 0.35 * focusAmount)
+			alpha = min(1, alpha * (1 + 0.6 * focusAmount))
+			-- Make sure the selected card renders at full opacity while it
+			-- animates toward the center. Without this clamp the focus easing
+			-- could leave it slightly translucent until the animation fully
+			-- completes, which felt like a bug. Forcing alpha to 1 keeps the
+			-- spotlighted card crisp for the whole animation.
+			if cardSelected or revealFocus > 0 then
+				alpha = 1
+			end
+		end
 
-                if not cardSelected and combinedFocus <= 0 then
-                        if discardData then
-                                scale = scale * (1 - 0.05 * fadeEase)
-                                alpha = alpha * (1 - 0.55 * fadeEase)
-                        else
-                                yOffset = yOffset - 32 * fadeEase
+		if not cardSelected and combinedFocus <= 0 then
+			if discardData then
+				scale = scale * (1 - 0.05 * fadeEase)
+				alpha = alpha * (1 - 0.55 * fadeEase)
+			else
+				yOffset = yOffset - 32 * fadeEase
 				scale = scale * (1 - 0.2 * fadeEase)
 				alpha = alpha * (1 - 0.9 * fadeEase)
 			end
@@ -1922,19 +1922,19 @@ function Shop:draw(screenW, screenH)
 		local shakeOffset = (revealState and revealState.shakeOffset) or 0
 		local extraRotation = (revealState and revealState.shakeRotation) or 0
 
-                local centerX = baseX + cardWidth / 2
-                local centerY = baseY + cardHeight / 2 - yOffset
-                if cardSelected or combinedFocus > 0 then
-                        local focusAmount = combinedFocus
-                        centerX = centerX + (screenW / 2 - centerX) * focusAmount
-                        local targetY = layoutCenterY
-                        centerY = centerY + (targetY - centerY) * focusAmount
-                else
-                        if discardData then
-                                centerX = centerX + discardOffsetX
-                                centerY = centerY + discardOffsetY
-                        else
-                                centerY = centerY + 28 * fadeEase
+		local centerX = baseX + cardWidth / 2
+		local centerY = baseY + cardHeight / 2 - yOffset
+		if cardSelected or combinedFocus > 0 then
+			local focusAmount = combinedFocus
+			centerX = centerX + (screenW / 2 - centerX) * focusAmount
+			local targetY = layoutCenterY
+			centerY = centerY + (targetY - centerY) * focusAmount
+		else
+			if discardData then
+				centerX = centerX + discardOffsetX
+				centerY = centerY + discardOffsetY
+			else
+				centerY = centerY + 28 * fadeEase
 			end
 		end
 
