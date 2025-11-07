@@ -25,7 +25,6 @@ spelled out in the completion criteria column.
 | Dragonfruit Gourmand | `dragonfruit_gourmand` | `dragonfruitEaten` | Eat **3** dragonfruit in one session. | 100 XP |
 | Shield Triathlon | `shield_triathlon` | `runShieldWallBounces`, `runShieldRockBreaks`, `runShieldSawParries` | Perform at least one of each shield action (wall bounce, rock break, saw parry); completing all three awards progress **3**/3. | 120 XP |
 | Floor Speedrunner | `floor_speedrunner` | `fastestFloorClear` | Finish any floor in **45 seconds** or less (tracking stores the best time per run). | 110 XP |
-| Pace Setter | `pace_setter` | `tilesTravelled`, `timeAlive` | Maintain an average pace of **240 tiles per minute** across the run (⌊tiles ÷ time_alive⌋ × 60). | 105 XP |
 | Combo Harvester | `combo_harvester` | `applesEaten`, `combosTriggered` | Bank fruit in sets of **8** before bursting into combos; achieve **4** harvests (min(floor(apples/8), combos) ≥ 4). | 95 XP |
 | Shielded Marathon | `shielded_marathon` | `shieldsSaved`, `tilesTravelled` | Meet both conditions: trigger **2** emergency shields and travel **320** tiles in a single run. | 115 XP |
 | Fruit Rush | `fruit_rush` | `applesEaten`, `timeAlive` | Maintain a fruit collection rate of **16 per minute** (⌊apples ÷ time_alive⌋ × 60). | 100 XP |
