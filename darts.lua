@@ -665,26 +665,28 @@ function Darts:onSnakeImpact(emitter, hitX, hitY)
 end
 
 function Darts:update(dt)
-	if not DARTS_ENABLED then
-		return
-	end
+        if not DARTS_ENABLED then
+                return
+        end
 
-	dt = dt or 0
+        dt = dt or 0
 
-	local stall = stallTimer or 0
-	if stall > 0 then
-		if dt <= stall then
-			stallTimer = max(0, stall - dt)
-			return
-		end
+        local stall = stallTimer or 0
+        local consumed = min(stall, dt)
+        if consumed > 0 then
+                stallTimer = stall - consumed
+        end
 
-		dt = dt - stall
-		stallTimer = 0
-	end
+        local idleDt = dt - consumed
 
-	for index = 1, #emitters do
-		updateEmitter(emitters[index], dt)
-	end
+        for index = 1, #emitters do
+                local emitter = emitters[index]
+                if emitter and emitter.state == "firing" then
+                        updateEmitter(emitter, dt)
+                else
+                        updateEmitter(emitter, idleDt)
+                end
+        end
 end
 
 local function drawEmitter(emitter)
