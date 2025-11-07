@@ -1155,30 +1155,40 @@ local badgeDefinitions = {
 		shape = "diamond",
 		colorKey = "snakeDefault",
 		fallback = {0.45, 0.85, 0.70, 1},
+		cornerRadiusScale = 0.18,
+		cornerSegments = 4,
 	},
 	mobility = {
 		label = "Mobility",
 		shape = "triangle_up",
 		colorKey = "blueberryColor",
 		fallback = {0.55, 0.65, 0.95, 1},
+		cornerRadiusScale = 0.15,
+		cornerSegments = 3,
 	},
 	risk = {
 		label = "Risk",
 		shape = "triangle_down",
 		colorKey = "warningColor",
 		fallback = {0.92, 0.55, 0.40, 1},
+		cornerRadiusScale = 0.15,
+		cornerSegments = 3,
 	},
 	utility = {
 		label = "Utility",
 		shape = "square",
 		colorKey = "panelBorder",
 		fallback = {0.32, 0.50, 0.54, 1},
+		cornerRadiusScale = 0.2,
+		cornerSegments = 4,
 	},
 	hazard = {
 		label = "Hazard",
 		shape = "hexagon",
 		colorKey = "appleColor",
 		fallback = {0.90, 0.45, 0.55, 1},
+		cornerRadiusScale = 0.12,
+		cornerSegments = 5,
 	},
 }
 
@@ -1266,167 +1276,88 @@ getBadgeStyleForCard = function(card)
 	return nil
 end
 
-local function drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-	local points = {}
-	local angleStep = (pi * 2) / sides
-	local offset = rotation or 0
-	for i = 0, sides - 1 do
-		local angle = offset + i * angleStep
-		points[#points + 1] = cx + cos(angle) * radius
-		points[#points + 1] = cy + sin(angle) * radius
-	end
+local function drawRoundedRegularPolygon(mode, cx, cy, R, sides, cr, segs, rot)
+    segs = math.max(2, segs or 4)
+    rot  = rot or 0
+    local pi, cos, sin, atan2 = math.pi, math.cos, math.sin, math.atan2
+    local TWO_PI = 2 * pi
 
-	love.graphics.polygon(mode, unpack(points))
-end
+    -- Interior angle and half-angle for a regular n-gon
+    local interior = pi - TWO_PI / sides
+    local half     = interior / 2
 
-local function drawRoundedRegularPolygon(mode, cx, cy, radius, sides, rotation, baseCornerRadius, segments)
-	if not sides or sides < 3 then
-		return
-	end
+    -- Distance from the vertex to the tangent point along each edge
+    -- t = r * cot(α/2)  and  cot(x) = 1 / tan(x)
+    local function cot(x) return 1 / math.tan(x) end
+    local t = cr * cot(half)
 
-	if not baseCornerRadius or baseCornerRadius <= 0 then
-		drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-		return
-	end
+    -- Distance from vertex inward along the angle bisector to the arc center
+    -- m = r / sin(α/2)
+    local m = cr / math.sin(half)
 
-	segments = max(1, floor(segments or 1))
+    -- Precompute the raw (unrounded) vertices
+    local V = {}
+    for i = 0, sides - 1 do
+        local a = rot + (TWO_PI * i / sides) - pi/2 -- start with a vertex "up"
+        V[i] = { cx + R * cos(a), cy + R * sin(a) }
+    end
 
-	local angleStep = (pi * 2) / sides
-	local offset = rotation or 0
-	local vertices = {}
-	for i = 0, sides - 1 do
-		local angle = offset + i * angleStep
-		vertices[i + 1] = {
-			cx + cos(angle) * radius,
-			cy + sin(angle) * radius,
-		}
-	end
+    -- Build the final flattened point list, walking CCW
+    local points = {}
+    local function norm(dx, dy)
+        local len = math.sqrt(dx*dx + dy*dy)
+        return dx/len, dy/len
+    end
 
-	local points = {}
-	for i = 1, sides do
-		local current = vertices[i]
-		local prev = vertices[i == 1 and sides or (i - 1)]
-		local next = vertices[i == sides and 1 or (i + 1)]
+    for i = 0, sides - 1 do
+        local vp   = V[(i - 1) % sides]
+        local v    = V[i]
+        local vn   = V[(i + 1) % sides]
 
-		local prevDirX = prev[1] - current[1]
-		local prevDirY = prev[2] - current[2]
-		local nextDirX = next[1] - current[1]
-		local nextDirY = next[2] - current[2]
+        -- Unit directions from vertex toward prev/next vertices
+        local dpx, dpy = norm(vp[1] - v[1], vp[2] - v[2])
+        local dnx, dny = norm(vn[1] - v[1], vn[2] - v[2])
 
-		local prevLen = sqrt(prevDirX * prevDirX + prevDirY * prevDirY)
-		local nextLen = sqrt(nextDirX * nextDirX + nextDirY * nextDirY)
+        -- Tangency points on each adjacent edge
+        local T1x, T1y = v[1] + dpx * t, v[2] + dpy * t
+        local T2x, T2y = v[1] + dnx * t, v[2] + dny * t
 
-		if prevLen <= 0 or nextLen <= 0 then
-			drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-			return
-		end
+        -- Inward bisector (sum of unit directions), then normalize
+        local bx, by = dpx + dnx, dpy + dny
+        bx, by = norm(bx, by)
 
-		local cornerRadius = min(baseCornerRadius, prevLen * 0.48, nextLen * 0.48)
-		if cornerRadius <= 0 then
-			drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-			return
-		end
+        -- Arc center is along the inward bisector
+        local Cx, Cy = v[1] + bx * m, v[2] + by * m
 
-		local normPrevX = prevDirX / prevLen
-		local normPrevY = prevDirY / prevLen
-		local normNextX = nextDirX / nextLen
-		local normNextY = nextDirY / nextLen
+        -- Arc angles from center to each tangency point
+        local a1 = atan2(T1y - Cy, T1x - Cx)
+        local a2 = atan2(T2y - Cy, T2x - Cx)
 
-		local incomingPrevX = -normPrevX
-		local incomingPrevY = -normPrevY
-		local incomingNextX = -normNextX
-		local incomingNextY = -normNextY
+        -- Ensure we sweep the shorter CCW arc from a1 to a2
+        -- (adjust for wrapping so it marches forward CCW)
+        while a2 < a1 do a2 = a2 + TWO_PI end
 
-		local dot = incomingPrevX * incomingNextX + incomingPrevY * incomingNextY
-		dot = max(-1, min(1, dot))
-		local theta = acos(dot)
-		if theta <= 0 then
-			drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-			return
-		end
+        -- Add the first tangency point (connects from previous corner)
+        table.insert(points, T1x); table.insert(points, T1y)
 
-		local halfTheta = theta * 0.5
-		local sinHalf = sin(halfTheta)
-		local tanHalf = tan(halfTheta)
+        -- Sample the rounded corner arc
+        for s = 1, segs - 1 do
+            local u = s / segs
+            local aa = a1 + (a2 - a1) * u
+            table.insert(points, Cx + cr * math.cos(aa))
+            table.insert(points, Cy + cr * math.sin(aa))
+        end
 
-		if abs(sinHalf) < 1e-4 or abs(tanHalf) < 1e-4 then
-			drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-			return
-		end
+        -- The second tangency point will be added as the first point of the next corner
+        -- (so we avoid duplicates); it will appear when i+1 is processed as T1.
+        -- For the last corner, we'll close the polygon automatically.
+        if i == sides - 1 then
+            -- Close by explicitly adding the very last tangency point
+            table.insert(points, T2x); table.insert(points, T2y)
+        end
+    end
 
-		local outwardX = incomingPrevX + incomingNextX
-		local outwardY = incomingPrevY + incomingNextY
-		local outwardLen = sqrt(outwardX * outwardX + outwardY * outwardY)
-		if outwardLen <= 1e-4 then
-			drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-			return
-		end
-
-		outwardX = outwardX / outwardLen
-		outwardY = outwardY / outwardLen
-
-		local offsetToCenter = cornerRadius / sinHalf
-		local offsetAlongEdge = cornerRadius / tanHalf
-
-		local centerX = current[1] + outwardX * offsetToCenter
-		local centerY = current[2] + outwardY * offsetToCenter
-
-		local prevPointX = current[1] + incomingPrevX * offsetAlongEdge
-		local prevPointY = current[2] + incomingPrevY * offsetAlongEdge
-		local nextPointX = current[1] + incomingNextX * offsetAlongEdge
-		local nextPointY = current[2] + incomingNextY * offsetAlongEdge
-
-		points[#points + 1] = prevPointX
-		points[#points + 1] = prevPointY
-
-		local anglePrev = atan2(prevPointY - centerY, prevPointX - centerX)
-		local angleNext = atan2(nextPointY - centerY, nextPointX - centerX)
-		local angleDelta = angleNext - anglePrev
-		if angleDelta <= 0 then
-			angleDelta = angleDelta + (pi * 2)
-		end
-
-		for step = 1, segments do
-			local t = step / segments
-			local angle = anglePrev + angleDelta * t
-			points[#points + 1] = centerX + cos(angle) * cornerRadius
-			points[#points + 1] = centerY + sin(angle) * cornerRadius
-		end
-	end
-
-	love.graphics.polygon(mode, unpack(points))
-end
-
-local function drawPolygonShape(mode, cx, cy, size, sides, rotation, style, defaultRadiusScale)
-	local radiusScale = defaultRadiusScale or 0.5
-	if style and style.radiusScale ~= nil then
-		radiusScale = style.radiusScale
-	end
-	local radius = size * radiusScale
-
-	local baseCornerRadius
-	if style then
-		if style.cornerRadius then
-			baseCornerRadius = style.cornerRadius
-		elseif style.cornerRadiusScale then
-			baseCornerRadius = radius * style.cornerRadiusScale
-		end
-	end
-
-	if baseCornerRadius and baseCornerRadius > 0 then
-		local segments = 4
-		if style and style.cornerSegments then
-			segments = style.cornerSegments
-		end
-		drawRoundedRegularPolygon(mode, cx, cy, radius, sides, rotation, baseCornerRadius, segments)
-		return
-	end
-
-	drawRegularPolygon(mode, cx, cy, radius, sides, rotation)
-end
-
-local function drawRoundedTriangle(mode, cx, cy, size, rotation, style)
-	drawPolygonShape(mode, cx, cy, size, 3, rotation, style, 0.52)
+    love.graphics.polygon(mode, points)
 end
 
 local badgeShapeDrawers = {
@@ -1434,19 +1365,34 @@ local badgeShapeDrawers = {
 		love.graphics.circle(mode, cx, cy, size * 0.5, 32)
 	end,
 	square = function(mode, cx, cy, size, style)
-		drawPolygonShape(mode, cx, cy, size, 4, pi / 4, style, 0.64)
+		local R  = size * 0.50
+		local cr = size * 0.08
+		local segs = 4
+		drawRoundedRegularPolygon(mode, cx, cy, R, 4, cr, segs, 0)
 	end,
 	diamond = function(mode, cx, cy, size, style)
-		drawPolygonShape(mode, cx, cy, size, 4, 0, style, 0.54)
+		local R  = size * 0.50
+		local cr = size * 0.08
+		local segs = 4
+		drawRoundedRegularPolygon(mode, cx, cy, R, 4, cr, segs, math.pi/4)
 	end,
 	triangle_up = function(mode, cx, cy, size, style)
-		drawRoundedTriangle(mode, cx, cy, size + 12, -pi / 2, style)
+		local R  = size * 0.52
+		local cr = size * 0.08
+		local segs = 4
+		drawRoundedRegularPolygon(mode, cx, cy, R, 3, cr, segs, 0)
 	end,
 	triangle_down = function(mode, cx, cy, size, style)
-		drawRoundedTriangle(mode, cx, cy, size + 12, pi / 2, style)
+		local R  = size * 0.52
+		local cr = size * 0.08
+		local segs = 4
+		drawRoundedRegularPolygon(mode, cx, cy, R, 3, cr, segs, math.pi)
 	end,
 	hexagon = function(mode, cx, cy, size, style)
-		drawPolygonShape(mode, cx, cy, size, 6, pi / 6, style, 0.48)
+		local R  = size * 0.50
+		local cr = size * 0.08
+		local segs = 4
+		drawRoundedRegularPolygon(mode, cx, cy, R, 6, cr, segs, 0)
 	end,
 }
 
