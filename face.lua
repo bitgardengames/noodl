@@ -210,31 +210,26 @@ registerDrawer("blank", function()
 end)
 
 registerDrawer("shocked", function()
-	local outerRadius = EYE_RADIUS * currentEyeScale * 1.15
-	local circleSegments = 24
-	local outlineWidth = outerRadius * 0.4
-	local crossHalfWidth = outerRadius * 0.75
-	local crossHalfHeight = outerRadius * 0.75
-	local crossLineWidth = outerRadius * 0.32
+	local crossSize = EYE_RADIUS * currentEyeScale * 1.6
+	local crossLineWidth = EYE_RADIUS * currentEyeScale * 0.9
 
-	love.graphics.setLineWidth(outlineWidth)
-	love.graphics.setLineJoin("bevel")
-	love.graphics.circle("line", LEFT_EYE_CENTER_X, EYE_CENTER_Y, outerRadius, circleSegments)
-	love.graphics.circle("line", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, outerRadius, circleSegments)
-
+	love.graphics.setColor(0, 0, 0, 1)
 	love.graphics.setLineWidth(crossLineWidth)
+	love.graphics.setLineJoin("miter")
+	love.graphics.setLineStyle("smooth")  -- keeps rounded ends
+
 	local function drawCross(cx)
 		love.graphics.line(
-		cx - crossHalfWidth,
-		EYE_CENTER_Y - crossHalfHeight,
-		cx + crossHalfWidth,
-		EYE_CENTER_Y + crossHalfHeight
+			cx - crossSize * 0.5,
+			EYE_CENTER_Y - crossSize * 0.5,
+			cx + crossSize * 0.5,
+			EYE_CENTER_Y + crossSize * 0.5
 		)
 		love.graphics.line(
-		cx - crossHalfWidth,
-		EYE_CENTER_Y + crossHalfHeight,
-		cx + crossHalfWidth,
-		EYE_CENTER_Y - crossHalfHeight
+			cx - crossSize * 0.5,
+			EYE_CENTER_Y + crossSize * 0.5,
+			cx + crossSize * 0.5,
+			EYE_CENTER_Y - crossSize * 0.5
 		)
 	end
 
