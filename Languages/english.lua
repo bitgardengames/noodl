@@ -17,16 +17,16 @@ local english = {
 			start_game = "Start Game",
 			settings = "Settings",
 			achievements = "Achievements",
-			progression = "Progression",
+			progress = "Progress",
 			quit = "Quit",
 			version = "v1.0.0",
 			title_word = "noodl",
 			daily_panel_header = "Daily Challenge",
 			daily_panel_progress = "Progress: ${current}/${goal}",
-			daily_panel_complete = "Challenge complete! You're at ${current}.",
-			daily_panel_streak = "Current streak: ${streak} ${unit}",
+			daily_panel_complete = "Challenge complete! You reached ${current}.",
+			daily_panel_streak = "Streak: ${streak} ${unit}",
 			daily_panel_best = "Best streak: ${best} ${unit}",
-			daily_panel_keep_alive = "Don't miss today's challenge to keep it alive!",
+			daily_panel_keep_alive = "Complete today’s challenge to keep your streak alive!",
 			daily_panel_complete_message = "Streak saved! See you tomorrow.",
 			daily_panel_start = "Complete today's challenge to begin a streak!",
 			daily_panel_reset_tooltip = "Daily challenges reset in ${time}.",
@@ -315,7 +315,7 @@ local english = {
 				bestComboStreak = "Best Combo Streak",
 				totalCombosTriggered = "Combos Pulled Off",
 				mostApplesInRun = "Most Apples in a Run",
-				shieldsSaved = "Emergency Shields Triggered",
+				shieldsSaved = "Shields Triggered",
 				tilesTravelled = "Tiles Slithered",
 				totalTimeAlive = "Time Alive",
 				longestRunDuration = "Longest Run",
@@ -326,7 +326,7 @@ local english = {
 				longestFloorClearTime = "Slowest Floor Clear",
 				mostTilesTravelledInRun = "Most Tiles in a Run",
 				mostCombosInRun = "Most Combos in a Run",
-				mostShieldsSavedInRun = "Most Emergency Shields in a Run",
+				mostShieldsSavedInRun = "Most Shields in a Run",
 				shieldWallBounces = "Shield Wall Bounces",
 				shieldRockBreaks = "Shield Rock Breaks",
 				shieldSawParries = "Shield Saw Parries",
@@ -334,7 +334,7 @@ local english = {
 			},
 		},
 		pause = {
-			title = "Paused",
+			title = "Game Paused",
 			floor_label = "Floor ${number}: ${name}",
 			resume = "Resume",
 			toggle_music = "Music: ${state}",
@@ -364,8 +364,8 @@ local english = {
 			view_run_summary = "Continue",
 			quit_to_menu = "Quit to Menu",
 			meta_progress_title = "Run Summary",
-			meta_progress_gain = "You earned ${points} XP from ${fruit}.",
-			meta_progress_gain_no_fruit = "You earned ${points} XP this run.",
+			meta_progress_gain = "Earned ${points} XP from fruit collected.",
+			meta_progress_gain_no_fruit = "Earned ${points} XP this run.",
 			meta_progress_gain_none = "You didn't earn any XP this run.",
 			meta_progress_gain_short = "+${points} XP",
 			meta_progress_unlock_overlay_title = "New upgrade unlocked!",
@@ -490,7 +490,7 @@ local english = {
 			},
 			stone_skin = {
 				name = "Stone Skin",
-				description = "Gain a shield that shatters rocks and shrugs off a saw or laser hit.",
+				description = "Gain a shield that absorbs one hit.",
 				shield_text = "Stone Skin!",
 			},
 			aegis_recycler = {
@@ -522,7 +522,7 @@ local english = {
 			},
 			molting_reflex = {
 				name = "Molting Reflex",
-				description = "Shields trigger a 60% adrenaline surge.",
+				description = "Breaking a shield unleashes a 60% adrenaline burst.",
 			},
 			mystery_card = {
 				name = "Mystery Card",
@@ -530,7 +530,7 @@ local english = {
 			},
 			circuit_breaker = {
 				name = "Circuit Breaker",
-				description = "Traps freeze for 1s after each fruit.",
+				description = "Each fruit collected short-circuits all traps for 1 second.",
 			},
 			tremor_bloom = {
 				name = "Tremor Bloom",
@@ -544,7 +544,6 @@ local english = {
 			sawblade_sinkhole = {
 				name = "Sawblade Sinkhole",
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
-				activation_text = "",
 			},
 			resonant_shell = {
 				name = "Resonant Shell",
@@ -592,7 +591,7 @@ local english = {
 			},
 			phoenix_echo = {
 				name = "Phoenix Echo",
-				description = "Once per run, a fatal crash rewinds without resetting the floor.",
+				description = "Once per run, a fatal hit rewinds time",
 			},
 			thunder_dash = {
 				name = "Thunder Dash",
