@@ -14,7 +14,6 @@ local PlayerStats = require("playerstats")
 local UpgradeHelpers = require("upgradehelpers")
 local DataSchemas = require("dataschemas")
 local UpgradeVisuals = require("upgradevisuals")
-local Bombs = require("bombs")
 
 local floor = math.floor
 local max = math.max
@@ -295,10 +294,6 @@ local TREMOR_BLOOM_RADIUS = 2
 local TREMOR_BLOOM_SLIDE_DURATION = 0.28
 local TREMOR_BLOOM_SAW_NUDGE_AMOUNT = 0.22
 local TREMOR_BLOOM_COLOR = {0.76, 0.64, 1.0, 1}
-
-local VOLATILE_BLOOM_SHIELD_PER_HIT = 0.25
-local VOLATILE_BLOOM_COMBO_PER_HIT = 0.35
-local VOLATILE_BLOOM_COLOR = {0.98, 0.46, 0.3, 1}
 
 local function grantShields(amount)
 	amount = max(0, floor((amount or 0) + 0.0001))
@@ -807,91 +802,6 @@ local function stoneSkinShieldHandler(data, state)
 		},
 	})
 	Rocks:shatterNearest(fx or 0, fy or 0, 1)
-end
-
-local function handleVolatileBloomExplosion(event)
-	local state = Upgrades.runState
-	if not state or getStacks(state, "volatile_bloom") <= 0 then
-		return
-	end
-
-	local hits = event and event.hits
-	local hitCount = hits and #hits or 0
-	if hitCount <= 0 then
-		return
-	end
-
-	state.counters = state.counters or {}
-	local counters = state.counters
-
-	local totalProgress = (counters.volatileBloomShieldProgress or 0) + hitCount * VOLATILE_BLOOM_SHIELD_PER_HIT
-	local shields = floor(totalProgress + 1e-6)
-	counters.volatileBloomShieldProgress = totalProgress - shields
-
-	if hits then
-		for _, hit in ipairs(hits) do
-			if hit.type == "rock" then
-				Upgrades:notify("rockShattered", {
-					x = hit.x,
-					y = hit.y,
-					sourceX = event and event.x,
-					sourceY = event and event.y,
-					rock = hit.rock,
-				})
-			end
-		end
-	end
-
-	local comboBoost = hitCount * VOLATILE_BLOOM_COMBO_PER_HIT
-	if comboBoost > 0 then
-		boostComboTimer(comboBoost)
-	end
-
-	if shields > 0 then
-		grantShields(shields)
-	end
-
-	local label = getUpgradeString("volatile_bloom", "activation_text")
-	if label and label ~= "" then
-		if shields > 0 then
-			if shields > 1 then
-				label = string.format("%s +%d", label, shields)
-			else
-				label = string.format("%s +1", label)
-			end
-		else
-			local percent = floor(hitCount * VOLATILE_BLOOM_SHIELD_PER_HIT * 100 + 0.5)
-			label = string.format("%s +%d%%", label, percent)
-		end
-	else
-		label = nil
-	end
-
-	local options = {
-		x = event and event.x,
-		y = event and event.y,
-		color = VOLATILE_BLOOM_COLOR,
-		particleCount = 16,
-		particleSpeed = 140,
-		particleLife = 0.42,
-		textOffset = 44,
-		textScale = 1.08,
-		visual = {
-			variant = "pulse",
-			showBase = false,
-			life = 0.74,
-			innerRadius = 14,
-			outerRadius = 66,
-			ringCount = 3,
-			ringSpacing = 12,
-			addBlend = true,
-			color = VOLATILE_BLOOM_COLOR,
-			variantSecondaryColor = {1.0, 0.74, 0.46, 0.78},
-			variantTertiaryColor = {1.0, 0.92, 0.62, 0.65},
-		},
-	}
-
-	celebrateUpgrade(label, nil, options)
 end
 
 local function newRunState()
@@ -1679,73 +1589,6 @@ pool = {
 							})
 						end
 					end
-				end
-			end,
-		},
-	}),
-	register({
-		id = "volatile_bloom",
-		nameKey = "upgrades.volatile_bloom.name",
-		descKey = "upgrades.volatile_bloom.description",
-		rarity = "legendary",
-		tags = {"hazard", "rocks", "defense"},
-		onAcquire = function(state)
-			state.counters = state.counters or {}
-			state.counters.volatileBloomShieldProgress = state.counters.volatileBloomShieldProgress or 0
-
-			local options = {
-				color = VOLATILE_BLOOM_COLOR,
-				textOffset = 48,
-				textScale = 1.12,
-				particleCount = 20,
-				particleSpeed = 150,
-				particleLife = 0.44,
-				visual = {
-					variant = "pulse",
-					showBase = false,
-					life = 0.8,
-					innerRadius = 12,
-					outerRadius = 68,
-					ringCount = 3,
-					ringSpacing = 12,
-					addBlend = true,
-					color = VOLATILE_BLOOM_COLOR,
-					variantSecondaryColor = {1.0, 0.74, 0.46, 0.82},
-					variantTertiaryColor = {1.0, 0.92, 0.6, 0.62},
-				},
-			}
-
-			applySegmentPosition(options, 0.78)
-			celebrateUpgrade(getUpgradeString("volatile_bloom", "name"), nil, options)
-		end,
-		handlers = {
-			fruitCollected = function(_, state)
-				if getStacks(state, "volatile_bloom") <= 0 then
-					return
-				end
-
-				local hx, hy = Snake:getHead()
-				if not (hx and hy) then
-					return
-				end
-
-				local dir = Snake:getDirection()
-				local dirX = dir and dir.x or 0
-				local dirY = dir and dir.y or 0
-				if dirX == 0 and dirY == 0 then
-					return
-				end
-
-				local tileSize = (Arena and Arena.tileSize) or SnakeUtils.SEGMENT_SIZE or 24
-				if not tileSize or tileSize <= 0 then
-					tileSize = 24
-				end
-
-				local dropX = hx - dirX * tileSize
-				local dropY = hy - dirY * tileSize
-
-				if dropX and dropY then
-					Bombs:spawnBomb(dropX, dropY)
 				end
 			end,
 		},
@@ -2636,10 +2479,6 @@ function Upgrades:notify(event, data)
 		self:markHUDIndicatorsDirty()
 	end
 end
-
-Bombs:setExplosionCallback(function(event)
-	handleVolatileBloomExplosion(event)
-end)
 
 local function clamp(value, min, max)
 	if min and value < min then return min end
