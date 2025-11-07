@@ -1360,39 +1360,28 @@ local function drawRoundedRegularPolygon(mode, cx, cy, R, sides, cr, segs, rot)
     love.graphics.polygon(mode, points)
 end
 
+local SHAPE_RADIUS = 0.46  -- unified size across all shapes
+local CORNER_RADIUS = 0.10 -- keeps smooth, subtle rounding
+
 local badgeShapeDrawers = {
 	circle = function(mode, cx, cy, size)
-		love.graphics.circle(mode, cx, cy, size * 0.5, 32)
+		local r = size * SHAPE_RADIUS
+		love.graphics.circle(mode, cx, cy, r, 32)
 	end,
 	square = function(mode, cx, cy, size, style)
-		local R  = size * 0.50
-		local cr = size * 0.08
-		local segs = 4
-		drawRoundedRegularPolygon(mode, cx, cy, R, 4, cr, segs, 0)
+		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS, 4, size * CORNER_RADIUS, 4, 0)
 	end,
 	diamond = function(mode, cx, cy, size, style)
-		local R  = size * 0.50
-		local cr = size * 0.08
-		local segs = 4
-		drawRoundedRegularPolygon(mode, cx, cy, R, 4, cr, segs, math.pi/4)
+		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS, 4, size * CORNER_RADIUS, 4, math.pi / 4)
 	end,
 	triangle_up = function(mode, cx, cy, size, style)
-		local R  = size * 0.52
-		local cr = size * 0.08
-		local segs = 4
-		drawRoundedRegularPolygon(mode, cx, cy, R, 3, cr, segs, 0)
+		drawRoundedRegularPolygon(mode, cx, cy + size * 0.02, size * SHAPE_RADIUS * 1.05, 3, size * CORNER_RADIUS * 0.8, 4, 0)
 	end,
 	triangle_down = function(mode, cx, cy, size, style)
-		local R  = size * 0.52
-		local cr = size * 0.08
-		local segs = 4
-		drawRoundedRegularPolygon(mode, cx, cy, R, 3, cr, segs, math.pi)
+		drawRoundedRegularPolygon(mode, cx, cy - size * 0.02, size * SHAPE_RADIUS * 1.05, 3, size * CORNER_RADIUS * 0.8, 4, math.pi)
 	end,
 	hexagon = function(mode, cx, cy, size, style)
-		local R  = size * 0.50
-		local cr = size * 0.08
-		local segs = 4
-		drawRoundedRegularPolygon(mode, cx, cy, R, 6, cr, segs, 0)
+		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS * 1.05, 6, size * CORNER_RADIUS * 0.9, 4, 0)
 	end,
 }
 
