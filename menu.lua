@@ -554,7 +554,7 @@ function Menu:enter()
 
 	Audio:playMusic("menu")
 	Screen:update()
-	Face:set("shocked", 10)
+	Face:set("happy", 10)
 
 	dailyChallenge = DailyChallenges:getDailyChallenge()
 	dailyChallengeAnim = 0

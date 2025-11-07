@@ -25,11 +25,6 @@ local FACE_CANVAS_OFFSET_Y = (SHAPE_CANVAS_SIZE - FACE_HEIGHT) / 2
 local shapeCacheBuilt = false
 local rebuildShapeCache
 
-local function drawHappyArc(cx, lift)
-	local radius = EYE_RADIUS * currentEyeScale
-	love.graphics.arc("line", cx, EYE_CENTER_Y + lift, radius, PI, 2 * PI)
-end
-
 local function drawSadArc(cx, drop)
 	local radius = EYE_RADIUS * currentEyeScale
 	love.graphics.arc("line", cx, EYE_CENTER_Y + drop, radius, 0, PI)
@@ -145,8 +140,6 @@ local function ensureShapeCache()
 end
 
 registerDrawer("idle", function()
-	-- Explicitly provide a generous segment count so the filled circles stay
-	-- visually round even after any scaling applied to the snake sprite.
 	local circleSegments = 24
 	local radius = EYE_RADIUS * currentEyeScale
 	love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, radius, circleSegments)
@@ -164,17 +157,59 @@ registerDrawer("blink", function()
 end)
 
 registerDrawer("happy", function()
-	love.graphics.setLineWidth(EYE_RADIUS * currentEyeScale * 1.1)
+	local radius = EYE_RADIUS * currentEyeScale
+	local lineWidth = radius * 0.9
+
+	love.graphics.setColor(0, 0, 0, 1)
+	love.graphics.setLineWidth(lineWidth)
 	love.graphics.setLineJoin("bevel")
-	drawHappyArc(LEFT_EYE_CENTER_X, 1.0)
-	drawHappyArc(RIGHT_EYE_CENTER_X, 1.0)
+	love.graphics.setLineStyle("smooth")
+
+	local function drawCuteArc(cx)
+		local w = radius * 1.6
+		local h = radius * 1.1
+		local y = EYE_CENTER_Y + 1
+
+		local curve = love.math.newBezierCurve({
+			cx - w * 0.5, y,
+			cx - w * 0.25, y - h,
+			cx + w * 0.25, y - h,
+			cx + w * 0.5, y
+		})
+
+		love.graphics.line(curve:render(16))
+	end
+
+	drawCuteArc(LEFT_EYE_CENTER_X)
+	drawCuteArc(RIGHT_EYE_CENTER_X)
 end)
 
 registerDrawer("veryHappy", function()
-	love.graphics.setLineWidth(EYE_RADIUS * currentEyeScale * 1.3)
+	local radius = EYE_RADIUS * currentEyeScale
+	local lineWidth = radius * 0.9
+
+	love.graphics.setColor(0, 0, 0, 1)
+	love.graphics.setLineWidth(lineWidth)
 	love.graphics.setLineJoin("bevel")
-	drawHappyArc(LEFT_EYE_CENTER_X, 1.3)
-	drawHappyArc(RIGHT_EYE_CENTER_X, 1.3)
+	love.graphics.setLineStyle("smooth")
+
+	local function drawCuteArc(cx)
+		local w = radius * 1.8
+		local h = radius * 1.3
+		local y = EYE_CENTER_Y + 1
+
+		local curve = love.math.newBezierCurve({
+			cx - w * 0.5, y,
+			cx - w * 0.25, y - h,
+			cx + w * 0.25, y - h,
+			cx + w * 0.5, y
+		})
+
+		love.graphics.line(curve:render(16))
+	end
+
+	drawCuteArc(LEFT_EYE_CENTER_X)
+	drawCuteArc(RIGHT_EYE_CENTER_X)
 end)
 
 registerDrawer("sad", function()
@@ -209,14 +244,15 @@ registerDrawer("blank", function()
 	)
 end)
 
+-- xx
 registerDrawer("shocked", function()
 	local crossSize = EYE_RADIUS * currentEyeScale * 1.6
-	local crossLineWidth = EYE_RADIUS * currentEyeScale * 0.9
+	local crossLineWidth = EYE_RADIUS * currentEyeScale
 
 	love.graphics.setColor(0, 0, 0, 1)
 	love.graphics.setLineWidth(crossLineWidth)
 	love.graphics.setLineJoin("miter")
-	love.graphics.setLineStyle("smooth")  -- keeps rounded ends
+	love.graphics.setLineStyle("smooth")
 
 	local function drawCross(cx)
 		love.graphics.line(
