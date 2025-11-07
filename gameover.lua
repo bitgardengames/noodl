@@ -1673,7 +1673,7 @@ local function drawXpSection(self, x, y, width)
 			total = formatXpValue(totalValue),
 		})
 	else
-		local remaining = max(0, math.ceil((anim.xpForLevel or 0) - (anim.xpIntoLevel or 0)))
+		local remaining = max(0, ceil((anim.xpForLevel or 0) - (anim.xpIntoLevel or 0)))
 		totalLabel = Localization:get("gameover.meta_progress_total_summary_next", {
 			total = formatXpValue(totalValue),
 			remaining = formatXpValue(remaining),
