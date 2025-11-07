@@ -34,7 +34,7 @@ local english = {
 			daily = {
 				combo = {
 					title = "Combo Crunch",
-					description = "Reach a ${goal}-fruit combo streak in a single run.",
+					description = "Reach a ${goal}-fruit combo in one run.",
 					progress = "Best streak: ${best}/${goal}",
 					complete = "Combo goal smashed! Best streak: ${best}.",
 				},
@@ -66,7 +66,7 @@ local english = {
 				},
 				balanced_banquet = {
 					title = "Balanced Banquet",
-					description = "Pull off ${goal} combo feasts by earning a combo after every ${apples_per_combo} fruit in one run.",
+					description = "Trigger ${goal} combo feasts by earning a combo after every ${apples_per_combo} fruit in one run.",
 					progress = "Combo feasts: ${current}/${goal} (Fruit: ${apples} | Combos: ${combos})",
 					complete = "Balanced banquet! ${current} combo feasts served.",
 				},
@@ -95,13 +95,13 @@ local english = {
 				},
 				time_keeper = {
 					title = "Time Keeper",
-					description = "Stay alive for ${goal} minutes in a single run.",
+					description = "Survive for ${goal} minutes in one run.",
 					progress = "Run survival: ${current}/${goal}",
 					complete = "Endurance expert! Survived ${current} minutes.",
 				},
 				floor_tourist = {
 					title = "Floor Tourist",
-					description = "Spend ${goal} minutes on floors.",
+					description = "Spend ${goal} minutes exploring floors.",
 					progress = "Floor time: ${current}/${goal}",
 				},
 				floor_conqueror = {
@@ -183,11 +183,11 @@ local english = {
 					title = "Fruit Frenzy",
 					description = "Chomp ${target_apples} fruit within ${target_time}.",
 					progress = "Fruit: ${apples}/${target_apples}, Time: ${time}/${target_time}",
-					complete = "Frenzy fulfilled! Devoured ${target_apples} fruit in time.",
+					complete = "Frenzy fulfilled! Devoured ${target_apples} fruit before time ran out.",
 				},
 				momentum_master = {
 					title = "Momentum Master",
-					description = "Stack ${goal} momentum surges of ${fruit_chunk} fruit and ${tile_chunk} tiles without slowing.",
+					description = "Maintain ${goal} momentum surges of ${fruit_chunk} fruit and ${tile_chunk} tiles without slowing down.",
 					progress = "Surges: ${current}/${goal} (Chain: ${chain}, Tiles: ${tiles})",
 					complete = "Momentum maintained! ${current} surges sustained.",
 				},
@@ -285,7 +285,7 @@ local english = {
 			tabs = {
 				experience = "Experience",
 				cosmetics = "Cosmetics",
-				stats = "Lifetime Stats",
+				stats = "Career Stats",
 			},
 			cosmetics = {
 				locked_label = "Locked",
@@ -296,7 +296,7 @@ local english = {
 				equipped = "Equipped",
 				new_badge = "New",
 			},
-			stats_header = "Lifetime Stats",
+			stats_header = "Career Stats",
 			stats_subheader = "Review your best runs and lifetime milestones.",
 			stats_empty = "Keep playing to build your legacy!",
 			stats_badges = {
@@ -316,7 +316,7 @@ local english = {
 				totalCombosTriggered = "Combos Triggered",
 				mostApplesInRun = "Most Fruit in a Run",
 				shieldsSaved = "Shields Triggered",
-				tilesTravelled = "Tiles travelled",
+				tilesTravelled = "Tiles Travelled",
 				totalTimeAlive = "Total Time Survived",
 				longestRunDuration = "Longest Run",
 				totalUpgradesPurchased = "Upgrades Purchased",
@@ -505,7 +505,7 @@ local english = {
 			},
 			adrenaline_surge = {
 				name = "Adrenaline Surge",
-				description = "Snake surges forward after each fruit.",
+				description = "Surge forward after eating fruit.",
 				adrenaline_shout = "Adrenaline!",
 			},
 			stone_whisperer = {
@@ -518,7 +518,7 @@ local english = {
 			},
 			pocket_springs = {
 				name = "Tempest Ward",
-				description = "After collecting twenty fruit, forge a single shield charge.",
+				description = "After collecting 20 fruit, forge 1 shield.",
 			},
 			molting_reflex = {
 				name = "Molting Reflex",
@@ -547,7 +547,7 @@ local english = {
 			},
 			resonant_shell = {
 				name = "Resonant Shell",
-				description = "For each of the first 5 Defense upgrades you own, saws travel 8% slower (down to 55% speed) and lasers take +0.08s longer to charge.",
+				description = "For each of your first 5 Defense upgrades, saws move 8% slower (up to 55% total speed) and lasers take +0.08s longer to charge.",
 			},
 			caravan_contract = {
 				name = "Caravan Contract",
@@ -591,7 +591,7 @@ local english = {
 			},
 			phoenix_echo = {
 				name = "Phoenix Echo",
-				description = "Once per run, a fatal hit rewinds time, reviving you on the same floor",
+				description = "Once per run, a fatal hit rewinds time, reviving you on the same floor.",
 			},
 			thunder_dash = {
 				name = "Thunder Dash",
@@ -609,7 +609,7 @@ local english = {
 			},
 			temporal_anchor = {
 				name = "Temporal Anchor",
-				description = "Press Shift (or X/Left Shoulder on a controller) to slow time briefly, reducing all movement to 35% speed",
+				description = "Press Shift (or X/Left Shoulder) to briefly slow time, reducing all movement to 35% speed.",
 				activation_text = "Time Slow!",
 			},
 			zephyr_coils = {
@@ -644,7 +644,7 @@ local english = {
 			},
 			rockShatter = {
 				title = "Stone Sneeze",
-				description = "Break a rock head-on using a shield",
+				description = "Break a rock head-on using a shield.",
 			},
 			rockCrusher = {
 				title = "Rock Crusher",
@@ -668,11 +668,11 @@ local english = {
 			},
 			dragonHunter = {
 				title = "Dragon Hunter",
-				description = "Collect the legendary Dragonfruit",
+				description = "Collect the legendary Dragonfruit.",
 			},
 			dragonConnoisseur = {
 				title = "Dragon Connoisseur",
-				description = "Collect 10 total dragonfruit",
+				description = "Collect 10 total dragonfruit.",
 			},
 			dragonComboFusion = {
 				title = "Dragon Combo Fusion",
