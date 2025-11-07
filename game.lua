@@ -15,7 +15,6 @@ local PauseMenu = require("pausemenu")
 local Movement = require("movement")
 local Particles = require("particles")
 local UpgradeVisuals = require("upgradevisuals")
-local Bombs = require("bombs")
 local Achievements = require("achievements")
 local FloatingText = require("floatingtext")
 local Arena = require("arena")
@@ -108,7 +107,6 @@ local function drawMainLayer()
 	end
 
 	Particles:draw()
-	Bombs:draw()
 	UpgradeVisuals:draw()
 	Popup:draw()
 
@@ -296,7 +294,6 @@ local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
 	Saws,
 	Arena,
 	Particles,
-	Bombs,
 	UpgradeVisuals,
 	Achievements,
 	FloatingText,
@@ -309,7 +306,6 @@ local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
 	Arena,
 	Darts,
 	Particles,
-	Bombs,
 	UpgradeVisuals,
 	Achievements,
 	FloatingText,
