@@ -17,7 +17,7 @@ local sqrt = math.sqrt
 local EXIT_SAFE_ATTEMPTS = 180
 local MIN_HEAD_DISTANCE_TILES = 2
 local BORDER_CANVAS_MSAA = 4
-local ARENA_BORDER_TOLERANCE = 10 -- 6
+local ARENA_BORDER_TOLERANCE = 12
 
 local function getModule(name)
 	local loaded = package.loaded[name]
