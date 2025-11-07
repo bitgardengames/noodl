@@ -169,6 +169,9 @@ local cosmeticShowcaseHeight = 0
 local progressionState = nil
 local activeTab = "experience"
 local cosmeticsFocusIndex = nil
+local hoveredCosmeticIndex = nil
+local pressedCosmeticIndex = nil
+local cosmeticPreviewBounds = nil
 
 local function compareStatsEntries(a, b)
 	if a.label == b.label then
@@ -184,57 +187,6 @@ local function compareCosmeticShowcaseEntries(a, b)
 		return (a.skinName or "") < (b.skinName or "")
 	end
 	return nameA < nameB
-end
-local hoveredCosmeticIndex = nil
-local pressedCosmeticIndex = nil
-
-local cosmeticPreviewTrail = nil
-local cosmeticPreviewBounds = nil
-
-local function computeCosmeticShowcaseLayout(sw)
-	if not cosmeticShaderShowcaseEntries or #cosmeticShaderShowcaseEntries == 0 then
-		cosmeticShowcaseHeight = 0
-		return nil
-	end
-
-	if not sw then
-		sw = select(1, Screen:get())
-	end
-
-	if not sw then
-		return nil
-	end
-
-	local tileWidth = COSMETIC_SHOWCASE_TILE_WIDTH
-	local tileHeight = COSMETIC_SHOWCASE_TILE_HEIGHT
-	local spacingX = COSMETIC_SHOWCASE_SPACING_X
-	local spacingY = COSMETIC_SHOWCASE_SPACING_Y
-
-	local maxColumns = max(1, floor((sw + spacingX) / (tileWidth + spacingX)))
-	maxColumns = min(maxColumns, #cosmeticShaderShowcaseEntries)
-	if maxColumns < 1 then
-		maxColumns = 1
-	end
-
-	local rows = ceil(#cosmeticShaderShowcaseEntries / maxColumns)
-	local contentWidth = maxColumns * tileWidth + (max(0, maxColumns - 1) * spacingX)
-	local startX = (sw - contentWidth) * 0.5
-	local startY = menuAnchors.tabBottom + COSMETIC_SHOWCASE_TOP_OFFSET
-	local contentHeight = rows * tileHeight + max(0, rows - 1) * spacingY
-	local contentBottom = startY + contentHeight
-	local requiredListTop = contentBottom + COSMETIC_SHOWCASE_BOTTOM_PADDING
-
-	cosmeticShowcaseHeight = max(0, requiredListTop - menuAnchors.contentTop)
-
-	return {
-		startX = startX,
-		startY = startY,
-		tileWidth = tileWidth,
-		tileHeight = tileHeight,
-		spacingX = spacingX,
-		spacingY = spacingY,
-		columns = maxColumns,
-	}
 end
 
 local tabs = {
@@ -496,9 +448,7 @@ local function getListTop(tab)
 	end
 
 	if tab == "cosmetics" then
-		local sw = select(1, Screen:get())
-		computeCosmeticShowcaseLayout(sw)
-		return menuAnchors.contentTop + (cosmeticShowcaseHeight or 0)
+		return menuAnchors.contentTop
 	end
 
 	return menuAnchors.contentTop
@@ -1867,32 +1817,6 @@ function drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, 
 	love.graphics.pop()
 end
 
-local function drawCosmeticsHeader(sw)
-	local headerY = menuAnchors.tabBottom + 28
-	love.graphics.setFont(UI.fonts.button)
-	love.graphics.setColor(Theme.textColor)
-	love.graphics.printf(Localization:get("metaprogression.cosmetics.header"), 0, headerY, sw, "center")
-
-	if cosmeticsSummary.total > 0 then
-		local summaryText = Localization:get("metaprogression.cosmetics.progress", {
-			unlocked = cosmeticsSummary.unlocked or 0,
-			total = cosmeticsSummary.total or 0,
-		})
-		local muted = Theme.mutedTextColor or {Theme.textColor[1], Theme.textColor[2], Theme.textColor[3], (Theme.textColor[4] or 1) * 0.75}
-		love.graphics.setFont(UI.fonts.caption)
-		love.graphics.setColor(muted[1], muted[2], muted[3], muted[4] or 1)
-		love.graphics.printf(summaryText, 0, headerY + 38, sw, "center")
-
-		if cosmeticsSummary.newUnlocks and cosmeticsSummary.newUnlocks > 0 then
-			local key = (cosmeticsSummary.newUnlocks == 1) and "metaprogression.cosmetics.new_summary_single" or "metaprogression.cosmetics.new_summary_multiple"
-			local accent = Theme.progressColor or Theme.accentTextColor or Theme.textColor
-			love.graphics.setFont(UI.fonts.small)
-			love.graphics.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * 0.92)
-			love.graphics.printf(Localization:get(key, {count = cosmeticsSummary.newUnlocks}), 0, headerY + 60, sw, "center")
-		end
-	end
-end
-
 local function drawCosmeticsList(sw, sh)
 	local clipY = getListTop("cosmetics")
 	local clipH = viewportHeight
@@ -2273,7 +2197,6 @@ function ProgressionScreen:draw()
 		drawSummaryPanel(sw)
 		drawTrack(sw, sh)
 	elseif activeTab == "cosmetics" then
-		drawCosmeticsHeader(sw)
 		drawCosmeticsList(sw, sh)
 	else
 		drawStatsList(sw, sh)
