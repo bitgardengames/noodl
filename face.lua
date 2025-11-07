@@ -19,6 +19,7 @@ local PI = math.pi
 local shapeDrawers = {}
 local shapeDefinitions = {}
 local SHAPE_CANVAS_SIZE = 32
+local SHAPE_CANVAS_SCALE = 4
 local FACE_CANVAS_OFFSET_X = (SHAPE_CANVAS_SIZE - FACE_WIDTH) / 2
 local FACE_CANVAS_OFFSET_Y = (SHAPE_CANVAS_SIZE - FACE_HEIGHT) / 2
 local shapeCacheBuilt = false
@@ -85,33 +86,37 @@ local function buildShapeCache()
 		return
 	end
 
-	for name, definition in pairs(shapeDefinitions) do
-		local canvas = love.graphics.newCanvas(SHAPE_CANVAS_SIZE, SHAPE_CANVAS_SIZE)
+        for name, definition in pairs(shapeDefinitions) do
+                local canvasWidth = SHAPE_CANVAS_SIZE * SHAPE_CANVAS_SCALE
+                local canvasHeight = SHAPE_CANVAS_SIZE * SHAPE_CANVAS_SCALE
+                local canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
 
-		love.graphics.push("all")
-		love.graphics.setCanvas(canvas)
-		love.graphics.clear(0, 0, 0, 0)
-		love.graphics.origin()
-		love.graphics.translate(FACE_CANVAS_OFFSET_X, FACE_CANVAS_OFFSET_Y)
+                love.graphics.push("all")
+                love.graphics.setCanvas(canvas)
+                love.graphics.clear(0, 0, 0, 0)
+                love.graphics.origin()
+                love.graphics.scale(SHAPE_CANVAS_SCALE, SHAPE_CANVAS_SCALE)
+                love.graphics.translate(FACE_CANVAS_OFFSET_X, FACE_CANVAS_OFFSET_Y)
 
-		currentEyeScale = 1
-		definition()
-		currentEyeScale = 1
+                currentEyeScale = 1
+                definition()
+                currentEyeScale = 1
 
 		love.graphics.pop()
 
 		local imageData = canvas:newImageData()
-		local image = love.graphics.newImage(imageData)
-		image:setFilter("nearest", "nearest")
+                local image = love.graphics.newImage(imageData)
+                image:setFilter("linear", "linear")
 
-		canvas:release()
+                canvas:release()
 
-		shapeDrawers[name] = {
-			image = image,
-			originX = SHAPE_CANVAS_SIZE / 2,
-			originY = SHAPE_CANVAS_SIZE / 2
-		}
-	end
+                shapeDrawers[name] = {
+                        image = image,
+                        originX = canvasWidth / 2,
+                        originY = canvasHeight / 2,
+                        scale = 1 / SHAPE_CANVAS_SCALE
+                }
+        end
 
 	shapeCacheBuilt = true
 end
@@ -323,7 +328,8 @@ function Face:draw(x, y, scale, options)
 
 	love.graphics.push("all")
 	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.draw(entry.image, x, y, 0, finalScale, finalScale, entry.originX, entry.originY)
+        local imageScale = finalScale * (entry.scale or 1)
+        love.graphics.draw(entry.image, x, y, 0, imageScale, imageScale, entry.originX, entry.originY)
 
 	if highlight > 0 then
 		local baseRadius = EYE_RADIUS
