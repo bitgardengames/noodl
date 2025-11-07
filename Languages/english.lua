@@ -40,7 +40,7 @@ local english = {
 				},
 				floors = {
 					title = "Floor Explorer",
-					description = "Clear ${goal} floors in a single run.",
+					description = "Clear ${goal} floors in one run.",
 				},
 				apples = {
 					title = "Fruit Sampler",
@@ -72,8 +72,8 @@ local english = {
 				},
 				marathon = {
 					title = "Serpentine Marathon",
-					description = "Slither ${goal} tiles in a single run.",
-					progress = "Run slither: ${current}/${goal}",
+					description = "Travel ${goal} tiles in a single run.",
+					progress = "Travelled: ${current}/${goal}",
 				},
 				shield_bounce = {
 					title = "Shield Wall Master",
@@ -101,7 +101,7 @@ local english = {
 				},
 				floor_tourist = {
 					title = "Floor Tourist",
-					description = "Spend ${goal} minutes exploring floors in a single run.",
+					description = "Spend ${goal} minutes on floors.",
 					progress = "Floor time: ${current}/${goal}",
 				},
 				floor_conqueror = {
@@ -115,9 +115,9 @@ local english = {
 					complete = "Depth conquered! Reached floor ${current}.",
 				},
 				apple_hoarder = {
-					title = "Apple Hoarder",
-					description = "Collect ${goal} apples in a single run.",
-					progress = "Run apples: ${current}/${goal}",
+					title = "Fruit Hoarder",
+					description = "Collect ${goal} fruit in a single run.",
+					progress = "Run fruit: ${current}/${goal}",
 				},
 				streak_perfectionist = {
 					title = "Streak Perfectionist",
@@ -163,8 +163,8 @@ local english = {
 				},
 				fruit_rush = {
 					title = "Fruit Rush",
-					description = "Keep an apple pace of ${pace} per minute in a single run.",
-					progress = "Current pace: ${pace}/${goal} (Apples: ${apples}, Minutes: ${minutes})",
+					description = "Maintain ${pace} fruit per minute.",
+					progress = "Current pace: ${pace}/${goal} (Fruit: ${apples}, Minutes: ${minutes})",
 					complete = "Fruit frenzy! Pace reached ${pace} per minute.",
 				},
 				combo_courier = {
@@ -181,9 +181,9 @@ local english = {
 				},
 				fruit_frenzy = {
 					title = "Fruit Frenzy",
-					description = "Chomp ${target_apples} apples within ${target_time}.",
-					progress = "Apples: ${apples}/${target_apples}, Time: ${time}/${target_time}",
-					complete = "Frenzy fulfilled! Devoured ${target_apples} apples in time.",
+					description = "Chomp ${target_apples} fruit within ${target_time}.",
+					progress = "Fruit: ${apples}/${target_apples}, Time: ${time}/${target_time}",
+					complete = "Frenzy fulfilled! Devoured ${target_apples} fruit in time.",
 				},
 				momentum_master = {
 					title = "Momentum Master",
@@ -206,7 +206,7 @@ local english = {
 			},
 		},
 		shop = {
-			title = "Choose an Upgrade",
+			title = "Pick an Upgrade Card",
 		},
 		settings = {
 			title = "Settings",
@@ -306,18 +306,18 @@ local english = {
 				progress = "Progress",
 			},
 			stat_labels = {
-				sessionsPlayed = "Sessions Played",
-				totalApplesEaten = "Apples Collected",
+				sessionsPlayed = "Runs Played",
+				totalApplesEaten = "Fruit Eaten",
 				totalDragonfruitEaten = "Dragonfruit Collected",
 				floorsCleared = "Floors Cleared",
 				deepestFloorReached = "Deepest Floor Reached",
 				snakeScore = "Best Score",
 				bestComboStreak = "Best Combo Streak",
-				totalCombosTriggered = "Combos Pulled Off",
-				mostApplesInRun = "Most Apples in a Run",
+				totalCombosTriggered = "Combos Triggered",
+				mostApplesInRun = "Most Fruit in a Run",
 				shieldsSaved = "Shields Triggered",
-				tilesTravelled = "Tiles Slithered",
-				totalTimeAlive = "Time Alive",
+				tilesTravelled = "Tiles travelled",
+				totalTimeAlive = "Total Time Survived",
 				longestRunDuration = "Longest Run",
 				totalUpgradesPurchased = "Upgrades Purchased",
 				legendaryUpgradesPurchased = "Legendary Upgrades",
@@ -347,14 +347,14 @@ local english = {
 			victory_story_body = "Pip helps carry the gathered fruit home, and the orchard feast is safe again.",
 			final_score = "Final Score: ${score}",
 			high_score = "High Score: ${score}",
-			apples_eaten = "Apples Eaten: ${count}",
+			apples_eaten = "Fruit Eaten: ${count}",
 			default_message = "You died.",
 			run_summary_title = "Run Summary",
 			high_score_badge = "New Personal Best!",
 			stats_best_label = "Best",
 			stats_apples_label = "Fruit",
-			stats_total_label = "Lifetime Apples",
-			total_apples_collected = "Lifetime Apples: ${count}",
+			stats_total_label = "Lifetime Fruit",
+			total_apples_collected = "Lifetime Fruit: ${count}",
 			fruit_summary_title = "Fruit Spoils",
 			no_fruit_summary = "No fruit collected this run.",
 			fruit_chip = "${label}: +${gained} (Total ${total})",
@@ -481,16 +481,16 @@ local english = {
 			},
 			serpents_reflex = {
 				name = "Serpent’s Reflex",
-				description = "Snake moves 4% faster.",
+				description = "Move 4% faster.",
 			},
 			quick_fangs = {
 				name = "Quick Fangs",
-				description = "Snake moves 10% faster.",
+				description = "Move 10% faster.",
 				combo_celebration = "Fang Rush",
 			},
 			stone_skin = {
 				name = "Stone Skin",
-				description = "Gain a shield that absorbs one hit.",
+				description = "Forge a shield that blocks one hit.",
 				shield_text = "Stone Skin!",
 			},
 			aegis_recycler = {
@@ -500,7 +500,7 @@ local english = {
 			},
 			extra_bite = {
 				name = "Extra Bite",
-				description = "The exit unlocks one fruit earlier. Rocks spawn 15% more often.",
+				description = "Exits open one fruit earlier. Rocks spawn 15% more often.",
 				celebration = "Early Exit",
 			},
 			adrenaline_surge = {
@@ -526,7 +526,7 @@ local english = {
 			},
 			mystery_card = {
 				name = "Mystery Card",
-				description = "Select to reveal and immediately gain a random upgrade.",
+				description = "Select to reveal and instantly gain a random upgrade.",
 			},
 			circuit_breaker = {
 				name = "Circuit Breaker",
@@ -534,12 +534,12 @@ local english = {
 			},
 			tremor_bloom = {
 				name = "Tremor Bloom",
-				description = "Each time you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away.",
+				description = "When you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away.",
 				activation_text = "Shockwave Bloom",
 			},
 			contract_of_cinders = {
 				name = "Contract of Cinders",
-				description = "Gain +2 shields immediately. Each time a shield breaks, leave behind a burning ember that spawns a saw on the next floor.",
+				description = "Gain +2 shields immediately. Each time a shield breaks, it leaves an ember that spawns a saw on the next floor.",
 			},
 			sawblade_sinkhole = {
 				name = "Sawblade Sinkhole",
@@ -559,7 +559,7 @@ local english = {
 			},
 			gluttons_wake = {
 				name = "Glutton's Wake",
-				description = "Fruit award double score, but each one crystallizes into a rock when it leaves your tail.",
+				description = "Fruit grant double score but leave a rock behind as they exit your tail.",
 			},
 			grand_bazaar = {
 				name = "Grand Bazaar",
@@ -591,7 +591,7 @@ local english = {
 			},
 			phoenix_echo = {
 				name = "Phoenix Echo",
-				description = "Once per run, a fatal hit rewinds time",
+				description = "Once per run, a fatal hit rewinds time, reviving you on the same floor",
 			},
 			thunder_dash = {
 				name = "Thunder Dash",
@@ -609,12 +609,12 @@ local english = {
 			},
 			temporal_anchor = {
 				name = "Temporal Anchor",
-				description = "Press Shift (or X/Left Shoulder on a controller) to slow time for a short duration, reducing all movement to 35% speed.",
+				description = "Press Shift (or X/Left Shoulder on a controller) to slow time briefly, reducing all movement to 35% speed",
 				activation_text = "Time Slow!",
 			},
 			zephyr_coils = {
 				name = "Zephyr Coils",
-				description = "Snake moves 15% faster. You gain +1 extra growth.",
+				description = "Move 15% faster and gain +1 extra growth per fruit.",
 			},
 			event_horizon = {
 				name = "Event Horizon",
@@ -624,11 +624,11 @@ local english = {
 		achievements_definitions = {
 			appleTycoon = {
 				title = "Apple Tycoon",
-				description = "Eat 1,000 total apples",
+				description = "Eat 1,000 total fruit",
 			},
 			comboSpark = {
 				title = "Combo Spark",
-				description = "Chain a combo of 3 fruit",
+				description = "Trigger a 3-fruit combo.",
 			},
 			comboSurge = {
 				title = "Combo Surge",
@@ -644,7 +644,7 @@ local english = {
 			},
 			rockShatter = {
 				title = "Stone Sneeze",
-				description = "Shatter a rock by face-checking it with a shield.",
+				description = "Break a rock head-on using a shield",
 			},
 			rockCrusher = {
 				title = "Rock Crusher",
@@ -660,11 +660,11 @@ local english = {
 			},
 			shieldTriad = {
 				title = "Crash-Test Maestro",
-				description = "In one run, shrug off a wall, rock, and saw with shields.",
+				description = "In one run, block a wall, rock, and saw using shields.",
 			},
 			shieldlessWonder = {
 				title = "Shieldless Wonder",
-				description = "Clear 3 floors in a run without triggering a shield.",
+				description = "Clear 3 floors without using shields.",
 			},
 			dragonHunter = {
 				title = "Dragon Hunter",
