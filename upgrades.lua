@@ -449,6 +449,42 @@ local function getLaserEmitterDetails(limit)
 	return targets
 end
 
+local function getDartEmitterDetails(limit)
+	if not Darts or not Darts.iterateEmitters then
+		return {}
+	end
+
+	local targets = {}
+	local maxCount = limit
+	if maxCount and maxCount <= 0 then
+		maxCount = nil
+	end
+
+	Darts:iterateEmitters(function(emitter)
+		if not emitter then
+			return
+		end
+
+		local x = emitter.x
+		local y = emitter.y
+		if x and y then
+			targets[#targets + 1] = {
+				x = x,
+				y = y,
+				dir = emitter.dir,
+				facing = emitter.facing,
+				type = "dart",
+			}
+
+			if maxCount and #targets >= maxCount then
+				return true
+			end
+		end
+	end)
+
+	return targets
+end
+
 local function arenaHasGrid()
 	return Arena and Arena.cols and Arena.rows and Arena.getTileFromWorld and Arena.getCenterOfTile
 end
@@ -988,6 +1024,20 @@ local function getLaserFacingDirection(laserInfo)
 	return 0, facing
 end
 
+local function getDartFacingDirection(dartInfo)
+	if not dartInfo then
+		return 0, -1
+	end
+
+	local facing = (dartInfo.facing or 1) >= 0 and 1 or -1
+
+	if dartInfo.dir == "horizontal" then
+		return facing, 0
+	end
+
+	return 0, facing
+end
+
 local function buildCircuitBreakerTargets(data)
 	local targets = {}
 	if not data then
@@ -1031,6 +1081,10 @@ end
 
 local function buildCircuitBreakerLaserTargets(limit)
 	return getLaserEmitterDetails(limit)
+end
+
+local function buildCircuitBreakerDartTargets(limit)
+	return getDartEmitterDetails(limit)
 end
 
 local pool
@@ -1474,7 +1528,24 @@ pool = {
 					end
 				end
 
-				if sparksSpawned <= 0 then
+				local dartTargets = buildCircuitBreakerDartTargets(2)
+				if dartTargets and #dartTargets > 0 then
+					local limit = min(#dartTargets, 2)
+					for i = 1, limit do
+						local target = dartTargets[i]
+						if target then
+							local sparkOptions = deepcopy(baseOptions)
+							sparkOptions.x = target.x
+							sparkOptions.y = target.y
+							local dirX, dirY = getDartFacingDirection(target)
+							applyCircuitBreakerFacing(sparkOptions, dirX, dirY)
+							celebrateUpgrade(nil, nil, sparkOptions)
+							sparksSpawned = sparksSpawned + 1
+						end
+					end
+				end
+
+			if sparksSpawned <= 0 then
 					local fallbackOptions = deepcopy(baseOptions)
 					applySegmentPosition(fallbackOptions, 0.82)
 					applyCircuitBreakerFacing(fallbackOptions, 0, -1)
