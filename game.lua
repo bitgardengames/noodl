@@ -319,6 +319,7 @@ local FLOOR_INTRO_BACKGROUND_SYSTEMS = ModuleUtil.prepareSystems({
         Lasers,
         Darts,
         Saws,
+        Rocks,
         Particles,
         UpgradeVisuals,
         Achievements,
