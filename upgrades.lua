@@ -942,23 +942,6 @@ local function updateResonantShellBonus(state)
 	end
 end
 
-local function updateGuildLedger(state)
-	if not state then return end
-
-	local perSlot = state.counters and state.counters.guildLedgerFlatPerSlot or 0
-	if perSlot == 0 then return end
-
-	local slots = 0
-	if state.effects then
-		slots = state.effects.shopSlots or 0
-	end
-
-	local previous = state.counters.guildLedgerBonus or 0
-	local newBonus = -(perSlot * slots)
-	state.counters.guildLedgerBonus = newBonus
-	state.effects.rockSpawnFlat = (state.effects.rockSpawnFlat or 0) - previous + newBonus
-end
-
 local function normalizeDirection(dx, dy)
 	dx = dx or 0
 	dy = dy or 0
@@ -2085,83 +2068,6 @@ pool = {
 	}),
 
 	register({
-		id = "verdant_bonds",
-		nameKey = "upgrades.verdant_bonds.name",
-		descKey = "upgrades.verdant_bonds.description",
-		rarity = "uncommon",
-		tags = {"economy", "defense"},
-		allowDuplicates = true,
-		maxStacks = 3,
-		onAcquire = function(state)
-			state.counters = state.counters or {}
-			state.counters.verdantBondsProgress = state.counters.verdantBondsProgress or 0
-			if not state.counters.verdantBondsHandlerRegistered then
-				state.counters.verdantBondsHandlerRegistered = true
-				Upgrades:addEventHandler("upgradeAcquired", function(data, runState)
-					if not runState then return end
-					if getStacks(runState, "verdant_bonds") <= 0 then return end
-					if not data or not data.upgrade then return end
-
-					local upgradeTags = data.upgrade.tags
-					local hasEconomy = false
-					if upgradeTags then
-						for _, tag in ipairs(upgradeTags) do
-							if tag == "economy" then
-								hasEconomy = true
-								break
-							end
-						end
-					end
-
-					if not hasEconomy then return end
-
-					runState.counters = runState.counters or {}
-					local counters = runState.counters
-
-					local stacks = getStacks(runState, "verdant_bonds")
-					if stacks <= 0 then return end
-
-					local progress = (counters.verdantBondsProgress or 0) + stacks
-					progress = min(progress, 9)
-					local threshold = 3
-					local shields = floor(progress / threshold)
-					counters.verdantBondsProgress = progress - shields * threshold
-
-					if shields <= 0 then return end
-
-					Snake:addShields(shields)
-
-					local label = getUpgradeString("verdant_bonds", "name")
-					if shields > 1 then
-						if label and label ~= "" then
-							label = string.format("%s +%d", label, shields)
-						else
-							label = string.format("+%d", shields)
-						end
-					end
-
-					celebrateUpgrade(label, data, {
-						color = {0.58, 0.88, 0.64, 1},
-						particleCount = 14,
-						particleSpeed = 120,
-						particleLife = 0.48,
-						textOffset = 46,
-						textScale = 1.1,
-						visual = {
-							badge = "shield",
-							outerRadius = 52,
-							innerRadius = 16,
-							ringCount = 3,
-							life = 0.68,
-							glowAlpha = 0.26,
-							haloAlpha = 0.18,
-						},
-					})
-				end)
-			end
-		end,
-	}),
-	register({
 		id = "fresh_supplies",
 		nameKey = "upgrades.fresh_supplies.name",
 		descKey = "upgrades.fresh_supplies.description",
@@ -2170,36 +2076,6 @@ pool = {
 		restockShop = true,
 		allowDuplicates = true,
 		weight = 0.6,
-	}),
-	register({
-		id = "guild_ledger",
-		nameKey = "upgrades.guild_ledger.name",
-		descKey = "upgrades.guild_ledger.description",
-		rarity = "uncommon",
-		requiresTags = {"economy"},
-		tags = {"economy", "defense"},
-		onAcquire = function(state)
-			state.counters.guildLedgerFlatPerSlot = 0.03
-			updateGuildLedger(state)
-
-			if not state.counters.guildLedgerHandlerRegistered then
-				state.counters.guildLedgerHandlerRegistered = true
-				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
-					if not runState then return end
-					if getStacks(runState, "guild_ledger") <= 0 then return end
-					updateGuildLedger(runState)
-				end)
-			end
-
-			celebrateUpgrade(getUpgradeString("guild_ledger", "name"), nil, {
-				color = {1, 0.86, 0.46, 1},
-				particleCount = 16,
-				particleSpeed = 120,
-				particleLife = 0.42,
-				textOffset = 42,
-				textScale = 1.1,
-			})
-		end,
 	}),
 	register({
 		id = "abyssal_catalyst",
