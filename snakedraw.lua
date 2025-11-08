@@ -786,9 +786,9 @@ local function renderTrailRegion(trail, half, options, overlayEffect, palette, c
 	love.graphics.pop()
 	love.graphics.setCanvas()
 
-	presentSnakeCanvas(overlayEffect, regionBounds.width, regionBounds.height, regionBounds.offsetX, regionBounds.offsetY)
+        local presented, overlayApplied = presentSnakeCanvas(overlayEffect, regionBounds.width, regionBounds.height, regionBounds.offsetX, regionBounds.offsetY)
 
-	return true
+        return presented, overlayApplied
 end
 
 local function renderPortalFallback(items, half, options, overlayEffect)
@@ -813,15 +813,15 @@ local function renderPortalFallback(items, half, options, overlayEffect)
 	end
 
 	love.graphics.setCanvas()
-	presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
+        local presented = presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
 
-	return true
+        return presented
 end
 
 presentSnakeCanvas = function(overlayEffect, width, height, offsetX, offsetY)
         local canvas = snakeCanvas
         if not canvas then
-                return false
+                return false, false
         end
 
         local drawX = offsetX or 0
@@ -843,7 +843,7 @@ presentSnakeCanvas = function(overlayEffect, width, height, offsetX, offsetY)
                 end
         end)
 
-        return drewOverlay
+        return true, drewOverlay
 end
 
 local shadowPalette = {
