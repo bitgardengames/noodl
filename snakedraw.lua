@@ -819,30 +819,31 @@ local function renderPortalFallback(items, half, options, overlayEffect)
 end
 
 presentSnakeCanvas = function(overlayEffect, width, height, offsetX, offsetY)
-	if not snakeCanvas then
-		return false
-	end
+        local canvas = snakeCanvas
+        if not canvas then
+                return false
+        end
 
-	local drawX = offsetX or 0
-	local drawY = offsetY or 0
+        local drawX = offsetX or 0
+        local drawY = offsetY or 0
 
-	RenderLayers:withLayer("shadows", function()
-		love.graphics.setColor(0, 0, 0, 0.25)
-		love.graphics.draw(snakeCanvas, drawX + SHADOW_OFFSET, drawY + SHADOW_OFFSET)
-	end)
+        RenderLayers:withLayer("shadows", function()
+                love.graphics.setColor(0, 0, 0, 0.25)
+                love.graphics.draw(canvas, drawX + SHADOW_OFFSET, drawY + SHADOW_OFFSET)
+        end)
 
-	local drewOverlay = false
-	RenderLayers:withLayer("main", function()
-		love.graphics.setColor(1, 1, 1, 1)
-		if overlayEffect then
-			drewOverlay = applyOverlay(snakeCanvas, overlayEffect, drawX, drawY)
-		end
-		if not drewOverlay then
-			love.graphics.draw(snakeCanvas, drawX, drawY)
-		end
-	end)
+        local drewOverlay = false
+        RenderLayers:withLayer("main", function()
+                love.graphics.setColor(1, 1, 1, 1)
+                if overlayEffect then
+                        drewOverlay = applyOverlay(canvas, overlayEffect, drawX, drawY)
+                end
+                if not drewOverlay then
+                        love.graphics.draw(canvas, drawX, drawY)
+                end
+        end)
 
-	return drewOverlay
+        return drewOverlay
 end
 
 local shadowPalette = {
