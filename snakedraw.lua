@@ -35,6 +35,8 @@ local snakeCanvasHeight = 0
 local glowSprite = nil
 local glowSpriteResolution = 128
 
+local presentSnakeCanvas
+
 local zephyrPoints = {}
 local zephyrPointCapacity = 0
 local stormBolt = {}
@@ -816,7 +818,7 @@ local function renderPortalFallback(items, half, options, overlayEffect)
 	return true
 end
 
-local function presentSnakeCanvas(overlayEffect, width, height, offsetX, offsetY)
+presentSnakeCanvas = function(overlayEffect, width, height, offsetX, offsetY)
 	if not snakeCanvas then
 		return false
 	end
