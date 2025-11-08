@@ -1146,6 +1146,7 @@ function Snake:resetModifiers()
 	self.stoneSkinSawGrace = 0
 	self.dash = nil
 	self.timeDilation = nil
+	self.chronoWard = nil
 	self.adrenaline = nil
 	self.hazardGraceTimer = 0
 	self.abyssalCatalyst = nil
