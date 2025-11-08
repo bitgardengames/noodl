@@ -559,18 +559,10 @@ local english = {
 				name = "Grand Bazaar",
 				description = "Shops now stock only Uncommon or higher cards. One slot in every shop is always a Rare.",
 			},
-			verdant_bonds = {
-				name = "Verdant Bonds",
-				description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a shield.",
-			},
-			fresh_supplies = {
-				name = "Fresh Supplies",
-				description = "Discard the current shop cards and restock with new ones.",
-			},
-			guild_ledger = {
-				name = "Guild Ledger",
-				description = "Each shop slot reduces rock spawn chance by 3%.",
-			},
+                        fresh_supplies = {
+                                name = "Fresh Supplies",
+                                description = "Discard the current shop cards and restock with new ones.",
+                        },
 			abyssal_catalyst = {
 				name = "Abyssal Catalyst",
 				description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
