@@ -3,7 +3,7 @@
 Garden Gate → Noodl winds through the grove to gather scattered fruit.
 Moonwell Caves → Reflected pools guide each pear into reach.
 Tide Vault → Rolling tides usher citrus toward the basket.
-Rusted Hoist → Old lifts reveal syrupy stores to reclaim.
+Gloomshaft Hoist → Echoing caverns drip with glowcaps along the hoist.
 Crystal Run → Frozen light chills the apples along the path.
 Ember Market → Emberlit stalls keep peppered fruit warm for pickup.
 Skywalk → High lanterns reveal every dangling peach.
@@ -66,22 +66,22 @@ local Floors = {
 		backgroundTheme = "oceanic",
 	},
 	[4] = {
-		name = "Rusted Hoist",
-		flavor = "Ancient lifts cough up stashed syrup, giving Noodl fresh fuel for the harvest.",
+		name = "Gloomshaft Hoist",
+		flavor = "Winches creak through echoing caverns while glimmering dew feeds Noodl's climb.",
 		palette = {
-			bgColor    = {0.078, 0.102, 0.11, 1},
-			arenaBG    = {0.157, 0.192, 0.169, 1},
-			arenaBorder= {0.424, 0.431, 0.275, 1},
-			snake      = {0.98, 0.88, 0.48, 1},
-			rock       = {0.66, 0.46, 0.28, 1},
-			sawColor   = {0.92, 0.76, 0.42, 1},
+			bgColor    = {0.06, 0.085, 0.13, 1},
+			arenaBG    = {0.112, 0.162, 0.214, 1},
+			arenaBorder= {0.368, 0.512, 0.62, 1},
+			snake      = {0.78, 0.95, 0.89, 1},
+			rock       = {0.318, 0.452, 0.54, 1},
+			sawColor   = {0.67, 0.88, 0.93, 1},
 		},
 		backgroundEffect = {
-			type = "ruinMotes",
-			backdropIntensity = 0.54,
-			arenaIntensity = 0.3,
+			type = "mushroomPulse",
+			backdropIntensity = 0.68,
+			arenaIntensity = 0.42,
 		},
-		backgroundTheme = "machine",
+		backgroundTheme = "cavern",
 	},
 	[5] = {
 		name = "Crystal Run",
