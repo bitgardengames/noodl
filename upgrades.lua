@@ -287,9 +287,8 @@ local CHRONO_WARD_DEFAULT_SCALE = 0.45
 local CIRCUIT_BREAKER_STALL_DURATION = 1
 local SUBDUCTION_ARRAY_SINK_DURATION = 1.6
 local SUBDUCTION_ARRAY_VISUAL_LIMIT = 3
-local RESONANT_SHELL_DEFENSE_CAP = 5
-local RESONANT_SHELL_PER_DEFENSE_SLOW = 0.08
-local RESONANT_SHELL_MIN_SPEED_MULT = 0.55
+local RESONANT_SHELL_SAW_SPEED_MULT = 0.6
+local RESONANT_SHELL_DART_SPEED_MULT = 0.6
 local TREMOR_BLOOM_RADIUS = 2
 local TREMOR_BLOOM_SLIDE_DURATION = 0.28
 local TREMOR_BLOOM_SAW_NUDGE_AMOUNT = 0.22
@@ -887,59 +886,13 @@ local function register(upgrade)
 	return upgrade
 end
 
-local function countUpgradesWithTag(state, tag)
-	if not state or not tag then return 0 end
+local function applyResonantShellBonus(state)
+        if not state then return end
 
-	local total = 0
-	if not state.takenSet then return total end
+        state.effects = state.effects or {}
 
-	for id, count in pairs(state.takenSet) do
-		local upgrade = poolById[id]
-		if upgrade and upgrade.tags then
-			for _, upgradeTag in ipairs(upgrade.tags) do
-				if upgradeTag == tag then
-					total = total + (count or 0)
-					break
-				end
-			end
-		end
-	end
-
-	return total
-end
-
-local function updateResonantShellBonus(state)
-	if not state then return end
-
-	state.effects = state.effects or {}
-
-	local perSlow = state.counters and state.counters.resonantShellPerSlow or 0
-	local perCharge = state.counters and state.counters.resonantShellPerCharge or 0
-	if perSlow <= 0 and perCharge <= 0 then return end
-
-	local defenseCount = countUpgradesWithTag(state, "defense")
-	local effectiveDefenseCount = min(defenseCount, RESONANT_SHELL_DEFENSE_CAP)
-
-	if perSlow > 0 then
-		local previousMult = state.counters and state.counters.resonantShellSpeedMult or 1
-		if previousMult == 0 then
-			previousMult = 1
-		end
-
-		local reduction = perSlow * effectiveDefenseCount
-		local targetMult = max(RESONANT_SHELL_MIN_SPEED_MULT, 1 - reduction)
-		state.counters.resonantShellSpeedMult = targetMult
-
-		local currentMult = state.effects.sawSpeedMult or 1
-		state.effects.sawSpeedMult = (currentMult / previousMult) * targetMult
-	end
-
-	if perCharge > 0 then
-		local previousCharge = state.counters.resonantShellChargeBonus or 0
-		local newCharge = perCharge * effectiveDefenseCount
-		state.counters.resonantShellChargeBonus = newCharge
-		state.effects.laserChargeFlat = (state.effects.laserChargeFlat or 0) - previousCharge + newCharge
-	end
+        state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * RESONANT_SHELL_SAW_SPEED_MULT
+        state.effects.dartSpeedMult = (state.effects.dartSpeedMult or 1) * RESONANT_SHELL_DART_SPEED_MULT
 end
 
 local function normalizeDirection(dx, dy)
@@ -1817,26 +1770,14 @@ pool = {
 		descKey = "upgrades.resonant_shell.description",
 		rarity = "uncommon",
 		requiresTags = {"defense"},
-		tags = {"defense"},
-		unlockTag = "specialist",
-		onAcquire = function(state)
-			state.counters.resonantShellPerSlow = RESONANT_SHELL_PER_DEFENSE_SLOW
-			state.counters.resonantShellPerCharge = 0.08
-			state.counters.resonantShellSpeedMult = state.counters.resonantShellSpeedMult or 1
-			updateResonantShellBonus(state)
+                tags = {"defense"},
+                unlockTag = "specialist",
+                onAcquire = function(state)
+                        applyResonantShellBonus(state)
 
-			if not state.counters.resonantShellHandlerRegistered then
-				state.counters.resonantShellHandlerRegistered = true
-				Upgrades:addEventHandler("upgradeAcquired", function(_, runState)
-					if not runState then return end
-					if getStacks(runState, "resonant_shell") <= 0 then return end
-					updateResonantShellBonus(runState)
-				end)
-			end
-
-			local celebrationOptions = {
-				color = {0.8, 0.88, 1, 1},
-				particleCount = 18,
+                        local celebrationOptions = {
+                                color = {0.8, 0.88, 1, 1},
+                                particleCount = 18,
 				particleSpeed = 120,
 				particleLife = 0.48,
 				textOffset = 48,
@@ -2782,7 +2723,8 @@ end
 
 local function captureBaseline(state)
 	local baseline = state.baseline
-	baseline.sawSpeedMult = Saws.speedMult or 1
+        baseline.sawSpeedMult = Saws.speedMult or 1
+        baseline.dartSpeedMult = Darts.speedMult or 1
 	baseline.sawSpinMult = Saws.spinMult or 1
 	baseline.sawStall = Saws:getStallOnFruit()
 	baseline.rockSpawnChance = Rocks:getSpawnChance()
@@ -2813,10 +2755,16 @@ function Upgrades:applyPersistentEffects(rebaseline)
 	ensureBaseline(state)
 	local base = state.baseline
 
-	local sawSpeed = (base.sawSpeedMult or 1) * (effects.sawSpeedMult or 1)
-	local sawSpin = (base.sawSpinMult or 1) * (effects.sawSpinMult or 1)
-	Saws.speedMult = sawSpeed
-	Saws.spinMult = sawSpin
+        local sawSpeed = (base.sawSpeedMult or 1) * (effects.sawSpeedMult or 1)
+        local dartSpeed = (base.dartSpeedMult or 1) * (effects.dartSpeedMult or 1)
+        local sawSpin = (base.sawSpinMult or 1) * (effects.sawSpinMult or 1)
+        Saws.speedMult = sawSpeed
+        Saws.spinMult = sawSpin
+        if Darts.setSpeedMultiplier then
+                Darts:setSpeedMultiplier(dartSpeed)
+        else
+                Darts.speedMult = dartSpeed
+        end
 
 	local stallBase = base.sawStall or 0
 	local stallBonus = effects.sawStall or 0

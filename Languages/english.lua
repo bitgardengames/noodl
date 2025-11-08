@@ -539,10 +539,10 @@ local english = {
 				name = "Sawblade Sinkhole",
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
 			},
-			resonant_shell = {
-				name = "Resonant Shell",
-				description = "For each of your first 5 Defense upgrades, saws move 8% slower (up to 55% total speed) and lasers take +0.08s longer to charge.",
-			},
+                        resonant_shell = {
+                                name = "Resonant Shell",
+                                description = "Saws and darts travel 40% slower.",
+                        },
 			caravan_contract = {
 				name = "Caravan Contract",
 				description = "Shops offer +1 card.",
