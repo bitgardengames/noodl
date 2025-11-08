@@ -1049,7 +1049,7 @@ pool = {
 		id = "quick_fangs",
 		nameKey = "upgrades.quick_fangs.name",
 		descKey = "upgrades.quick_fangs.description",
-		rarity = "rare",
+                rarity = "uncommon",
 		tags = {"mobility"},
 		allowDuplicates = true,
 		maxStacks = 4,
@@ -1350,11 +1350,11 @@ pool = {
 			end,
 		},
 	}),
-	register({
-		id = "circuit_breaker",
-		nameKey = "upgrades.circuit_breaker.name",
-		descKey = "upgrades.circuit_breaker.description",
-		rarity = "rare",
+        register({
+                id = "circuit_breaker",
+                nameKey = "upgrades.circuit_breaker.name",
+                descKey = "upgrades.circuit_breaker.description",
+                rarity = "rare",
 		tags = {"hazard"},
 		onAcquire = function(state)
 			state.effects.sawStall = (state.effects.sawStall or 0) + CIRCUIT_BREAKER_STALL_DURATION
@@ -1494,7 +1494,7 @@ pool = {
 		id = "tremor_bloom",
 		nameKey = "upgrades.tremor_bloom.name",
 		descKey = "upgrades.tremor_bloom.description",
-		rarity = "rare",
+                rarity = "uncommon",
 		tags = {"mobility", "hazard", "rocks", "control"},
 		onAcquire = function()
 			celebrateUpgrade(getUpgradeString("tremor_bloom", "name"), nil, {
@@ -2058,11 +2058,11 @@ pool = {
 			celebrateUpgrade(getUpgradeString("abyssal_catalyst", "name"), nil, celebrationOptions)
 		end,
 	}),
-	register({
-		id = "tectonic_resolve",
-		nameKey = "upgrades.tectonic_resolve.name",
-		descKey = "upgrades.tectonic_resolve.description",
-		rarity = "rare",
+        register({
+                id = "tectonic_resolve",
+                nameKey = "upgrades.tectonic_resolve.name",
+                descKey = "upgrades.tectonic_resolve.description",
+                rarity = "uncommon",
 		tags = {"defense"},
 		onAcquire = function(state)
 			state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.85
