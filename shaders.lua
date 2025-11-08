@@ -294,7 +294,8 @@ registerEffect({
 
 		float vertical = smoothstep(0.0, 1.0, uv.y);
 		vec3 top = blend(baseColor.rgb * 0.8, canopyColor.rgb * 0.95, 0.35);
-		vec3 bottom = blend(canopyColor.rgb, highlightColor.rgb, 0.28 + intensity * 0.18);
+		vec3 slateBlue = vec3(0.38, 0.46, 0.74);
+		vec3 bottom = blend(canopyColor.rgb, slateBlue, 0.34 + intensity * 0.2);
 		vec3 gradient = mix(top, bottom, vertical);
 
 		float lift = smoothstep(0.22, 0.72, uv.y);
