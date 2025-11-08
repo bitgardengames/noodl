@@ -301,15 +301,29 @@ local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
 })
 
 local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
-	Face,
-	Popup,
-	Arena,
-	Darts,
-	Particles,
-	UpgradeVisuals,
-	Achievements,
-	FloatingText,
-	Score,
+        Face,
+        Popup,
+        Arena,
+        Darts,
+        Particles,
+        UpgradeVisuals,
+        Achievements,
+        FloatingText,
+        Score,
+})
+
+local FLOOR_INTRO_BACKGROUND_SYSTEMS = ModuleUtil.prepareSystems({
+        Face,
+        Popup,
+        Arena,
+        Lasers,
+        Darts,
+        Saws,
+        Particles,
+        UpgradeVisuals,
+        Achievements,
+        FloatingText,
+        Score,
 })
 
 local function cloneColor(color, fallback, out)
@@ -1246,11 +1260,16 @@ function Game:updateEntities(dt)
 end
 
 function Game:updateTransitionVisuals(dt)
-	if not dt or dt <= 0 then
-		return
-	end
+        if not dt or dt <= 0 then
+                return
+        end
 
-	updateSystems(TRANSITION_VISUAL_SYSTEMS, dt)
+        local phase = self.transition and self.transition:getPhase()
+        if phase == "floorintro" then
+                updateSystems(FLOOR_INTRO_BACKGROUND_SYSTEMS, dt)
+        else
+                updateSystems(TRANSITION_VISUAL_SYSTEMS, dt)
+        end
 end
 
 function Game:handleDeath(dt)
