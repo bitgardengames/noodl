@@ -53,8 +53,9 @@ end
 UpgradeHelpers.deepcopy = deepcopy
 
 UpgradeHelpers.defaultEffects = {
-	sawSpeedMult = 1,
-	sawSpinMult = 1,
+        sawSpeedMult = 1,
+        dartSpeedMult = 1,
+        sawSpinMult = 1,
 	sawStall = 0,
 	sawSinkDuration = 0,
 	rockSpawnMult = 1,
