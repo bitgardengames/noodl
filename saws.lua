@@ -866,38 +866,43 @@ end
 function Saws:spawn(x, y, radius, teeth, dir, side, options)
 	local slot = getOrCreateSlot(x, y, dir)
 
+	options = options or {}
+	local spawnFromSink = options.spawnWithSink
+	local autoUnsink = spawnFromSink and not sinkActive
+	local initialSink = spawnFromSink and 1 or (sinkActive and 1 or 0)
+
 	insert(current, {
-		x = x,
-		y = y,
-		radius = radius or SAW_RADIUS,
-		collisionRadius = (radius or SAW_RADIUS) * COLLISION_RADIUS_MULT,
-		teeth = teeth or SAW_TEETH,
-		rotation = 0,
-		timer = 0,
-		phase = "drop",
+                x = x,
+                y = y,
+                radius = radius or SAW_RADIUS,
+                collisionRadius = (radius or SAW_RADIUS) * COLLISION_RADIUS_MULT,
+                teeth = teeth or SAW_TEETH,
+                rotation = 0,
+                timer = 0,
+		phase = spawnFromSink and "done" or "drop",
 		scaleX = 1,
-		scaleY = 0,
-		offsetY = -40,
+		scaleY = spawnFromSink and 1 or 0,
+		offsetY = spawnFromSink and 0 or -40,
 
-		-- movement
-		dir = dir or "horizontal",
-		side = side,
-		progress = 0,
-		direction = 1,
-		slotId = slot and slot.id or nil,
+                -- movement
+                dir = dir or "horizontal",
+                side = side,
+                progress = 0,
+                direction = 1,
+                slotId = slot and slot.id or nil,
 
-		sinkProgress = sinkActive and 1 or 0,
-		sinkTarget = sinkActive and 1 or 0,
-		sinkVisualProgress = Easing.easeInOutCubic(sinkActive and 1 or 0),
-		collisionCells = nil,
-		hitFlashTimer = 0,
-	})
+		sinkProgress = initialSink,
+		sinkTarget = spawnFromSink and 1 or (sinkActive and 1 or 0),
+		sinkVisualProgress = Easing.easeInOutCubic(initialSink),
+                collisionCells = nil,
+                hitFlashTimer = 0,
+		pendingUnsink = autoUnsink or nil,
+        })
 
 	local saw = current[#current]
 	invalidateSawPointCache(saw)
 	invalidateSawCache(saw)
 	saw.collisionCells = buildCollisionCellsForSaw(saw)
-	options = options or {}
 	saw.color = options.color or saw.color
 	saw.ember = options.ember or false
 	saw.emberTrailColor = options.emberTrailColor
@@ -986,6 +991,13 @@ function Saws:update(dt)
 		saw.rotation = (saw.rotation + dt * 5 * (self.spinMult or 1)) % (pi * 2)
 
 		updateSawSlide(saw, dt)
+
+		if saw.pendingUnsink then
+			if not sinkActive then
+				saw.sinkTarget = 0
+				saw.pendingUnsink = nil
+			end
+		end
 
 		local sinkDirection = (saw.sinkTarget or 0) > 0 and 1 or -1
 		saw.sinkProgress = (saw.sinkProgress or 0) + sinkDirection * dt * SINK_SPEED

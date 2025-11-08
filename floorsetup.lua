@@ -294,19 +294,24 @@ local function trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, options)
 end
 
 local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
-	local spawnLookup = buildCellLookup(spawnBuffer)
-	options = options or {}
-	local specialQueue = {}
-	local function addSpecial(count, specialOptions)
-		local amount = max(0, floor((count or 0) + 0.5))
-		if amount <= 0 then
-			return
+        local spawnLookup = buildCellLookup(spawnBuffer)
+        options = options or {}
+        local specialQueue = {}
+	local defaultOptions = options.spawnWithSink and {spawnWithSink = true} or nil
+        local function addSpecial(count, specialOptions)
+                local amount = max(0, floor((count or 0) + 0.5))
+                if amount <= 0 then
+                        return
+		end
+
+		if options.spawnWithSink and specialOptions then
+			specialOptions.spawnWithSink = true
 		end
 
 		specialQueue[#specialQueue + 1] = {
-			remaining = amount,
-			options = specialOptions,
-		}
+                        remaining = amount,
+                        options = specialOptions,
+                }
 	end
 
 	addSpecial(options.emberCount, {
@@ -340,7 +345,7 @@ local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
 		local attempts = 0
 		local maxAttempts = 60
 		local activeSpecial, activeIndex = acquireSpecial()
-		local sawOptions = activeSpecial and activeSpecial.options or nil
+		local sawOptions = activeSpecial and activeSpecial.options or defaultOptions
 
 		while not placed and attempts < maxAttempts do
 			attempts = attempts + 1
@@ -710,15 +715,16 @@ function FloorSetup.spawnHazards(spawnPlan)
 	spawnSaws(
 	spawnPlan.numSaws or 0,
 	spawnPlan.halfTiles,
-	spawnPlan.bladeRadius,
-	spawnPlan.spawnSafeCells,
-	{
-		emberCount = emberSawCount,
-		emberColor = EMBER_SAW_COLOR,
-		emberTrailColor = EMBER_SAW_TRAIL_COLOR,
-		emberGlowColor = EMBER_SAW_GLOW_COLOR,
-	}
-	)
+        spawnPlan.bladeRadius,
+        spawnPlan.spawnSafeCells,
+        {
+                emberCount = emberSawCount,
+                emberColor = EMBER_SAW_COLOR,
+                emberTrailColor = EMBER_SAW_TRAIL_COLOR,
+                emberGlowColor = EMBER_SAW_GLOW_COLOR,
+                spawnWithSink = true,
+        }
+        )
 	spawnLasers(spawnPlan.lasers or {})
 	spawnDarts(spawnPlan.darts or {})
 	spawnRocks(spawnPlan.numRocks or 0, spawnPlan.spawnSafeCells or spawnPlan.rockSafeZone or spawnPlan.safeZone)
