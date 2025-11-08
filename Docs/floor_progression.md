@@ -7,7 +7,7 @@ The current campaign moves through eight distinct floors. Each entry below is al
 | 1 | Garden Gate | botanical | `gardenMellow` | 0.54 | 0.30 |
 | 2 | Moonwell Caves | cavern | `softCavern` | 0.54 | 0.32 |
 | 3 | Tide Vault | oceanic | `abyssDrift` | 0.64 | 0.38 |
-| 4 | Rusted Hoist | machine | `ruinMotes` | 0.60 | 0.34 |
+| 4 | Gloomshaft Hoist | cavern | `mushroomPulse` | 0.68 | 0.42 |
 | 5 | Crystal Run | arctic | `auroraVeil` | 0.62 | 0.42 |
 | 6 | Ember Market | desert | `emberDrift` | 0.62 | 0.38 |
 | 7 | Skywalk | urban — celestial | `auroraVeil` | 0.48 | 0.28 |
@@ -86,26 +86,26 @@ Story payoff: **Harvest Complete** — "Noodl hauls the full harvest home, every
 
 ---
 
-## Floor 4: Rusted Hoist
+## Floor 4: Gloomshaft Hoist
 
-**Description:** Ancient lifts cough up stashed syrup, giving Noodl fresh fuel for the harvest.
+**Description:** Winches creak through echoing caverns while glimmering dew feeds Noodl's climb.
 
-**Mood / Tone:** Harsh, mechanical  
-**Dominant colours:** Bronze & rust  
-**Visual theme:** machine shafts
+**Mood / Tone:** Subterranean, luminous
+**Dominant colours:** Teal mist & sea-glass glow
+**Visual theme:** cavern lift shafts
 
 **Palette**
 
 | Element | RGBA (0-255) | Hex |
 | --- | --- | --- |
-| Backdrop | (36, 31, 20, 255) | #241F14 |
-| Arena base | (61, 51, 31, 255) | #3D331F |
-| Arena border | (148, 122, 71, 255) | #947A47 |
-| Snake | (250, 224, 122, 255) | #FAE07A |
-| Rocks | (168, 117, 71, 255) | #A87547 |
-| Saws | (235, 194, 107, 255) | #EBC26B |
+| Backdrop | (15, 22, 33, 255) | #0F1621 |
+| Arena base | (29, 41, 55, 255) | #1D2937 |
+| Arena border | (94, 131, 158, 255) | #5E839E |
+| Snake | (199, 242, 227, 255) | #C7F2E3 |
+| Rocks | (81, 115, 138, 255) | #51738A |
+| Saws | (171, 224, 237, 255) | #ABE0ED |
 
-**Background shader:** `ruinMotes` — Dust motes float through ancient machinery glow. (Backdrops 0.60 / Arena 0.34)
+**Background shader:** `mushroomPulse` — Glowcap blooms breathe in the dark, scattering bioluminescent haze. (Backdrops 0.68 / Arena 0.42)
 
 ---
 
