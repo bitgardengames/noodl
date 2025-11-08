@@ -802,17 +802,18 @@ local function renderPortalFallback(items, half, options, overlayEffect)
 		return false
 	end
 
-	love.graphics.setCanvas({fallbackCanvas, stencil = true})
-	love.graphics.clear(0, 0, 0, 0)
+        love.graphics.push("all")
+        love.graphics.setCanvas({fallbackCanvas, stencil = true})
+        love.graphics.clear(0, 0, 0, 0)
 
-	for _, item in ipairs(items) do
-		local trail = item.trail
-		if trail and #trail > 0 then
-			drawTrailSegmentToCanvas(trail, half, options, item.palette, item.coords)
-		end
-	end
+        for _, item in ipairs(items) do
+                local trail = item.trail
+                if trail and #trail > 0 then
+                        drawTrailSegmentToCanvas(trail, half, options, item.palette, item.coords)
+                end
+        end
 
-	love.graphics.setCanvas()
+        love.graphics.pop()
         local presented = presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
 
         return presented
@@ -2818,10 +2819,11 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                         local ww, hh = love.graphics.getDimensions()
                         local fallbackCanvas = ensureSnakeCanvas(ww, hh)
                         if fallbackCanvas then
+                                love.graphics.push("all")
                                 love.graphics.setCanvas({fallbackCanvas, stencil = true})
                                 love.graphics.clear(0, 0, 0, 0)
                                 drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-                                love.graphics.setCanvas()
+                                love.graphics.pop()
                                 presentSnakeCanvas(overlayEffect, ww, hh, 0, 0)
                                 presented = true
                         end
