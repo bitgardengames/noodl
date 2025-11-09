@@ -19,8 +19,8 @@ local min = math.min
 local sin = math.sin
 
 local Menu = {
-        transitionDuration = 0.35,
-        transitionStyle = "menuSlide",
+	transitionDuration = 0.35,
+	transitionStyle = "menuSlide",
 }
 
 local ANALOG_DEADZONE = 0.3
@@ -59,15 +59,15 @@ local titleSaw = SawActor.new()
 local random = (love.math and love.math.random) or math.random
 
 function Menu:getMenuBackgroundOptions()
-        return {effectKey = "menu"}
+	return {effectKey = "menu"}
 end
 
 local function drawBackground(sw, sh)
-        if not MenuScene.shouldDrawBackground() then
-                return
-        end
+	if not MenuScene.shouldDrawBackground() then
+		return
+	end
 
-        MenuScene.drawBackground(sw, sh, Menu:getMenuBackgroundOptions())
+	MenuScene.drawBackground(sw, sh, Menu:getMenuBackgroundOptions())
 end
 
 local function getDayUnit(count)
@@ -467,9 +467,9 @@ function Menu:enter()
 	resetDailyBarCelebration()
 	resetAnalogAxis()
 
-        MenuScene.prepareBackground(self:getMenuBackgroundOptions())
+	MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 
-        local sw, sh = Screen:get()
+	local sw, sh = Screen:get()
 	local centerX = sw / 2
 	local menuLayout = UI.getMenuLayout(sw, sh)
 

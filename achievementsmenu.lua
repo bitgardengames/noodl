@@ -14,8 +14,8 @@ local max = math.max
 local min = math.min
 
 local AchievementsMenu = {
-        transitionDuration = 0.35,
-        transitionStyle = "menuSlide",
+	transitionDuration = 0.35,
+	transitionStyle = "menuSlide",
 }
 
 local buttonList = ButtonList.new()
@@ -66,108 +66,108 @@ local scrollbarState = {
 }
 
 local scrollbarDrag = {
-        active = false,
-        grabOffset = 0,
+	active = false,
+	grabOffset = 0,
 }
 
 local function loadIcon(path)
-        local ok, image = pcall(love.graphics.newImage, path)
-        if ok then
-                return image
-        end
+	local ok, image = pcall(love.graphics.newImage, path)
+	if ok then
+		return image
+	end
 
-        return nil
+	return nil
 end
 
 local function ensureDefaultIcon()
-        local defaultIcon = iconCache.__default
-        if defaultIcon == nil then
-                defaultIcon = loadIcon("Assets/Achievements/Default.png")
-                iconCache.__default = defaultIcon
-        end
+	local defaultIcon = iconCache.__default
+	if defaultIcon == nil then
+		defaultIcon = loadIcon("Assets/Achievements/Default.png")
+		iconCache.__default = defaultIcon
+	end
 
-        return iconCache.__default
+	return iconCache.__default
 end
 
 local function resolveIconPath(iconName)
-        local path = string.format("Assets/Achievements/%s.png", iconName or "Default")
-        if not love.filesystem.getInfo(path) then
-                path = "Assets/Achievements/Default.png"
-        end
+	local path = string.format("Assets/Achievements/%s.png", iconName or "Default")
+	if not love.filesystem.getInfo(path) then
+		path = "Assets/Achievements/Default.png"
+	end
 
-        return path
+	return path
 end
 
 local function resetIconLoading()
-        iconLoadQueue = {}
-        iconLoadQueueIndex = 1
-        queuedIconIds = {}
+	iconLoadQueue = {}
+	iconLoadQueueIndex = 1
+	queuedIconIds = {}
 end
 
 local function queueAchievementIcon(achievement)
-        if not achievement then
-                return
-        end
+	if not achievement then
+		return
+	end
 
-        local id = achievement.id
-        if not id or iconCache[id] ~= nil or queuedIconIds[id] then
-                return
-        end
+	local id = achievement.id
+	if not id or iconCache[id] ~= nil or queuedIconIds[id] then
+		return
+	end
 
-        iconLoadQueue[#iconLoadQueue + 1] = {
-                id = id,
-                iconName = achievement.icon or "Default",
-        }
-        queuedIconIds[id] = true
+	iconLoadQueue[#iconLoadQueue + 1] = {
+		id = id,
+		iconName = achievement.icon or "Default",
+	}
+	queuedIconIds[id] = true
 end
 
 local function queueIconsForBlocks(blocks)
-        if not blocks then
-                return
-        end
+	if not blocks then
+		return
+	end
 
-        for _, block in ipairs(blocks) do
-                local achievements = block.achievements or {}
-                for i = 1, #achievements do
-                        queueAchievementIcon(achievements[i])
-                end
-        end
+	for _, block in ipairs(blocks) do
+		local achievements = block.achievements or {}
+		for i = 1, #achievements do
+			queueAchievementIcon(achievements[i])
+		end
+	end
 end
 
 local function processQueuedIcons(maxLoads)
-        if not maxLoads or maxLoads <= 0 then
-                return
-        end
+	if not maxLoads or maxLoads <= 0 then
+		return
+	end
 
-        ensureDefaultIcon()
+	ensureDefaultIcon()
 
-        while maxLoads > 0 and iconLoadQueueIndex <= #iconLoadQueue do
-                local entry = iconLoadQueue[iconLoadQueueIndex]
-                iconLoadQueueIndex = iconLoadQueueIndex + 1
+	while maxLoads > 0 and iconLoadQueueIndex <= #iconLoadQueue do
+		local entry = iconLoadQueue[iconLoadQueueIndex]
+		iconLoadQueueIndex = iconLoadQueueIndex + 1
 
-                if entry then
-                        local path = resolveIconPath(entry.iconName)
-                        local icon = loadIcon(path) or iconCache.__default or false
-                        iconCache[entry.id] = icon
-                        queuedIconIds[entry.id] = nil
-                end
+		if entry then
+			local path = resolveIconPath(entry.iconName)
+			local icon = loadIcon(path) or iconCache.__default or false
+			iconCache[entry.id] = icon
+			queuedIconIds[entry.id] = nil
+		end
 
-                maxLoads = maxLoads - 1
-        end
+		maxLoads = maxLoads - 1
+	end
 end
 
 local function getAchievementIcon(achievement)
-        local defaultIcon = ensureDefaultIcon()
-        if not achievement then
-                return defaultIcon
-        end
+	local defaultIcon = ensureDefaultIcon()
+	if not achievement then
+		return defaultIcon
+	end
 
-        local cached = iconCache[achievement.id]
-        if cached ~= nil then
-                return cached or defaultIcon
-        end
+	local cached = iconCache[achievement.id]
+	if cached ~= nil then
+		return cached or defaultIcon
+	end
 
-        return defaultIcon
+	return defaultIcon
 end
 
 local heldDpadButton = nil
@@ -177,74 +177,74 @@ local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 function AchievementsMenu:getMenuBackgroundOptions()
-        return {effectKey = "achievements"}
+	return {effectKey = "achievements"}
 end
 
 local function copyColor(color)
-        if not color then
-                return {0, 0, 0, 1}
-        end
+	if not color then
+		return {0, 0, 0, 1}
+	end
 
-        return {
-                color[1] or 0,
-                color[2] or 0,
-                color[3] or 0,
-                color[4] == nil and 1 or color[4],
-        }
+	return {
+		color[1] or 0,
+		color[2] or 0,
+		color[3] or 0,
+		color[4] == nil and 1 or color[4],
+	}
 end
 
 local function lightenColor(color, factor)
-        factor = factor or 0.35
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] == nil and 1 or color[4]
-        return {
-                r + (1 - r) * factor,
-                g + (1 - g) * factor,
-                b + (1 - b) * factor,
-                a * (0.65 + factor * 0.35),
-        }
+	factor = factor or 0.35
+	local r = color[1] or 1
+	local g = color[2] or 1
+	local b = color[3] or 1
+	local a = color[4] == nil and 1 or color[4]
+	return {
+		r + (1 - r) * factor,
+		g + (1 - g) * factor,
+		b + (1 - b) * factor,
+		a * (0.65 + factor * 0.35),
+	}
 end
 
 local function darkenColor(color, factor)
-        factor = factor or 0.35
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] == nil and 1 or color[4]
-        return {
-                r * (1 - factor),
-                g * (1 - factor),
-                b * (1 - factor),
-                a,
-        }
+	factor = factor or 0.35
+	local r = color[1] or 1
+	local g = color[2] or 1
+	local b = color[3] or 1
+	local a = color[4] == nil and 1 or color[4]
+	return {
+		r * (1 - factor),
+		g * (1 - factor),
+		b * (1 - factor),
+		a,
+	}
 end
 
 local function withAlpha(color, alpha)
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] == nil and 1 or color[4]
-        return {r, g, b, a * alpha}
+	local r = color[1] or 1
+	local g = color[2] or 1
+	local b = color[3] or 1
+	local a = color[4] == nil and 1 or color[4]
+	return {r, g, b, a * alpha}
 end
 
 local function clamp(value, minValue, maxValue)
-        if value < minValue then
-                return minValue
-        elseif value > maxValue then
-                return maxValue
-        end
+	if value < minValue then
+		return minValue
+	elseif value > maxValue then
+		return maxValue
+	end
 
-        return value
+	return value
 end
 
 local function drawBackground(sw, sh)
-        if not MenuScene.shouldDrawBackground() then
-                return
-        end
+	if not MenuScene.shouldDrawBackground() then
+		return
+	end
 
-        MenuScene.drawBackground(sw, sh, AchievementsMenu:getMenuBackgroundOptions())
+	MenuScene.drawBackground(sw, sh, AchievementsMenu:getMenuBackgroundOptions())
 end
 
 local function resetHeldDpad()
@@ -966,7 +966,7 @@ function AchievementsMenu:enter()
 
 	local sw, sh = Screen:get()
 
-    MenuScene.prepareBackground(self:getMenuBackgroundOptions())
+	MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 
 	scrollOffset = 0
 	minScrollOffset = 0
@@ -978,13 +978,13 @@ function AchievementsMenu:enter()
 
 	Face:set("idle")
 
-        iconCache = {}
-        resetIconLoading()
-        ensureDefaultIcon()
-        displayBlocks = Achievements:getDisplayOrder()
-        queueIconsForBlocks(displayBlocks)
-        processQueuedIcons(ICON_LOADS_PER_FRAME)
-        rebuildAchievementRewards()
+	iconCache = {}
+	resetIconLoading()
+	ensureDefaultIcon()
+	displayBlocks = Achievements:getDisplayOrder()
+	queueIconsForBlocks(displayBlocks)
+	processQueuedIcons(ICON_LOADS_PER_FRAME)
+	rebuildAchievementRewards()
 
 	local layout = computeLayout(sw, sh)
 	local backButtonY = resolveBackButtonY(sw, sh, layout)
@@ -1004,15 +1004,15 @@ function AchievementsMenu:enter()
 
 	applyBackButtonLayout(layout, sw, sh)
 
-        resetHeldDpad()
+	resetHeldDpad()
 
-        updateScrollBounds(sw, sh)
+	updateScrollBounds(sw, sh)
 end
 
 function AchievementsMenu:update(dt)
-        processQueuedIcons(ICON_LOADS_PER_FRAME)
+	processQueuedIcons(ICON_LOADS_PER_FRAME)
 
-        local mx, my = UI.refreshCursor()
+	local mx, my = UI.refreshCursor()
 	buttonList:updateHover(mx, my)
 	if scrollbarDrag.active then
 		if not scrollbarState.visible or not love.mouse.isDown(1) then
@@ -1030,15 +1030,15 @@ function AchievementsMenu:draw()
 	local sw, sh = Screen:get()
 	drawBackground(sw, sh)
 
-        if not displayBlocks or #displayBlocks == 0 then
-                displayBlocks = Achievements:getDisplayOrder()
-        end
+	if not displayBlocks or #displayBlocks == 0 then
+		displayBlocks = Achievements:getDisplayOrder()
+	end
 
-        queueIconsForBlocks(displayBlocks)
+	queueIconsForBlocks(displayBlocks)
 
-        local defaultIcon = ensureDefaultIcon()
+	local defaultIcon = ensureDefaultIcon()
 
-        UI.refreshCursor()
+	UI.refreshCursor()
 
 	local layout = computeLayout(sw, sh)
 	layout = updateScrollBounds(sw, sh, layout)
@@ -1150,14 +1150,14 @@ function AchievementsMenu:draw()
 		for _, ach in ipairs(block.achievements) do
 			local unlocked = ach.unlocked
 			local goal = ach.goal or 0
-                        local hiddenLocked = ach.hidden and not unlocked
-                        local hasProgress = (not hiddenLocked) and goal > 0
-                        local icon
-                        if hiddenLocked then
-                                icon = defaultIcon
-                        else
-                                icon = getAchievementIcon(ach) or defaultIcon
-                        end
+			local hiddenLocked = ach.hidden and not unlocked
+			local hasProgress = (not hiddenLocked) and goal > 0
+			local icon
+			if hiddenLocked then
+				icon = defaultIcon
+			else
+				icon = getAchievementIcon(ach) or defaultIcon
+			end
 			local x = listX
 			local barW = max(0, cardWidth - 120)
 			local cardY = y

@@ -74,50 +74,50 @@ local function resolveStateDurationPreference(state, direction, otherStateName)
 end
 
 local function resolveTransitionDuration(self, fromName, toName)
-        local toState = toName and self.states[toName]
-        local fromState = fromName and self.states[fromName]
+	local toState = toName and self.states[toName]
+	local fromState = fromName and self.states[fromName]
 
-        local duration = resolveStateDurationPreference(toState, "in", fromName)
-        or resolveStateDurationPreference(fromState, "out", toName)
+	local duration = resolveStateDurationPreference(toState, "in", fromName)
+	or resolveStateDurationPreference(fromState, "out", toName)
 
-        if duration ~= nil then
-                return duration
-        end
+	if duration ~= nil then
+		return duration
+	end
 
-        return self.defaultTransitionDuration or 0
+	return self.defaultTransitionDuration or 0
 end
 
 local function getTransitionStyle(state)
-        if not state then
-                return nil
-        end
+	if not state then
+		return nil
+	end
 
-        if state.getTransitionStyle then
-                local ok, value = pcall(state.getTransitionStyle, state)
-                if ok and value ~= nil then
-                        return value
-                end
-        end
+	if state.getTransitionStyle then
+		local ok, value = pcall(state.getTransitionStyle, state)
+		if ok and value ~= nil then
+			return value
+		end
+	end
 
-        return state.transitionStyle
+	return state.transitionStyle
 end
 
 local function shouldUseMenuSlide(fromState, toState)
-        local fromStyle = getTransitionStyle(fromState)
-        local toStyle = getTransitionStyle(toState)
+	local fromStyle = getTransitionStyle(fromState)
+	local toStyle = getTransitionStyle(toState)
 
-        if fromStyle and fromStyle == toStyle and fromStyle == "menuSlide" then
-                return true
-        end
+	if fromStyle and fromStyle == toStyle and fromStyle == "menuSlide" then
+		return true
+	end
 
-        return false
+	return false
 end
 
 local function updateTransitionContext(self, data)
-        local context = self.transitionContext
-        if not context then
-                context = {}
-                self.transitionContext = context
+	local context = self.transitionContext
+	if not context then
+		context = {}
+		self.transitionContext = context
 	end
 
 	context.transitioning = data.transitioning or false
@@ -172,71 +172,71 @@ local function callCurrentState(self, methodName, ...)
 end
 
 function GameState:switch(stateName, data)
-        if self.transitioning then
-                self.queuedState = stateName
-                self.queuedData = data
-                return
-        end
+	if self.transitioning then
+		self.queuedState = stateName
+		self.queuedData = data
+		return
+	end
 
-        self.transitionDuration = resolveTransitionDuration(self, self.current, stateName)
+	self.transitionDuration = resolveTransitionDuration(self, self.current, stateName)
 
-        local previousState = getCurrentState(self)
-        local nextStateModule = stateName and self.states[stateName]
+	local previousState = getCurrentState(self)
+	local nextStateModule = stateName and self.states[stateName]
 
-        if shouldUseMenuSlide(previousState, nextStateModule) and self.transitionDuration > 0 then
-                local previousName = self.current
+	if shouldUseMenuSlide(previousState, nextStateModule) and self.transitionDuration > 0 then
+		local previousName = self.current
 
-                self.transitionMode = "menuSlide"
-                self.transitioning = true
-                self.transitionDirection = -1
-                self.transitionTime = 0
-                self.transitionFrom = previousName
-                self.pendingData = nil
-                self.previousState = previousState
-                self.previousStateName = previousName
-                self.current = stateName
-                self.next = nil
+		self.transitionMode = "menuSlide"
+		self.transitioning = true
+		self.transitionDirection = -1
+		self.transitionTime = 0
+		self.transitionFrom = previousName
+		self.pendingData = nil
+		self.previousState = previousState
+		self.previousStateName = previousName
+		self.current = stateName
+		self.next = nil
 
-                if previousState and previousState.onTransitionStart then
-                        previousState:onTransitionStart("out", stateName)
-                end
+		if previousState and previousState.onTransitionStart then
+			previousState:onTransitionStart("out", stateName)
+		end
 
-                local nextState = getCurrentState(self)
-                if nextState and nextState.enter then
-                        nextState:enter(data)
-                end
-                if nextState and nextState.onTransitionStart then
-                        nextState:onTransitionStart("in", previousName)
-                end
+		local nextState = getCurrentState(self)
+		if nextState and nextState.enter then
+			nextState:enter(data)
+		end
+		if nextState and nextState.onTransitionStart then
+			nextState:onTransitionStart("in", previousName)
+		end
 
-                self.transitionOutgoingContext = {
-                        transitioning = true,
-                        direction = 1,
-                        progress = 0,
-                        duration = self.transitionDuration,
-                        time = 0,
-                        from = previousName,
-                        to = self.current,
-                        alpha = getTransitionAlpha(0, 1),
-                }
+		self.transitionOutgoingContext = {
+			transitioning = true,
+			direction = 1,
+			progress = 0,
+			duration = self.transitionDuration,
+			time = 0,
+			from = previousName,
+			to = self.current,
+			alpha = getTransitionAlpha(0, 1),
+		}
 
-                updateTransitionContext(self, {
-                        transitioning = true,
-                        direction = -1,
-                        progress = 0,
-                        duration = self.transitionDuration,
-                        time = 0,
-                        from = previousName,
-                        to = self.current,
-                })
+		updateTransitionContext(self, {
+			transitioning = true,
+			direction = -1,
+			progress = 0,
+			duration = self.transitionDuration,
+			time = 0,
+			from = previousName,
+			to = self.current,
+		})
 
-                return
-        end
+		return
+	end
 
-        if self.current == nil or self.transitionDuration <= 0 then
-                local previous = getCurrentState(self)
-                if previous and previous.leave then
-                        previous:leave()
+	if self.current == nil or self.transitionDuration <= 0 then
+		local previous = getCurrentState(self)
+		if previous and previous.leave then
+			previous:leave()
 		end
 
 		self.current = stateName
@@ -292,91 +292,91 @@ function GameState:switch(stateName, data)
 end
 
 function GameState:update(dt)
-        if self.transitionMode == "menuSlide" and self.transitioning then
-                local duration = self.transitionDuration
-                if not duration or duration <= 0 then
-                        duration = 0.0001
-                end
+	if self.transitionMode == "menuSlide" and self.transitioning then
+		local duration = self.transitionDuration
+		if not duration or duration <= 0 then
+			duration = 0.0001
+		end
 
-                if dt and dt > 0 then
-                        self.transitionTime = min(1, self.transitionTime + dt / duration)
-                else
-                        self.transitionTime = min(1, self.transitionTime + 0)
-                end
+		if dt and dt > 0 then
+			self.transitionTime = min(1, self.transitionTime + dt / duration)
+		else
+			self.transitionTime = min(1, self.transitionTime + 0)
+		end
 
-                local progress = clamp01(self.transitionTime)
-                local fromName = self.transitionFrom
-                local context = updateTransitionContext(self, {
-                        transitioning = true,
-                        direction = -1,
-                        progress = progress,
-                        duration = self.transitionDuration,
-                        time = progress * (self.transitionDuration or 0),
-                        from = fromName,
-                        to = self.current,
-                })
+		local progress = clamp01(self.transitionTime)
+		local fromName = self.transitionFrom
+		local context = updateTransitionContext(self, {
+			transitioning = true,
+			direction = -1,
+			progress = progress,
+			duration = self.transitionDuration,
+			time = progress * (self.transitionDuration or 0),
+			from = fromName,
+			to = self.current,
+		})
 
-                local outgoingContext = self.transitionOutgoingContext
-                if outgoingContext then
-                        outgoingContext.transitioning = progress < 1
-                        outgoingContext.direction = 1
-                        outgoingContext.progress = progress
-                        outgoingContext.duration = self.transitionDuration
-                        outgoingContext.time = progress * (self.transitionDuration or 0)
-                        outgoingContext.alpha = getTransitionAlpha(progress, 1)
-                end
+		local outgoingContext = self.transitionOutgoingContext
+		if outgoingContext then
+			outgoingContext.transitioning = progress < 1
+			outgoingContext.direction = 1
+			outgoingContext.progress = progress
+			outgoingContext.duration = self.transitionDuration
+			outgoingContext.time = progress * (self.transitionDuration or 0)
+			outgoingContext.alpha = getTransitionAlpha(progress, 1)
+		end
 
-                if self.previousState and self.previousState.transitionUpdate then
-                        self.previousState:transitionUpdate(dt, 1, progress, outgoingContext)
-                end
+		if self.previousState and self.previousState.transitionUpdate then
+			self.previousState:transitionUpdate(dt, 1, progress, outgoingContext)
+		end
 
-                local result = callCurrentState(self, "transitionUpdate", dt, -1, progress, context)
+		local result = callCurrentState(self, "transitionUpdate", dt, -1, progress, context)
 
-                if progress >= 1 then
-                        if self.previousState then
-                                if self.previousState.onTransitionEnd then
-                                        self.previousState:onTransitionEnd("out", self.current)
-                                end
-                                if self.previousState.leave then
-                                        self.previousState:leave()
-                                end
-                                self.previousState = nil
-                                self.previousStateName = nil
-                        end
+		if progress >= 1 then
+			if self.previousState then
+				if self.previousState.onTransitionEnd then
+					self.previousState:onTransitionEnd("out", self.current)
+				end
+				if self.previousState.leave then
+					self.previousState:leave()
+				end
+				self.previousState = nil
+				self.previousStateName = nil
+			end
 
-                        local activeState = getCurrentState(self)
-                        if activeState and activeState.onTransitionEnd then
-                                activeState:onTransitionEnd("in", fromName)
-                        end
+			local activeState = getCurrentState(self)
+			if activeState and activeState.onTransitionEnd then
+				activeState:onTransitionEnd("in", fromName)
+			end
 
-                        self.transitioning = false
-                        self.transitionTime = 0
-                        self.transitionFrom = nil
-                        self.transitionMode = nil
-                        self.transitionOutgoingContext = nil
+			self.transitioning = false
+			self.transitionTime = 0
+			self.transitionFrom = nil
+			self.transitionMode = nil
+			self.transitionOutgoingContext = nil
 
-                        updateTransitionContext(self, {
-                                transitioning = false,
-                                direction = 0,
-                                progress = 1,
-                                duration = self.transitionDuration,
-                                time = 0,
-                                from = nil,
-                                to = self.current,
-                        })
+			updateTransitionContext(self, {
+				transitioning = false,
+				direction = 0,
+				progress = 1,
+				duration = self.transitionDuration,
+				time = 0,
+				from = nil,
+				to = self.current,
+			})
 
-                        if self.queuedState then
-                                local queuedState, queuedData = self.queuedState, self.queuedData
-                                self.queuedState, self.queuedData = nil, nil
-                                self:switch(queuedState, queuedData)
-                        end
-                end
+			if self.queuedState then
+				local queuedState, queuedData = self.queuedState, self.queuedData
+				self.queuedState, self.queuedData = nil, nil
+				self:switch(queuedState, queuedData)
+			end
+		end
 
-                return result
-        end
+		return result
+	end
 
-        if self.transitioning then
-                self.transitionTime = min(1, self.transitionTime + dt / self.transitionDuration)
+	if self.transitioning then
+		self.transitionTime = min(1, self.transitionTime + dt / self.transitionDuration)
 
 		local context
 
@@ -474,89 +474,89 @@ function GameState:update(dt)
 end
 
 function GameState:draw()
-        if self.transitionMode == "menuSlide" and self.transitioning then
-                local currentState = getCurrentState(self)
-                local previousState = self.previousState
-                local width = love.graphics.getWidth()
-                local height = love.graphics.getHeight()
-                local context = self.transitionContext
-                local progress = (context and context.progress) or clamp01(self.transitionTime)
+	if self.transitionMode == "menuSlide" and self.transitioning then
+		local currentState = getCurrentState(self)
+		local previousState = self.previousState
+		local width = love.graphics.getWidth()
+		local height = love.graphics.getHeight()
+		local context = self.transitionContext
+		local progress = (context and context.progress) or clamp01(self.transitionTime)
 
-                local function getBackgroundOptions(state)
-                        if not state or not state.getMenuBackgroundOptions then
-                                return nil
-                        end
+		local function getBackgroundOptions(state)
+			if not state or not state.getMenuBackgroundOptions then
+				return nil
+			end
 
-                        local ok, options = pcall(state.getMenuBackgroundOptions, state)
-                        if ok then
-                                return options
-                        end
+			local ok, options = pcall(state.getMenuBackgroundOptions, state)
+			if ok then
+				return options
+			end
 
-                        return nil
-                end
+			return nil
+		end
 
-                local useIncomingBackground = (not previousState) or progress >= 0.5
-                local backgroundOptions
+		local useIncomingBackground = (not previousState) or progress >= 0.5
+		local backgroundOptions
 
-                if useIncomingBackground then
-                        backgroundOptions = getBackgroundOptions(currentState) or getBackgroundOptions(previousState)
-                else
-                        backgroundOptions = getBackgroundOptions(previousState) or getBackgroundOptions(currentState)
-                end
+		if useIncomingBackground then
+			backgroundOptions = getBackgroundOptions(currentState) or getBackgroundOptions(previousState)
+		else
+			backgroundOptions = getBackgroundOptions(previousState) or getBackgroundOptions(currentState)
+		end
 
-                MenuScene.drawBackground(width, height, backgroundOptions)
-                MenuScene.beginManualBackground()
+		MenuScene.drawBackground(width, height, backgroundOptions)
+		MenuScene.beginManualBackground()
 
-                if previousState then
-                        local outgoingProgress = clamp01(progress * 2)
-                        MenuScene.setDrawRole("outgoing")
-                        love.graphics.push()
-                        love.graphics.translate(MenuScene.getOutgoingOffset(outgoingProgress, width), 0)
-                        previousState:draw()
-                        love.graphics.pop()
-                end
+		if previousState then
+			local outgoingProgress = clamp01(progress * 2)
+			MenuScene.setDrawRole("outgoing")
+			love.graphics.push()
+			love.graphics.translate(MenuScene.getOutgoingOffset(outgoingProgress, width), 0)
+			previousState:draw()
+			love.graphics.pop()
+		end
 
-                if currentState and (not previousState or progress >= 0.5) then
-                        local incomingProgress
-                        if previousState then
-                                incomingProgress = clamp01((progress - 0.5) * 2)
-                        else
-                                incomingProgress = clamp01(progress)
-                        end
+		if currentState and (not previousState or progress >= 0.5) then
+			local incomingProgress
+			if previousState then
+				incomingProgress = clamp01((progress - 0.5) * 2)
+			else
+				incomingProgress = clamp01(progress)
+			end
 
-                        MenuScene.setDrawRole("incoming")
-                        love.graphics.push()
-                        love.graphics.translate(MenuScene.getIncomingOffset(incomingProgress, width), 0)
-                        currentState:draw()
-                        love.graphics.pop()
-                end
+			MenuScene.setDrawRole("incoming")
+			love.graphics.push()
+			love.graphics.translate(MenuScene.getIncomingOffset(incomingProgress, width), 0)
+			currentState:draw()
+			love.graphics.pop()
+		end
 
-                MenuScene.setDrawRole(nil)
-                MenuScene.endManualBackground()
-                love.graphics.setColor(1, 1, 1, 1)
-                return
-        end
+		MenuScene.setDrawRole(nil)
+		MenuScene.endManualBackground()
+		love.graphics.setColor(1, 1, 1, 1)
+		return
+	end
 
-        callCurrentState(self, "draw")
+	callCurrentState(self, "draw")
 
-        if not self.transitioning then
-                return
-        end
+	if not self.transitioning then
+		return
+	end
 
-        local context = self.transitionContext
-        local progress = min(math.max(self.transitionTime, 0), 1)
-        local alpha = (context and context.alpha) or getTransitionAlpha(progress, self.transitionDirection)
+	local context = self.transitionContext
+	local progress = min(math.max(self.transitionTime, 0), 1)
+	local alpha = (context and context.alpha) or getTransitionAlpha(progress, self.transitionDirection)
 
-        if alpha <= 0 then
-                return
-        end
+	if alpha <= 0 then
+		return
+	end
 
-        local width = love.graphics.getWidth()
-        local height = love.graphics.getHeight()
+	local width = love.graphics.getWidth()
+	local height = love.graphics.getHeight()
 
-        love.graphics.setColor(0, 0, 0, alpha)
-        love.graphics.rectangle("fill", 0, 0, width, height)
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(0, 0, 0, alpha)
+	love.graphics.rectangle("fill", 0, 0, width, height)
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 function GameState:dispatch(eventName, ...)

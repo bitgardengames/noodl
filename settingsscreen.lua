@@ -13,8 +13,8 @@ local max = math.max
 local min = math.min
 
 local SettingsScreen = {
-        transitionDuration = 0.35,
-        transitionStyle = "menuSlide",
+	transitionDuration = 0.35,
+	transitionStyle = "menuSlide",
 }
 
 local ANALOG_DEADZONE = 0.3
@@ -441,18 +441,18 @@ local function getBaseColor()
 end
 
 function SettingsScreen:getMenuBackgroundOptions()
-        return {
-                effectKey = "settings",
-                baseColor = getBaseColor(),
-        }
+	return {
+		effectKey = "settings",
+		baseColor = getBaseColor(),
+	}
 end
 
 local function drawBackground(sw, sh)
-        if not MenuScene.shouldDrawBackground() then
-                return
-        end
+	if not MenuScene.shouldDrawBackground() then
+		return
+	end
 
-        MenuScene.drawBackground(sw, sh, SettingsScreen:getMenuBackgroundOptions())
+	MenuScene.drawBackground(sw, sh, SettingsScreen:getMenuBackgroundOptions())
 end
 
 local analogAxisDirections = {horizontal = nil, vertical = nil}
@@ -520,7 +520,7 @@ end
 
 function SettingsScreen:enter()
 	Screen:update()
-    MenuScene.prepareBackground(self:getMenuBackgroundOptions())
+	MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 	local sw, sh = Screen:get()
 	local menuLayout = UI.getMenuLayout(sw, sh)
 	local headerY = UI.getHeaderY(sw, sh)

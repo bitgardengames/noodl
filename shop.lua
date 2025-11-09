@@ -1277,87 +1277,87 @@ getBadgeStyleForCard = function(card)
 end
 
 local function drawRoundedRegularPolygon(mode, cx, cy, R, sides, cr, segs, rot)
-    segs = math.max(2, segs or 4)
-    rot  = rot or 0
-    local pi, cos, sin, atan2 = math.pi, math.cos, math.sin, math.atan2
-    local TWO_PI = 2 * pi
+	segs = math.max(2, segs or 4)
+	rot  = rot or 0
+	local pi, cos, sin, atan2 = math.pi, math.cos, math.sin, math.atan2
+	local TWO_PI = 2 * pi
 
-    -- Interior angle and half-angle for a regular n-gon
-    local interior = pi - TWO_PI / sides
-    local half     = interior / 2
+	-- Interior angle and half-angle for a regular n-gon
+	local interior = pi - TWO_PI / sides
+	local half     = interior / 2
 
-    -- Distance from the vertex to the tangent point along each edge
-    -- t = r * cot(α/2)  and  cot(x) = 1 / tan(x)
-    local function cot(x) return 1 / math.tan(x) end
-    local t = cr * cot(half)
+	-- Distance from the vertex to the tangent point along each edge
+	-- t = r * cot(α/2)  and  cot(x) = 1 / tan(x)
+	local function cot(x) return 1 / math.tan(x) end
+	local t = cr * cot(half)
 
-    -- Distance from vertex inward along the angle bisector to the arc center
-    -- m = r / sin(α/2)
-    local m = cr / math.sin(half)
+	-- Distance from vertex inward along the angle bisector to the arc center
+	-- m = r / sin(α/2)
+	local m = cr / math.sin(half)
 
-    -- Precompute the raw (unrounded) vertices
-    local V = {}
-    for i = 0, sides - 1 do
-        local a = rot + (TWO_PI * i / sides) - pi/2 -- start with a vertex "up"
-        V[i] = { cx + R * cos(a), cy + R * sin(a) }
-    end
+	-- Precompute the raw (unrounded) vertices
+	local V = {}
+	for i = 0, sides - 1 do
+		local a = rot + (TWO_PI * i / sides) - pi/2 -- start with a vertex "up"
+		V[i] = { cx + R * cos(a), cy + R * sin(a) }
+	end
 
-    -- Build the final flattened point list, walking CCW
-    local points = {}
-    local function norm(dx, dy)
-        local len = math.sqrt(dx*dx + dy*dy)
-        return dx/len, dy/len
-    end
+	-- Build the final flattened point list, walking CCW
+	local points = {}
+	local function norm(dx, dy)
+		local len = math.sqrt(dx*dx + dy*dy)
+		return dx/len, dy/len
+	end
 
-    for i = 0, sides - 1 do
-        local vp   = V[(i - 1) % sides]
-        local v    = V[i]
-        local vn   = V[(i + 1) % sides]
+	for i = 0, sides - 1 do
+		local vp   = V[(i - 1) % sides]
+		local v    = V[i]
+		local vn   = V[(i + 1) % sides]
 
-        -- Unit directions from vertex toward prev/next vertices
-        local dpx, dpy = norm(vp[1] - v[1], vp[2] - v[2])
-        local dnx, dny = norm(vn[1] - v[1], vn[2] - v[2])
+		-- Unit directions from vertex toward prev/next vertices
+		local dpx, dpy = norm(vp[1] - v[1], vp[2] - v[2])
+		local dnx, dny = norm(vn[1] - v[1], vn[2] - v[2])
 
-        -- Tangency points on each adjacent edge
-        local T1x, T1y = v[1] + dpx * t, v[2] + dpy * t
-        local T2x, T2y = v[1] + dnx * t, v[2] + dny * t
+		-- Tangency points on each adjacent edge
+		local T1x, T1y = v[1] + dpx * t, v[2] + dpy * t
+		local T2x, T2y = v[1] + dnx * t, v[2] + dny * t
 
-        -- Inward bisector (sum of unit directions), then normalize
-        local bx, by = dpx + dnx, dpy + dny
-        bx, by = norm(bx, by)
+		-- Inward bisector (sum of unit directions), then normalize
+		local bx, by = dpx + dnx, dpy + dny
+		bx, by = norm(bx, by)
 
-        -- Arc center is along the inward bisector
-        local Cx, Cy = v[1] + bx * m, v[2] + by * m
+		-- Arc center is along the inward bisector
+		local Cx, Cy = v[1] + bx * m, v[2] + by * m
 
-        -- Arc angles from center to each tangency point
-        local a1 = atan2(T1y - Cy, T1x - Cx)
-        local a2 = atan2(T2y - Cy, T2x - Cx)
+		-- Arc angles from center to each tangency point
+		local a1 = atan2(T1y - Cy, T1x - Cx)
+		local a2 = atan2(T2y - Cy, T2x - Cx)
 
-        -- Ensure we sweep the shorter CCW arc from a1 to a2
-        -- (adjust for wrapping so it marches forward CCW)
-        while a2 < a1 do a2 = a2 + TWO_PI end
+		-- Ensure we sweep the shorter CCW arc from a1 to a2
+		-- (adjust for wrapping so it marches forward CCW)
+		while a2 < a1 do a2 = a2 + TWO_PI end
 
-        -- Add the first tangency point (connects from previous corner)
-        table.insert(points, T1x); table.insert(points, T1y)
+		-- Add the first tangency point (connects from previous corner)
+		table.insert(points, T1x); table.insert(points, T1y)
 
-        -- Sample the rounded corner arc
-        for s = 1, segs - 1 do
-            local u = s / segs
-            local aa = a1 + (a2 - a1) * u
-            table.insert(points, Cx + cr * math.cos(aa))
-            table.insert(points, Cy + cr * math.sin(aa))
-        end
+		-- Sample the rounded corner arc
+		for s = 1, segs - 1 do
+			local u = s / segs
+			local aa = a1 + (a2 - a1) * u
+			table.insert(points, Cx + cr * math.cos(aa))
+			table.insert(points, Cy + cr * math.sin(aa))
+		end
 
-        -- The second tangency point will be added as the first point of the next corner
-        -- (so we avoid duplicates); it will appear when i+1 is processed as T1.
-        -- For the last corner, we'll close the polygon automatically.
-        if i == sides - 1 then
-            -- Close by explicitly adding the very last tangency point
-            table.insert(points, T2x); table.insert(points, T2y)
-        end
-    end
+		-- The second tangency point will be added as the first point of the next corner
+		-- (so we avoid duplicates); it will appear when i+1 is processed as T1.
+		-- For the last corner, we'll close the polygon automatically.
+		if i == sides - 1 then
+			-- Close by explicitly adding the very last tangency point
+			table.insert(points, T2x); table.insert(points, T2y)
+		end
+	end
 
-    love.graphics.polygon(mode, points)
+	love.graphics.polygon(mode, points)
 end
 
 local SHAPE_RADIUS = 0.46  -- unified size across all shapes

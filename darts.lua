@@ -122,51 +122,51 @@ local function getEmitterColors()
 end
 
 local function applySpeedMultiplier(emitter)
-        if not emitter then
-                return
-        end
+	if not emitter then
+		return
+	end
 
-        local mult = Darts.speedMult or 1
-        if mult <= 0 then
-                mult = 1
-        end
+	local mult = Darts.speedMult or 1
+	if mult <= 0 then
+		mult = 1
+	end
 
-        local travelDistance = emitter.travelDistance or 0
+	local travelDistance = emitter.travelDistance or 0
 
-        if emitter.baseFireDuration and emitter.baseFireDuration > 0 then
-                emitter.fireDuration = max(0.28, (emitter.baseFireDuration or 0.28) / mult)
-        elseif travelDistance > 0 then
-                local baseSpeed = emitter.baseDartSpeed or emitter.dartSpeed or DEFAULT_DART_SPEED
-                if baseSpeed <= 0 then
-                        baseSpeed = DEFAULT_DART_SPEED
-                end
+	if emitter.baseFireDuration and emitter.baseFireDuration > 0 then
+		emitter.fireDuration = max(0.28, (emitter.baseFireDuration or 0.28) / mult)
+	elseif travelDistance > 0 then
+		local baseSpeed = emitter.baseDartSpeed or emitter.dartSpeed or DEFAULT_DART_SPEED
+		if baseSpeed <= 0 then
+			baseSpeed = DEFAULT_DART_SPEED
+		end
 
-                local speed = baseSpeed * mult
-                if speed <= 0 then
-                        speed = DEFAULT_DART_SPEED
-                end
+		local speed = baseSpeed * mult
+		if speed <= 0 then
+			speed = DEFAULT_DART_SPEED
+		end
 
-                emitter.fireDuration = max(0.28, travelDistance / speed)
-        else
-                emitter.fireDuration = max(0.28, (emitter.fireDuration or 0.28) / mult)
-        end
+		emitter.fireDuration = max(0.28, travelDistance / speed)
+	else
+		emitter.fireDuration = max(0.28, (emitter.fireDuration or 0.28) / mult)
+	end
 
-        if travelDistance > 0 then
-                emitter.dartSpeed = travelDistance / (emitter.fireDuration or 0.28)
-        else
-                emitter.dartSpeed = (emitter.baseDartSpeed or emitter.dartSpeed or DEFAULT_DART_SPEED) * mult
-        end
+	if travelDistance > 0 then
+		emitter.dartSpeed = travelDistance / (emitter.fireDuration or 0.28)
+	else
+		emitter.dartSpeed = (emitter.baseDartSpeed or emitter.dartSpeed or DEFAULT_DART_SPEED) * mult
+	end
 
-        if emitter.state == "firing" then
-                local progress = clamp01(emitter.dartProgress or 0)
-                emitter.fireTimer = (1 - progress) * (emitter.fireDuration or 0)
-        end
+	if emitter.state == "firing" then
+		local progress = clamp01(emitter.dartProgress or 0)
+		emitter.fireTimer = (1 - progress) * (emitter.fireDuration or 0)
+	end
 end
 
 local function computeShotTargets(emitter)
-        if not emitter then
-                return
-        end
+	if not emitter then
+		return
+	end
 
 	local tileSize = Arena.tileSize or 24
 	local facing = emitter.facing or 1
@@ -259,7 +259,7 @@ local function computeShotTargets(emitter)
 		emitter.travelDistance = tileSize
 	end
 
-        applySpeedMultiplier(emitter)
+	applySpeedMultiplier(emitter)
 end
 
 local function recordImpact(emitter, x, y, impactType)
@@ -469,16 +469,16 @@ function Darts:load()
 end
 
 function Darts:reset()
-        for _, emitter in ipairs(emitters) do
-                releaseOccupancy(emitter)
-        end
+	for _, emitter in ipairs(emitters) do
+		releaseOccupancy(emitter)
+	end
 
-        for i = #emitters, 1, -1 do
-                emitters[i] = nil
-        end
+	for i = #emitters, 1, -1 do
+		emitters[i] = nil
+	end
 
-        stallTimer = 0
-        self.speedMult = 1
+	stallTimer = 0
+	self.speedMult = 1
 end
 
 function Darts:spawn(x, y, dir, options)
@@ -492,16 +492,16 @@ function Darts:spawn(x, y, dir, options)
 
 	local initialCooldownBonus = resolveInitialCooldownBonus(options)
 
-        local emitter = {
-                x = x,
-                y = y,
-                dir = dir,
-                facing = options and options.facing or 1,
-                telegraphDuration = max(0.2, options and options.telegraphDuration or DEFAULT_TELEGRAPH_DURATION),
-                dartSpeed = options and options.dartSpeed or DEFAULT_DART_SPEED,
-                dartLength = options and options.dartLength or DEFAULT_DART_LENGTH,
-                dartThickness = options and options.dartThickness or DEFAULT_DART_THICKNESS,
-                baseFireDuration = options and options.fireDuration or nil,
+	local emitter = {
+		x = x,
+		y = y,
+		dir = dir,
+		facing = options and options.facing or 1,
+		telegraphDuration = max(0.2, options and options.telegraphDuration or DEFAULT_TELEGRAPH_DURATION),
+		dartSpeed = options and options.dartSpeed or DEFAULT_DART_SPEED,
+		dartLength = options and options.dartLength or DEFAULT_DART_LENGTH,
+		dartThickness = options and options.dartThickness or DEFAULT_DART_THICKNESS,
+		baseFireDuration = options and options.fireDuration or nil,
 		fireCooldownMin = options and options.fireCooldownMin or DEFAULT_COOLDOWN_MIN,
 		fireCooldownMax = options and options.fireCooldownMax or DEFAULT_COOLDOWN_MAX,
 		flashTimer = 0,
@@ -509,13 +509,13 @@ function Darts:spawn(x, y, dir, options)
 		randomOffset = love.math.random() * 1000,
 	}
 
-        emitter.col, emitter.row = Arena:getTileFromWorld(x, y)
-        SnakeUtils.setOccupied(emitter.col, emitter.row, true)
+	emitter.col, emitter.row = Arena:getTileFromWorld(x, y)
+	SnakeUtils.setOccupied(emitter.col, emitter.row, true)
 
-        emitter.baseDartSpeed = emitter.dartSpeed
+	emitter.baseDartSpeed = emitter.dartSpeed
 
-        computeShotTargets(emitter)
-        enterCooldown(emitter, true)
+	computeShotTargets(emitter)
+	enterCooldown(emitter, true)
 
 	if initialCooldownBonus and initialCooldownBonus > 0 then
 		emitter.cooldownTimer = (emitter.cooldownTimer or 0) + initialCooldownBonus
@@ -526,16 +526,16 @@ function Darts:spawn(x, y, dir, options)
 end
 
 function Darts:setSpeedMultiplier(mult)
-        local clamped = mult or 1
-        if clamped <= 0 then
-                clamped = 0.01
-        end
+	local clamped = mult or 1
+	if clamped <= 0 then
+		clamped = 0.01
+	end
 
-        self.speedMult = clamped
+	self.speedMult = clamped
 
-        for _, emitter in ipairs(emitters) do
-                applySpeedMultiplier(emitter)
-        end
+	for _, emitter in ipairs(emitters) do
+		applySpeedMultiplier(emitter)
+	end
 end
 
 function Darts:getEmitters()
@@ -712,28 +712,28 @@ function Darts:onSnakeImpact(emitter, hitX, hitY)
 end
 
 function Darts:update(dt)
-        if not DARTS_ENABLED then
-                return
-        end
+	if not DARTS_ENABLED then
+		return
+	end
 
-        dt = dt or 0
+	dt = dt or 0
 
-        local stall = stallTimer or 0
-        local consumed = min(stall, dt)
-        if consumed > 0 then
-                stallTimer = stall - consumed
-        end
+	local stall = stallTimer or 0
+	local consumed = min(stall, dt)
+	if consumed > 0 then
+		stallTimer = stall - consumed
+	end
 
-        local idleDt = dt - consumed
+	local idleDt = dt - consumed
 
-        for index = 1, #emitters do
-                local emitter = emitters[index]
-                if emitter and emitter.state == "firing" then
-                        updateEmitter(emitter, dt)
-                else
-                        updateEmitter(emitter, idleDt)
-                end
-        end
+	for index = 1, #emitters do
+		local emitter = emitters[index]
+		if emitter and emitter.state == "firing" then
+			updateEmitter(emitter, dt)
+		else
+			updateEmitter(emitter, idleDt)
+		end
+	end
 end
 
 local function drawEmitter(emitter)

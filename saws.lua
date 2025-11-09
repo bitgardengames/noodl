@@ -872,32 +872,32 @@ function Saws:spawn(x, y, radius, teeth, dir, side, options)
 	local initialSink = spawnFromSink and 1 or (sinkActive and 1 or 0)
 
 	insert(current, {
-                x = x,
-                y = y,
-                radius = radius or SAW_RADIUS,
-                collisionRadius = (radius or SAW_RADIUS) * COLLISION_RADIUS_MULT,
-                teeth = teeth or SAW_TEETH,
-                rotation = 0,
-                timer = 0,
+		x = x,
+		y = y,
+		radius = radius or SAW_RADIUS,
+		collisionRadius = (radius or SAW_RADIUS) * COLLISION_RADIUS_MULT,
+		teeth = teeth or SAW_TEETH,
+		rotation = 0,
+		timer = 0,
 		phase = spawnFromSink and "done" or "drop",
 		scaleX = 1,
 		scaleY = spawnFromSink and 1 or 0,
 		offsetY = spawnFromSink and 0 or -40,
 
-                -- movement
-                dir = dir or "horizontal",
-                side = side,
-                progress = 0,
-                direction = 1,
-                slotId = slot and slot.id or nil,
+		-- movement
+		dir = dir or "horizontal",
+		side = side,
+		progress = 0,
+		direction = 1,
+		slotId = slot and slot.id or nil,
 
 		sinkProgress = initialSink,
 		sinkTarget = spawnFromSink and 1 or (sinkActive and 1 or 0),
 		sinkVisualProgress = Easing.easeInOutCubic(initialSink),
-                collisionCells = nil,
-                hitFlashTimer = 0,
+		collisionCells = nil,
+		hitFlashTimer = 0,
 		pendingUnsink = autoUnsink or nil,
-        })
+	})
 
 	local saw = current[#current]
 	invalidateSawPointCache(saw)

@@ -539,10 +539,10 @@ local english = {
 				name = "Sawblade Sinkhole",
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
 			},
-                        resonant_shell = {
-                                name = "Dampening Shell",
-                                description = "Saws and darts travel 15% slower.",
-                        },
+			resonant_shell = {
+				name = "Dampening Shell",
+				description = "Saws and darts travel 15% slower.",
+			},
 			caravan_contract = {
 				name = "Caravan Contract",
 				description = "Shops offer +1 card.",
@@ -559,10 +559,10 @@ local english = {
 				name = "Grand Bazaar",
 				description = "Shops now stock only Uncommon or higher cards. One slot in every shop is always a Rare.",
 			},
-                        fresh_supplies = {
-                                name = "Fresh Supplies",
-                                description = "Discard the current shop cards and restock with new ones.",
-                        },
+			fresh_supplies = {
+				name = "Fresh Supplies",
+				description = "Discard the current shop cards and restock with new ones.",
+			},
 			abyssal_catalyst = {
 				name = "Abyssal Catalyst",
 				description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",

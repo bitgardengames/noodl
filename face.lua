@@ -256,16 +256,16 @@ registerDrawer("shocked", function()
 
 	local function drawCross(cx)
 		love.graphics.line(
-			cx - crossSize * 0.5,
-			EYE_CENTER_Y - crossSize * 0.5,
-			cx + crossSize * 0.5,
-			EYE_CENTER_Y + crossSize * 0.5
+		cx - crossSize * 0.5,
+		EYE_CENTER_Y - crossSize * 0.5,
+		cx + crossSize * 0.5,
+		EYE_CENTER_Y + crossSize * 0.5
 		)
 		love.graphics.line(
-			cx - crossSize * 0.5,
-			EYE_CENTER_Y + crossSize * 0.5,
-			cx + crossSize * 0.5,
-			EYE_CENTER_Y - crossSize * 0.5
+		cx - crossSize * 0.5,
+		EYE_CENTER_Y + crossSize * 0.5,
+		cx + crossSize * 0.5,
+		EYE_CENTER_Y - crossSize * 0.5
 		)
 	end
 

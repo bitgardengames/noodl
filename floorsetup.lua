@@ -294,14 +294,14 @@ local function trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, options)
 end
 
 local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
-        local spawnLookup = buildCellLookup(spawnBuffer)
-        options = options or {}
-        local specialQueue = {}
+	local spawnLookup = buildCellLookup(spawnBuffer)
+	options = options or {}
+	local specialQueue = {}
 	local defaultOptions = options.spawnWithSink and {spawnWithSink = true} or nil
-        local function addSpecial(count, specialOptions)
-                local amount = max(0, floor((count or 0) + 0.5))
-                if amount <= 0 then
-                        return
+	local function addSpecial(count, specialOptions)
+		local amount = max(0, floor((count or 0) + 0.5))
+		if amount <= 0 then
+			return
 		end
 
 		if options.spawnWithSink and specialOptions then
@@ -309,9 +309,9 @@ local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
 		end
 
 		specialQueue[#specialQueue + 1] = {
-                        remaining = amount,
-                        options = specialOptions,
-                }
+			remaining = amount,
+			options = specialOptions,
+		}
 	end
 
 	addSpecial(options.emberCount, {
@@ -715,16 +715,16 @@ function FloorSetup.spawnHazards(spawnPlan)
 	spawnSaws(
 	spawnPlan.numSaws or 0,
 	spawnPlan.halfTiles,
-        spawnPlan.bladeRadius,
-        spawnPlan.spawnSafeCells,
-        {
-                emberCount = emberSawCount,
-                emberColor = EMBER_SAW_COLOR,
-                emberTrailColor = EMBER_SAW_TRAIL_COLOR,
-                emberGlowColor = EMBER_SAW_GLOW_COLOR,
-                spawnWithSink = true,
-        }
-        )
+	spawnPlan.bladeRadius,
+	spawnPlan.spawnSafeCells,
+	{
+		emberCount = emberSawCount,
+		emberColor = EMBER_SAW_COLOR,
+		emberTrailColor = EMBER_SAW_TRAIL_COLOR,
+		emberGlowColor = EMBER_SAW_GLOW_COLOR,
+		spawnWithSink = true,
+	}
+	)
 	spawnLasers(spawnPlan.lasers or {})
 	spawnDarts(spawnPlan.darts or {})
 	spawnRocks(spawnPlan.numRocks or 0, spawnPlan.spawnSafeCells or spawnPlan.rockSafeZone or spawnPlan.safeZone)

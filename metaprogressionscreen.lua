@@ -10,7 +10,7 @@ local SnakeUtils = require("snakeutils")
 local Achievements = require("achievements")
 local PlayerStats = require("playerstats")
 local Audio = require("audio")
-local MenuScene = require("menu_scene")
+local MenuScene = require("menuscene")
 
 local abs = math.abs
 local ceil = math.ceil
@@ -22,8 +22,8 @@ local sin = math.sin
 local sort = table.sort
 
 local ProgressionScreen = {
-        transitionDuration = 0.35,
-        transitionStyle = "menuSlide",
+	transitionDuration = 0.35,
+	transitionStyle = "menuSlide",
 }
 
 local buttonList = ButtonList.new()
@@ -250,11 +250,11 @@ local function darkenColor(color, factor)
 end
 
 local function withAlpha(color, alpha)
-        local r = color[1] or 1
-        local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] == nil and 1 or color[4]
-        return {r, g, b, a * alpha}
+	local r = color[1] or 1
+	local g = color[2] or 1
+	local b = color[3] or 1
+	local a = color[4] == nil and 1 or color[4]
+	return {r, g, b, a * alpha}
 end
 
 local function setColor(color, alphaOverride)
@@ -378,15 +378,15 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 end
 
 function ProgressionScreen:getMenuBackgroundOptions()
-        return {effectKey = "metaprogression"}
+	return {effectKey = "metaprogression"}
 end
 
 local function drawBackground(sw, sh)
-        if not MenuScene.shouldDrawBackground() then
-                return
-        end
+	if not MenuScene.shouldDrawBackground() then
+		return
+	end
 
-        MenuScene.drawBackground(sw, sh, ProgressionScreen:getMenuBackgroundOptions())
+	MenuScene.drawBackground(sw, sh, ProgressionScreen:getMenuBackgroundOptions())
 end
 
 local function resetHeldDpad()
@@ -1301,7 +1301,7 @@ function ProgressionScreen:enter()
 	Screen:update()
 	UI.clearButtons()
 
-    MenuScene.prepareBackground(self:getMenuBackgroundOptions())
+	MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 
 	trackEntries = MetaProgression:getUnlockTrack() or {}
 	annotateTrackEntries()

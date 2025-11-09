@@ -887,12 +887,12 @@ local function register(upgrade)
 end
 
 local function applyResonantShellBonus(state)
-        if not state then return end
+	if not state then return end
 
-        state.effects = state.effects or {}
+	state.effects = state.effects or {}
 
-        state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * RESONANT_SHELL_SAW_SPEED_MULT
-        state.effects.dartSpeedMult = (state.effects.dartSpeedMult or 1) * RESONANT_SHELL_DART_SPEED_MULT
+	state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * RESONANT_SHELL_SAW_SPEED_MULT
+	state.effects.dartSpeedMult = (state.effects.dartSpeedMult or 1) * RESONANT_SHELL_DART_SPEED_MULT
 end
 
 local function normalizeDirection(dx, dy)
@@ -1049,7 +1049,7 @@ pool = {
 		id = "quick_fangs",
 		nameKey = "upgrades.quick_fangs.name",
 		descKey = "upgrades.quick_fangs.description",
-                rarity = "uncommon",
+		rarity = "uncommon",
 		tags = {"mobility"},
 		allowDuplicates = true,
 		maxStacks = 4,
@@ -1350,11 +1350,11 @@ pool = {
 			end,
 		},
 	}),
-        register({
-                id = "circuit_breaker",
-                nameKey = "upgrades.circuit_breaker.name",
-                descKey = "upgrades.circuit_breaker.description",
-                rarity = "rare",
+	register({
+		id = "circuit_breaker",
+		nameKey = "upgrades.circuit_breaker.name",
+		descKey = "upgrades.circuit_breaker.description",
+		rarity = "rare",
 		tags = {"hazard"},
 		onAcquire = function(state)
 			state.effects.sawStall = (state.effects.sawStall or 0) + CIRCUIT_BREAKER_STALL_DURATION
@@ -1481,7 +1481,7 @@ pool = {
 					end
 				end
 
-			if sparksSpawned <= 0 then
+				if sparksSpawned <= 0 then
 					local fallbackOptions = deepcopy(baseOptions)
 					applySegmentPosition(fallbackOptions, 0.82)
 					applyCircuitBreakerFacing(fallbackOptions, 0, -1)
@@ -1494,7 +1494,7 @@ pool = {
 		id = "tremor_bloom",
 		nameKey = "upgrades.tremor_bloom.name",
 		descKey = "upgrades.tremor_bloom.description",
-                rarity = "uncommon",
+		rarity = "uncommon",
 		tags = {"mobility", "hazard", "rocks", "control"},
 		onAcquire = function()
 			celebrateUpgrade(getUpgradeString("tremor_bloom", "name"), nil, {
@@ -1770,14 +1770,14 @@ pool = {
 		descKey = "upgrades.resonant_shell.description",
 		rarity = "uncommon",
 		requiresTags = {"defense"},
-                tags = {"defense"},
-                unlockTag = "specialist",
-                onAcquire = function(state)
-                        applyResonantShellBonus(state)
+		tags = {"defense"},
+		unlockTag = "specialist",
+		onAcquire = function(state)
+			applyResonantShellBonus(state)
 
-                        local celebrationOptions = {
-                                color = {0.8, 0.88, 1, 1},
-                                particleCount = 18,
+			local celebrationOptions = {
+				color = {0.8, 0.88, 1, 1},
+				particleCount = 18,
 				particleSpeed = 120,
 				particleLife = 0.48,
 				textOffset = 48,
@@ -2058,11 +2058,11 @@ pool = {
 			celebrateUpgrade(getUpgradeString("abyssal_catalyst", "name"), nil, celebrationOptions)
 		end,
 	}),
-        register({
-                id = "tectonic_resolve",
-                nameKey = "upgrades.tectonic_resolve.name",
-                descKey = "upgrades.tectonic_resolve.description",
-                rarity = "uncommon",
+	register({
+		id = "tectonic_resolve",
+		nameKey = "upgrades.tectonic_resolve.name",
+		descKey = "upgrades.tectonic_resolve.description",
+		rarity = "uncommon",
 		tags = {"defense"},
 		onAcquire = function(state)
 			state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.85
@@ -2723,8 +2723,8 @@ end
 
 local function captureBaseline(state)
 	local baseline = state.baseline
-        baseline.sawSpeedMult = Saws.speedMult or 1
-        baseline.dartSpeedMult = Darts.speedMult or 1
+	baseline.sawSpeedMult = Saws.speedMult or 1
+	baseline.dartSpeedMult = Darts.speedMult or 1
 	baseline.sawSpinMult = Saws.spinMult or 1
 	baseline.sawStall = Saws:getStallOnFruit()
 	baseline.rockSpawnChance = Rocks:getSpawnChance()
@@ -2755,16 +2755,16 @@ function Upgrades:applyPersistentEffects(rebaseline)
 	ensureBaseline(state)
 	local base = state.baseline
 
-        local sawSpeed = (base.sawSpeedMult or 1) * (effects.sawSpeedMult or 1)
-        local dartSpeed = (base.dartSpeedMult or 1) * (effects.dartSpeedMult or 1)
-        local sawSpin = (base.sawSpinMult or 1) * (effects.sawSpinMult or 1)
-        Saws.speedMult = sawSpeed
-        Saws.spinMult = sawSpin
-        if Darts.setSpeedMultiplier then
-                Darts:setSpeedMultiplier(dartSpeed)
-        else
-                Darts.speedMult = dartSpeed
-        end
+	local sawSpeed = (base.sawSpeedMult or 1) * (effects.sawSpeedMult or 1)
+	local dartSpeed = (base.dartSpeedMult or 1) * (effects.dartSpeedMult or 1)
+	local sawSpin = (base.sawSpinMult or 1) * (effects.sawSpinMult or 1)
+	Saws.speedMult = sawSpeed
+	Saws.spinMult = sawSpin
+	if Darts.setSpeedMultiplier then
+		Darts:setSpeedMultiplier(dartSpeed)
+	else
+		Darts.speedMult = dartSpeed
+	end
 
 	local stallBase = base.sawStall or 0
 	local stallBonus = effects.sawStall or 0
