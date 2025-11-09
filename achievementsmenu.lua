@@ -14,7 +14,7 @@ local max = math.max
 local min = math.min
 
 local AchievementsMenu = {
-	transitionDuration = 0.35,
+        transitionDuration = 0.4,
 	transitionStyle = "menuSlide",
 }
 
