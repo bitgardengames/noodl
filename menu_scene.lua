@@ -230,15 +230,18 @@ function MenuScene.shouldDrawBackground()
         return drawRole ~= "outgoing"
 end
 
-function MenuScene.getIncomingOffset(progress, width)
+local function resolveSlideProgress(progress)
         progress = Easing.clamp01(progress or 0)
-        local eased = Easing.easeOutCubic(progress)
+        return Easing.easeInOutCubic(progress)
+end
+
+function MenuScene.getIncomingOffset(progress, width)
+        local eased = resolveSlideProgress(progress)
         return (1 - eased) * (width or 0)
 end
 
 function MenuScene.getOutgoingOffset(progress, width)
-        progress = Easing.clamp01(progress or 0)
-        local eased = Easing.easeInCubic(progress)
+        local eased = resolveSlideProgress(progress)
         return -eased * (width or 0)
 end
 

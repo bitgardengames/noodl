@@ -22,7 +22,7 @@ local sin = math.sin
 local sort = table.sort
 
 local ProgressionScreen = {
-        transitionDuration = 0.3,
+        transitionDuration = 0.35,
         transitionStyle = "menuSlide",
 }
 
