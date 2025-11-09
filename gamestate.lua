@@ -481,30 +481,52 @@ function GameState:draw()
                 local height = love.graphics.getHeight()
                 local context = self.transitionContext
                 local progress = (context and context.progress) or clamp01(self.transitionTime)
+
+                local function getBackgroundOptions(state)
+                        if not state or not state.getMenuBackgroundOptions then
+                                return nil
+                        end
+
+                        local ok, options = pcall(state.getMenuBackgroundOptions, state)
+                        if ok then
+                                return options
+                        end
+
+                        return nil
+                end
+
+                local useIncomingBackground = (not previousState) or progress >= 0.5
                 local backgroundOptions
 
-                if currentState and currentState.getMenuBackgroundOptions then
-                        local ok, options = pcall(currentState.getMenuBackgroundOptions, currentState)
-                        if ok then
-                                backgroundOptions = options
-                        end
+                if useIncomingBackground then
+                        backgroundOptions = getBackgroundOptions(currentState) or getBackgroundOptions(previousState)
+                else
+                        backgroundOptions = getBackgroundOptions(previousState) or getBackgroundOptions(currentState)
                 end
 
                 MenuScene.drawBackground(width, height, backgroundOptions)
                 MenuScene.beginManualBackground()
 
                 if previousState then
+                        local outgoingProgress = clamp01(progress * 2)
                         MenuScene.setDrawRole("outgoing")
                         love.graphics.push()
-                        love.graphics.translate(MenuScene.getOutgoingOffset(progress, width), 0)
+                        love.graphics.translate(MenuScene.getOutgoingOffset(outgoingProgress, width), 0)
                         previousState:draw()
                         love.graphics.pop()
                 end
 
-                if currentState then
+                if currentState and (not previousState or progress >= 0.5) then
+                        local incomingProgress
+                        if previousState then
+                                incomingProgress = clamp01((progress - 0.5) * 2)
+                        else
+                                incomingProgress = clamp01(progress)
+                        end
+
                         MenuScene.setDrawRole("incoming")
                         love.graphics.push()
-                        love.graphics.translate(MenuScene.getIncomingOffset(progress, width), 0)
+                        love.graphics.translate(MenuScene.getIncomingOffset(incomingProgress, width), 0)
                         currentState:draw()
                         love.graphics.pop()
                 end
