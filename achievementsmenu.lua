@@ -20,6 +20,9 @@ local AchievementsMenu = {
 
 local buttonList = ButtonList.new()
 local iconCache = {}
+local iconLoadQueue = {}
+local iconLoadQueueIndex = 1
+local queuedIconIds = {}
 local displayBlocks = {}
 local achievementRewardText = {}
 
@@ -39,6 +42,7 @@ local BASE_PANEL_PADDING_X = 40
 local BASE_PANEL_PADDING_Y = 32
 local MIN_SCROLLBAR_INSET = 12
 local SCROLLBAR_TRACK_WIDTH = 26
+local ICON_LOADS_PER_FRAME = 6
 
 local DPAD_REPEAT_INITIAL_DELAY = 0.3
 local DPAD_REPEAT_INTERVAL = 0.1
@@ -62,9 +66,109 @@ local scrollbarState = {
 }
 
 local scrollbarDrag = {
-	active = false,
-	grabOffset = 0,
+        active = false,
+        grabOffset = 0,
 }
+
+local function loadIcon(path)
+        local ok, image = pcall(love.graphics.newImage, path)
+        if ok then
+                return image
+        end
+
+        return nil
+end
+
+local function ensureDefaultIcon()
+        local defaultIcon = iconCache.__default
+        if defaultIcon == nil then
+                defaultIcon = loadIcon("Assets/Achievements/Default.png")
+                iconCache.__default = defaultIcon
+        end
+
+        return iconCache.__default
+end
+
+local function resolveIconPath(iconName)
+        local path = string.format("Assets/Achievements/%s.png", iconName or "Default")
+        if not love.filesystem.getInfo(path) then
+                path = "Assets/Achievements/Default.png"
+        end
+
+        return path
+end
+
+local function resetIconLoading()
+        iconLoadQueue = {}
+        iconLoadQueueIndex = 1
+        queuedIconIds = {}
+end
+
+local function queueAchievementIcon(achievement)
+        if not achievement then
+                return
+        end
+
+        local id = achievement.id
+        if not id or iconCache[id] ~= nil or queuedIconIds[id] then
+                return
+        end
+
+        iconLoadQueue[#iconLoadQueue + 1] = {
+                id = id,
+                iconName = achievement.icon or "Default",
+        }
+        queuedIconIds[id] = true
+end
+
+local function queueIconsForBlocks(blocks)
+        if not blocks then
+                return
+        end
+
+        for _, block in ipairs(blocks) do
+                local achievements = block.achievements or {}
+                for i = 1, #achievements do
+                        queueAchievementIcon(achievements[i])
+                end
+        end
+end
+
+local function processQueuedIcons(maxLoads)
+        if not maxLoads or maxLoads <= 0 then
+                return
+        end
+
+        ensureDefaultIcon()
+
+        while maxLoads > 0 and iconLoadQueueIndex <= #iconLoadQueue do
+                local entry = iconLoadQueue[iconLoadQueueIndex]
+                iconLoadQueueIndex = iconLoadQueueIndex + 1
+
+                if entry then
+                        local path = resolveIconPath(entry.iconName)
+                        local icon = loadIcon(path) or iconCache.__default or false
+                        iconCache[entry.id] = icon
+                        queuedIconIds[entry.id] = nil
+                end
+
+                maxLoads = maxLoads - 1
+        end
+end
+
+local function getAchievementIcon(achievement)
+        local defaultIcon = ensureDefaultIcon()
+        if not achievement then
+                return defaultIcon
+        end
+
+        local cached = iconCache[achievement.id]
+        if cached ~= nil then
+                return cached or defaultIcon
+        end
+
+        return defaultIcon
+end
 
 local heldDpadButton = nil
 local heldDpadAction = nil
@@ -874,9 +978,13 @@ function AchievementsMenu:enter()
 
 	Face:set("idle")
 
-	iconCache = {}
-	displayBlocks = Achievements:getDisplayOrder()
-	rebuildAchievementRewards()
+        iconCache = {}
+        resetIconLoading()
+        ensureDefaultIcon()
+        displayBlocks = Achievements:getDisplayOrder()
+        queueIconsForBlocks(displayBlocks)
+        processQueuedIcons(ICON_LOADS_PER_FRAME)
+        rebuildAchievementRewards()
 
 	local layout = computeLayout(sw, sh)
 	local backButtonY = resolveBackButtonY(sw, sh, layout)
@@ -896,36 +1004,15 @@ function AchievementsMenu:enter()
 
 	applyBackButtonLayout(layout, sw, sh)
 
-	resetHeldDpad()
+        resetHeldDpad()
 
-	local function loadIcon(path)
-		local ok, image = pcall(love.graphics.newImage, path)
-		if ok then
-			return image
-		end
-		return nil
-	end
-
-	iconCache.__default = loadIcon("Assets/Achievements/Default.png")
-
-	updateScrollBounds(sw, sh)
-
-	for _, block in ipairs(displayBlocks) do
-		for _, ach in ipairs(block.achievements) do
-			local iconName = ach.icon or "Default"
-			local path = string.format("Assets/Achievements/%s.png", iconName)
-			if not love.filesystem.getInfo(path) then
-				path = "Assets/Achievements/Default.png"
-			end
-			if not iconCache[ach.id] then
-				iconCache[ach.id] = loadIcon(path)
-			end
-		end
-	end
+        updateScrollBounds(sw, sh)
 end
 
 function AchievementsMenu:update(dt)
-	local mx, my = UI.refreshCursor()
+        processQueuedIcons(ICON_LOADS_PER_FRAME)
+
+        local mx, my = UI.refreshCursor()
 	buttonList:updateHover(mx, my)
 	if scrollbarDrag.active then
 		if not scrollbarState.visible or not love.mouse.isDown(1) then
@@ -943,11 +1030,15 @@ function AchievementsMenu:draw()
 	local sw, sh = Screen:get()
 	drawBackground(sw, sh)
 
-	if not displayBlocks or #displayBlocks == 0 then
-		displayBlocks = Achievements:getDisplayOrder()
-	end
+        if not displayBlocks or #displayBlocks == 0 then
+                displayBlocks = Achievements:getDisplayOrder()
+        end
 
-	UI.refreshCursor()
+        queueIconsForBlocks(displayBlocks)
+
+        local defaultIcon = ensureDefaultIcon()
+
+        UI.refreshCursor()
 
 	local layout = computeLayout(sw, sh)
 	layout = updateScrollBounds(sw, sh, layout)
@@ -1059,12 +1150,14 @@ function AchievementsMenu:draw()
 		for _, ach in ipairs(block.achievements) do
 			local unlocked = ach.unlocked
 			local goal = ach.goal or 0
-			local hiddenLocked = ach.hidden and not unlocked
-			local hasProgress = (not hiddenLocked) and goal > 0
-			local icon = hiddenLocked and iconCache.__default or iconCache[ach.id]
-			if not icon then
-				icon = iconCache.__default
-			end
+                        local hiddenLocked = ach.hidden and not unlocked
+                        local hasProgress = (not hiddenLocked) and goal > 0
+                        local icon
+                        if hiddenLocked then
+                                icon = defaultIcon
+                        else
+                                icon = getAchievementIcon(ach) or defaultIcon
+                        end
 			local x = listX
 			local barW = max(0, cardWidth - 120)
 			local cardY = y
