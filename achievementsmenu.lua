@@ -20,6 +20,7 @@ local AchievementsMenu = {
 
 local buttonList = ButtonList.new()
 local iconCache = {}
+local iconProcessingDeferred = false
 local iconLoadQueue = {}
 local iconLoadQueueIndex = 1
 local queuedIconIds = {}
@@ -978,13 +979,12 @@ function AchievementsMenu:enter()
 
 	Face:set("idle")
 
-	iconCache = {}
 	resetIconLoading()
 	ensureDefaultIcon()
 	displayBlocks = Achievements:getDisplayOrder()
 	queueIconsForBlocks(displayBlocks)
-	processQueuedIcons(ICON_LOADS_PER_FRAME)
 	rebuildAchievementRewards()
+	iconProcessingDeferred = false
 
 	local layout = computeLayout(sw, sh)
 	local backButtonY = resolveBackButtonY(sw, sh, layout)
@@ -1010,7 +1010,9 @@ function AchievementsMenu:enter()
 end
 
 function AchievementsMenu:update(dt)
-	processQueuedIcons(ICON_LOADS_PER_FRAME)
+	if not iconProcessingDeferred then
+		processQueuedIcons(ICON_LOADS_PER_FRAME)
+	end
 
 	local mx, my = UI.refreshCursor()
 	buttonList:updateHover(mx, my)
@@ -1024,6 +1026,19 @@ function AchievementsMenu:update(dt)
 	end
 	Face:update(dt)
 	updateHeldDpad(dt)
+end
+
+function AchievementsMenu:onTransitionStart(direction)
+	if direction == "in" then
+		iconProcessingDeferred = true
+	end
+end
+
+function AchievementsMenu:onTransitionEnd(direction)
+	if direction == "in" then
+		iconProcessingDeferred = false
+		processQueuedIcons(ICON_LOADS_PER_FRAME)
+	end
 end
 
 function AchievementsMenu:draw()
