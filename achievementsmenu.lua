@@ -6,7 +6,7 @@ local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local Face = require("face")
-local Shaders = require("shaders")
+local MenuScene = require("menu_scene")
 local SnakeCosmetics = require("snakecosmetics")
 
 local floor = math.floor
@@ -14,7 +14,8 @@ local max = math.max
 local min = math.min
 
 local AchievementsMenu = {
-	transitionDuration = 0.3,
+        transitionDuration = 0.3,
+        transitionStyle = "menuSlide",
 }
 
 local buttonList = ButtonList.new()
@@ -71,121 +72,75 @@ local heldDpadTimer = 0
 local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 
-local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
-local backgroundEffectCache = {}
-local backgroundEffect = nil
+function AchievementsMenu:getMenuBackgroundOptions()
+        return {effectKey = "achievements"}
+end
 
 local function copyColor(color)
-	if not color then
-		return {0, 0, 0, 1}
-	end
+        if not color then
+                return {0, 0, 0, 1}
+        end
 
-	return {
-		color[1] or 0,
-		color[2] or 0,
-		color[3] or 0,
-		color[4] == nil and 1 or color[4],
-	}
+        return {
+                color[1] or 0,
+                color[2] or 0,
+                color[3] or 0,
+                color[4] == nil and 1 or color[4],
+        }
 end
 
 local function lightenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r + (1 - r) * factor,
-		g + (1 - g) * factor,
-		b + (1 - b) * factor,
-		a * (0.65 + factor * 0.35),
-	}
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r + (1 - r) * factor,
+                g + (1 - g) * factor,
+                b + (1 - b) * factor,
+                a * (0.65 + factor * 0.35),
+        }
 end
 
 local function darkenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r * (1 - factor),
-		g * (1 - factor),
-		b * (1 - factor),
-		a,
-	}
-end
-
-local function clamp(value, minValue, maxValue)
-	if value < minValue then
-		return minValue
-	elseif value > maxValue then
-		return maxValue
-	end
-
-	return value
+        factor = factor or 0.35
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {
+                r * (1 - factor),
+                g * (1 - factor),
+                b * (1 - factor),
+                a,
+        }
 end
 
 local function withAlpha(color, alpha)
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {r, g, b, a * alpha}
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {r, g, b, a * alpha}
 end
 
-local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		return
-	end
+local function clamp(value, minValue, maxValue)
+        if value < minValue then
+                return minValue
+        elseif value > maxValue then
+                return maxValue
+        end
 
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
-	local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-	local accentColor = lightenColor(copyColor(coolAccent), 0.18)
-	accentColor[4] = 1
-
-	local pulseColor = lightenColor(copyColor(Theme.panelBorder or Theme.progressColor or accentColor), 0.26)
-	pulseColor[4] = 1
-
-	baseColor = darkenColor(baseColor, 0.15)
-	baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
-
-	local vignette = {
-		color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
-		alpha = 0.28,
-		steps = 3,
-		thickness = nil,
-	}
-
-	effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
-
-	Shaders.configure(effect, {
-		bgColor = baseColor,
-		accentColor = accentColor,
-		pulseColor = pulseColor,
-	})
-
-	effect.vignetteOverlay = vignette
-	backgroundEffect = effect
+        return value
 end
 
 local function drawBackground(sw, sh)
-	love.graphics.setColor(Theme.bgColor)
-	love.graphics.rectangle("fill", 0, 0, sw, sh)
+        if not MenuScene.shouldDrawBackground() then
+                return
+        end
 
-	if not backgroundEffect then
-		configureBackgroundEffect()
-	end
-
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
-	end
-
-	love.graphics.setColor(1, 1, 1, 1)
+        MenuScene.drawBackground(sw, sh, AchievementsMenu:getMenuBackgroundOptions())
 end
 
 local function resetHeldDpad()
@@ -907,7 +862,7 @@ function AchievementsMenu:enter()
 
 	local sw, sh = Screen:get()
 
-	configureBackgroundEffect()
+    MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 
 	scrollOffset = 0
 	minScrollOffset = 0

@@ -8,7 +8,7 @@ local Face = require("face")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local DailyChallenges = require("dailychallenges")
-local Shaders = require("shaders")
+local MenuScene = require("menu_scene")
 local PlayerStats = require("playerstats")
 local SawActor = require("sawactor")
 local Tooltip = require("tooltip")
@@ -19,7 +19,8 @@ local min = math.min
 local sin = math.sin
 
 local Menu = {
-	transitionDuration = 0.3,
+        transitionDuration = 0.3,
+        transitionStyle = "menuSlide",
 }
 
 local ANALOG_DEADZONE = 0.3
@@ -57,111 +58,16 @@ local titleSaw = SawActor.new()
 
 local random = (love.math and love.math.random) or math.random
 
-local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
-local backgroundEffectCache = {}
-local backgroundEffect = nil
-
-local function copyColor(color)
-	if not color then
-		return {0, 0, 0, 1}
-	end
-
-	return {
-		color[1] or 0,
-		color[2] or 0,
-		color[3] or 0,
-		color[4] == nil and 1 or color[4],
-	}
-end
-
-local function lightenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r + (1 - r) * factor,
-		g + (1 - g) * factor,
-		b + (1 - b) * factor,
-		a * (0.65 + factor * 0.35),
-	}
-end
-
-local function darkenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r * (1 - factor),
-		g * (1 - factor),
-		b * (1 - factor),
-		a,
-	}
-end
-
-local function withAlpha(color, alpha)
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {r, g, b, a * alpha}
-end
-
-local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		return
-	end
-
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
-	local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-	local accent = lightenColor(copyColor(coolAccent), 0.18)
-	accent[4] = 1
-
-	local pulse = lightenColor(copyColor(Theme.panelBorder or Theme.progressColor or accent), 0.26)
-	pulse[4] = 1
-
-	baseColor = darkenColor(baseColor, 0.15)
-	baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
-
-	local vignette = {
-		color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
-		alpha = 0.28,
-		steps = 3,
-		thickness = nil,
-	}
-
-	effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
-
-	Shaders.configure(effect, {
-		bgColor = baseColor,
-		accentColor = accent,
-		pulseColor = pulse,
-	})
-
-	effect.vignetteOverlay = vignette
-	backgroundEffect = effect
+function Menu:getMenuBackgroundOptions()
+        return {effectKey = "menu"}
 end
 
 local function drawBackground(sw, sh)
-	love.graphics.setColor(Theme.bgColor)
-	love.graphics.rectangle("fill", 0, 0, sw, sh)
+        if not MenuScene.shouldDrawBackground() then
+                return
+        end
 
-	if not backgroundEffect then
-		configureBackgroundEffect()
-	end
-
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
-	end
-
-	love.graphics.setColor(1, 1, 1, 1)
+        MenuScene.drawBackground(sw, sh, Menu:getMenuBackgroundOptions())
 end
 
 local function getDayUnit(count)
@@ -561,9 +467,9 @@ function Menu:enter()
 	resetDailyBarCelebration()
 	resetAnalogAxis()
 
-	configureBackgroundEffect()
+        MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 
-	local sw, sh = Screen:get()
+        local sw, sh = Screen:get()
 	local centerX = sw / 2
 	local menuLayout = UI.getMenuLayout(sw, sh)
 

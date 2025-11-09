@@ -10,7 +10,7 @@ local SnakeUtils = require("snakeutils")
 local Achievements = require("achievements")
 local PlayerStats = require("playerstats")
 local Audio = require("audio")
-local Shaders = require("shaders")
+local MenuScene = require("menu_scene")
 
 local abs = math.abs
 local ceil = math.ceil
@@ -22,7 +22,8 @@ local sin = math.sin
 local sort = table.sort
 
 local ProgressionScreen = {
-	transitionDuration = 0.3,
+        transitionDuration = 0.3,
+        transitionStyle = "menuSlide",
 }
 
 local buttonList = ButtonList.new()
@@ -207,10 +208,6 @@ local tabs = {
 	},
 }
 
-local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
-local backgroundEffectCache = {}
-local backgroundEffect = nil
-
 local function copyColor(color)
 	if not color then
 		return {0, 0, 0, 1}
@@ -253,11 +250,11 @@ local function darkenColor(color, factor)
 end
 
 local function withAlpha(color, alpha)
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {r, g, b, a * alpha}
+        local r = color[1] or 1
+        local g = color[2] or 1
+        local b = color[3] or 1
+        local a = color[4] == nil and 1 or color[4]
+        return {r, g, b, a * alpha}
 end
 
 local function setColor(color, alphaOverride)
@@ -380,58 +377,16 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 	love.graphics.pop()
 end
 
-local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		return
-	end
-
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
-	local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-	local accentColor = lightenColor(copyColor(coolAccent), 0.18)
-	accentColor[4] = 1
-
-	local pulseColor = lightenColor(copyColor(Theme.panelBorder or Theme.progressColor or accentColor), 0.26)
-	pulseColor[4] = 1
-
-	baseColor = darkenColor(baseColor, 0.15)
-	baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
-
-	local vignette = {
-		color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
-		alpha = 0.28,
-		steps = 3,
-		thickness = nil,
-	}
-
-	effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
-
-	Shaders.configure(effect, {
-		bgColor = baseColor,
-		accentColor = accentColor,
-		pulseColor = pulseColor,
-	})
-
-	effect.vignetteOverlay = vignette
-	backgroundEffect = effect
+function ProgressionScreen:getMenuBackgroundOptions()
+        return {effectKey = "metaprogression"}
 end
 
 local function drawBackground(sw, sh)
-	love.graphics.setColor(Theme.bgColor or {0, 0, 0, 1})
-	love.graphics.rectangle("fill", 0, 0, sw, sh)
+        if not MenuScene.shouldDrawBackground() then
+                return
+        end
 
-	if not backgroundEffect then
-		configureBackgroundEffect()
-	end
-
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
-	end
-
-	love.graphics.setColor(1, 1, 1, 1)
+        MenuScene.drawBackground(sw, sh, ProgressionScreen:getMenuBackgroundOptions())
 end
 
 local function resetHeldDpad()
@@ -1346,7 +1301,7 @@ function ProgressionScreen:enter()
 	Screen:update()
 	UI.clearButtons()
 
-	configureBackgroundEffect()
+    MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 
 	trackEntries = MetaProgression:getUnlockTrack() or {}
 	annotateTrackEntries()

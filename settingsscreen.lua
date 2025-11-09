@@ -4,7 +4,7 @@ local UI = require("ui")
 local Theme = require("theme")
 local Settings = require("settings")
 local Localization = require("localization")
-local Shaders = require("shaders")
+local MenuScene = require("menu_scene")
 local Display = require("display")
 local SnakeCosmetics = require("snakecosmetics")
 
@@ -13,7 +13,8 @@ local max = math.max
 local min = math.min
 
 local SettingsScreen = {
-	transitionDuration = 0.3,
+        transitionDuration = 0.3,
+        transitionStyle = "menuSlide",
 }
 
 local ANALOG_DEADZONE = 0.3
@@ -86,10 +87,6 @@ local function findFirstFocusableIndex()
 	end
 	return nil
 end
-
-local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
-local backgroundEffectCache = {}
-local backgroundEffect = nil
 
 local function copyColor(color)
 	if not color then
@@ -443,60 +440,19 @@ local function getBaseColor()
 	return (UI.colors and UI.colors.background) or Theme.bgColor
 end
 
-local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		return
-	end
-
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	local baseColor = copyColor(getBaseColor() or {0.12, 0.12, 0.14, 1})
-	local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-	local accentColor = lightenColor(copyColor(coolAccent), 0.18)
-	accentColor[4] = 1
-
-	local pulseColor = lightenColor(copyColor(Theme.panelBorder or Theme.progressColor or accentColor), 0.26)
-	pulseColor[4] = 1
-
-	baseColor = darkenColor(baseColor, 0.15)
-	baseColor[4] = baseColor[4] or 1
-
-	local vignette = {
-		color = withAlpha(lightenColor(copyColor(coolAccent), 0.05), 0.28),
-		alpha = 0.28,
-		steps = 3,
-		thickness = nil,
-	}
-
-	effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
-
-	Shaders.configure(effect, {
-		bgColor = baseColor,
-		accentColor = accentColor,
-		pulseColor = pulseColor,
-	})
-
-	effect.vignetteOverlay = vignette
-
-	backgroundEffect = effect
+function SettingsScreen:getMenuBackgroundOptions()
+        return {
+                effectKey = "settings",
+                baseColor = getBaseColor(),
+        }
 end
 
 local function drawBackground(sw, sh)
-	local baseColor = getBaseColor()
-	love.graphics.setColor(baseColor)
-	love.graphics.rectangle("fill", 0, 0, sw, sh)
+        if not MenuScene.shouldDrawBackground() then
+                return
+        end
 
-	if not backgroundEffect then
-		configureBackgroundEffect()
-	end
-
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
-	end
-
-	love.graphics.setColor(1, 1, 1, 1)
+        MenuScene.drawBackground(sw, sh, SettingsScreen:getMenuBackgroundOptions())
 end
 
 local analogAxisDirections = {horizontal = nil, vertical = nil}
@@ -564,7 +520,7 @@ end
 
 function SettingsScreen:enter()
 	Screen:update()
-	configureBackgroundEffect()
+    MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 	local sw, sh = Screen:get()
 	local menuLayout = UI.getMenuLayout(sw, sh)
 	local headerY = UI.getHeaderY(sw, sh)
