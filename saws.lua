@@ -18,7 +18,7 @@ local slots = {}
 local nextSlotId = 0
 
 local SAW_RADIUS = 24
-local COLLISION_RADIUS_MULT = 0.7 -- keep the visual size but ease up on collision tightness
+local COLLISION_RADIUS_MULT = 0.55 -- keep the visual size but ease up on collision tightness
 local SAW_TEETH = 12
 local HUB_HOLE_RADIUS = 4
 local HUB_HIGHLIGHT_PADDING = 3
