@@ -1,5 +1,5 @@
 local Easing = require("easing")
-local MenuScene = require("menu_scene")
+local MenuScene = require("menuscene")
 
 local min = math.min
 

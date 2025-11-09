@@ -6,7 +6,7 @@ local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local Face = require("face")
-local MenuScene = require("menu_scene")
+local MenuScene = require("menuscene")
 local SnakeCosmetics = require("snakecosmetics")
 
 local floor = math.floor

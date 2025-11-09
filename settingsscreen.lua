@@ -4,7 +4,7 @@ local UI = require("ui")
 local Theme = require("theme")
 local Settings = require("settings")
 local Localization = require("localization")
-local MenuScene = require("menu_scene")
+local MenuScene = require("menuscene")
 local Display = require("display")
 local SnakeCosmetics = require("snakecosmetics")
 
