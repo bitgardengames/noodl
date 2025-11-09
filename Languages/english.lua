@@ -540,8 +540,8 @@ local english = {
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
 			},
                         resonant_shell = {
-                                name = "Resonant Shell",
-                                description = "Saws and darts travel 40% slower.",
+                                name = "Dampening Shell",
+                                description = "Saws and darts travel 15% slower.",
                         },
 			caravan_contract = {
 				name = "Caravan Contract",
