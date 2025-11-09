@@ -642,18 +642,6 @@ function Menu:draw()
 		end
 	end
 
-	local versionFont = UI.fonts.small
-	love.graphics.setFont(versionFont)
-	local versionHeight = versionFont and versionFont:getHeight() or 0
-	local versionInset = 15
-	local versionY = sh - versionHeight - versionInset
-	local versionX = versionInset
-	setColorWithAlpha(Theme.shadowColor, 0.6)
-	love.graphics.print(Localization:get("menu.version"), versionX + 1, versionY + 1)
-	setColorWithAlpha(Theme.textColor, 0.6)
-	love.graphics.print(Localization:get("menu.version"), versionX, versionY)
-	love.graphics.setColor(Theme.textColor)
-
 	if dailyChallenge and dailyChallengeAnim > 0 then
 		local alpha = min(1, dailyChallengeAnim)
 		local eased = alpha * alpha
