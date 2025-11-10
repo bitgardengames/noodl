@@ -41,17 +41,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.98, 0.72, 0.78, 0.86},
 		},
 		effects = {
-			overlay = {
-				type = "stripes",
-				intensity = 1.0,
-				frequency = 22,
-				speed = 0.9,
-				angle = 52,
-				colors = {
-					primary = {0.95, 0.95, 0.95, 1.0},
-					secondary = {0.86, 0.12, 0.26, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.52,
 				radiusMultiplier = 1.35,
@@ -108,20 +97,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.60, 0.85, 1.00, 0.80},
 		},
 		effects = {
-			overlay = {
-				type = "auroraVeil",
-				intensity = 0.68,
-				opacity = 0.82,
-				curtainDensity = 7.5,
-				driftSpeed = 0.85,
-				parallax = 1.6,
-				shimmerStrength = 0.75,
-				colors = {
-					primary = {0.36, 0.88, 0.96, 0.85},
-					secondary = {0.76, 0.58, 1.00, 0.95},
-					tertiary = {0.48, 0.70, 0.98, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.55,
 				radiusMultiplier = 1.45,
@@ -160,20 +135,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.52, 0.72, 1.00, 0.78},
 		},
 		effects = {
-			overlay = {
-				type = "abyssalPulse",
-				intensity = 0.72,
-				opacity = 0.86,
-				swirlDensity = 9.0,
-				glimmerFrequency = 4.2,
-				driftSpeed = 1.05,
-				darkness = 0.32,
-				colors = {
-					primary = {0.20, 0.35, 0.75, 1.0},
-					secondary = {0.38, 0.78, 1.00, 1.0},
-					tertiary = {0.76, 0.46, 1.00, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.6,
 				radiusMultiplier = 1.6,
@@ -194,20 +155,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.58, 0.82, 1.00, 0.9},
 		},
 		effects = {
-			overlay = {
-				type = "ionStorm",
-				intensity = 0.82,
-				opacity = 0.9,
-				boltFrequency = 9.5,
-				flashFrequency = 5.8,
-				haze = 0.7,
-				turbulence = 1.45,
-				colors = {
-					primary = {0.32, 0.85, 1.00, 1.0},
-					secondary = {0.18, 0.52, 1.00, 1.0},
-					tertiary = {0.82, 0.45, 1.00, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.75,
 				radiusMultiplier = 1.55,
@@ -228,20 +175,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.96, 0.54, 0.88, 0.9},
 		},
 		effects = {
-			overlay = {
-				type = "petalBloom",
-				intensity = 0.76,
-				opacity = 0.84,
-				petalCount = 8.5,
-				pulseSpeed = 2.2,
-				trailStrength = 0.6,
-				bloomStrength = 0.8,
-				colors = {
-					primary = {0.52, 0.16, 0.58, 1.0},
-					secondary = {0.94, 0.48, 0.88, 1.0},
-					tertiary = {0.68, 0.94, 0.78, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.65,
 				radiusMultiplier = 1.5,
@@ -262,20 +195,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.62, 0.32, 1.00, 0.92},
 		},
 		effects = {
-			overlay = {
-				type = "voidEcho",
-				intensity = 0.64,
-				opacity = 0.8,
-				veilFrequency = 7.6,
-				echoSpeed = -1.1,
-				phaseShift = 0.3,
-				riftIntensity = 0.22,
-				colors = {
-					primary = {0.18, 0.18, 0.32, 1.0},
-					secondary = {0.32, 0.22, 0.52, 1.0},
-					tertiary = {0.62, 0.32, 1.00, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.65,
 				radiusMultiplier = 1.45,
@@ -296,20 +215,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.76, 0.92, 1.00, 0.88},
 		},
 		effects = {
-			overlay = {
-				type = "chronoWeave",
-				intensity = 0.7,
-				opacity = 0.88,
-				ringDensity = 10.5,
-				timeFlow = 2.6,
-				weaveStrength = 1.2,
-				phaseOffset = 0.04,
-				colors = {
-					primary = {0.46, 0.70, 1.00, 0.95},
-					secondary = {0.60, 0.82, 1.00, 1.0},
-					tertiary = {0.88, 0.78, 1.00, 0.9},
-				},
-			},
 			glow = {
 				intensity = 0.7,
 				radiusMultiplier = 1.6,
@@ -330,20 +235,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.48, 0.82, 1.00, 0.88},
 		},
 		effects = {
-			overlay = {
-				type = "ionStorm",
-				intensity = 0.62,
-				opacity = 0.85,
-				boltFrequency = 6.2,
-				flashFrequency = 4.0,
-				haze = 0.4,
-				turbulence = 1.1,
-				colors = {
-					primary = {0.24, 0.58, 0.98, 1.0},
-					secondary = {0.56, 0.32, 0.92, 1.0},
-					tertiary = {0.32, 0.86, 0.96, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.68,
 				radiusMultiplier = 1.6,
@@ -364,20 +255,6 @@ local SKIN_DEFINITIONS = {
 			glow = {1.00, 0.88, 0.52, 0.86},
 		},
 		effects = {
-			overlay = {
-				type = "gildedFacet",
-				intensity = 0.7,
-				opacity = 0.83,
-				facetDensity = 15.0,
-				sparkleDensity = 11.5,
-				beamSpeed = 0.9,
-				reflectionStrength = 0.75,
-				colors = {
-					primary = {0.96, 0.78, 0.42, 1.0},
-					secondary = {1.00, 0.92, 0.68, 1.0},
-					tertiary = {0.88, 0.54, 0.24, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.68,
 				radiusMultiplier = 1.55,
@@ -398,20 +275,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.54, 0.78, 1.00, 0.9},
 		},
 		effects = {
-			overlay = {
-				type = "constellationDrift",
-				intensity = 0.74,
-				opacity = 0.86,
-				starDensity = 6.8,
-				driftSpeed = 1.25,
-				parallax = 0.75,
-				twinkleStrength = 0.85,
-				colors = {
-					primary = {0.24, 0.32, 0.62, 1.0},
-					secondary = {0.52, 0.70, 1.00, 1.0},
-					tertiary = {0.84, 0.64, 1.00, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.72,
 				radiusMultiplier = 1.7,
@@ -432,20 +295,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.60, 0.92, 0.68, 0.86},
 		},
 		effects = {
-			overlay = {
-				type = "crystalBloom",
-				intensity = 0.66,
-				opacity = 0.82,
-				shardDensity = 7.8,
-				sweepSpeed = -0.75,
-				refractionStrength = 0.7,
-				veinStrength = 0.68,
-				colors = {
-					primary = {0.24, 0.72, 0.58, 1.0},
-					secondary = {0.32, 0.86, 0.68, 1.0},
-					tertiary = {0.62, 0.92, 0.54, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.6,
 				radiusMultiplier = 1.48,
@@ -466,20 +315,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.94, 0.38, 0.32, 0.88},
 		},
 		effects = {
-			overlay = {
-				type = "emberForge",
-				intensity = 0.78,
-				opacity = 0.84,
-				emberFrequency = 8.8,
-				emberSpeed = 1.2,
-				emberGlow = 0.82,
-				slagDarkness = 0.42,
-				colors = {
-					primary = {0.32, 0.14, 0.28, 1.0},
-					secondary = {0.94, 0.38, 0.32, 1.0},
-					tertiary = {0.98, 0.78, 0.38, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.7,
 				radiusMultiplier = 1.62,
@@ -500,20 +335,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.80, 0.72, 0.46, 0.9},
 		},
 		effects = {
-			overlay = {
-				type = "mechanicalScan",
-				intensity = 0.63,
-				opacity = 0.86,
-				scanSpeed = 1.6,
-				gearFrequency = 13.2,
-				gearParallax = 1.35,
-				servoIntensity = 0.58,
-				colors = {
-					primary = {0.42, 0.46, 0.62, 1.0},
-					secondary = {0.56, 0.60, 0.82, 1.0},
-					tertiary = {0.88, 0.78, 0.48, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.68,
 				radiusMultiplier = 1.52,
@@ -534,20 +355,6 @@ local SKIN_DEFINITIONS = {
 			glow = {0.46, 0.88, 1.00, 0.88},
 		},
 		effects = {
-			overlay = {
-				type = "tidalChorus",
-				intensity = 0.78,
-				opacity = 0.88,
-				waveFrequency = 6.2,
-				crestSpeed = 1.5,
-				chorusStrength = 0.68,
-				depthShift = -0.08,
-				colors = {
-					primary = {0.20, 0.62, 0.94, 1.0},
-					secondary = {0.40, 0.90, 1.00, 1.0},
-					tertiary = {0.76, 0.52, 1.00, 1.0},
-				},
-			},
 			glow = {
 				intensity = 0.74,
 				radiusMultiplier = 1.68,
@@ -1026,15 +833,6 @@ function SnakeCosmetics:getGlowColor()
 	return resolveColor(palette.glow, self:getBodyColor())
 end
 
-function SnakeCosmetics:getOverlayEffect()
-	local skin = self:getActiveSkin()
-	local effects = skin and skin.effects or {}
-	if effects.overlay then
-		return copyTable(effects.overlay)
-	end
-	return nil
-end
-
 function SnakeCosmetics:getPaletteForSkin(skin)
 	local target = skin or self:getActiveSkin()
 	if not target then
@@ -1059,15 +857,11 @@ function SnakeCosmetics:getPaletteForSkin(skin)
 		result.glow = resolveColor(palette.glow, result.body)
 	end
 
-	if effects.glow then
-		result.glowEffect = copyTable(effects.glow)
-	end
+        if effects.glow then
+                result.glowEffect = copyTable(effects.glow)
+        end
 
-	if effects.overlay then
-		result.overlay = copyTable(effects.overlay)
-	end
-
-	return result
+        return result
 end
 
 return SnakeCosmetics
