@@ -249,9 +249,15 @@ function Particles:draw()
 
 	ensureParticleSprite()
 
-	if count > particleBatch:getBufferSize() then
-		particleBatch:setBufferSize(count)
-	end
+        if count > particleBatch:getBufferSize() then
+                local currentSize = particleBatch:getBufferSize()
+                local newSize = max(count, (currentSize or 0) * 2)
+                if newSize <= 0 then
+                        newSize = count
+                end
+
+                particleBatch = love.graphics.newSpriteBatch(particleSprite, newSize)
+        end
 
 	RenderLayers:withLayer("overlay", function()
 		particleBatch:clear()
