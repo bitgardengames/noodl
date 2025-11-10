@@ -165,8 +165,6 @@ local trackContentHeight = 0
 local statsEntries = {}
 local cosmeticsEntries = {}
 local cosmeticsSummary = {unlocked = 0, total = 0, newUnlocks = 0}
-local cosmeticShaderShowcaseEntries = {}
-local cosmeticShowcaseHeight = 0
 local progressionState = nil
 local activeTab = "experience"
 local cosmeticsFocusIndex = nil
@@ -179,15 +177,6 @@ local function compareStatsEntries(a, b)
 		return a.id < b.id
 	end
 	return a.label < b.label
-end
-
-local function compareCosmeticShowcaseEntries(a, b)
-	local nameA = a.displayName or ""
-	local nameB = b.displayName or ""
-	if nameA == nameB then
-		return (a.skinName or "") < (b.skinName or "")
-	end
-	return nameA < nameB
 end
 
 local tabs = {
@@ -353,9 +342,8 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 		paletteOverride = {
 			body = bodyColor,
 			outline = adjustHover(snakePalette.outline, hoverBoost * 0.5),
-			glow = adjustHover(snakePalette.glow, hoverBoost * 0.35),
-			glowEffect = snakePalette.glowEffect,
-			overlay = snakePalette.overlay,
+                        glow = adjustHover(snakePalette.glow, hoverBoost * 0.35),
+                        glowEffect = snakePalette.glowEffect,
 		}
 	elseif hoverBoost > 0 then
 		paletteOverride = {body = bodyColor}
@@ -703,11 +691,7 @@ local function drawWindowFrame(x, y, width, height, options)
 	love.graphics.rectangle("line", x, y, width, height, WINDOW_CORNER_RADIUS, WINDOW_CORNER_RADIUS)
 	love.graphics.setLineWidth(1)
 
-	if options.overlay then
-		options.overlay(x, y, width, height)
-	end
-
-	love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function roundNearest(value)
@@ -898,66 +882,7 @@ local function resolveSkinStatus(skin)
 	return Localization:get("metaprogression.cosmetics.locked_label"), getSkinRequirementText(skin), Theme.lockedCardColor or Theme.warningColor or Theme.textColor
 end
 
-local function buildCosmeticShaderShowcaseEntries(skins)
-	cosmeticShaderShowcaseEntries = {}
 
-	if type(skins) ~= "table" then
-		cosmeticShowcaseHeight = 0
-		return
-	end
-
-	local entriesByType = {}
-
-	for _, skin in ipairs(skins) do
-		local effects = skin.effects or {}
-		local overlay = effects.overlay
-		if overlay and overlay.type then
-			local key = overlay.type
-			local entry = entriesByType[key]
-			if not entry then
-				entry = {
-					type = key,
-					displayName = formatShaderDisplayName(key),
-					totalCount = 0,
-					unlockedCount = 0,
-					primarySkin = nil,
-				}
-				entriesByType[key] = entry
-				cosmeticShaderShowcaseEntries[#cosmeticShaderShowcaseEntries + 1] = entry
-			end
-
-			entry.totalCount = (entry.totalCount or 0) + 1
-
-			if skin.unlocked then
-				entry.unlockedCount = (entry.unlockedCount or 0) + 1
-				if not entry.primarySkin or not entry.primarySkin.unlocked then
-					entry.primarySkin = skin
-				end
-			elseif not entry.primarySkin then
-				entry.primarySkin = skin
-			end
-		end
-	end
-
-	for _, entry in ipairs(cosmeticShaderShowcaseEntries) do
-		if entry.primarySkin then
-			entry.skinName = entry.primarySkin.name or entry.primarySkin.id
-			entry.palette = SnakeCosmetics:getPaletteForSkin(entry.primarySkin)
-			local effects = entry.primarySkin.effects or {}
-			entry.overlay = shallowCopy(effects.overlay)
-		else
-			entry.skinName = nil
-			entry.palette = nil
-			entry.overlay = nil
-		end
-	end
-
-	sort(cosmeticShaderShowcaseEntries, compareCosmeticShowcaseEntries)
-
-	if #cosmeticShaderShowcaseEntries == 0 then
-		cosmeticShowcaseHeight = 0
-	end
-end
 
 local function buildCosmeticsEntries()
 	cosmeticsEntries = {}
@@ -968,14 +893,11 @@ local function buildCosmeticsEntries()
 	cosmeticsSummary.total = 0
 	cosmeticsSummary.newUnlocks = 0
 
-	if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
-		cosmeticShaderShowcaseEntries = {}
-		cosmeticShowcaseHeight = 0
-		return
-	end
+        if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
+                return
+        end
 
-	local skins = SnakeCosmetics:getSkins() or {}
-	buildCosmeticShaderShowcaseEntries(skins)
+        local skins = SnakeCosmetics:getSkins() or {}
 	local selectedIndex
 	local recentlyUnlockedIds = {}
 
@@ -1763,12 +1685,11 @@ function drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, 
 	love.graphics.translate(previewX + previewW / 2, previewY + previewH / 2 + previewH * 0.04)
 	love.graphics.scale(scale * 0.95)
 	love.graphics.translate(-(bounds.centerX or 0), -(bounds.centerY or 0))
-	SnakeDraw.run(trail, #trail, SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, nil, {
-		drawFace = false,
-		skinOverride = skin,
-		paletteOverride = palette,
-		overlayEffect = palette and palette.overlay,
-	})
+        SnakeDraw.run(trail, #trail, SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, nil, {
+                drawFace = false,
+                skinOverride = skin,
+                paletteOverride = palette,
+        })
 	love.graphics.pop()
 end
 
@@ -1863,22 +1784,11 @@ local function drawCosmeticsList(sw, sh)
 			local bodyColor = (palette and palette.body) or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
 			local outlineColor = (palette and palette.outline) or {0.05, 0.15, 0.12, 1}
 			local glowColor = (palette and palette.glow) or Theme.accentTextColor or {0.95, 0.76, 0.48, 1}
-			local overlayEffect = palette and palette.overlay
-
-			if not unlocked then
-				bodyColor = darkenColor(bodyColor, 0.25)
-				outlineColor = darkenColor(outlineColor, 0.2)
-				glowColor = darkenColor(glowColor, 0.3)
-				if overlayEffect then
-					overlayEffect = shallowCopy(overlayEffect)
-					if overlayEffect.opacity then
-						overlayEffect.opacity = overlayEffect.opacity * 0.65
-					end
-					if overlayEffect.intensity then
-						overlayEffect.intensity = overlayEffect.intensity * 0.6
-					end
-				end
-			end
+                        if not unlocked then
+                                bodyColor = darkenColor(bodyColor, 0.25)
+                                outlineColor = darkenColor(outlineColor, 0.2)
+                                glowColor = darkenColor(glowColor, 0.3)
+                        end
 
 			local previewX = listX + 28
 			local previewY = y + (COSMETIC_CARD_HEIGHT - COSMETIC_PREVIEW_HEIGHT) / 2
@@ -1905,12 +1815,11 @@ local function drawCosmeticsList(sw, sh)
 			love.graphics.setLineWidth(1)
 			love.graphics.setColor(1, 1, 1, 1)
 
-			local previewPalette = {
-				body = bodyColor,
-				outline = outlineColor,
-				glow = glowColor,
-				overlay = overlayEffect,
-			}
+                        local previewPalette = {
+                                body = bodyColor,
+                                outline = outlineColor,
+                                glow = glowColor,
+                        }
 
 			drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, previewPalette)
 
