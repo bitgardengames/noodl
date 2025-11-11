@@ -8,5 +8,5 @@ function love.conf(t)
 
 	t.identity = "Noodl"
 	t.window.title = "Noodl"
-	t.window.icon = "Assets/Snake.png"
+	t.window.icon = "Assets/Icon.png"
 end

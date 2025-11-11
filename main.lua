@@ -22,6 +22,7 @@ local handlers = {
 	gamepadreleased = "gamepadreleased",
 	gamepadaxis = "gamepadaxis",
 	resize = "resize",
+	quit = "quit",
 }
 
 for event, method in pairs(handlers) do

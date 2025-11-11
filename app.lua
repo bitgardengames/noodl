@@ -13,6 +13,7 @@ local Theme = require("theme")
 local SnakeCosmetics = require("snakecosmetics")
 local InputMode = require("inputmode")
 local Timer = require("timer")
+local Steam = require("steam")
 
 local DEFAULT_BG_COLOR = {0, 0, 0, 1}
 
@@ -75,7 +76,8 @@ end
 function App:load()
 	Settings:load()
 	Display.apply(Settings)
-
+	Steam.init()
+	print(Steam, Steam.init, Steam.update, Steam.shutdown)
 	self:registerStates()
 	self:loadSubsystems()
 
@@ -91,6 +93,7 @@ end
 
 function App:update(dt)
 	Screen:update(dt)
+	Steam.update()
 	local action = GameState:update(dt)
 	self:resolveAction(action)
 	UI:update(dt)
@@ -143,6 +146,12 @@ end
 function App:resize(...)
 	Screen:update()
 	return self:forwardEvent("resize", ...)
+end
+
+function App:quit()
+	if Steam then
+		Steam.shutdown()
+	end
 end
 
 local function createEventForwarder(eventName, preHook)
