@@ -61,6 +61,7 @@ local function trimBuffer(buffer, used, capacity)
 	end
 end
 
+local presentSnakeCanvas
 local drawTrailSegmentToCanvas
 
 local function rebuildGlowSprite()
