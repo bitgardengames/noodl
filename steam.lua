@@ -47,6 +47,12 @@ function steam.storeStats()
 end
 
 -- Achievements
+function steam.progressAchievement(id, current, goal)
+	if steam.initialized then
+		Steam.userStats.indicateAchievementProgress(id, current, goal)
+	end
+end
+
 function steam.unlock(id)
 	if steam.initialized then
 		Steam.userStats.setAchievement(id)
@@ -68,14 +74,6 @@ function steam.isUnlocked(id)
 		return Steam.userStats.getAchievement(id)
 	end
 	return false
-end
-
--- Optional: player info
-function steam.getUsername()
-	if steam.initialized then
-		return Steam.friends.getPersonaName()
-	end
-	return "Offline Player"
 end
 
 return steam
