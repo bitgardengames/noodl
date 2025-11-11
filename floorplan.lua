@@ -56,94 +56,109 @@ local function applyLaserCap(context)
 	end
 end
 
-local BASELINE_PLAN = {
-	[1] = {
-		fruitGoal = 12,
-		rocks = 6,
-		saws = 2,
-		laserCount = 0,
-		dartCount = 0,
-		rockSpawnChance = 0.22,
-		sawSpeedMult = 1.02,
-		sawSpinMult = 0.96,
-	},
-	[2] = {
-		fruitGoal = 15,
-		rocks = 7,
-		saws = 2,
-		laserCount = 0,
-		dartCount = 1,
-		rockSpawnChance = 0.26,
-		sawSpeedMult = 1.1,
-		sawSpinMult = 1.02,
-	},
-	[3] = {
-		fruitGoal = 18,
-		rocks = 8,
-		saws = 3,
-		laserCount = 0,
-		dartCount = 2,
-		rockSpawnChance = 0.29,
-		sawSpeedMult = 1.18,
-		sawSpinMult = 1.08,
-	},
-	[4] = {
-		fruitGoal = 21,
-		rocks = 9,
-		saws = 3,
-		laserCount = 0,
-		dartCount = 2,
-		rockSpawnChance = 0.31,
-		sawSpeedMult = 1.26,
-		sawSpinMult = 1.14,
-	},
-	[5] = {
-		fruitGoal = 24,
-		rocks = 10,
-		saws = 4,
-		laserCount = 1,
-		dartCount = 1,
-		rockSpawnChance = 0.34,
-		sawSpeedMult = 1.34,
-		sawSpinMult = 1.22,
-	},
-	[6] = {
-		fruitGoal = 27,
-		rocks = 11,
-		saws = 4,
-		laserCount = 1,
-		dartCount = 1,
-		rockSpawnChance = 0.37,
-		sawSpeedMult = 1.42,
-		sawSpinMult = 1.28,
-	},
-	[7] = {
-		fruitGoal = 30,
-		rocks = 12,
-		saws = 5,
-		laserCount = 1,
-		dartCount = 2,
-		rockSpawnChance = 0.4,
-		sawSpeedMult = 1.48,
-		sawSpinMult = 1.34,
-	},
-	[8] = {
-		fruitGoal = 33,
-		rocks = 13,
-		saws = 5,
-		laserCount = 1,
-		dartCount = 2,
-		rockSpawnChance = 0.43,
-		sawSpeedMult = 1.56,
-		sawSpinMult = 1.42,
-	},
-}
+local function chance(p)
+	return love.math.random() < p
+end
 
-function FloorPlan.getBaselinePlan()
+local BASELINE_PLAN
+
+function generateFloorPlan()
+	return {
+		[1] = {
+			fruitGoal = 12,
+			rocks = 6 + (chance(0.5) and 1 or 0),
+			saws = 2,
+			laserCount = 0,
+			dartCount = 0,
+			rockSpawnChance = 0.22,
+			sawSpeedMult = 1.02,
+			sawSpinMult = 0.96,
+		},
+		[2] = {
+			fruitGoal = 15,
+			rocks = 7 + (chance(0.5) and 1 or 0),
+			saws = 2,
+			laserCount = 0,
+			dartCount = love.math.random(0, 1),
+			rockSpawnChance = 0.26,
+			sawSpeedMult = 1.1,
+			sawSpinMult = 1.02,
+		},
+		[3] = {
+			fruitGoal = 18,
+			rocks = 8 + (chance(0.5) and 1 or 0),
+			saws = 3,
+			laserCount = 0,
+			dartCount = love.math.random(0, 1),
+			rockSpawnChance = 0.29,
+			sawSpeedMult = 1.18,
+			sawSpinMult = 1.08,
+		},
+		[4] = {
+			fruitGoal = 21,
+			rocks = 9 + (chance(0.5) and 1 or 0),
+			saws = 3,
+			laserCount = 0,
+			dartCount = love.math.random(0, 1),
+			rockSpawnChance = 0.31,
+			sawSpeedMult = 1.26,
+			sawSpinMult = 1.14,
+		},
+		[5] = {
+			fruitGoal = 24,
+			rocks = 10 + (chance(0.5) and 1 or 0),
+			saws = 4,
+			laserCount = love.math.random(0, 1),
+			dartCount = love.math.random(0, 1),
+			rockSpawnChance = 0.34,
+			sawSpeedMult = 1.34,
+			sawSpinMult = 1.22,
+		},
+		[6] = {
+			fruitGoal = 27,
+			rocks = 11 + (chance(0.5) and 1 or 0),
+			saws = 4,
+			laserCount = love.math.random(0, 1),
+			dartCount = love.math.random(0, 1),
+			rockSpawnChance = 0.37,
+			sawSpeedMult = 1.42,
+			sawSpinMult = 1.28,
+		},
+		[7] = {
+			fruitGoal = 30,
+			rocks = 12 + (chance(0.5) and 1 or 0),
+			saws = 5,
+			laserCount = love.math.random(0, 1),
+			dartCount = love.math.random(0, 2),
+			rockSpawnChance = 0.4,
+			sawSpeedMult = 1.48,
+			sawSpinMult = 1.34,
+		},
+		[8] = {
+			fruitGoal = 33,
+			rocks = 13 + (chance(0.5) and 1 or 0),
+			saws = 5,
+			laserCount = love.math.random(0, 1),
+			dartCount = love.math.random(0, 2),
+			rockSpawnChance = 0.43,
+			sawSpeedMult = 1.56,
+			sawSpinMult = 1.42,
+		},
+	}
+end
+
+-- Now you can call FloorPlan.getBaselinePlan(os.time()) for fresh chaos, or FloorPlan.getBaselinePlan(12345) for deterministic daily-seeded runs.
+function FloorPlan.getBaselinePlan(seed)
+	if seed then love.math.setRandomSeed(seed) end
+	BASELINE_PLAN = generateFloorPlan()
 	return BASELINE_PLAN
 end
 
 function FloorPlan.getBaselinePlanForFloor(floorIndex)
+	if not BASELINE_PLAN then
+		FloorPlan.getBaselinePlan()
+	end
+
 	floorIndex = max(1, floorIndex or 1)
 	return BASELINE_PLAN[floorIndex]
 end
