@@ -479,7 +479,7 @@ local english = {
 				seconds = "${seconds}s",
 				progress = "${current} / ${target}",
 			},
-			serpents_reflex = {
+			serpents_reflex = { -- ship
 				name = "Serpent’s Reflex",
 				description = "Move 4% faster.",
 			},
@@ -515,7 +515,7 @@ local english = {
 				name = "Deliberate Coil",
 				description = "Snake moves 15% slower. The exit unlocks one fruit later.",
 			},
-			bountiful_harvest = {
+			bountiful_harvest = { -- ship
 				name = "Bountiful Harvest",
 				description = "After collecting 20 fruit, forge 1 shield.",
 			},
@@ -527,7 +527,7 @@ local english = {
 				name = "Mystery Card",
 				description = "Select to reveal and instantly gain a random upgrade.",
 			},
-			circuit_breaker = {
+			circuit_breaker = { -- ship
 				name = "Circuit Breaker",
 				description = "Each fruit collected short-circuits all traps for 1 second.",
 			},
@@ -540,8 +540,8 @@ local english = {
 				name = "Contract of Cinders",
 				description = "Gain +2 shields immediately. Each time a shield breaks, it leaves an ember that spawns a saw on the next floor.",
 			},
-			sawblade_sinkhole = {
-				name = "Sawblade Sinkhole",
+			blade_override = {
+				name = "Blade Override",
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
 			},
 			resonant_shell = {
