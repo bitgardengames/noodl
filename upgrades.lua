@@ -287,8 +287,8 @@ local CHRONO_WARD_DEFAULT_SCALE = 0.45
 local CIRCUIT_BREAKER_STALL_DURATION = 1
 local SUBDUCTION_ARRAY_SINK_DURATION = 1.6
 local SUBDUCTION_ARRAY_VISUAL_LIMIT = 3
-local RESONANT_SHELL_SAW_SPEED_MULT = 0.85
-local RESONANT_SHELL_DART_SPEED_MULT = 0.85
+local VELOCITY_REGULATOR_SAW_SPEED_MULT = 0.85
+local VELOCITY_REGULATOR_DART_SPEED_MULT = 0.85
 local TREMOR_BLOOM_RADIUS = 2
 local TREMOR_BLOOM_SLIDE_DURATION = 0.28
 local TREMOR_BLOOM_SAW_NUDGE_AMOUNT = 0.22
@@ -886,13 +886,13 @@ local function register(upgrade)
 	return upgrade
 end
 
-local function applyResonantShellBonus(state)
+local function applyVelocityRegulatorBonus(state)
 	if not state then return end
 
 	state.effects = state.effects or {}
 
-	state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * RESONANT_SHELL_SAW_SPEED_MULT
-	state.effects.dartSpeedMult = (state.effects.dartSpeedMult or 1) * RESONANT_SHELL_DART_SPEED_MULT
+	state.effects.sawSpeedMult = (state.effects.sawSpeedMult or 1) * VELOCITY_REGULATOR_SAW_SPEED_MULT
+	state.effects.dartSpeedMult = (state.effects.dartSpeedMult or 1) * VELOCITY_REGULATOR_DART_SPEED_MULT
 end
 
 local function normalizeDirection(dx, dy)
@@ -1210,9 +1210,9 @@ pool = {
 		end,
 	}),
 	register({
-		id = "stone_whisperer",
-		nameKey = "upgrades.stone_whisperer.name",
-		descKey = "upgrades.stone_whisperer.description",
+		id = "rock_suppressor",
+		nameKey = "upgrades.rock_suppressor.name",
+		descKey = "upgrades.rock_suppressor.description",
 		rarity = "common",
 		tags = {"hazard", "rocks"},
 		onAcquire = function(state)
@@ -1765,15 +1765,15 @@ pool = {
 		},
 	}),
 	register({
-		id = "resonant_shell",
-		nameKey = "upgrades.resonant_shell.name",
-		descKey = "upgrades.resonant_shell.description",
+		id = "velocity_regulator",
+		nameKey = "upgrades.velocity_regulator.name",
+		descKey = "upgrades.velocity_regulator.description",
 		rarity = "uncommon",
 		requiresTags = {"defense"},
 		tags = {"defense"},
 		unlockTag = "specialist",
 		onAcquire = function(state)
-			applyResonantShellBonus(state)
+			applyVelocityRegulatorBonus(state)
 
 			local celebrationOptions = {
 				color = {0.8, 0.88, 1, 1},
@@ -1783,7 +1783,7 @@ pool = {
 				textOffset = 48,
 				textScale = 1.12,
 				visual = {
-					variant = "resonant_shell",
+					variant = "velocity_regulator",
 					life = 0.86,
 					innerRadius = 12,
 					outerRadius = 60,
@@ -1796,7 +1796,7 @@ pool = {
 				},
 			}
 			applySegmentPosition(celebrationOptions, 0.52)
-			celebrateUpgrade(getUpgradeString("resonant_shell", "name"), nil, celebrationOptions)
+			celebrateUpgrade(getUpgradeString("velocity_regulator", "name"), nil, celebrationOptions)
 		end,
 	}),
 	register({

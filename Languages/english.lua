@@ -507,8 +507,8 @@ local english = {
 				description = "Surge forward after eating fruit.",
 				adrenaline_shout = "Adrenaline!",
 			},
-			stone_whisperer = {
-				name = "Stone Whisperer",
+			rock_suppressor = { -- ship
+				name = "Rock Suppressor",
 				description = "Rocks spawn far less often after eating fruit.",
 			},
 			deliberate_coil = {
@@ -544,9 +544,9 @@ local english = {
 				name = "Blade Override",
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
 			},
-			resonant_shell = {
-				name = "Resonant Shell",
-				description = "For each of your first 5 Defense upgrades, saws move 8% slower (up to 55% total speed) and lasers take +0.08s longer to charge.",
+			velocity_regulator = {
+				name = "Velocity Regulator",
+				description = "Saws and darts travel 15% slower.",
 			},
 			caravan_contract = {
 				name = "Caravan Contract",

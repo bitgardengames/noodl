@@ -1156,7 +1156,7 @@ local variantDrawers = {
 	adrenaline_rush = drawAdrenalineRush,
 	molting_reflex = drawMoltingReflex,
 	guiding_compass = drawGuidingCompass,
-	resonant_shell = drawResonantShell,
+	velocity_regulator = drawResonantShell,
 	abyssal_catalyst = drawAbyssalCatalyst,
 }
 
