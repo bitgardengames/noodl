@@ -1835,6 +1835,18 @@ pool = {
 		end,
 	}),
 	register({
+		id = "trade_accord",
+		nameKey = "upgrades.trade_accord.name",
+		descKey = "upgrades.trade_accord.description",
+		rarity = "uncommon",
+		tags = {"economy", "shop", "hazard"},
+		onAcquire = function(state)
+			local slots = state.effects.shopSlots or 0
+			local reduction = slots * 0.03
+			state.effects.rockSpawnChanceMult = (state.effects.rockSpawnChanceMult or 1) * (1 - reduction)
+		end,
+	})
+	register({
 		id = "gluttons_wake",
 		nameKey = "upgrades.gluttons_wake.name",
 		descKey = "upgrades.gluttons_wake.description",

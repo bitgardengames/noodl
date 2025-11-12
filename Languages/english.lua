@@ -489,7 +489,7 @@ local english = {
 			},
 			stone_skin = {
 				name = "Stone Skin",
-				description = "Forge a shield that blocks one hit.",
+				description = "Forge a shield that blocks one hazard.",
 				shield_text = "Stone Skin!",
 			},
 			aegis_recycler = {
@@ -540,11 +540,11 @@ local english = {
 				name = "Contract of Cinders",
 				description = "Gain +2 shields immediately. Each time a shield breaks, it leaves an ember that spawns a saw on the next floor.",
 			},
-			blade_override = {
+			blade_override = { -- ship
 				name = "Blade Override",
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
 			},
-			velocity_regulator = {
+			velocity_regulator = { -- ship
 				name = "Velocity Regulator",
 				description = "Saws and darts travel 15% slower.",
 			},
@@ -572,8 +572,8 @@ local english = {
 				name = "Fresh Supplies",
 				description = "Discard the current shop cards and restock with new ones.",
 			},
-			guild_ledger = {
-				name = "Guild Ledger",
+			trade_accord = {
+				name = "Trade Accord",
 				description = "Each shop slot reduces rock spawn chance by 3%.",
 			},
 			abyssal_catalyst = {
