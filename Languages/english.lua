@@ -515,8 +515,8 @@ local english = {
 				name = "Deliberate Coil",
 				description = "Snake moves 15% slower. The exit unlocks one fruit later.",
 			},
-			pocket_springs = {
-				name = "Tempest Ward",
+			bountiful_harvest = {
+				name = "Bountiful Harvest",
 				description = "After collecting 20 fruit, forge 1 shield.",
 			},
 			molting_reflex = {

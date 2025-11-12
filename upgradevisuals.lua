@@ -200,23 +200,23 @@ function UpgradeVisuals:update(dt)
 
 	local writeIndex = 1
 	for readIndex = 1, beforeCount do
-		local effect = effects[readIndex]
-		effect.age = effect.age + dt
-		if effect.age < effect.life then
-			if writeIndex ~= readIndex then
-				effects[writeIndex] = effect
-			end
-			writeIndex = writeIndex + 1
-		end
+	local effect = effects[readIndex]
+	effect.age = effect.age + dt
+	if effect.age < effect.life then
+	if writeIndex ~= readIndex then
+	effects[writeIndex] = effect
+	end
+	writeIndex = writeIndex + 1
+	end
 	end
 
 	for index = writeIndex, beforeCount do
-		effects[index] = nil
+	effects[index] = nil
 	end
 
 	if self.logEffectCounts then
-		local afterCount = writeIndex - 1
-		print(string.format("[UpgradeVisuals] effects %d -> %d", beforeCount, afterCount))
+	local afterCount = writeIndex - 1
+	print(string.format("[UpgradeVisuals] effects %d -> %d", beforeCount, afterCount))
 	end
 end
 
@@ -821,6 +821,91 @@ local function drawStormBurst(effect, progress)
 	love.graphics.setLineWidth(1)
 end
 
+local function drawGuidingCompass(effect, progress)
+	local x, y = effect.x, effect.y
+	local innerRadius = effect.innerRadius or 12
+	local outerRadius = effect.outerRadius or 44
+	local ringColor = effect.variantColor or effect.color or {0.72, 0.86, 1.0, 1}
+	local pointerColor = effect.variantSecondaryColor or {1.0, 0.82, 0.42, 1}
+	local markerColor = effect.variantTertiaryColor or {0.48, 0.72, 1.0, 0.85}
+
+	local ringAlpha = (ringColor[4] or 1) * clamp01(1.05 - progress * 1.15)
+	if ringAlpha <= 0 then return end
+
+
+	local rotation = (effect.rotation or 0) + progress * pi * 0.7
+
+	love.graphics.setColor(ringColor[1], ringColor[2], ringColor[3], ringAlpha * 0.35)
+	love.graphics.circle("fill", x, y, outerRadius * (0.82 - 0.12 * progress), 48)
+
+	love.graphics.setLineWidth(2.4)
+	love.graphics.setColor(ringColor[1], ringColor[2], ringColor[3], ringAlpha)
+	love.graphics.circle("line", x, y, outerRadius * (0.78 - 0.16 * progress), 48)
+
+	local markerAlpha = (markerColor[4] or 1) * clamp01(1 - progress * 1.25)
+	if markerAlpha > 0 then
+		for index = 1, 8 do
+			local weight = (index % 2 == 0) and 1 or 0.6
+			local angle = rotation + index * (pi / 4)
+			local inner = innerRadius * (0.85 + 0.12 * weight)
+			local outer = outerRadius * (0.58 + 0.18 * weight)
+			local sx = x + cos(angle) * inner
+			local sy = y + sin(angle) * inner
+			local ex = x + cos(angle) * outer
+			local ey = y + sin(angle) * outer
+			love.graphics.setLineWidth(1.4 + weight * 0.8)
+			love.graphics.setColor(markerColor[1], markerColor[2], markerColor[3], markerAlpha * weight)
+			love.graphics.line(sx, sy, ex, ey)
+		end
+	end
+
+	local pointerAlpha = (pointerColor[4] or 1) * clamp01(1.1 - progress * 1.05)
+	if pointerAlpha > 0 then
+		local pointerAngle = rotation + progress * pi * 1.4
+		local tipRadius = outerRadius * (0.68 + 0.08 * sin(progress * pi * 4))
+		local tailRadius = innerRadius * 0.7
+		local leftAngle = pointerAngle + pi * 0.55
+		local rightAngle = pointerAngle - pi * 0.55
+
+		love.graphics.setColor(pointerColor[1], pointerColor[2], pointerColor[3], pointerAlpha * 0.9)
+		love.graphics.polygon(
+		"fill",
+		x + cos(pointerAngle) * tipRadius,
+		y + sin(pointerAngle) * tipRadius,
+		x + cos(leftAngle) * tailRadius,
+		y + sin(leftAngle) * tailRadius,
+		x,
+		y,
+		x + cos(rightAngle) * tailRadius,
+		y + sin(rightAngle) * tailRadius
+		)
+
+		love.graphics.setLineWidth(2)
+		love.graphics.setColor(pointerColor[1], pointerColor[2], pointerColor[3], pointerAlpha)
+		love.graphics.polygon(
+		"line",
+		x + cos(pointerAngle) * tipRadius,
+		y + sin(pointerAngle) * tipRadius,
+		x + cos(leftAngle) * tailRadius,
+		y + sin(leftAngle) * tailRadius,
+		x,
+		y,
+		x + cos(rightAngle) * tailRadius,
+		y + sin(rightAngle) * tailRadius
+		)
+	end
+
+	local innerAlpha = (markerColor[4] or 1) * clamp01(1 - progress * 0.95)
+	if innerAlpha > 0 then
+		local pulse = 0.9 + 0.2 * sin(progress * pi * 5)
+		love.graphics.setColor(markerColor[1], markerColor[2], markerColor[3], innerAlpha)
+		love.graphics.circle("line", x, y, innerRadius * (0.9 + 0.35 * pulse), 30)
+		love.graphics.circle("line", x, y, innerRadius * (1.35 + 0.25 * pulse), 30)
+	end
+
+	love.graphics.setLineWidth(1)
+end
+
 local function drawMoltingReflex(effect, progress)
 	local x, y = effect.x, effect.y
 	local innerRadius = effect.innerRadius or 12
@@ -1066,10 +1151,11 @@ local variantDrawers = {
 	fang_flurry = drawFangFlurry,
 	extra_bite_chomp = drawExtraBiteChomp,
 	stoneguard_bastion = drawStoneguardBastion,
-	pocket_springs = drawPocketSprings,
+	bountiful_harvest = drawPocketSprings,
 	coiled_focus = drawCoiledFocus,
 	adrenaline_rush = drawAdrenalineRush,
 	molting_reflex = drawMoltingReflex,
+	guiding_compass = drawGuidingCompass,
 	resonant_shell = drawResonantShell,
 	abyssal_catalyst = drawAbyssalCatalyst,
 }

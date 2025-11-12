@@ -281,7 +281,7 @@ function RunState:notify(event, data)
 	end
 end
 
-local POCKET_SPRINGS_FRUIT_TARGET = 20
+local BOUNTIFUL_HARVEST_FRUIT_TARGET = 20
 local CHRONO_WARD_DEFAULT_DURATION = 0.85
 local CHRONO_WARD_DEFAULT_SCALE = 0.45
 local CIRCUIT_BREAKER_STALL_DURATION = 1
@@ -1253,31 +1253,31 @@ pool = {
 		end,
 	}),
 	register({
-		id = "pocket_springs",
-		nameKey = "upgrades.pocket_springs.name",
-		descKey = "upgrades.pocket_springs.description",
+		id = "bountiful_harvest",
+		nameKey = "upgrades.bountiful_harvest.name",
+		descKey = "upgrades.bountiful_harvest.description",
 		rarity = "uncommon",
 		tags = {"defense"},
 		onAcquire = function(state)
-			state.counters.pocketSpringsFruit = state.counters.pocketSpringsFruit or 0
-			if state.counters.pocketSpringsComplete == nil then
-				state.counters.pocketSpringsComplete = false
+			state.counters.bountifulHarvestFruit = state.counters.bountifulHarvestFruit or 0
+			if state.counters.bountifulHarvestComplete == nil then
+				state.counters.bountifulHarvestComplete = false
 			end
 		end,
 		handlers = {
 			fruitCollected = function(data, state)
-				if getStacks(state, "pocket_springs") <= 0 then
+				if getStacks(state, "bountiful_harvest") <= 0 then
 					return
 				end
 
-				if state.counters.pocketSpringsComplete then
+				if state.counters.bountifulHarvestComplete then
 					return
 				end
 
-				state.counters.pocketSpringsFruit = (state.counters.pocketSpringsFruit or 0) + 1
-				if state.counters.pocketSpringsFruit >= POCKET_SPRINGS_FRUIT_TARGET then
-					state.counters.pocketSpringsFruit = POCKET_SPRINGS_FRUIT_TARGET
-					state.counters.pocketSpringsComplete = true
+				state.counters.bountifulHarvestFruit = (state.counters.bountifulHarvestFruit or 0) + 1
+				if state.counters.bountifulHarvestFruit >= BOUNTIFUL_HARVEST_FRUIT_TARGET then
+					state.counters.bountifulHarvestFruit = BOUNTIFUL_HARVEST_FRUIT_TARGET
+					state.counters.bountifulHarvestComplete = true
 					Snake:addShields(1)
 					Face:set("happy", 1.6)
 					local celebrationOptions = {
@@ -1288,7 +1288,7 @@ pool = {
 						textOffset = 44,
 						textScale = 1.1,
 						visual = {
-							variant = "pocket_springs",
+							variant = "bountiful_harvest",
 							showBase = false,
 							life = 0.84,
 							innerRadius = 12,
@@ -1300,7 +1300,7 @@ pool = {
 						},
 					}
 					applySegmentPosition(celebrationOptions, 0.42)
-					celebrateUpgrade(getUpgradeString("pocket_springs", "name"), nil, celebrationOptions)
+					celebrateUpgrade(getUpgradeString("bountiful_harvest", "name"), nil, celebrationOptions)
 				end
 			end,
 		},
@@ -2399,25 +2399,25 @@ function Upgrades:getHUDIndicators()
 		return getStacks(state, id) > 0
 	end
 
-	if hasUpgrade("pocket_springs") then
+	if hasUpgrade("bountiful_harvest") then
 		local counters = state.counters or {}
-		local complete = counters.pocketSpringsComplete
+		local complete = counters.bountifulHarvestComplete
 		if not complete then
-			local collected = min(counters.pocketSpringsFruit or 0, POCKET_SPRINGS_FRUIT_TARGET)
+			local collected = min(counters.bountifulHarvestFruit or 0, BOUNTIFUL_HARVEST_FRUIT_TARGET)
 			local progress = 0
-			if POCKET_SPRINGS_FRUIT_TARGET > 0 then
-				progress = clamp(collected / POCKET_SPRINGS_FRUIT_TARGET, 0, 1)
+			if BOUNTIFUL_HARVEST_FRUIT_TARGET > 0 then
+				progress = clamp(collected / BOUNTIFUL_HARVEST_FRUIT_TARGET, 0, 1)
 			end
 
 			insert(indicators, {
-				id = "pocket_springs",
-				label = Localization:get("upgrades.pocket_springs.name"),
+				id = "bountiful_harvest",
+				label = Localization:get("upgrades.bountiful_harvest.name"),
 				accentColor = {0.58, 0.82, 1.0, 1.0},
 				stackCount = nil,
 				charge = progress,
 				chargeLabel = hudText("progress", {
 					current = tostring(collected),
-					target = tostring(POCKET_SPRINGS_FRUIT_TARGET),
+					target = tostring(BOUNTIFUL_HARVEST_FRUIT_TARGET),
 				}),
 				status = hudStatus("charging"),
 				icon = "shield",
