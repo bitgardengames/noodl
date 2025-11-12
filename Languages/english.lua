@@ -143,6 +143,12 @@ local english = {
 					progress = "Fastest floor: ${best} (Target ${target})",
 					complete = "Blazing clear!",
 				},
+				pace_setter = {
+					title = "Pace Setter",
+					description = "Maintain an average pace of ${pace} tiles per minute.",
+					progress = "Current pace: ${pace}/${goal} (Tiles: ${tiles}, Minutes: ${minutes})",
+					complete = "Steady sprint! Pace hit ${pace} tiles per minute.",
+				},
 				combo_harvester = {
 					title = "Combo Harvester",
 					description = "Trigger combos after hoarding ${fruit_batch} fruit ${goal} times in one run.",
@@ -477,10 +483,9 @@ local english = {
 				name = "Serpent’s Reflex",
 				description = "Move 4% faster.",
 			},
-			quick_fangs = {
-				name = "Quick Fangs",
+			swift_fangs = {
+				name = "Swift Fangs",
 				description = "Move 10% faster.",
-				combo_celebration = "Fang Rush",
 			},
 			stone_skin = {
 				name = "Stone Skin",
@@ -540,8 +545,8 @@ local english = {
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
 			},
 			resonant_shell = {
-				name = "Dampening Shell",
-				description = "Saws and darts travel 15% slower.",
+				name = "Resonant Shell",
+				description = "For each of your first 5 Defense upgrades, saws move 8% slower (up to 55% total speed) and lasers take +0.08s longer to charge.",
 			},
 			caravan_contract = {
 				name = "Caravan Contract",
@@ -559,9 +564,17 @@ local english = {
 				name = "Grand Bazaar",
 				description = "Shops now stock only Uncommon or higher cards. One slot in every shop is always a Rare.",
 			},
+			verdant_bonds = {
+				name = "Verdant Bonds",
+				description = "Buying an Economy upgrade adds Verdant Growth equal to Verdant Bonds stacks. Every 3 Verdant Growth, gain a shield.",
+			},
 			fresh_supplies = {
 				name = "Fresh Supplies",
 				description = "Discard the current shop cards and restock with new ones.",
+			},
+			guild_ledger = {
+				name = "Guild Ledger",
+				description = "Each shop slot reduces rock spawn chance by 3%.",
 			},
 			abyssal_catalyst = {
 				name = "Abyssal Catalyst",

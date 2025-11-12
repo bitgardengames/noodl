@@ -1046,9 +1046,9 @@ pool = {
 		end,
 	}),
 	register({
-		id = "quick_fangs",
-		nameKey = "upgrades.quick_fangs.name",
-		descKey = "upgrades.quick_fangs.description",
+		id = "swift_fangs",
+		nameKey = "upgrades.swift_fangs.name",
+		descKey = "upgrades.swift_fangs.description",
 		rarity = "uncommon",
 		tags = {"mobility"},
 		allowDuplicates = true,
@@ -1058,11 +1058,11 @@ pool = {
 
 			if state then
 				state.counters = state.counters or {}
-				local stacks = (state.counters.quickFangsStacks or 0) + 1
-				state.counters.quickFangsStacks = stacks
-				Snake:setQuickFangsStacks(stacks)
+				local stacks = (state.counters.swiftFangsStacks or 0) + 1
+				state.counters.swiftFangsStacks = stacks
+				Snake:setSwiftFangsStacks(stacks)
 			else
-				Snake:setQuickFangsStacks((Snake.quickFangs and Snake.quickFangs.stacks or 0) + 1)
+				Snake:setSwiftFangsStacks((Snake.swiftFangs and Snake.swiftFangs.stacks or 0) + 1)
 			end
 
 			Face:set("veryHappy", 1.6)
@@ -1076,7 +1076,7 @@ pool = {
 				textScale = 1.18,
 			}
 			applySegmentPosition(celebrationOptions, 0.28)
-			celebrateUpgrade(getUpgradeString("quick_fangs", "name"), nil, celebrationOptions)
+			celebrateUpgrade(getUpgradeString("swift_fangs", "name"), nil, celebrationOptions)
 		end,
 	}),
 	register({
@@ -2875,7 +2875,7 @@ function Upgrades:applyPersistentEffects(rebaseline)
 	Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
 
 	local counters = state.counters or {}
-	Snake:setQuickFangsStacks(counters.quickFangsStacks or 0)
+	Snake:setSwiftFangsStacks(counters.swiftFangsStacks or 0)
 
 	Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
 end

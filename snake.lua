@@ -1071,7 +1071,7 @@ Snake.eventHorizon = nil
 Snake.stormchaser = nil
 Snake.titanblood = nil
 Snake.temporalAnchor = nil
-Snake.quickFangs = nil
+Snake.swiftFangs = nil
 
 local function resolveTimeDilationScale(primary, secondary)
 	local scale = 1
@@ -1146,7 +1146,6 @@ function Snake:resetModifiers()
 	self.stoneSkinSawGrace = 0
 	self.dash = nil
 	self.timeDilation = nil
-	self.chronoWard = nil
 	self.adrenaline = nil
 	self.hazardGraceTimer = 0
 	self.abyssalCatalyst = nil
@@ -1155,7 +1154,7 @@ function Snake:resetModifiers()
 	self.stormchaser = nil
 	self.titanblood = nil
 	self.temporalAnchor = nil
-	self.quickFangs = nil
+	self.swiftFangs = nil
 	self.zephyrCoils = nil
 	self.stoneSkinVisual = nil
 	self.speedVisual = nil
@@ -1163,15 +1162,15 @@ function Snake:resetModifiers()
 	UI:setShields(self.shields or 0, {silent = true, immediate = true})
 end
 
-function Snake:setQuickFangsStacks(count)
+function Snake:setSwiftFangsStacks(count)
 	count = max(0, floor((count or 0) + 0.0001))
-	local state = self.quickFangs
+	local state = self.swiftFangs
 	local previous = state and (state.stacks or 0) or 0
 
 	if count > 0 then
 		if not state then
 			state = {intensity = 0, baseTarget = 0, time = 0, stacks = 0, flash = 0}
-			self.quickFangs = state
+			self.swiftFangs = state
 		end
 
 		state.stacks = count
@@ -1187,10 +1186,10 @@ function Snake:setQuickFangsStacks(count)
 		state.target = 0
 	end
 
-	if self.quickFangs then
-		local data = self.quickFangs
+	if self.swiftFangs then
+		local data = self.swiftFangs
 		if (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01 then
-			self.quickFangs = nil
+			self.swiftFangs = nil
 		end
 	end
 end
@@ -2529,16 +2528,16 @@ local function collectUpgradeVisuals(self)
 		entry.time = speedVisual.time or 0
 	end
 
-	local quickFangs = self.quickFangs
-	if quickFangs and (((quickFangs.intensity or 0) > 0.01) or (quickFangs.stacks or 0) > 0) then
-		local entry = acquireEntry("quickFangs")
-		entry.stacks = quickFangs.stacks or 0
-		entry.intensity = quickFangs.intensity or 0
-		entry.target = quickFangs.target or 0
-		entry.speedRatio = quickFangs.speedRatio or 1
-		entry.active = quickFangs.active or false
-		entry.time = quickFangs.time or 0
-		entry.flash = quickFangs.flash or 0
+	local swiftFangs = self.swiftFangs
+	if swiftFangs and (((swiftFangs.intensity or 0) > 0.01) or (swiftFangs.stacks or 0) > 0) then
+		local entry = acquireEntry("swiftFangs")
+		entry.stacks = swiftFangs.stacks or 0
+		entry.intensity = swiftFangs.intensity or 0
+		entry.target = swiftFangs.target or 0
+		entry.speedRatio = swiftFangs.speedRatio or 1
+		entry.active = swiftFangs.active or false
+		entry.time = swiftFangs.time or 0
+		entry.flash = swiftFangs.flash or 0
 	end
 
 	local zephyr = self.zephyrCoils
@@ -3570,8 +3569,8 @@ function Snake:update(dt)
 		end
 	end
 
-	if self.quickFangs then
-		local state = self.quickFangs
+	if self.swiftFangs then
+		local state = self.swiftFangs
 		state.time = (state.time or 0) + dt * (1.4 + min(1.8, (speed / max(1, self.baseSpeed or 1))))
 		state.flash = max(0, (state.flash or 0) - dt * 1.8)
 
@@ -3598,7 +3597,7 @@ function Snake:update(dt)
 		state.active = (target > baseTarget + 0.02) or (ratio > 1.05) or ((state.flash or 0) > 0.05)
 
 		if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.02 then
-			self.quickFangs = nil
+			self.swiftFangs = nil
 		end
 	end
 
@@ -5005,6 +5004,7 @@ function Snake:draw()
 					local drawOptions = {
 						drawFace = false,
 						paletteOverride = buildSeveredPalette(fade),
+						overlayEffect = nil,
 						flatStartCap = true,
 					}
 
