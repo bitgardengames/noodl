@@ -857,11 +857,11 @@ function SnakeCosmetics:getPaletteForSkin(skin)
 		result.glow = resolveColor(palette.glow, result.body)
 	end
 
-        if effects.glow then
-                result.glowEffect = copyTable(effects.glow)
-        end
+	if effects.glow then
+		result.glowEffect = copyTable(effects.glow)
+	end
 
-        return result
+	return result
 end
 
 return SnakeCosmetics

@@ -32,16 +32,16 @@ function Easing.easeOutCubic(t)
 end
 
 function Easing.easeInOutCubic(t)
-        if t < 0.5 then
-                return 4 * t * t * t
-        end
+	if t < 0.5 then
+		return 4 * t * t * t
+	end
 
-        local inv = 1 - t
-        return 1 - 4 * inv * inv * inv
+	local inv = 1 - t
+	return 1 - 4 * inv * inv * inv
 end
 
 function Easing.easeInOutSine(t)
-        return -(cos(pi * t) - 1) / 2
+	return -(cos(pi * t) - 1) / 2
 end
 
 function Easing.easeInCubic(t)

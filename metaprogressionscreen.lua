@@ -22,7 +22,7 @@ local sin = math.sin
 local sort = table.sort
 
 local ProgressionScreen = {
-        transitionDuration = 0.4,
+	transitionDuration = 0.4,
 	transitionStyle = "menuSlide",
 }
 
@@ -342,8 +342,8 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 		paletteOverride = {
 			body = bodyColor,
 			outline = adjustHover(snakePalette.outline, hoverBoost * 0.5),
-                        glow = adjustHover(snakePalette.glow, hoverBoost * 0.35),
-                        glowEffect = snakePalette.glowEffect,
+			glow = adjustHover(snakePalette.glow, hoverBoost * 0.35),
+			glowEffect = snakePalette.glowEffect,
 		}
 	elseif hoverBoost > 0 then
 		paletteOverride = {body = bodyColor}
@@ -691,7 +691,7 @@ local function drawWindowFrame(x, y, width, height, options)
 	love.graphics.rectangle("line", x, y, width, height, WINDOW_CORNER_RADIUS, WINDOW_CORNER_RADIUS)
 	love.graphics.setLineWidth(1)
 
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function roundNearest(value)
@@ -893,11 +893,11 @@ local function buildCosmeticsEntries()
 	cosmeticsSummary.total = 0
 	cosmeticsSummary.newUnlocks = 0
 
-        if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
-                return
-        end
+	if not (SnakeCosmetics and SnakeCosmetics.getSkins) then
+		return
+	end
 
-        local skins = SnakeCosmetics:getSkins() or {}
+	local skins = SnakeCosmetics:getSkins() or {}
 	local selectedIndex
 	local recentlyUnlockedIds = {}
 
@@ -1685,11 +1685,11 @@ function drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, 
 	love.graphics.translate(previewX + previewW / 2, previewY + previewH / 2 + previewH * 0.04)
 	love.graphics.scale(scale * 0.95)
 	love.graphics.translate(-(bounds.centerX or 0), -(bounds.centerY or 0))
-        SnakeDraw.run(trail, #trail, SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, nil, {
-                drawFace = false,
-                skinOverride = skin,
-                paletteOverride = palette,
-        })
+	SnakeDraw.run(trail, #trail, SnakeUtils.SEGMENT_SIZE, nil, nil, nil, nil, nil, {
+		drawFace = false,
+		skinOverride = skin,
+		paletteOverride = palette,
+	})
 	love.graphics.pop()
 end
 
@@ -1784,11 +1784,11 @@ local function drawCosmeticsList(sw, sh)
 			local bodyColor = (palette and palette.body) or Theme.snakeDefault or {0.45, 0.85, 0.70, 1}
 			local outlineColor = (palette and palette.outline) or {0.05, 0.15, 0.12, 1}
 			local glowColor = (palette and palette.glow) or Theme.accentTextColor or {0.95, 0.76, 0.48, 1}
-                        if not unlocked then
-                                bodyColor = darkenColor(bodyColor, 0.25)
-                                outlineColor = darkenColor(outlineColor, 0.2)
-                                glowColor = darkenColor(glowColor, 0.3)
-                        end
+			if not unlocked then
+				bodyColor = darkenColor(bodyColor, 0.25)
+				outlineColor = darkenColor(outlineColor, 0.2)
+				glowColor = darkenColor(glowColor, 0.3)
+			end
 
 			local previewX = listX + 28
 			local previewY = y + (COSMETIC_CARD_HEIGHT - COSMETIC_PREVIEW_HEIGHT) / 2
@@ -1815,11 +1815,11 @@ local function drawCosmeticsList(sw, sh)
 			love.graphics.setLineWidth(1)
 			love.graphics.setColor(1, 1, 1, 1)
 
-                        local previewPalette = {
-                                body = bodyColor,
-                                outline = outlineColor,
-                                glow = glowColor,
-                        }
+			local previewPalette = {
+				body = bodyColor,
+				outline = outlineColor,
+				glow = glowColor,
+			}
 
 			drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, previewPalette)
 

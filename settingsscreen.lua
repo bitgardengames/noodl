@@ -13,7 +13,7 @@ local max = math.max
 local min = math.min
 
 local SettingsScreen = {
-        transitionDuration = 0.4,
+	transitionDuration = 0.4,
 	transitionStyle = "menuSlide",
 }
 

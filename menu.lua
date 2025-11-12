@@ -19,7 +19,7 @@ local min = math.min
 local sin = math.sin
 
 local Menu = {
-        transitionDuration = 0.4,
+	transitionDuration = 0.4,
 	transitionStyle = "menuSlide",
 }
 

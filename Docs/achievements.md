@@ -17,15 +17,6 @@ entry specifies the numerical goal, how progress is tracked, hidden status, and 
 | Apple Tycoon | 1,000 apples | Eat 1,000 apples across all runs. | `PlayerStats.totalApplesEaten` | No | Orchard Sovereign snake skin |
 | Daily Dabbler | 1 daily challenge | Complete a single daily challenge. | `PlayerStats.dailyChallengesCompleted` | No | — |
 | Daily Champion | 30 daily challenges | Complete 30 daily challenges overall. | `PlayerStats.dailyChallengesCompleted` | No | Crystalline Mire snake skin |
-
-## Depth Achievements
-
-No depth achievements are currently defined in `achievement_definitions.lua`.
-
-## Skill Achievements
-
-| Achievement | Goal | Requirement Detail | Tracking Source | Hidden | Unlocks |
-| --- | --- | --- | --- | --- | --- |
 | Combo Spark | 3 fruit combo | Reach a 3-fruit combo streak (lifetime best). | `PlayerStats.bestComboStreak` | No | — |
 | Combo Surge | 6 fruit combo | Reach a 6-fruit combo streak (lifetime best). | `PlayerStats.bestComboStreak` | No | — |
 | Combo Inferno | 10 fruit combo | Reach a 10-fruit combo streak (lifetime best). | `PlayerStats.bestComboStreak` | No | Tidal Resonance snake skin |
@@ -37,11 +28,6 @@ No depth achievements are currently defined in `achievement_definitions.lua`.
 | Saw Whisperer | 1 saw parry | Parry a saw blade using a shield (cumulative). | `PlayerStats.shieldSawParries` | No | — |
 | Saw Annihilator | 25 saw parries | Parry 25 saw blades with shields over time. | `PlayerStats.shieldSawParries` | No | — |
 | Crash-Test Maestro | 3 interactions | In a single run, block at least one wall, rock, and saw with shields. | `SessionStats.runShieldWallBounces`, `SessionStats.runShieldRockBreaks`, `SessionStats.runShieldSawParries` | No | — |
-
-## Collection Achievements
-
-| Achievement | Goal | Requirement Detail | Tracking Source | Hidden | Unlocks |
-| --- | --- | --- | --- | --- | --- |
 | Dragon Hunter | 1 dragonfruit | Collect a dragonfruit (lifetime). | `PlayerStats.totalDragonfruitEaten` | No | — |
 | Dragon Connoisseur | 10 dragonfruit | Collect 10 dragonfruit over time. | `PlayerStats.totalDragonfruitEaten` | No | — |
 

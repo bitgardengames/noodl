@@ -5002,11 +5002,11 @@ function Snake:draw()
 						fade = clamp01(remaining / life)
 					end
 
-                                        local drawOptions = {
-                                                drawFace = false,
-                                                paletteOverride = buildSeveredPalette(fade),
-                                                flatStartCap = true,
-                                        }
+					local drawOptions = {
+						drawFace = false,
+						paletteOverride = buildSeveredPalette(fade),
+						flatStartCap = true,
+					}
 
 					activeTrailForHead = trailData
 					SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getActiveTrailHead, 0, 0, nil, drawOptions)
