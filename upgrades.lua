@@ -1845,7 +1845,7 @@ pool = {
 			local reduction = slots * 0.03
 			state.effects.rockSpawnChanceMult = (state.effects.rockSpawnChanceMult or 1) * (1 - reduction)
 		end,
-	})
+	}),
 	register({
 		id = "gluttons_wake",
 		nameKey = "upgrades.gluttons_wake.name",
