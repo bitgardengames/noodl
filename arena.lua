@@ -1,6 +1,5 @@
 local Theme = require("theme")
 local Audio = require("audio")
-local Shaders = require("shaders")
 local RenderLayers = require("renderlayers")
 local SharedCanvas = require("sharedcanvas")
 local Timer = require("timer")
@@ -208,9 +207,11 @@ local Arena = {
 	tileSize = 24,
 	cols = 0,
 	rows = 0,
-	exit = nil,
-	_exitDrawRequested = false,
-	activeBackgroundEffect = nil,
+        exit = nil,
+        _exitDrawRequested = false,
+        backgroundPalette = nil,
+        backdropColor = nil,
+        arenaFillColor = nil,
 	borderFlare = 0,
 	borderFlareStrength = 0,
 	borderFlareTimer = 0,
@@ -973,82 +974,33 @@ function Arena:getBounds()
 end
 
 function Arena:setBackgroundEffect(effectData, palette)
-	local effectType
-	local overrides
+        self.backgroundPalette = palette
 
-	if type(effectData) == "string" then
-		effectType = effectData
-	elseif type(effectData) == "table" then
-		effectType = effectData.type or effectData.name
-		overrides = effectData
-	end
+        local backdrop = (palette and palette.bgColor) or Theme.bgColor or {0.12, 0.12, 0.14, 1}
+        local arenaColor = (palette and palette.arenaBG) or Theme.arenaBG or {0.18, 0.18, 0.22, 1}
 
-	self._backgroundEffects = self._backgroundEffects or {}
-
-	if not effectType or not Shaders.has(effectType) then
-		self.activeBackgroundEffect = nil
-		return
-	end
-
-	local effect = Shaders.ensure(self._backgroundEffects, effectType)
-	if not effect then
-		self.activeBackgroundEffect = nil
-		return
-	end
-
-	local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(effect)
-
-	effect.backdropIntensity = defaultBackdrop
-	effect.arenaIntensity = defaultArena
-
-	if overrides then
-		if overrides.backdropIntensity then
-			effect.backdropIntensity = overrides.backdropIntensity
-		end
-
-		if overrides.arenaIntensity then
-			effect.arenaIntensity = overrides.arenaIntensity
-		end
-	end
-
-	effect._lastEffectData = overrides
-
-	Shaders.configure(effect, palette, overrides)
-
-	self.activeBackgroundEffect = effect
+        self.backdropColor = copyColor(backdrop)
+        self.arenaFillColor = copyColor(arenaColor)
 end
 
 function Arena:drawBackdrop(sw, sh)
-	love.graphics.setColor(Theme.bgColor)
-	love.graphics.rectangle("fill", 0, 0, sw, sh)
+        local color = self.backdropColor or Theme.bgColor or {0.12, 0.12, 0.14, 1}
+        love.graphics.setColor(color[1] or 0, color[2] or 0, color[3] or 0, color[4] or 1)
+        love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-	local drawn = false
-	local effect = self.activeBackgroundEffect
-	if effect then
-		local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-		local intensity = effect.backdropIntensity or defaultBackdrop
-		drawn = Shaders.draw(effect, 0, 0, sw, sh, intensity) or false
-	end
-
-	love.graphics.setColor(1, 1, 1, 1)
-	return drawn
+        love.graphics.setColor(1, 1, 1, 1)
+        return true
 end
 
 -- Draws the playfield with a solid fill + simple border
 function Arena:drawBackground()
-	local ax, ay, aw, ah = self:getBounds()
+        local ax, ay, aw, ah = self:getBounds()
 
-	if self.activeBackgroundEffect then
-		local defaultBackdrop, defaultArena = Shaders.getDefaultIntensities(self.activeBackgroundEffect)
-		local intensity = self.activeBackgroundEffect.arenaIntensity or defaultArena
-		Shaders.draw(self.activeBackgroundEffect, ax, ay, aw, ah, intensity)
-	end
+        local arenaColor = self.arenaFillColor or Theme.arenaBG or {0.18, 0.18, 0.22, 1}
+        love.graphics.setColor(arenaColor[1] or 0, arenaColor[2] or 0, arenaColor[3] or 0, arenaColor[4] or 1)
+        love.graphics.rectangle("fill", ax, ay, aw, ah)
 
-	-- Solid fill (rendered on top of shader-driven effects so gameplay remains clear)
-	love.graphics.setColor(Theme.arenaBG)
-	love.graphics.rectangle("fill", ax, ay, aw, ah)
-
-	self:_updateArenaOverlayBounds(ax, ay, aw, ah)
+        self:_updateArenaOverlayBounds(ax, ay, aw, ah)
 
 	if self.drawTileDecorations then
 		self:drawTileDecorations()

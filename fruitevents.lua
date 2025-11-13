@@ -15,7 +15,6 @@ local Particles = require("particles")
 local Theme = require("theme")
 local Achievements = require("achievements")
 local Upgrades = require("upgrades")
-local Shaders = require("shaders")
 
 local floor = math.floor
 local max = math.max
@@ -115,11 +114,6 @@ local function handleBloomFruitExpired()
 		dragonfruitBloom.spawnCooldown = bloomRandomDelay()
 	end
 
-	Shaders.notify("specialEvent", {
-		type = BLOOM_EVENT_TAG,
-		strength = 0.5,
-		color = Theme.dragonfruitColor,
-	})
 end
 
 local function spawnDragonfruitBloomFruit(safeZone)
@@ -156,13 +150,7 @@ local function spawnDragonfruitBloomFruit(safeZone)
 	dragonfruitBloom.activeFruitTag = BLOOM_EVENT_TAG
 	dragonfruitBloom.safeZone = safeZoneSnapshot
 
-	Shaders.notify("specialEvent", {
-		type = BLOOM_EVENT_TAG,
-		strength = 0.75,
-		color = Theme.dragonfruitColor,
-	})
-
-	return true
+        return true
 end
 
 local function handleBloomFruitCollected()
@@ -179,13 +167,7 @@ local function handleBloomFruitCollected()
 		dragonfruitBloom.spawnCooldown = bloomRandomDelay()
 	end
 
-	Shaders.notify("specialEvent", {
-		type = BLOOM_EVENT_TAG,
-		strength = 0.65,
-		color = Theme.dragonfruitColor,
-	})
-
-	return true
+        return true
 end
 
 local function startDragonfruitBloom(safeZone)
@@ -201,13 +183,7 @@ local function startDragonfruitBloom(safeZone)
 	dragonfruitBloom.safeZone = safeZone
 	dragonfruitBloom.activeFruitTag = nil
 
-	Shaders.notify("specialEvent", {
-		type = BLOOM_EVENT_TAG,
-		strength = 1.0,
-		color = Theme.dragonfruitColor,
-	})
-
-	spawnDragonfruitBloomFruit(dragonfruitBloom.safeZone)
+        spawnDragonfruitBloomFruit(dragonfruitBloom.safeZone)
 
 	return true
 end
@@ -304,12 +280,7 @@ local function applyComboReward(x, y)
 	if comboCount >= 2 then
 		SessionStats:add("combosTriggered", 1)
 	end
-	Shaders.notify("comboChanged", {
-		combo = comboCount,
-		timer = comboState.timer or 0,
-		window = comboState.window or DEFAULT_COMBO_WINDOW,
-	})
-	markComboWindowDirty()
+        markComboWindowDirty()
 	if comboState.windowDirty then
 		updateComboWindow()
 	end
@@ -336,12 +307,7 @@ local function applyComboReward(x, y)
 
 		local summary = string.format("Combo Bonus +%d", totalBonus)
 		FloatingText:add(summary, x, y - 74, {1, 0.95, 0.6, 1}, 1.3, 48)
-		Shaders.notify("specialEvent", {
-			type = "combo",
-			strength = 0.38,
-			color = {1, 0.9, 0.5, 1},
-		})
-	end
+        end
 
 	Particles:spawnBurst(x, y, {
 		count = love.math.random(10, 14) + comboCount,
@@ -382,11 +348,6 @@ local function applyRunRewards(fruitType, x, y)
 					addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
 					offset = offset + 22
 				end
-				Shaders.notify("specialEvent", {
-					type = "comboBoost",
-					strength = 0.24,
-					color = reward.color,
-				})
 			end
 		elseif rewardType == "stallSaws" then
 			local duration = reward.duration or reward.amount or 0
@@ -396,11 +357,6 @@ local function applyRunRewards(fruitType, x, y)
 					addFloatingText(reward.label, x, y - offset, reward.color or {0.8, 0.9, 1, 1}, reward.duration, reward.size)
 					offset = offset + 22
 				end
-				Shaders.notify("specialEvent", {
-					type = "stallSaws",
-					strength = 0.36,
-					color = reward.color or {0.72, 0.85, 1, 1},
-				})
 			end
 		elseif rewardType == "shield" then
 			local shields = floor(reward.amount or 0)
@@ -410,11 +366,6 @@ local function applyRunRewards(fruitType, x, y)
 					addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
 					offset = offset + 22
 				end
-				Shaders.notify("specialEvent", {
-					type = "shield",
-					strength = 0.48,
-					color = reward.color or {0.72, 1, 0.82, 1},
-				})
 			end
 		elseif rewardType == "scoreBonus" then
 			local bonus = floor(reward.amount or 0)
@@ -424,11 +375,6 @@ local function applyRunRewards(fruitType, x, y)
 					addFloatingText(reward.label, x, y - offset, reward.color, reward.duration, reward.size)
 					offset = offset + 22
 				end
-				Shaders.notify("specialEvent", {
-					type = "score",
-					strength = 0.32,
-					color = reward.color or {1, 0.78, 0.45, 1},
-				})
 			end
 		end
 	end
@@ -446,8 +392,7 @@ function FruitEvents.reset()
 		updateComboWindow()
 	end
 	syncComboToUI()
-	Shaders.notify("comboLost", {reason = "reset"})
-	resetDragonfruitBloomState()
+        resetDragonfruitBloomState()
 end
 
 function FruitEvents.update(dt)
@@ -459,8 +404,7 @@ function FruitEvents.update(dt)
 
 		if comboState.timer == 0 then
 			comboState.count = 0
-			Shaders.notify("comboLost", {reason = "timeout"})
-			markComboWindowDirty()
+                        markComboWindowDirty()
 		end
 
 		if comboState.windowDirty then
@@ -486,12 +430,6 @@ function FruitEvents.boostComboTimer(amount)
 		updateComboWindow()
 	end
 	syncComboToUI()
-	if (comboState.count or 0) >= 2 then
-		Shaders.notify("specialEvent", {
-			type = "comboBoost",
-			strength = 0.22,
-		})
-	end
 end
 
 function FruitEvents.handleConsumption(x, y)
@@ -537,18 +475,14 @@ function FruitEvents.handleConsumption(x, y)
 	local segments = Snake:getSegments()
 
 	local bloomTriggeredThisFruit = false
-	if name == "Dragonfruit" then
-		PlayerStats:add("totalDragonfruitEaten", 1)
-		SessionStats:add("dragonfruitEaten", 1)
-		Achievements:unlock("dragonHunter")
-		Shaders.notify("specialEvent", {
-			type = "dragonfruit",
-			strength = 0.9,
-		})
-		if not dragonfruitBloom.triggered then
-			bloomTriggeredThisFruit = startDragonfruitBloom(safeZone)
-		end
-	end
+        if name == "Dragonfruit" then
+                PlayerStats:add("totalDragonfruitEaten", 1)
+                SessionStats:add("dragonfruitEaten", 1)
+                Achievements:unlock("dragonHunter")
+                if not dragonfruitBloom.triggered then
+                        bloomTriggeredThisFruit = startDragonfruitBloom(safeZone)
+                end
+        end
 
 	if countsForGoal then
 		UI:addFruit(fruitType)
