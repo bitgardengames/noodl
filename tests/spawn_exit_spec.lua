@@ -91,27 +91,11 @@ package.loaded["audio"] = {
 	playSound = noop,
 }
 
-package.loaded["shaders"] = {
-	has = function()
-		return false
-	end,
-	ensure = function()
-		return nil
-	end,
-	getDefaultIntensities = function()
-		return 0, 0
-	end,
-	configure = noop,
-	draw = function()
-		return false
-	end,
-}
-
 package.loaded["renderlayers"] = {
-	withLayer = function(_, _, fn)
-		if fn then
-			fn()
-		end
+        withLayer = function(_, _, fn)
+                if fn then
+                        fn()
+                end
 	end,
 }
 

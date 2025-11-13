@@ -1,10 +1,7 @@
 local Theme = require("theme")
-local Shaders = require("shaders")
 local Easing = require("easing")
 
 local MenuScene = {}
-
-local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
 
 local backgroundCaches = {}
 local manualBackground = false
@@ -59,28 +56,23 @@ local function withAlpha(color, alpha)
 	return {r, g, b, a * alpha}
 end
 
-local function getEffectEntry(options)
-	local key = "default"
-	if options and options.effectKey then
-		key = tostring(options.effectKey)
-	end
+local function getCacheEntry(options)
+        local key = "default"
+        if options and options.effectKey then
+                key = tostring(options.effectKey)
+        end
 
-	local entry = backgroundCaches[key]
-	if not entry then
-		entry = {
-			cache = {},
-			effect = nil,
-			hash = nil,
-		}
-		backgroundCaches[key] = entry
-	end
+        local entry = backgroundCaches[key]
+        if not entry then
+                entry = {
+                        hash = nil,
+                        fillColor = nil,
+                        overlayColor = nil,
+                }
+                backgroundCaches[key] = entry
+        end
 
-	if not entry.effect then
-		entry.effect = Shaders.ensure(entry.cache, BACKGROUND_EFFECT_TYPE)
-		entry.hash = nil
-	end
-
-	return entry
+        return entry
 end
 
 local function getBaseColor(options)
@@ -148,39 +140,17 @@ local function computeHash(options)
 end
 
 function MenuScene.prepareBackground(options)
-	local entry = getEffectEntry(options)
-	if not entry.effect then
-		return
-	end
+        local entry = getCacheEntry(options)
+        local configHash = computeHash(options)
+        if entry.hash == configHash then
+                return
+        end
 
-	local configHash = computeHash(options)
-	if entry.hash == configHash then
-		return
-	end
+        local fillColor, accentColor, pulseColor, vignette = computePalette(options)
 
-	local effect = entry.effect
-	local fillColor, accentColor, pulseColor, vignette = computePalette(options)
-
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	if defaultBackdrop then
-		effect.backdropIntensity = defaultBackdrop
-	end
-
-	if effect.backdropIntensity then
-		local minimum = (options and options.backdropMinimum) or 0.48
-		local multiplier = (options and options.backdropMultiplier) or 0.92
-		effect.backdropIntensity = math.max(minimum, effect.backdropIntensity * multiplier)
-	end
-
-	Shaders.configure(effect, {
-		bgColor = fillColor,
-		accentColor = accentColor,
-		pulseColor = pulseColor,
-	})
-
-	effect.vignetteOverlay = vignette
-	entry.hash = configHash
-	entry.fillColor = fillColor
+        entry.hash = configHash
+        entry.fillColor = fillColor
+        entry.overlayColor = vignette and vignette.color or nil
 end
 
 local function resolveFillColor(entry, options)
@@ -191,19 +161,20 @@ local function resolveFillColor(entry, options)
 end
 
 function MenuScene.drawBackground(sw, sh, options)
-	local entry = getEffectEntry(options)
-	MenuScene.prepareBackground(options)
+        local entry = getCacheEntry(options)
+        MenuScene.prepareBackground(options)
 
-	local fillColor = resolveFillColor(entry, options)
-	love.graphics.setColor(fillColor)
-	love.graphics.rectangle("fill", 0, 0, sw, sh)
+        local fillColor = resolveFillColor(entry, options)
+        love.graphics.setColor(fillColor[1] or 0, fillColor[2] or 0, fillColor[3] or 0, fillColor[4] or 1)
+        love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-	if entry.effect then
-		local intensity = entry.effect.backdropIntensity or select(1, Shaders.getDefaultIntensities(entry.effect))
-		Shaders.draw(entry.effect, 0, 0, sw, sh, intensity)
-	end
+        if entry.overlayColor then
+                local overlay = entry.overlayColor
+                love.graphics.setColor(overlay[1] or 0, overlay[2] or 0, overlay[3] or 0, overlay[4] or 1)
+                love.graphics.rectangle("fill", 0, 0, sw, sh)
+        end
 
-	love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 function MenuScene.setDrawRole(role)

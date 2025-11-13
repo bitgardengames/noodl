@@ -4,7 +4,6 @@ local Upgrades = require("upgrades")
 local Audio = require("audio")
 local MetaProgression = require("metaprogression")
 local Theme = require("theme")
-local Shaders = require("shaders")
 local Floors = require("floors")
 local Timer = require("timer")
 local abs = math.abs
@@ -122,71 +121,25 @@ end
 local ANALOG_DEADZONE = 0.3
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 
-local BACKGROUND_EFFECT_TYPE = "shopGlimmer"
-local backgroundEffectCache = {}
-local backgroundEffect = nil
-
 local function getColorChannels(color, fallback)
-	local reference = color or fallback
-	if not reference then
-		return 0, 0, 0, 1
-	end
+        local reference = color or fallback
+        if not reference then
+                return 0, 0, 0, 1
+        end
 
 	return reference[1] or 0, reference[2] or 0, reference[3] or 0, reference[4] or 1
 end
 
-local function configureBackgroundEffect(palette)
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		return
-	end
-
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	effect.backdropIntensity = defaultBackdrop or effect.backdropIntensity or 0.54
-
-	local needsConfigure = (effect._appliedPalette ~= palette) or not effect._appliedPaletteConfigured
-
-	if needsConfigure then
-		local bgColor = (palette and palette.bgColor) or Theme.bgColor
-		local accentColor = (palette and (palette.arenaBorder or palette.snake)) or Theme.buttonHover
-		local highlightColor = (palette and (palette.highlightColor or palette.snake or palette.arenaBorder))
-		or Theme.accentTextColor
-		or Theme.highlightColor
-
-		Shaders.configure(effect, {
-			bgColor = bgColor,
-			accentColor = accentColor,
-			glowColor = highlightColor,
-			highlightColor = highlightColor,
-		})
-
-		effect._appliedPalette = palette
-		effect._appliedPaletteConfigured = true
-	end
-
-	backgroundEffect = effect
-end
-
 local function drawBackground(screenW, screenH, palette)
-	local bgColor = (palette and palette.bgColor) or Theme.bgColor
-	local baseR, baseG, baseB, baseA = getColorChannels(bgColor)
-	love.graphics.setColor(baseR * 0.92, baseG * 0.92, baseB * 0.92, baseA)
-	love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+        local bgColor = (palette and palette.bgColor) or Theme.bgColor
+        local baseR, baseG, baseB, baseA = getColorChannels(bgColor)
+        love.graphics.setColor(baseR * 0.92, baseG * 0.92, baseB * 0.92, baseA)
+        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
 
-	if not backgroundEffect or backgroundEffect._appliedPalette ~= palette then
-		configureBackgroundEffect(palette)
-	end
-
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, screenW, screenH, intensity)
-	end
-
-	local overlayR, overlayG, overlayB = getColorChannels(bgColor)
-	love.graphics.setColor(overlayR, overlayG, overlayB, 0.28)
-	love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-	love.graphics.setColor(1, 1, 1, 1)
+        local overlayR, overlayG, overlayB = getColorChannels(bgColor)
+        love.graphics.setColor(overlayR, overlayG, overlayB, 0.28)
+        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function moveFocusAnalog(self, delta)

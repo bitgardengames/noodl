@@ -21,7 +21,6 @@ local Arena = require("arena")
 local UI = require("ui")
 local Theme = require("theme")
 local FruitEvents = require("fruitevents")
-local Shaders = require("shaders")
 local Settings = require("settings")
 local GameUtils = require("gameutils")
 local Saws = require("saws")
@@ -584,12 +583,6 @@ function Game:triggerImpactFeedback(strength, options)
 	local hitStopDuration = 0.08 + strength * 0.08
 	self:applyHitStop(hitStopStrength, hitStopDuration)
 
-	if not skipFlash and Shaders and Shaders.notify then
-		Shaders.notify("specialEvent", {
-			type = "danger",
-			strength = min(1.2, 0.45 + strength * 0.55),
-		})
-	end
 end
 
 local TAIL_HAZARD_SHAKE = {
@@ -877,8 +870,7 @@ local function updateSystems(systems, dt)
 end
 
 local function updateGlobalSystems(dt)
-	FruitEvents.update(dt)
-	Shaders.update(dt)
+        FruitEvents.update(dt)
 end
 
 local function handlePauseMenu(game, dt)

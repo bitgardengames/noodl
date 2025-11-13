@@ -8,7 +8,6 @@ local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local MetaProgression = require("metaprogression")
 local DailyChallenges = require("dailychallenges")
-local Shaders = require("shaders")
 local Upgrades = require("upgrades")
 local Shop = require("shop")
 local Timer = require("timer")
@@ -251,9 +250,7 @@ local function measureXpPanelHeight(self, width, celebrationCount)
 	return max(160, height)
 end
 
-local BACKGROUND_EFFECT_TYPE = "afterglowPulse"
-local backgroundEffectCache = {}
-local backgroundEffect = nil
+local backgroundStyle = nil
 
 local function copyColor(color)
 	if type(color) ~= "table" then
@@ -319,81 +316,50 @@ local function withAlpha(color, alpha)
 	return {r, g, b, a * alpha}
 end
 
-local function configureBackgroundEffect()
-	local effect = Shaders.ensure(backgroundEffectCache, BACKGROUND_EFFECT_TYPE)
-	if not effect then
-		backgroundEffect = nil
-		GameOver.xpCoreColor = nil
-		return
-	end
+local function rebuildBackgroundStyle()
+        local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
+        local pulse = copyColor(Theme.progressColor or {0.55, 0.75, 0.55, 1})
+        local overlayColor
+        local coreColor
 
-	local defaultBackdrop = select(1, Shaders.getDefaultIntensities(effect))
-	local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
-	local accent = copyColor(Theme.warningColor or {0.92, 0.55, 0.4, 1})
-	local pulse = copyColor(Theme.progressColor or {0.55, 0.75, 0.55, 1})
-	local vignette
-	local coreColor
+        if GameOver.isVictory then
+                pulse = lightenColor(copyColor(Theme.progressColor or pulse), 0.4)
+                pulse[4] = 1
 
-	if GameOver.isVictory then
-		effect.backdropIntensity = min(0.9, (defaultBackdrop or 0.72) + 0.08)
+                baseColor = darkenColor(baseColor, 0.08)
+                baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-		accent = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or accent), 0.32)
-		accent[4] = 1
+                coreColor = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or pulse), 0.26)
+                coreColor = desaturateColor(coreColor, 0.22)
+                coreColor[4] = 0.58
 
-		pulse = lightenColor(copyColor(Theme.progressColor or pulse), 0.4)
-		pulse[4] = 1
+                local overlay = lightenColor(copyColor(Theme.goldenPearColor or Theme.accentTextColor or pulse), 0.2)
+                overlay = desaturateColor(overlay, 0.4)
+                overlayColor = withAlpha(overlay, 0.22)
+        else
+                local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
 
-		baseColor = darkenColor(baseColor, 0.08)
-		baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
+                pulse = lightenColor(copyColor(Theme.panelBorder or pulse), 0.26)
+                pulse[4] = 1
 
-		coreColor = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or pulse), 0.26)
-		coreColor = desaturateColor(coreColor, 0.22)
-		coreColor[4] = 0.58
+                baseColor = darkenColor(baseColor, 0.22)
+                baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-		local vignetteColor = lightenColor(copyColor(Theme.goldenPearColor or Theme.accentTextColor or pulse), 0.2)
-		vignetteColor = desaturateColor(vignetteColor, 0.4)
-		vignette = {
-			color = withAlpha(vignetteColor, 0.22),
-			alpha = 0.22,
-			steps = 4,
-			thickness = nil,
-		}
-	else
-		effect.backdropIntensity = max(0.48, (defaultBackdrop or effect.backdropIntensity or 0.62) * 0.92)
+                coreColor = lightenColor(copyColor(coolAccent), 0.14)
+                coreColor = desaturateColor(coreColor, 0.38)
+                coreColor[4] = 0.52
 
-		local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
-		accent = lightenColor(copyColor(coolAccent), 0.18)
-		accent[4] = 1
+                local overlay = lightenColor(copyColor(coolAccent), 0.04)
+                overlay = desaturateColor(overlay, 0.45)
+                overlayColor = withAlpha(overlay, 0.18)
+        end
 
-		pulse = lightenColor(copyColor(Theme.panelBorder or pulse), 0.26)
-		pulse[4] = 1
+        GameOver.xpCoreColor = darkenColor(copyColor(coreColor), 0.16) or copyColor(pulse)
 
-		baseColor = darkenColor(baseColor, 0.22)
-		baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
-
-		coreColor = lightenColor(copyColor(coolAccent), 0.14)
-		coreColor = desaturateColor(coreColor, 0.38)
-		coreColor[4] = 0.52
-
-		local vignetteColor = lightenColor(copyColor(coolAccent), 0.04)
-		vignetteColor = desaturateColor(vignetteColor, 0.45)
-		vignette = {
-			color = withAlpha(vignetteColor, 0.28),
-			alpha = 0.28,
-			steps = 3,
-			thickness = nil,
-		}
-	end
-
-	Shaders.configure(effect, {
-		bgColor = baseColor,
-		accentColor = accent,
-		pulseColor = pulse,
-	})
-
-	effect.vignetteOverlay = vignette
-	GameOver.xpCoreColor = darkenColor(coreColor, 0.16) or copyColor(pulse)
-	backgroundEffect = effect
+        backgroundStyle = {
+                fillColor = baseColor,
+                overlayColor = overlayColor,
+        }
 end
 
 local function easeOutBack(t)
@@ -628,20 +594,21 @@ local function drawFruitAnimations(anim)
 end
 
 local function drawBackground(sw, sh)
-	local baseColor = (UI.colors and UI.colors.background) or Theme.bgColor
-	love.graphics.setColor(baseColor)
-	love.graphics.rectangle("fill", 0, 0, sw, sh)
+        if not backgroundStyle then
+                rebuildBackgroundStyle()
+        end
 
-	if not backgroundEffect then
-		configureBackgroundEffect()
-	end
+        local fillColor = (backgroundStyle and backgroundStyle.fillColor) or (UI.colors and UI.colors.background) or Theme.bgColor
+        love.graphics.setColor(fillColor[1] or 0, fillColor[2] or 0, fillColor[3] or 0, fillColor[4] or 1)
+        love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-	if backgroundEffect then
-		local intensity = backgroundEffect.backdropIntensity or select(1, Shaders.getDefaultIntensities(backgroundEffect))
-		Shaders.draw(backgroundEffect, 0, 0, sw, sh, intensity)
-	end
+        local overlay = backgroundStyle and backgroundStyle.overlayColor
+        if overlay then
+                love.graphics.setColor(overlay[1] or 0, overlay[2] or 0, overlay[3] or 0, overlay[4] or 1)
+                love.graphics.rectangle("fill", 0, 0, sw, sh)
+        end
 
-	love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- All button definitions in one place
@@ -1227,7 +1194,8 @@ function GameOver:enter(data)
 	end
 	self.summaryMessage = self.deathMessage
 
-	configureBackgroundEffect()
+        backgroundStyle = nil
+        rebuildBackgroundStyle()
 
 	fontTitle = UI.fonts.display or UI.fonts.title
 	fontScore = UI.fonts.heading or UI.fonts.title or UI.fonts.display
