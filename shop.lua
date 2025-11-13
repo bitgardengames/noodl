@@ -142,10 +142,24 @@ local function drawBackground(screenW, screenH, palette)
         love.graphics.setColor(1, 1, 1, 1)
 end
 
+local function configureBackgroundEffect(palette)
+        if Theme.reset then
+                Theme.reset()
+        end
+
+        if not palette then
+                return
+        end
+
+        for key, value in pairs(palette) do
+                Theme[key] = value
+        end
+end
+
 local function moveFocusAnalog(self, delta)
-	if self.restocking then return end
-	if not self.cards or #self.cards == 0 then return end
-	if self.selected then return end
+        if self.restocking then return end
+        if not self.cards or #self.cards == 0 then return end
+        if self.selected then return end
 
 	self.inputMode = "gamepad"
 	self:moveFocus(delta)
