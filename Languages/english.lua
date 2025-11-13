@@ -38,8 +38,8 @@ local english = {
 					progress = "Best streak: ${best}/${goal}",
 					complete = "Combo goal smashed! Best streak: ${best}.",
 				},
-				floors = {
-					title = "Floor Explorer",
+				pathfinder = {
+					title = "Pathfinder",
 					description = "Clear ${goal} floors in one run.",
 				},
 				shield_showoff = {
@@ -65,8 +65,8 @@ local english = {
 					progress = "Wall bounces: ${current}/${goal}",
 					complete = "Shield walls conquered with ${current} bounces!",
 				},
-				rock_breaker = {
-					title = "Rock Breaker",
+				stonebreaker_protocol = {
+					title = "Stonebreaker Protocol",
 					description = "Smash ${goal} rocks with your shield in one run.",
 					progress = "Rocks shattered: ${current}/${goal}",
 					complete = "Pulverized ${current} rocks!",
@@ -88,11 +88,6 @@ local english = {
 					description = "Reach floor ${goal} in a single run.",
 					progress = "Deepest floor: ${current}/${goal}",
 					complete = "Depth conquered! Reached floor ${current}.",
-				},
-				apple_hoarder = {
-					title = "Fruit Hoarder",
-					description = "Collect ${goal} fruit in a single run.",
-					progress = "Run fruit: ${current}/${goal}",
 				},
 				streak_perfectionist = {
 					title = "Streak Perfectionist",
@@ -153,12 +148,6 @@ local english = {
 					description = "Spend ${minutes_chunk} minutes exploring each of ${goal} floors in one run.",
 					progress = "Floors mapped: ${current}/${goal} (Floors: ${floors}, Minutes: ${minutes})",
 					complete = "Map complete! ${current} floors fully charted.",
-				},
-				safety_dance = {
-					title = "Safety Dance",
-					description = "Pair up ${goal} wall bounces with saw parries in a single run.",
-					progress = "Bounces: ${bounces}, Saws: ${saws} (${current}/${goal})",
-					complete = "Safe steps! ${current} perfect pairs executed.",
 				},
 			},
 		},

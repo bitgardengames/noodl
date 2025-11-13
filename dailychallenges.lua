@@ -448,9 +448,9 @@ DailyChallenges.challenges = {
 		xpReward = 70,
 	},
 	{
-		id = "floor_explorer",
-		titleKey = "menu.daily.floors.title",
-		descriptionKey = "menu.daily.floors.description",
+		id = "pathfinder",
+		titleKey = "menu.daily.pathfinder.title",
+		descriptionKey = "menu.daily.pathfinder.description",
 		sessionStat = "floorsCleared",
 		goal = 5,
 		xpReward = 80,
@@ -510,13 +510,13 @@ DailyChallenges.challenges = {
 		xpReward = 80,
 	},
 	{
-		id = "rock_breaker",
-		titleKey = "menu.daily.rock_breaker.title",
-		descriptionKey = "menu.daily.rock_breaker.description",
+		id = "stonebreaker_protocol",
+		titleKey = "menu.daily.stonebreaker_protocol.title",
+		descriptionKey = "menu.daily.stonebreaker_protocol.description",
 		sessionStat = "runShieldRockBreaks",
 		goal = 4,
-		progressKey = "menu.daily.rock_breaker.progress",
-		completeKey = "menu.daily.rock_breaker.complete",
+		progressKey = "menu.daily.stonebreaker_protocol.progress",
+		completeKey = "menu.daily.stonebreaker_protocol.complete",
 		xpReward = 80,
 	},
 	{
@@ -565,15 +565,6 @@ DailyChallenges.challenges = {
 			}
 		end,
 		xpReward = 110,
-	},
-	{
-		id = "apple_hoarder",
-		titleKey = "menu.daily.apple_hoarder.title",
-		descriptionKey = "menu.daily.apple_hoarder.description",
-		sessionStat = "applesEaten",
-		goal = 70,
-		progressKey = "menu.daily.apple_hoarder.progress",
-		xpReward = 90,
 	},
 	{
 		id = "shield_triathlon",
@@ -922,39 +913,6 @@ DailyChallenges.challenges = {
 			}
 		end,
 		xpReward = 100,
-	},
-	{
-		id = "safety_dance",
-		titleKey = "menu.daily.safety_dance.title",
-		descriptionKey = "menu.daily.safety_dance.description",
-		goal = 3,
-		progressKey = "menu.daily.safety_dance.progress",
-		completeKey = "menu.daily.safety_dance.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local bounces = getStatValue(statsSource, "runShieldWallBounces", context)
-			local saws = getStatValue(statsSource, "runShieldSawParries", context)
-			local pairs = min(floor(bounces / 2), floor(saws / 2))
-			return max(pairs, 0)
-		end,
-		getRunValue = function(self, statsSource)
-			local bounces = getStatValue(statsSource, "runShieldWallBounces")
-			local saws = getStatValue(statsSource, "runShieldSawParries")
-			local pairs = min(floor(bounces / 2), floor(saws / 2))
-			return max(pairs, 0)
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local bounces = getStatValue(statsSource, "runShieldWallBounces", context)
-			local saws = getStatValue(statsSource, "runShieldSawParries", context)
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				bounces = bounces,
-				saws = saws,
-			}
-		end,
-		xpReward = 110,
 	},
 }
 
