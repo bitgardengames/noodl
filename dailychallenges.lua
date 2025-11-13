@@ -500,15 +500,6 @@ DailyChallenges.challenges = {
 		xpReward = 80,
 	},
 	{
-		id = "serpentine_marathon",
-		titleKey = "menu.daily.marathon.title",
-		descriptionKey = "menu.daily.marathon.description",
-		sessionStat = "tilesTravelled",
-		goal = 3000,
-		progressKey = "menu.daily.marathon.progress",
-		xpReward = 70,
-	},
-	{
 		id = "shield_wall_master",
 		titleKey = "menu.daily.shield_bounce.title",
 		descriptionKey = "menu.daily.shield_bounce.description",
@@ -685,45 +676,6 @@ DailyChallenges.challenges = {
 		xpReward = 110,
 	},
 	{
-		id = "combo_harvester",
-		titleKey = "menu.daily.combo_harvester.title",
-		descriptionKey = "menu.daily.combo_harvester.description",
-		goal = 4,
-		progressKey = "menu.daily.combo_harvester.progress",
-		completeKey = "menu.daily.combo_harvester.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten", context)
-			local combos = getStatValue(statsSource, "combosTriggered", context)
-			local harvests = min(floor(apples / 8), combos)
-			return max(harvests, 0)
-		end,
-		getRunValue = function(self, statsSource)
-			local apples = getStatValue(statsSource, "applesEaten")
-			local combos = getStatValue(statsSource, "combosTriggered")
-			local harvests = min(floor(apples / 8), combos)
-			return max(harvests, 0)
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten", context)
-			local combos = getStatValue(statsSource, "combosTriggered", context)
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				apples = apples,
-				combos = combos,
-				fruit_batch = 8,
-			}
-		end,
-		descriptionReplacements = function(self, current, goal)
-			return {
-				fruit_batch = 8,
-			}
-		end,
-		xpReward = 95,
-	},
-	{
 		id = "shielded_marathon",
 		titleKey = "menu.daily.shielded_marathon.title",
 		descriptionKey = "menu.daily.shielded_marathon.description",
@@ -882,64 +834,6 @@ DailyChallenges.challenges = {
 			}
 		end,
 		xpReward = 125,
-	},
-	{
-		id = "combo_dash",
-		titleKey = "menu.daily.combo_dash.title",
-		descriptionKey = "menu.daily.combo_dash.description",
-		goal = 1,
-		progressKey = "menu.daily.combo_dash.progress",
-		completeKey = "menu.daily.combo_dash.complete",
-		comboGoal = 6,
-		timeGoal = 360,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local combos = getStatValue(statsSource, "combosTriggered", context)
-			local timeAlive = getStatValue(statsSource, "timeAlive", context)
-			if timeAlive <= 0 then
-				return 0
-			end
-
-			if combos >= (self.comboGoal or 0) and timeAlive <= (self.timeGoal or 0) then
-				return 1
-			end
-
-			return 0
-		end,
-		getRunValue = function(self, statsSource)
-			local combos = getStatValue(statsSource, "combosTriggered")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
-			if timeAlive <= 0 then
-				return 0
-			end
-
-			if combos >= (self.comboGoal or 0) and timeAlive <= (self.timeGoal or 0) then
-				return 1
-			end
-
-			return 0
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local combos = getStatValue(statsSource, "combosTriggered", context)
-			local timeAlive = getStatValue(statsSource, "timeAlive", context)
-
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				combos = combos,
-				combo_goal = self.comboGoal or 0,
-				time = formatSeconds(timeAlive),
-				time_goal = formatSeconds(self.timeGoal or 0),
-			}
-		end,
-		descriptionReplacements = function(self)
-			return {
-				combo_goal = self.comboGoal or 0,
-				time_goal = formatSeconds(self.timeGoal or 0),
-			}
-		end,
-		xpReward = 130,
 	},
 	{
 		id = "fruit_frenzy",

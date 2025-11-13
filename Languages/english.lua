@@ -59,11 +59,6 @@ local english = {
 					progress = "Emergency saves: ${current}/${goal}",
 					complete = "Shield mastery! ${current} clutch saves.",
 				},
-				marathon = {
-					title = "Serpentine Marathon",
-					description = "Travel ${goal} tiles in a single run.",
-					progress = "Travelled: ${current}/${goal}",
-				},
 				shield_bounce = {
 					title = "Shield Wall Master",
 					description = "Bounce off walls with your shield ${goal} times in one run.",
@@ -123,12 +118,6 @@ local english = {
 					progress = "Current pace: ${pace}/${goal} (Tiles: ${tiles}, Minutes: ${minutes})",
 					complete = "Steady sprint! Pace hit ${pace} tiles per minute.",
 				},
-				combo_harvester = {
-					title = "Combo Harvester",
-					description = "Trigger combos after hoarding ${fruit_batch} fruit ${goal} times in one run.",
-					progress = "Harvests: ${current}/${goal} (Fruit: ${apples}, Combos: ${combos})",
-					complete = "Combo harvest complete! ${current} powerful bursts.",
-				},
 				shielded_marathon = {
 					title = "Shielded Marathon",
 					description = "Trigger ${target_shields} emergency shields and slither ${target_tiles} tiles in one run.",
@@ -146,12 +135,6 @@ local english = {
 					description = "Trigger ${combo_goal} combos while clearing ${floor_goal} floors in one run.",
 					progress = "Conditions: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Floors: ${floors}/${floor_goal})",
 					complete = "Delivery complete! ${combos} combos and ${floors} floors cleared.",
-				},
-				combo_dash = {
-					title = "Combo Dash",
-					description = "Trigger ${combo_goal} combos within ${time_goal} in a single run.",
-					progress = "Status: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Time: ${time}/${time_goal})",
-					complete = "Dash complete! ${combos} combos in ${time}.",
 				},
 				fruit_frenzy = {
 					title = "Fruit Frenzy",
