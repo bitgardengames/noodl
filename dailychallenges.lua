@@ -456,15 +456,6 @@ DailyChallenges.challenges = {
 		xpReward = 80,
 	},
 	{
-		id = "fruit_sampler",
-		titleKey = "menu.daily.apples.title",
-		descriptionKey = "menu.daily.apples.description",
-		sessionStat = "applesEaten",
-		goal = 45,
-		progressKey = "menu.daily.apples.progress",
-		xpReward = 70,
-	},
-	{
 		id = "shield_showoff",
 		titleKey = "menu.daily.shield_showoff.title",
 		descriptionKey = "menu.daily.shield_showoff.description",
@@ -601,34 +592,6 @@ DailyChallenges.challenges = {
 		xpReward = 90,
 	},
 	{
-		id = "floor_tourist",
-		titleKey = "menu.daily.floor_tourist.title",
-		descriptionKey = "menu.daily.floor_tourist.description",
-		sessionStat = "totalFloorTime",
-		goal = 480,
-		progressKey = "menu.daily.floor_tourist.progress",
-		progressReplacements = function(self, current, goal)
-			return {
-				current = formatSecondsFloor(current),
-				goal = formatSecondsFloor(goal),
-			}
-		end,
-		descriptionReplacements = function(self, current, goal)
-			return {
-				goal = floor((goal or 0) / 60),
-			}
-		end,
-		xpReward = 85,
-	},
-	{
-		id = "floor_conqueror",
-		titleKey = "menu.daily.floor_conqueror.title",
-		descriptionKey = "menu.daily.floor_conqueror.description",
-		sessionStat = "floorsCleared",
-		goal = 8,
-		xpReward = 100,
-	},
-	{
 		id = "depth_delver",
 		titleKey = "menu.daily.depth_delver.title",
 		descriptionKey = "menu.daily.depth_delver.description",
@@ -652,16 +615,6 @@ DailyChallenges.challenges = {
 		goal = 70,
 		progressKey = "menu.daily.apple_hoarder.progress",
 		xpReward = 90,
-	},
-	{
-		id = "dragonfruit_gourmand",
-		titleKey = "menu.daily.dragonfruit_gourmand.title",
-		descriptionKey = "menu.daily.dragonfruit_gourmand.description",
-		sessionStat = "dragonfruitEaten",
-		goal = 3,
-		progressKey = "menu.daily.dragonfruit_gourmand.progress",
-		completeKey = "menu.daily.dragonfruit_gourmand.complete",
-		xpReward = 100,
 	},
 	{
 		id = "shield_triathlon",

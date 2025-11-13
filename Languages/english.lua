@@ -42,11 +42,6 @@ local english = {
 					title = "Floor Explorer",
 					description = "Clear ${goal} floors in one run.",
 				},
-				apples = {
-					title = "Fruit Sampler",
-					description = "Collect ${goal} fruit in a single run.",
-					progress = "Fruit collected: ${current}/${goal}",
-				},
 				shield_showoff = {
 					title = "Shield Showoff",
 					description = "Break rocks and parry saws ${goal} times total in a single run.",
@@ -99,15 +94,6 @@ local english = {
 					progress = "Run survival: ${current}/${goal}",
 					complete = "Endurance expert! Survived ${current} minutes.",
 				},
-				floor_tourist = {
-					title = "Floor Tourist",
-					description = "Spend ${goal} minutes exploring floors.",
-					progress = "Floor time: ${current}/${goal}",
-				},
-				floor_conqueror = {
-					title = "Floor Conqueror",
-					description = "Clear ${goal} floors in a single run.",
-				},
 				depth_delver = {
 					title = "Depth Delver",
 					description = "Reach floor ${goal} in a single run.",
@@ -124,12 +110,6 @@ local english = {
 					description = "Collect ${goal} fruit without turning in a single run.",
 					progress = "No-turn chain: ${current}/${goal}",
 					complete = "Flawless flow! Chain reached ${current}.",
-				},
-				dragonfruit_gourmand = {
-					title = "Dragonfruit Gourmand",
-					description = "Devour ${goal} dragonfruit in a single run.",
-					progress = "Dragonfruit eaten: ${current}/${goal}",
-					complete = "Sweet success! ${current} dragonfruit devoured.",
 				},
 				shield_triathlon = {
 					title = "Shield Triathlon",
