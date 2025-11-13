@@ -1889,9 +1889,9 @@ pool = {
 	}),
 
 	register({
-		id = "mystery_card",
-		nameKey = "upgrades.mystery_card.name",
-		descKey = "upgrades.mystery_card.description",
+		id = "wildcard",
+		nameKey = "upgrades.wildcard.name",
+		descKey = "upgrades.wildcard.description",
 		rarity = "rare",
 		tags = {"utility", "risk", "shop"},
 		allowDuplicates = true,
@@ -1918,7 +1918,7 @@ pool = {
 					revealShakeFrequency = 26,
 					revealApplyThreshold = 0.6,
 					revealPostPauseDuration = 0.65,
-					revealAnimation = "mystery_card",
+					revealAnimation = "wildcard",
 				}
 			end
 
@@ -1926,7 +1926,7 @@ pool = {
 				local available = {}
 				local totalWeight = 0
 				for _, upgrade in ipairs(pool) do
-					if upgrade.id ~= "mystery_card" and Upgrades:canOffer(upgrade, context, allowTaken) then
+					if upgrade.id ~= "wildcard" and Upgrades:canOffer(upgrade, context, allowTaken) then
 						local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
 						if rarityRank >= minimumRank then
 							local weight = calculateWeight(upgrade)
@@ -1996,7 +1996,7 @@ pool = {
 				revealShakeFrequency = 26,
 				revealApplyThreshold = 0.6,
 				revealPostPauseDuration = 0.65,
-				revealAnimation = "mystery_card",
+				revealAnimation = "wildcard",
 			}
 
 			if decorated then
@@ -2251,23 +2251,22 @@ pool = {
 		end,
 	}),
 	register({
-		id = "zephyr_coils",
-		nameKey = "upgrades.zephyr_coils.name",
-		descKey = "upgrades.zephyr_coils.description",
+		id = "momentum_coils",
+		nameKey = "upgrades.momentum_coils.name",
+		descKey = "upgrades.momentum_coils.description",
 		rarity = "rare",
 		tags = {"mobility", "risk"},
 		unlockTag = "stormtech",
 		onAcquire = function(state)
 			Snake:addSpeedMultiplier(1.15)
-			Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
 			if state then
 				state.counters = state.counters or {}
-				local stacks = (state.counters.zephyrCoilsStacks or 0) + 1
-				state.counters.zephyrCoilsStacks = stacks
-				Snake:setZephyrCoilsStacks(stacks)
+				local stacks = (state.counters.momentumCoilsStacks or 0) + 1
+				state.counters.momentumCoilsStacks = stacks
+				Snake:setMomentumCoilsStacks(stacks)
 			else
-				local stacks = (Snake.zephyrCoils and Snake.zephyrCoils.stacks or 0) + 1
-				Snake:setZephyrCoilsStacks(stacks)
+				local stacks = (Snake.momentumCoils and Snake.momentumCoils.stacks or 0) + 1
+				Snake:setMomentumCoilsStacks(stacks)
 			end
 		end,
 	}),

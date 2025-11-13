@@ -1194,17 +1194,17 @@ function Snake:setSwiftFangsStacks(count)
 	end
 end
 
-function Snake:setZephyrCoilsStacks(count)
+function Snake:setMomentumCoilsStacks(count)
 	count = max(0, floor((count or 0) + 0.0001))
 
-	local state = self.zephyrCoils
+	local state = self.momentumCoils
 	if not state and count <= 0 then
 		return
 	end
 
 	if not state then
 		state = {stacks = 0, intensity = 0, target = 0, time = 0}
-		self.zephyrCoils = state
+		self.momentumCoils = state
 	end
 
 	state.stacks = count

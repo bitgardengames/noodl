@@ -523,8 +523,8 @@ local english = {
 				name = "Molting Reflex",
 				description = "Breaking a shield unleashes a 60% adrenaline burst.",
 			},
-			mystery_card = {
-				name = "Mystery Card",
+			wildcard = {
+				name = "Wildcard",
 				description = "Select to reveal and instantly gain a random upgrade.",
 			},
 			circuit_breaker = { -- ship
@@ -611,9 +611,9 @@ local english = {
 				description = "Press Shift (or X/Left Shoulder) to briefly slow time, reducing all movement to 35% speed.",
 				activation_text = "Time Slow!",
 			},
-			zephyr_coils = {
-				name = "Zephyr Coils",
-				description = "Move 15% faster and gain +1 extra growth per fruit.",
+			momentum_coils = {
+				name = "Momentum Coils",
+				description = "Move 15% faster.",
 			},
 			event_horizon = {
 				name = "Event Horizon",
