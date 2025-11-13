@@ -500,38 +500,6 @@ DailyChallenges.challenges = {
 		xpReward = 80,
 	},
 	{
-		id = "balanced_banquet",
-		titleKey = "menu.daily.balanced_banquet.title",
-		descriptionKey = "menu.daily.balanced_banquet.description",
-		goal = 3,
-		progressKey = "menu.daily.balanced_banquet.progress",
-		completeKey = "menu.daily.balanced_banquet.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten", context)
-			local combos = getStatValue(statsSource, "combosTriggered", context)
-
-			local feasts = min(floor(apples / 15), combos)
-			return max(feasts, 0)
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				apples = getStatValue(statsSource, "applesEaten", context),
-				combos = getStatValue(statsSource, "combosTriggered", context),
-			}
-		end,
-		descriptionReplacements = function(self, current, goal)
-			return {
-				goal = goal or 0,
-				apples_per_combo = 15,
-			}
-		end,
-		xpReward = 110,
-	},
-	{
 		id = "serpentine_marathon",
 		titleKey = "menu.daily.marathon.title",
 		descriptionKey = "menu.daily.marathon.description",

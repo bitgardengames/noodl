@@ -59,12 +59,6 @@ local english = {
 					progress = "Emergency saves: ${current}/${goal}",
 					complete = "Shield mastery! ${current} clutch saves.",
 				},
-				balanced_banquet = {
-					title = "Balanced Banquet",
-					description = "Trigger ${goal} combo feasts by earning a combo after every ${apples_per_combo} fruit in one run.",
-					progress = "Combo feasts: ${current}/${goal} (Fruit: ${apples} | Combos: ${combos})",
-					complete = "Balanced banquet! ${current} combo feasts served.",
-				},
 				marathon = {
 					title = "Serpentine Marathon",
 					description = "Travel ${goal} tiles in a single run.",
