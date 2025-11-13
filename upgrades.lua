@@ -1210,9 +1210,9 @@ pool = {
 		end,
 	}),
 	register({
-		id = "rock_suppressor",
-		nameKey = "upgrades.rock_suppressor.name",
-		descKey = "upgrades.rock_suppressor.description",
+		id = "seismic_dampener",
+		nameKey = "upgrades.seismic_dampener.name",
+		descKey = "upgrades.seismic_dampener.description",
 		rarity = "common",
 		tags = {"hazard", "rocks"},
 		onAcquire = function(state)

@@ -507,8 +507,8 @@ local english = {
 				description = "Surge forward after eating fruit.",
 				adrenaline_shout = "Adrenaline!",
 			},
-			rock_suppressor = { -- ship
-				name = "Rock Suppressor",
+			seismic_dampener = { -- ship
+				name = "Seismic Dampener",
 				description = "Rocks spawn far less often after eating fruit.",
 			},
 			deliberate_coil = {
