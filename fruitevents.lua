@@ -24,23 +24,6 @@ local FruitEvents = {}
 
 local DEFAULT_COMBO_WINDOW = 2.25
 
-local BLOOM_EVENT_TAG = "dragonfruitBloom"
-local BLOOM_MIN_FRUIT = 5
-local BLOOM_MAX_FRUIT = 7
-local BLOOM_FRUIT_LIFESPAN = false
-local BLOOM_RESPAWN_DELAY_MIN = 0.08
-local BLOOM_RESPAWN_DELAY_MAX = 0.2
-
-local dragonfruitBloom = {
-	triggered = false,
-	active = false,
-	fruitsRemaining = 0,
-	spawnCooldown = 0,
-	pendingSpawn = false,
-	safeZone = nil,
-	activeFruitTag = nil,
-}
-
 local comboState = {
 	count = 0,
 	timer = 0,
@@ -61,161 +44,6 @@ Achievements:registerStateProvider(function()
 		bestComboStreak = max(comboState.best or 0, comboState.count or 0),
 	}
 end)
-
-local function resetDragonfruitBloomState()
-	dragonfruitBloom.triggered = false
-	dragonfruitBloom.active = false
-	dragonfruitBloom.fruitsRemaining = 0
-	dragonfruitBloom.spawnCooldown = 0
-	dragonfruitBloom.pendingSpawn = false
-	dragonfruitBloom.safeZone = nil
-	dragonfruitBloom.activeFruitTag = nil
-end
-
-local function bloomRandomDelay()
-	return BLOOM_RESPAWN_DELAY_MIN + (BLOOM_RESPAWN_DELAY_MAX - BLOOM_RESPAWN_DELAY_MIN) * love.math.random()
-end
-
-local function endDragonfruitBloom()
-	if not dragonfruitBloom.active then
-		dragonfruitBloom.pendingSpawn = false
-		dragonfruitBloom.fruitsRemaining = 0
-		dragonfruitBloom.safeZone = nil
-		dragonfruitBloom.activeFruitTag = nil
-		return
-	end
-
-	dragonfruitBloom.active = false
-	dragonfruitBloom.pendingSpawn = false
-	dragonfruitBloom.spawnCooldown = 0
-	dragonfruitBloom.fruitsRemaining = 0
-	dragonfruitBloom.safeZone = nil
-	dragonfruitBloom.activeFruitTag = nil
-
-	local exitAlreadyOpen = Arena and Arena.hasExit and Arena:hasExit()
-	if not exitAlreadyOpen and not UI:isGoalReached() then
-		if not Fruit:getActive() then
-			Fruit:spawn(Snake:getSegments(), Rocks, Snake:getSafeZone(3))
-		end
-	end
-end
-
-local function handleBloomFruitExpired()
-	if not dragonfruitBloom.active then
-		return
-	end
-
-	dragonfruitBloom.activeFruitTag = nil
-
-	if (dragonfruitBloom.fruitsRemaining or 0) <= 0 then
-		dragonfruitBloom.pendingSpawn = false
-	else
-		dragonfruitBloom.pendingSpawn = true
-		dragonfruitBloom.spawnCooldown = bloomRandomDelay()
-	end
-
-end
-
-local function spawnDragonfruitBloomFruit(safeZone)
-	if not dragonfruitBloom.active then
-		return false
-	end
-
-	if (dragonfruitBloom.fruitsRemaining or 0) <= 0 then
-		dragonfruitBloom.pendingSpawn = false
-		return false
-	end
-
-	local safeZoneSnapshot = safeZone or dragonfruitBloom.safeZone
-	if not safeZoneSnapshot then
-		safeZoneSnapshot = Snake:getSafeZone(3)
-		dragonfruitBloom.safeZone = safeZoneSnapshot
-	end
-
-	local options = {
-		isBonus = true,
-		countsForGoal = false,
-		eventTag = BLOOM_EVENT_TAG,
-	}
-
-	if BLOOM_FRUIT_LIFESPAN and BLOOM_FRUIT_LIFESPAN > 0 then
-		options.lifespan = BLOOM_FRUIT_LIFESPAN
-		options.onExpire = handleBloomFruitExpired
-	end
-
-	Fruit:spawn(Snake:getSegments(), Rocks, safeZoneSnapshot, options)
-	dragonfruitBloom.fruitsRemaining = max(0, (dragonfruitBloom.fruitsRemaining or 0) - 1)
-	dragonfruitBloom.pendingSpawn = false
-	dragonfruitBloom.spawnCooldown = bloomRandomDelay()
-	dragonfruitBloom.activeFruitTag = BLOOM_EVENT_TAG
-	dragonfruitBloom.safeZone = safeZoneSnapshot
-
-        return true
-end
-
-local function handleBloomFruitCollected()
-	if not dragonfruitBloom.active then
-		return false
-	end
-
-	dragonfruitBloom.activeFruitTag = nil
-
-	if (dragonfruitBloom.fruitsRemaining or 0) <= 0 then
-		dragonfruitBloom.pendingSpawn = false
-	else
-		dragonfruitBloom.pendingSpawn = true
-		dragonfruitBloom.spawnCooldown = bloomRandomDelay()
-	end
-
-        return true
-end
-
-local function startDragonfruitBloom(safeZone)
-	if dragonfruitBloom.triggered then
-		return false
-	end
-
-	dragonfruitBloom.triggered = true
-	dragonfruitBloom.active = true
-	dragonfruitBloom.fruitsRemaining = love.math.random(BLOOM_MIN_FRUIT, BLOOM_MAX_FRUIT)
-	dragonfruitBloom.spawnCooldown = 0
-	dragonfruitBloom.pendingSpawn = true
-	dragonfruitBloom.safeZone = safeZone
-	dragonfruitBloom.activeFruitTag = nil
-
-        spawnDragonfruitBloomFruit(dragonfruitBloom.safeZone)
-
-	return true
-end
-
-local function updateDragonfruitBloom(dt)
-	if not dragonfruitBloom.active then
-		return
-	end
-
-	dragonfruitBloom.spawnCooldown = max(0, (dragonfruitBloom.spawnCooldown or 0) - dt)
-	dragonfruitBloom.safeZone = Snake:getSafeZone(3)
-
-	local activeFruit = Fruit:getActive()
-	local activeTag = nil
-	if activeFruit then
-		activeTag = activeFruit.eventTag or (activeFruit.type and activeFruit.type.id)
-	end
-
-	if activeTag ~= BLOOM_EVENT_TAG then
-		dragonfruitBloom.activeFruitTag = nil
-	end
-
-	if dragonfruitBloom.pendingSpawn and dragonfruitBloom.spawnCooldown <= 0 and activeTag ~= BLOOM_EVENT_TAG then
-		if not spawnDragonfruitBloomFruit(dragonfruitBloom.safeZone) then
-			dragonfruitBloom.pendingSpawn = false
-		end
-	end
-
-	if (dragonfruitBloom.fruitsRemaining or 0) <= 0 and not dragonfruitBloom.pendingSpawn and activeTag ~= BLOOM_EVENT_TAG then
-		endDragonfruitBloom()
-	end
-end
 
 local function getUpgradeEffect(name)
 	if Upgrades and Upgrades.getEffect then
@@ -392,7 +220,6 @@ function FruitEvents.reset()
 		updateComboWindow()
 	end
 	syncComboToUI()
-        resetDragonfruitBloomState()
 end
 
 function FruitEvents.update(dt)
@@ -404,7 +231,7 @@ function FruitEvents.update(dt)
 
 		if comboState.timer == 0 then
 			comboState.count = 0
-                        markComboWindowDirty()
+			markComboWindowDirty()
 		end
 
 		if comboState.windowDirty then
@@ -412,8 +239,6 @@ function FruitEvents.update(dt)
 		end
 		syncComboToUI()
 	end
-
-	updateDragonfruitBloom(dt)
 end
 
 function FruitEvents.getComboCount()
@@ -447,7 +272,6 @@ function FruitEvents.handleConsumption(x, y)
 	local name = Fruit:getTypeName()
 	local fruitType = Fruit:getType()
 	local collectedMeta = Fruit:getLastCollectedMeta()
-	local isBloomFruit = collectedMeta and collectedMeta.eventTag == BLOOM_EVENT_TAG
 	local countsForGoal = not (collectedMeta and collectedMeta.countsForGoal == false)
 	local col, row = Fruit:getTile()
 
@@ -474,15 +298,11 @@ function FruitEvents.handleConsumption(x, y)
 	local safeZone = Snake:getSafeZone(3)
 	local segments = Snake:getSegments()
 
-	local bloomTriggeredThisFruit = false
-        if name == "Dragonfruit" then
-                PlayerStats:add("totalDragonfruitEaten", 1)
-                SessionStats:add("dragonfruitEaten", 1)
-                Achievements:unlock("dragonHunter")
-                if not dragonfruitBloom.triggered then
-                        bloomTriggeredThisFruit = startDragonfruitBloom(safeZone)
-                end
-        end
+	if name == "Dragonfruit" then
+		PlayerStats:add("totalDragonfruitEaten", 1)
+		SessionStats:add("dragonfruitEaten", 1)
+		Achievements:unlock("dragonHunter")
+	end
 
 	if countsForGoal then
 		UI:addFruit(fruitType)
@@ -490,14 +310,7 @@ function FruitEvents.handleConsumption(x, y)
 	local goalReached = UI:isGoalReached()
 
 	local exitAlreadyOpen = Arena and Arena.hasExit and Arena:hasExit()
-	local spawnHandled = false
-	if bloomTriggeredThisFruit then
-		spawnHandled = true
-	elseif isBloomFruit then
-		spawnHandled = handleBloomFruitCollected()
-	end
-
-	if not spawnHandled and not exitAlreadyOpen and not goalReached then
+	if not exitAlreadyOpen and not goalReached then
 		Fruit:spawn(segments, Rocks, safeZone)
 	end
 
