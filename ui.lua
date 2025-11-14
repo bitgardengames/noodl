@@ -138,6 +138,7 @@ local baseSectionHeaderPadding = 8
 UI.fonts = {}
 
 local BUTTON_POP_DURATION = 0.32
+local BUTTON_HOVER_BOUNCE_DURATION = 0.5
 local BUTTON_BORDER_WIDTH = 3
 
 UI.buttonBorderWidth = BUTTON_BORDER_WIDTH
@@ -360,15 +361,19 @@ UI._buttonList = {}
 UI._buttonIndex = {}
 
 local function createButtonState()
-	return {
-		pressed = false,
-		anim = 0,
-		hoverAnim = 0,
-		focusAnim = 0,
-		hoverTarget = 0,
-		glow = 0,
-		popProgress = 0,
-	}
+        return {
+                pressed = false,
+                anim = 0,
+                hoverAnim = 0,
+                focusAnim = 0,
+                hoverTarget = 0,
+                glow = 0,
+                popProgress = 0,
+                hoverBounceTimer = nil,
+                hoverBounce = 0,
+                wasHovered = false,
+                wasFocused = false,
+        }
 end
 
 local function addButtonToList(id, btn)
@@ -1013,22 +1018,40 @@ function UI.drawButton(id)
 
 	local mx, my = UI.getCursorPosition()
 	local hoveredByMouse = UI.isHovered(b.x, b.y, b.w, b.h, mx, my)
-	local displayHover = hoveredByMouse or btn.focused
+        local displayHover = hoveredByMouse or btn.focused
 
-	if displayHover and not btn.wasHovered then
-		Audio:playSound("hover")
-	end
-	btn.wasHovered = displayHover
-	btn.hoverTarget = displayHover and 1 or 0
+        if displayHover and not btn.wasHovered then
+                Audio:playSound("hover")
+                btn.hoverBounceTimer = 0
+        end
 
-	-- Animate press depth
-	local pressAnim = btn.anim or 0
-	local yOffset = easeOutQuad(pressAnim) * 4
+        if btn.focused and not btn.wasFocused then
+                btn.hoverBounceTimer = 0
+        end
 
-	local baseScale = 1 + (btn.popProgress or 0) * 0.08
-	local hoverScale = 1 + (btn.hoverAnim or 0) * 0.02
-	local focusScale = 1 + (btn.focusAnim or 0) * 0.015
-	local totalScale = baseScale * hoverScale * focusScale
+        btn.wasHovered = displayHover or false
+        btn.wasFocused = btn.focused and true or false
+        btn.hoverTarget = displayHover and 1 or 0
+
+        -- Animate press depth
+        local pressAnim = clamp01(btn.anim or 0)
+        local yOffset = easeOutQuad(pressAnim) * 4
+
+        local popAmount = btn.popProgress or 0
+        local baseScale = 1 + popAmount * 0.1
+
+        local hoverAnim = clamp01(btn.hoverAnim or 0)
+        local hoverEase = max(0, Easing.easeOutBack(hoverAnim))
+        local hoverScale = 1 + hoverEase * 0.02
+
+        local focusAnim = clamp01(btn.focusAnim or 0)
+        local focusEase = max(0, Easing.easeOutBack(focusAnim))
+        local focusScale = 1 + focusEase * 0.012
+
+        local hoverBounce = btn.hoverBounce or 0
+        local hoverBounceScale = 1 + hoverBounce * 0.03
+
+        local totalScale = baseScale * hoverScale * focusScale * hoverBounceScale
 
 	local centerX = b.x + b.w / 2
 	local centerY = b.y + yOffset + b.h / 2
@@ -1081,7 +1104,7 @@ function UI.drawButton(id)
 	setColor(fillColor)
 	love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
 
-	local highlightStrength = (btn.hoverAnim or 0) * 0.18 + (btn.popProgress or 0) * 0.22
+        local highlightStrength = hoverEase * 0.2 + popAmount * 0.26 + hoverBounce * 0.18
 	if highlightStrength > 0.001 then
 		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
 		love.graphics.setBlendMode("add", "alphamultiply")
@@ -1096,8 +1119,8 @@ function UI.drawButton(id)
 		drawAlignedBorder("line", b.x, b.y + yOffset, b.w, b.h, radius, borderWidth)
 	end
 
-	if btn.focused then
-		local focusStrength = btn.focusAnim or 0
+        if btn.focused then
+                local focusStrength = focusEase
 		if focusStrength > 0.01 then
 			local focusRadius = radius + 4
 			local padding = 3
@@ -1124,10 +1147,10 @@ function UI.drawButton(id)
 	-- TEXT
 	UI.setFont("button")
 	local textColor = UI.colors.text
-	if displayHover or (btn.focusAnim or 0) > 0.001 or isToggled then
-		btn._lightenedTextColor = lightenColor(textColor, 0.18 + 0.1 * (btn.focusAnim or 0), btn._lightenedTextColor)
-		textColor = btn._lightenedTextColor
-	end
+        if displayHover or focusEase > 0.001 or isToggled then
+                btn._lightenedTextColor = lightenColor(textColor, 0.18 + 0.1 * focusEase, btn._lightenedTextColor)
+                textColor = btn._lightenedTextColor
+        end
 	local text = btn.text or ""
 	local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
 
@@ -1322,32 +1345,43 @@ function UI:celebrateGoal()
 end
 
 function UI:update(dt)
-	for _, button in ipairs(UI._buttonList) do
-		local hoverTarget = button.hoverTarget or 0
-		local focusTarget = button.focused and 1 or 0
-		button.anim = approachExp(button.anim or 0, button.pressed and 1 or 0, dt, 18)
-		if hoverTarget > 0 then
-			button.hoverAnim = approachExp(button.hoverAnim or 0, hoverTarget, dt, 12)
-		else
-			button.hoverAnim = 0
-		end
-		button.focusAnim = approachExp(button.focusAnim or 0, focusTarget, dt, 9)
-		local glowTarget = max(hoverTarget, focusTarget)
-		button.glow = approachExp(button.glow or 0, glowTarget, dt, 5)
+        for _, button in ipairs(UI._buttonList) do
+                local hoverTarget = button.hoverTarget or 0
+                local focusTarget = button.focused and 1 or 0
+                button.anim = approachExp(button.anim or 0, button.pressed and 1 or 0, dt, 18)
+                local currentHover = button.hoverAnim or 0
+                local hoverSpeed = hoverTarget > currentHover and 16 or 10
+                button.hoverAnim = approachExp(currentHover, hoverTarget, dt, hoverSpeed)
+                button.focusAnim = approachExp(button.focusAnim or 0, focusTarget, dt, 9)
+                local glowTarget = max(hoverTarget, focusTarget)
+                button.glow = approachExp(button.glow or 0, glowTarget, dt, 5)
 
-		if button.popTimer ~= nil then
-			button.popTimer = button.popTimer + dt
-			local progress = min(1, button.popTimer / BUTTON_POP_DURATION)
-			button.popProgress = sin(progress * pi) * (1 - progress * 0.45)
-			if progress >= 1 then
-				button.popTimer = nil
-			end
-		else
-			button.popProgress = approachExp(button.popProgress or 0, 0, dt, 10)
-		end
+                if button.popTimer ~= nil then
+                        button.popTimer = button.popTimer + dt
+                        local progress = min(1, button.popTimer / BUTTON_POP_DURATION)
+                        button.popProgress = Easing.easeOutElastic(1 - progress)
+                        if progress >= 1 then
+                                button.popTimer = nil
+                                button.popProgress = 0
+                        end
+                else
+                        button.popProgress = approachExp(button.popProgress or 0, 0, dt, 12)
+                end
 
-		button.hoverTarget = 0
-	end
+                if button.hoverBounceTimer ~= nil then
+                        button.hoverBounceTimer = button.hoverBounceTimer + dt
+                        local bounceProgress = min(1, button.hoverBounceTimer / BUTTON_HOVER_BOUNCE_DURATION)
+                        button.hoverBounce = Easing.easeOutElastic(1 - bounceProgress)
+                        if bounceProgress >= 1 then
+                                button.hoverBounceTimer = nil
+                                button.hoverBounce = 0
+                        end
+                else
+                        button.hoverBounce = approachExp(button.hoverBounce or 0, 0, dt, 10)
+                end
+
+                button.hoverTarget = 0
+        end
 
 	-- update fruit socket animations
 	for i = #self.fruitSockets, 1, -1 do
@@ -2335,12 +2369,13 @@ function UI:drawFruitSockets()
 			end
 			appearEase = max(0, appearEase)
 
-			local scale = min(1.18, appearEase)
-			local bounceScale = 1
-			if socket.bounceTimer ~= nil then
-				local bounceProgress = clamp01(socket.bounceTimer / self.socketBounceDuration)
-				bounceScale = 1 + sin(bounceProgress * pi) * 0.24 * (1 - bounceProgress * 0.4)
-			end
+                        local scale = min(1.18, appearEase)
+                        local bounceScale = 1
+                        if socket.bounceTimer ~= nil then
+                                local bounceProgress = clamp01(socket.bounceTimer / self.socketBounceDuration)
+                                local bounceEase = Easing.easeOutElastic(1 - bounceProgress)
+                                bounceScale = 1 + bounceEase * 0.18
+                        end
 
 			local celebrationWave = 0
 			if self.goalCelebrated then
