@@ -1,5 +1,6 @@
 local UI = require("ui")
 local Localization = require("localization")
+local GamepadAliases = require("gamepadaliases")
 local Upgrades = require("upgrades")
 local Audio = require("audio")
 local MetaProgression = require("metaprogression")
@@ -39,29 +40,43 @@ local applyColor
 local withTransformedScissor
 
 local function getLocalizationRevision()
-	if Localization and Localization.getRevision then
-		return Localization:getRevision()
-	end
+        if Localization and Localization.getRevision then
+                return Localization:getRevision()
+        end
 
-	return 0
+        return 0
+end
+
+local function getGamepadRevision()
+        if GamepadAliases and GamepadAliases.getRevision then
+                return GamepadAliases:getRevision()
+        end
+
+        return 0
 end
 
 local function ensureCardTextLayout(card, width)
-	if not card then return nil end
+        if not card then return nil end
 
-	local revision = getLocalizationRevision()
-	local name = card.name or ""
-	local desc = card.desc or ""
-	local cache = card._textLayoutCache
+        if card.refreshLocalization then
+                card:refreshLocalization()
+        end
 
-	if not cache or cache.revision ~= revision or cache.name ~= name or cache.desc ~= desc then
-		cache = {
-			revision = revision,
-			name = name,
-			desc = desc,
-			byWidth = {},
-		}
-		card._textLayoutCache = cache
+        local localizationRevision = getLocalizationRevision()
+        local layoutRevision = getGamepadRevision()
+        local name = card.name or ""
+        local desc = card.desc or ""
+        local cache = card._textLayoutCache
+
+        if not cache or cache.localizationRevision ~= localizationRevision or cache.layoutRevision ~= layoutRevision or cache.name ~= name or cache.desc ~= desc then
+                cache = {
+                        localizationRevision = localizationRevision,
+                        layoutRevision = layoutRevision,
+                        name = name,
+                        desc = desc,
+                        byWidth = {},
+                }
+                card._textLayoutCache = cache
 	end
 
 	local w = width or DEFAULT_CARD_WIDTH
