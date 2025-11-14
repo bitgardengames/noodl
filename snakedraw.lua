@@ -3,14 +3,12 @@ local SnakeCosmetics = require("snakecosmetics")
 local ModuleUtil = require("moduleutil")
 local RenderLayers = require("renderlayers")
 local Timer = require("timer")
-local SharedCanvas = require("sharedcanvas")
 
 local abs = math.abs
 local atan = math.atan
 local atan2 = math.atan2
 local cos = math.cos
 local floor = math.floor
-local ceil = math.ceil
 local max = math.max
 local min = math.min
 local pi = math.pi
@@ -26,11 +24,6 @@ local SHADOW_OFFSET  = 3
 local OUTLINE_SIZE   = 3
 local FRUIT_BULGE_SCALE = 1.25
 local defaultTailFlashColor = {1, 0, 0}
-
--- Canvas for single-pass shadow
-local snakeCanvas = nil
-local snakeCanvasWidth = 0
-local snakeCanvasHeight = 0
 
 local glowSprite = nil
 local glowSpriteResolution = 128
@@ -61,7 +54,6 @@ local function trimBuffer(buffer, used, capacity)
 	end
 end
 
-local presentSnakeCanvas
 local drawTrailSegmentToCanvas
 
 local function rebuildGlowSprite()
@@ -100,194 +92,9 @@ local function ensureGlowSprite()
 end
 
 
-local function accumulateBounds(accumulator, coords, hx, hy)
-	local bounds = accumulator or {}
-	local minX = bounds.minX
-	local minY = bounds.minY
-	local maxX = bounds.maxX
-	local maxY = bounds.maxY
-
-	if coords then
-		for i = 1, #coords, 2 do
-			local x = coords[i]
-			local y = coords[i + 1]
-			if x and y then
-				if not minX or x < minX then minX = x end
-				if not minY or y < minY then minY = y end
-				if not maxX or x > maxX then maxX = x end
-				if not maxY or y > maxY then maxY = y end
-			end
-		end
-	end
-
-	if hx and hy then
-		if not minX or hx < minX then minX = hx end
-		if not minY or hy < minY then minY = hy end
-		if not maxX or hx > maxX then maxX = hx end
-		if not maxY or hy > maxY then maxY = hy end
-	end
-
-	bounds.minX = minX
-	bounds.minY = minY
-	bounds.maxX = maxX
-	bounds.maxY = maxY
-
-	return bounds
-end
-
-local function finalizeBounds(bounds, half)
-	if not bounds or not bounds.minX or not bounds.minY or not bounds.maxX or not bounds.maxY then
-		return nil
-	end
-
-	local bulgeRadius = half * FRUIT_BULGE_SCALE
-	local margin = max(half + OUTLINE_SIZE, bulgeRadius + OUTLINE_SIZE) + SHADOW_OFFSET + 2
-
-	local minX = bounds.minX
-	local minY = bounds.minY
-	local maxX = bounds.maxX
-	local maxY = bounds.maxY
-
-	local rawX = minX - margin
-	local rawY = minY - margin
-	local rawW = (maxX - minX) + margin * 2
-	local rawH = (maxY - minY) + margin * 2
-
-	local offsetX = floor(rawX)
-	local offsetY = floor(rawY)
-	local width = ceil(rawX + rawW - offsetX)
-	local height = ceil(rawY + rawH - offsetY)
-
-	if width < 1 then width = 1 end
-	if height < 1 then height = 1 end
-
-	bounds.offsetX = offsetX
-	bounds.offsetY = offsetY
-	bounds.width = width
-	bounds.height = height
-
-	return bounds
-end
-
-local function ensureSnakeCanvas(width, height)
-	if width <= 0 or height <= 0 then
-		return nil
-	end
-
-	local targetWidth = width
-	local targetHeight = height
-
-	if snakeCanvas then
-		if width > snakeCanvasWidth or height > snakeCanvasHeight then
-			targetWidth = max(width, snakeCanvasWidth)
-			targetHeight = max(height, snakeCanvasHeight)
-		else
-			targetWidth = snakeCanvasWidth
-			targetHeight = snakeCanvasHeight
-		end
-	end
-
-	local canvas, replaced = SharedCanvas.ensureCanvas(snakeCanvas, targetWidth, targetHeight)
-	if canvas then
-		snakeCanvas = canvas
-		if replaced or snakeCanvasWidth ~= canvas:getWidth() or snakeCanvasHeight ~= canvas:getHeight() then
-			snakeCanvasWidth = canvas:getWidth()
-			snakeCanvasHeight = canvas:getHeight()
-		end
-	end
-
-	return snakeCanvas
-end
-
-
-local function renderTrailRegion(trail, half, options, palette, coords, bounds)
-	if not trail or #trail == 0 then
-		return false
-	end
-
-	coords = coords or buildCoords(trail)
-
-	local regionBounds = bounds
-	if not regionBounds then
-		local head = trail[1]
-		local hx = head and (head.drawX or head.x)
-		local hy = head and (head.drawY or head.y)
-		regionBounds = finalizeBounds(accumulateBounds(nil, coords, hx, hy), half)
-	end
-
-	if not regionBounds then
-		return false
-	end
-
-	local canvas = ensureSnakeCanvas(regionBounds.width, regionBounds.height)
-	if not canvas then
-		return false
-	end
-
-	love.graphics.setCanvas({canvas, stencil = true})
-	love.graphics.clear(0, 0, 0, 0)
-	love.graphics.push()
-	love.graphics.translate(-regionBounds.offsetX, -regionBounds.offsetY)
-	drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-	love.graphics.pop()
-	love.graphics.setCanvas()
-
-	presentSnakeCanvas(regionBounds.width, regionBounds.height, regionBounds.offsetX, regionBounds.offsetY)
-
-	return true
-end
-
-local function renderPortalFallback(items, half, options)
-	if not items or #items == 0 then
-		return false
-	end
-
-	local ww, hh = love.graphics.getDimensions()
-	local fallbackCanvas = ensureSnakeCanvas(ww, hh)
-	if not fallbackCanvas then
-		return false
-	end
-
-	love.graphics.setCanvas({fallbackCanvas, stencil = true})
-	love.graphics.clear(0, 0, 0, 0)
-
-	for _, item in ipairs(items) do
-		local trail = item.trail
-		if trail and #trail > 0 then
-			drawTrailSegmentToCanvas(trail, half, options, item.palette, item.coords)
-		end
-	end
-
-	love.graphics.setCanvas()
-	presentSnakeCanvas(ww, hh, 0, 0)
-
-	return true
-end
-
-local function presentSnakeCanvas(width, height, offsetX, offsetY)
-	if not snakeCanvas then
-		return false
-	end
-
-	local drawX = offsetX or 0
-	local drawY = offsetY or 0
-
-	RenderLayers:withLayer("shadows", function()
-		love.graphics.setColor(0, 0, 0, 0.25)
-		love.graphics.draw(snakeCanvas, drawX + SHADOW_OFFSET, drawY + SHADOW_OFFSET)
-	end)
-
-	RenderLayers:withLayer("main", function()
-		love.graphics.setColor(1, 1, 1, 1)
-		love.graphics.draw(snakeCanvas, drawX, drawY)
-	end)
-
-	return true
-end
-
 local shadowPalette = {
-	body = {0, 0, 0, 0.25},
-	outline = {0, 0, 0, 0.25},
+        body = {0, 0, 0, 0.25},
+        outline = {0, 0, 0, 0.25},
 }
 
 
@@ -1934,56 +1741,46 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			hy = portalInfo.exitY or hy
 		end
 
-		local exitCoords = buildCoords(exitTrail)
-		local exitHX = exitHead and (exitHead.drawX or exitHead.x)
-		local exitHY = exitHead and (exitHead.drawY or exitHead.y)
-		local bounds = finalizeBounds(accumulateBounds(nil, exitCoords, exitHX, exitHY), half)
+                local exitCoords = buildCoords(exitTrail)
 
-		local entryCoords
-		if entryTrail and #entryTrail > 0 then
-			local entryHead = entryTrail[1]
-			local entryHX = entryHead and (entryHead.drawX or entryHead.x)
-			local entryHY = entryHead and (entryHead.drawY or entryHead.y)
-			entryCoords = buildCoords(entryTrail)
-			bounds = finalizeBounds(accumulateBounds(bounds, entryCoords, entryHX, entryHY), half) or bounds
-		end
+                local entryCoords
+                if entryTrail and #entryTrail > 0 then
+                        entryCoords = buildCoords(entryTrail)
+                end
 
-		local fallbackItems = {}
+                local entryPalette
+                if entryTrail and #entryTrail > 0 then
+                        entryPalette = fadePalette(palette, 0.55)
+                end
 
-		local exitPresented = renderTrailRegion(exitTrail, half, options, palette, exitCoords, bounds)
-		if not exitPresented then
-			fallbackItems[#fallbackItems + 1] = {trail = exitTrail, coords = exitCoords, palette = palette, kind = "exit"}
-		end
+                RenderLayers:withLayer("shadows", function()
+                        love.graphics.push()
+                        love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+                        if exitTrail and #exitTrail > 0 then
+                                drawTrailSegmentToCanvas(exitTrail, half, options, shadowPalette, exitCoords)
+                        end
+                        if entryTrail and #entryTrail > 0 then
+                                drawTrailSegmentToCanvas(entryTrail, half, options, shadowPalette, entryCoords)
+                        end
+                        love.graphics.pop()
+                end)
 
-		local entryPresented = false
-		local entryPalette
-		if entryTrail and #entryTrail > 0 then
-			entryPalette = fadePalette(palette, 0.55)
-			entryPresented = renderTrailRegion(entryTrail, half, options, entryPalette, entryCoords)
-			if not entryPresented then
-				fallbackItems[#fallbackItems + 1] = {trail = entryTrail, coords = entryCoords, palette = entryPalette, kind = "entry"}
-			end
-		end
+                RenderLayers:withLayer("main", function()
+                        if exitTrail and #exitTrail > 0 then
+                                drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords)
+                        end
+                        if entryTrail and #entryTrail > 0 and entryPalette then
+                                drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
+                        end
+                end)
 
-		if exitHole then
-			drawPortalHole(exitHole, true)
-		end
+                if exitHole then
+                        drawPortalHole(exitHole, true)
+                end
 
-		if #fallbackItems > 0 then
-			if renderPortalFallback(fallbackItems, half, options) then
-				for _, item in ipairs(fallbackItems) do
-					if item.kind == "exit" then
-						exitPresented = true
-					else
-						entryPresented = true
-					end
-				end
-			end
-		end
-
-		if entryHole then
-			drawPortalHole(entryHole, false)
-		end
+                if entryHole then
+                        drawPortalHole(entryHole, false)
+                end
 
 		local entryX = (entryHole and entryHole.x) or portalInfo.entryX
 		local entryY = (entryHole and entryHole.y) or portalInfo.entryY
