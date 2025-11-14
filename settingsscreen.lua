@@ -91,13 +91,13 @@ end
 
 local copyColor = Color.copy
 local lightenColor = function(color, factor)
-        return Color.lighten(color, factor)
+	return Color.lighten(color, factor)
 end
 local darkenColor = function(color, factor)
-        return Color.darken(color, factor)
+	return Color.darken(color, factor)
 end
 local withAlpha = function(color, alpha)
-        return Color.withAlpha(color, alpha)
+	return Color.withAlpha(color, alpha)
 end
 
 local function setColor(color, alphaOverride)
@@ -404,7 +404,7 @@ local function getBaseColor()
 end
 
 function SettingsScreen:getMenuBackgroundOptions()
-        return MenuScene.getPlainBackgroundOptions(nil, getBaseColor())
+	return MenuScene.getPlainBackgroundOptions(nil, getBaseColor())
 end
 
 local function drawBackground(sw, sh)

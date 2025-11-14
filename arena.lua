@@ -91,10 +91,10 @@ local function clamp(value, minimum, maximum)
 end
 
 local function copyColor(color, defaultAlpha)
-        return Color.copy(color, {
-                default = {0, 0, 0, defaultAlpha or 1},
-                defaultAlpha = defaultAlpha,
-        })
+	return Color.copy(color, {
+		default = {0, 0, 0, defaultAlpha or 1},
+		defaultAlpha = defaultAlpha,
+	})
 end
 
 local function getPaletteColor(palette, key, fallback, defaultAlpha)
@@ -202,11 +202,11 @@ local Arena = {
 	tileSize = 24,
 	cols = 0,
 	rows = 0,
-        exit = nil,
-        _exitDrawRequested = false,
-        backgroundPalette = nil,
-        backdropColor = nil,
-        arenaFillColor = nil,
+	exit = nil,
+	_exitDrawRequested = false,
+	backgroundPalette = nil,
+	backdropColor = nil,
+	arenaFillColor = nil,
 	borderFlare = 0,
 	borderFlareStrength = 0,
 	borderFlareTimer = 0,
@@ -969,33 +969,33 @@ function Arena:getBounds()
 end
 
 function Arena:setBackgroundEffect(effectData, palette)
-        self.backgroundPalette = palette
+	self.backgroundPalette = palette
 
-        local backdrop = (palette and palette.bgColor) or Theme.bgColor or {0.12, 0.12, 0.14, 1}
-        local arenaColor = (palette and palette.arenaBG) or Theme.arenaBG or {0.18, 0.18, 0.22, 1}
+	local backdrop = (palette and palette.bgColor) or Theme.bgColor or {0.12, 0.12, 0.14, 1}
+	local arenaColor = (palette and palette.arenaBG) or Theme.arenaBG or {0.18, 0.18, 0.22, 1}
 
-        self.backdropColor = copyColor(backdrop)
-        self.arenaFillColor = copyColor(arenaColor)
+	self.backdropColor = copyColor(backdrop)
+	self.arenaFillColor = copyColor(arenaColor)
 end
 
 function Arena:drawBackdrop(sw, sh)
-        local color = self.backdropColor or Theme.bgColor or {0.12, 0.12, 0.14, 1}
-        love.graphics.setColor(color[1] or 0, color[2] or 0, color[3] or 0, color[4] or 1)
-        love.graphics.rectangle("fill", 0, 0, sw, sh)
+	local color = self.backdropColor or Theme.bgColor or {0.12, 0.12, 0.14, 1}
+	love.graphics.setColor(color[1] or 0, color[2] or 0, color[3] or 0, color[4] or 1)
+	love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-        love.graphics.setColor(1, 1, 1, 1)
-        return true
+	love.graphics.setColor(1, 1, 1, 1)
+	return true
 end
 
 -- Draws the playfield with a solid fill + simple border
 function Arena:drawBackground()
-        local ax, ay, aw, ah = self:getBounds()
+	local ax, ay, aw, ah = self:getBounds()
 
-        local arenaColor = self.arenaFillColor or Theme.arenaBG or {0.18, 0.18, 0.22, 1}
-        love.graphics.setColor(arenaColor[1] or 0, arenaColor[2] or 0, arenaColor[3] or 0, arenaColor[4] or 1)
-        love.graphics.rectangle("fill", ax, ay, aw, ah)
+	local arenaColor = self.arenaFillColor or Theme.arenaBG or {0.18, 0.18, 0.22, 1}
+	love.graphics.setColor(arenaColor[1] or 0, arenaColor[2] or 0, arenaColor[3] or 0, arenaColor[4] or 1)
+	love.graphics.rectangle("fill", ax, ay, aw, ah)
 
-        self:_updateArenaOverlayBounds(ax, ay, aw, ah)
+	self:_updateArenaOverlayBounds(ax, ay, aw, ah)
 
 	if self.drawTileDecorations then
 		self:drawTileDecorations()

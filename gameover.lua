@@ -254,69 +254,69 @@ end
 local backgroundStyle = nil
 
 local copyColor = function(color)
-        return Color.copy(color, {default = Color.white})
+	return Color.copy(color, {default = Color.white})
 end
 
 local lightenColor = function(color, factor)
-        return Color.lighten(color, factor)
+	return Color.lighten(color, factor)
 end
 
 local darkenColor = function(color, factor)
-        return Color.darken(color, factor)
+	return Color.darken(color, factor)
 end
 
 local desaturateColor = function(color, amount)
-        return Color.desaturate(color, amount)
+	return Color.desaturate(color, amount)
 end
 
 local withAlpha = function(color, alpha)
-        return Color.withAlpha(color, alpha)
+	return Color.withAlpha(color, alpha)
 end
 
 local function rebuildBackgroundStyle()
-        local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
-        local pulse = copyColor(Theme.progressColor or {0.55, 0.75, 0.55, 1})
-        local overlayColor
-        local coreColor
+	local baseColor = copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
+	local pulse = copyColor(Theme.progressColor or {0.55, 0.75, 0.55, 1})
+	local overlayColor
+	local coreColor
 
-        if GameOver.isVictory then
-                pulse = lightenColor(copyColor(Theme.progressColor or pulse), 0.4)
-                pulse[4] = 1
+	if GameOver.isVictory then
+		pulse = lightenColor(copyColor(Theme.progressColor or pulse), 0.4)
+		pulse[4] = 1
 
-                baseColor = darkenColor(baseColor, 0.08)
-                baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
+		baseColor = darkenColor(baseColor, 0.08)
+		baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-                coreColor = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or pulse), 0.26)
-                coreColor = desaturateColor(coreColor, 0.22)
-                coreColor[4] = 0.58
+		coreColor = lightenColor(copyColor(Theme.goldenPearColor or Theme.progressColor or pulse), 0.26)
+		coreColor = desaturateColor(coreColor, 0.22)
+		coreColor[4] = 0.58
 
-                local overlay = lightenColor(copyColor(Theme.goldenPearColor or Theme.accentTextColor or pulse), 0.2)
-                overlay = desaturateColor(overlay, 0.4)
-                overlayColor = withAlpha(overlay, 0.22)
-        else
-                local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
+		local overlay = lightenColor(copyColor(Theme.goldenPearColor or Theme.accentTextColor or pulse), 0.2)
+		overlay = desaturateColor(overlay, 0.4)
+		overlayColor = withAlpha(overlay, 0.22)
+	else
+		local coolAccent = Theme.blueberryColor or Theme.panelBorder or {0.35, 0.3, 0.5, 1}
 
-                pulse = lightenColor(copyColor(Theme.panelBorder or pulse), 0.26)
-                pulse[4] = 1
+		pulse = lightenColor(copyColor(Theme.panelBorder or pulse), 0.26)
+		pulse[4] = 1
 
-                baseColor = darkenColor(baseColor, 0.22)
-                baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
+		baseColor = darkenColor(baseColor, 0.22)
+		baseColor[4] = Theme.bgColor and Theme.bgColor[4] or 1
 
-                coreColor = lightenColor(copyColor(coolAccent), 0.14)
-                coreColor = desaturateColor(coreColor, 0.38)
-                coreColor[4] = 0.52
+		coreColor = lightenColor(copyColor(coolAccent), 0.14)
+		coreColor = desaturateColor(coreColor, 0.38)
+		coreColor[4] = 0.52
 
-                local overlay = lightenColor(copyColor(coolAccent), 0.04)
-                overlay = desaturateColor(overlay, 0.45)
-                overlayColor = withAlpha(overlay, 0.18)
-        end
+		local overlay = lightenColor(copyColor(coolAccent), 0.04)
+		overlay = desaturateColor(overlay, 0.45)
+		overlayColor = withAlpha(overlay, 0.18)
+	end
 
-        GameOver.xpCoreColor = darkenColor(copyColor(coreColor), 0.16) or copyColor(pulse)
+	GameOver.xpCoreColor = darkenColor(copyColor(coreColor), 0.16) or copyColor(pulse)
 
-        backgroundStyle = {
-                fillColor = baseColor,
-                overlayColor = overlayColor,
-        }
+	backgroundStyle = {
+		fillColor = baseColor,
+		overlayColor = overlayColor,
+	}
 end
 
 local function easeOutBack(t)
@@ -551,21 +551,21 @@ local function drawFruitAnimations(anim)
 end
 
 local function drawBackground(sw, sh)
-        if not backgroundStyle then
-                rebuildBackgroundStyle()
-        end
+	if not backgroundStyle then
+		rebuildBackgroundStyle()
+	end
 
-        local fillColor = (backgroundStyle and backgroundStyle.fillColor) or (UI.colors and UI.colors.background) or Theme.bgColor
-        love.graphics.setColor(fillColor[1] or 0, fillColor[2] or 0, fillColor[3] or 0, fillColor[4] or 1)
-        love.graphics.rectangle("fill", 0, 0, sw, sh)
+	local fillColor = (backgroundStyle and backgroundStyle.fillColor) or (UI.colors and UI.colors.background) or Theme.bgColor
+	love.graphics.setColor(fillColor[1] or 0, fillColor[2] or 0, fillColor[3] or 0, fillColor[4] or 1)
+	love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-        local overlay = backgroundStyle and backgroundStyle.overlayColor
-        if overlay then
-                love.graphics.setColor(overlay[1] or 0, overlay[2] or 0, overlay[3] or 0, overlay[4] or 1)
-                love.graphics.rectangle("fill", 0, 0, sw, sh)
-        end
+	local overlay = backgroundStyle and backgroundStyle.overlayColor
+	if overlay then
+		love.graphics.setColor(overlay[1] or 0, overlay[2] or 0, overlay[3] or 0, overlay[4] or 1)
+		love.graphics.rectangle("fill", 0, 0, sw, sh)
+	end
 
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- All button definitions in one place
@@ -1151,8 +1151,8 @@ function GameOver:enter(data)
 	end
 	self.summaryMessage = self.deathMessage
 
-        backgroundStyle = nil
-        rebuildBackgroundStyle()
+	backgroundStyle = nil
+	rebuildBackgroundStyle()
 
 	fontTitle = UI.fonts.display or UI.fonts.title
 	fontScore = UI.fonts.heading or UI.fonts.title or UI.fonts.display

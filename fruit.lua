@@ -184,7 +184,7 @@ local idleSparkles = {}
 local drawList = {}
 
 local function copyColor(color)
-        return Color.copy(color, {default = Color.white})
+	return Color.copy(color, {default = Color.white})
 end
 
 -- Easing

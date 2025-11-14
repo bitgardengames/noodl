@@ -3,10 +3,10 @@ local Theme = {
 	arenaBG      = {0.18, 0.18, 0.22, 1.0},
 	arenaBorder  = {0.35, 0.30, 0.50, 1.0},
 
-        -- General background / chrome
-        bgColor        = {0.07, 0.08, 0.11, 1.0},
-        menuBackgroundColor = {0.07, 0.08, 0.11, 1.0},
-        shopBackgroundColor = {0.08, 0.06, 0.12, 1.0},
+	-- General background / chrome
+	bgColor        = {0.07, 0.08, 0.11, 1.0},
+	menuBackgroundColor = {0.07, 0.08, 0.11, 1.0},
+	shopBackgroundColor = {0.08, 0.06, 0.12, 1.0},
 	shadowColor    = {0.0, 0.0, 0.0, 0.25},
 	highlightColor = {1.0, 1.0, 1.0, 0.06},
 

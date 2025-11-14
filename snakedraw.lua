@@ -232,7 +232,7 @@ local function renderTrailRegion(trail, half, options, palette, coords, bounds)
 	love.graphics.pop()
 	love.graphics.setCanvas()
 
-        presentSnakeCanvas(regionBounds.width, regionBounds.height, regionBounds.offsetX, regionBounds.offsetY)
+	presentSnakeCanvas(regionBounds.width, regionBounds.height, regionBounds.offsetX, regionBounds.offsetY)
 
 	return true
 end
@@ -259,7 +259,7 @@ local function renderPortalFallback(items, half, options)
 	end
 
 	love.graphics.setCanvas()
-        presentSnakeCanvas(ww, hh, 0, 0)
+	presentSnakeCanvas(ww, hh, 0, 0)
 
 	return true
 end
@@ -277,12 +277,12 @@ local function presentSnakeCanvas(width, height, offsetX, offsetY)
 		love.graphics.draw(snakeCanvas, drawX + SHADOW_OFFSET, drawY + SHADOW_OFFSET)
 	end)
 
-        RenderLayers:withLayer("main", function()
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(snakeCanvas, drawX, drawY)
-        end)
+	RenderLayers:withLayer("main", function()
+		love.graphics.setColor(1, 1, 1, 1)
+		love.graphics.draw(snakeCanvas, drawX, drawY)
+	end)
 
-        return true
+	return true
 end
 
 local shadowPalette = {
@@ -846,7 +846,7 @@ local function fadePalette(palette, alphaScale)
 		},
 	}
 
-        return faded
+	return faded
 end
 
 drawTrailSegmentToCanvas = function(trail, half, options, paletteOverride, coordsOverride)
@@ -1877,7 +1877,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			palette = SnakeCosmetics:getPaletteForSkin(options.skinOverride)
 		end
 	end
-        local head = trail[1]
+	local head = trail[1]
 
 	love.graphics.setLineStyle("smooth")
 	love.graphics.setLineJoin("bevel") -- or "bevel" if you prefer fewer spikes
@@ -1950,7 +1950,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 
 		local fallbackItems = {}
 
-                local exitPresented = renderTrailRegion(exitTrail, half, options, palette, exitCoords, bounds)
+		local exitPresented = renderTrailRegion(exitTrail, half, options, palette, exitCoords, bounds)
 		if not exitPresented then
 			fallbackItems[#fallbackItems + 1] = {trail = exitTrail, coords = exitCoords, palette = palette, kind = "exit"}
 		end
@@ -1959,7 +1959,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		local entryPalette
 		if entryTrail and #entryTrail > 0 then
 			entryPalette = fadePalette(palette, 0.55)
-                        entryPresented = renderTrailRegion(entryTrail, half, options, entryPalette, entryCoords)
+			entryPresented = renderTrailRegion(entryTrail, half, options, entryPalette, entryCoords)
 			if not entryPresented then
 				fallbackItems[#fallbackItems + 1] = {trail = entryTrail, coords = entryCoords, palette = entryPalette, kind = "entry"}
 			end
@@ -1970,7 +1970,7 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		end
 
 		if #fallbackItems > 0 then
-                        if renderPortalFallback(fallbackItems, half, options) then
+			if renderPortalFallback(fallbackItems, half, options) then
 				for _, item in ipairs(fallbackItems) do
 					if item.kind == "exit" then
 						exitPresented = true
@@ -2029,20 +2029,20 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 				drawSoftGlow(exitX, exitY, exitRadius, 1.0, 0.88, 0.4, exitAlpha)
 			end
 		end
-        else
-                local coords = buildCoords(trail)
+	else
+		local coords = buildCoords(trail)
 
-                RenderLayers:withLayer("shadows", function()
-                        love.graphics.push()
-                        love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-                        drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
-                        love.graphics.pop()
-                end)
+		RenderLayers:withLayer("shadows", function()
+			love.graphics.push()
+			love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+			drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
+			love.graphics.pop()
+		end)
 
-                RenderLayers:withLayer("main", function()
-                        drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-                end)
-        end
+		RenderLayers:withLayer("main", function()
+			drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+		end)
+	end
 
 	local shouldDrawOverlay = (hx and hy and drawFace ~= false) or (popTimer and popTimer > 0 and hx and hy)
 	if shouldDrawOverlay then

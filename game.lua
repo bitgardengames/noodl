@@ -328,12 +328,12 @@ local FLOOR_INTRO_BACKGROUND_SYSTEMS = ModuleUtil.prepareSystems({
 })
 
 local function cloneColor(color, fallback, out)
-        local source = color or fallback or DEFAULT_IMPACT_RIPPLE_COLOR
-        if not source then
-                return nil
-        end
+	local source = color or fallback or DEFAULT_IMPACT_RIPPLE_COLOR
+	if not source then
+		return nil
+	end
 
-        return Color.copy(source, {target = out or {}})
+	return Color.copy(source, {target = out or {}})
 end
 
 local function resetFeedbackState(self)
@@ -865,7 +865,7 @@ local function updateSystems(systems, dt)
 end
 
 local function updateGlobalSystems(dt)
-        FruitEvents.update(dt)
+	FruitEvents.update(dt)
 end
 
 local function handlePauseMenu(game, dt)

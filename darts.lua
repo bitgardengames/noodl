@@ -65,11 +65,11 @@ local function releaseOccupancy(emitter)
 end
 
 local function scaleColor(color, factor, alphaFactor)
-        local scale = factor or 1
-        return Color.scale(color, scale, {
-                default = Color.white,
-                alphaFactor = alphaFactor or scale,
-        })
+	local scale = factor or 1
+	return Color.scale(color, scale, {
+		default = Color.white,
+		alphaFactor = alphaFactor or scale,
+	})
 end
 
 local function lerp(a, b, t)

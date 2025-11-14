@@ -123,41 +123,41 @@ local ANALOG_DEADZONE = 0.3
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 local function getColorChannels(color, fallback)
-        local reference = color or fallback
-        if not reference then
-                return 0, 0, 0, 1
-        end
+	local reference = color or fallback
+	if not reference then
+		return 0, 0, 0, 1
+	end
 
 	return reference[1] or 0, reference[2] or 0, reference[3] or 0, reference[4] or 1
 end
 
 local function drawBackground(screenW, screenH, palette)
-        local baseColor = Theme.shopBackgroundColor or (palette and palette.bgColor) or Theme.bgColor
-        local r, g, b, a = getColorChannels(baseColor)
-        love.graphics.setColor(r, g, b, a)
-        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+	local baseColor = Theme.shopBackgroundColor or (palette and palette.bgColor) or Theme.bgColor
+	local r, g, b, a = getColorChannels(baseColor)
+	love.graphics.setColor(r, g, b, a)
+	love.graphics.rectangle("fill", 0, 0, screenW, screenH)
 
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function configureBackgroundEffect(palette)
-        if Theme.reset then
-                Theme.reset()
-        end
+	if Theme.reset then
+		Theme.reset()
+	end
 
-        if not palette then
-                return
-        end
+	if not palette then
+		return
+	end
 
-        for key, value in pairs(palette) do
-                Theme[key] = value
-        end
+	for key, value in pairs(palette) do
+		Theme[key] = value
+	end
 end
 
 local function moveFocusAnalog(self, delta)
-        if self.restocking then return end
-        if not self.cards or #self.cards == 0 then return end
-        if self.selected then return end
+	if self.restocking then return end
+	if not self.cards or #self.cards == 0 then return end
+	if self.selected then return end
 
 	self.inputMode = "gamepad"
 	self:moveFocus(delta)
@@ -894,11 +894,11 @@ local function lerp(a, b, t)
 end
 
 local function scaleColor(color, factor, alphaFactor)
-        local scale = factor or 1
-        return Color.scale(color, scale, {
-                default = Color.white,
-                alphaFactor = alphaFactor or scale,
-        })
+	local scale = factor or 1
+	return Color.scale(color, scale, {
+		default = Color.white,
+		alphaFactor = alphaFactor or scale,
+	})
 end
 
 local function formatColorKey(color)

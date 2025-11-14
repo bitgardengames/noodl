@@ -59,7 +59,7 @@ local titleSaw = SawActor.new()
 local random = (love.math and love.math.random) or math.random
 
 function Menu:getMenuBackgroundOptions()
-        return MenuScene.getPlainBackgroundOptions()
+	return MenuScene.getPlainBackgroundOptions()
 end
 
 local function drawBackground(sw, sh)

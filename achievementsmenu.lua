@@ -179,18 +179,18 @@ local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 function AchievementsMenu:getMenuBackgroundOptions()
-        return MenuScene.getPlainBackgroundOptions()
+	return MenuScene.getPlainBackgroundOptions()
 end
 
 local copyColor = Color.copy
 local lightenColor = function(color, factor)
-        return Color.lighten(color, factor)
+	return Color.lighten(color, factor)
 end
 local darkenColor = function(color, factor)
-        return Color.darken(color, factor)
+	return Color.darken(color, factor)
 end
 local withAlpha = function(color, alpha)
-        return Color.withAlpha(color, alpha)
+	return Color.withAlpha(color, alpha)
 end
 
 local function clamp(value, minValue, maxValue)

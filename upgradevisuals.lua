@@ -36,11 +36,11 @@ local function deepcopy(value)
 end
 
 local function copyColor(color)
-        return Color.copy(color, {default = Color.white})
+	return Color.copy(color, {default = Color.white})
 end
 
 local function copyOptionalColor(color)
-        return Color.copyIfPresent(color, {default = Color.white})
+	return Color.copyIfPresent(color, {default = Color.white})
 end
 
 local function drawShieldBadge(effect, progress)
@@ -188,23 +188,23 @@ function UpgradeVisuals:update(dt)
 
 	local writeIndex = 1
 	for readIndex = 1, beforeCount do
-	local effect = effects[readIndex]
-	effect.age = effect.age + dt
-	if effect.age < effect.life then
-	if writeIndex ~= readIndex then
-	effects[writeIndex] = effect
-	end
-	writeIndex = writeIndex + 1
-	end
+		local effect = effects[readIndex]
+		effect.age = effect.age + dt
+		if effect.age < effect.life then
+			if writeIndex ~= readIndex then
+				effects[writeIndex] = effect
+			end
+			writeIndex = writeIndex + 1
+		end
 	end
 
 	for index = writeIndex, beforeCount do
-	effects[index] = nil
+		effects[index] = nil
 	end
 
 	if self.logEffectCounts then
-	local afterCount = writeIndex - 1
-	print(string.format("[UpgradeVisuals] effects %d -> %d", beforeCount, afterCount))
+		local afterCount = writeIndex - 1
+		print(string.format("[UpgradeVisuals] effects %d -> %d", beforeCount, afterCount))
 	end
 end
 

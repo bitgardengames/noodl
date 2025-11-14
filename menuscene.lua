@@ -11,59 +11,59 @@ local drawRole = nil
 local copyColor = Color.copy
 
 local function getPlainBackgroundBaseColor(override)
-        if override then
-                return copyColor(override)
-        end
+	if override then
+		return copyColor(override)
+	end
 
-        local base = Theme.menuBackgroundColor or Theme.bgColor or {0.07, 0.08, 0.11, 1}
-        return copyColor(base)
+	local base = Theme.menuBackgroundColor or Theme.bgColor or {0.07, 0.08, 0.11, 1}
+	return copyColor(base)
 end
 
 function MenuScene.getPlainBackgroundOptions(effectKey, overrideColor)
-        local baseColor = getPlainBackgroundBaseColor(overrideColor)
+	local baseColor = getPlainBackgroundBaseColor(overrideColor)
 
-        return {
-                effectKey = effectKey or "menu/plain",
-                baseColor = baseColor,
-                accentColor = baseColor,
-                pulseColor = baseColor,
-                baseDarken = 0,
-                accentLighten = 0,
-                pulseLighten = 0,
-                vignetteAlpha = 0,
-                vignetteLighten = 0,
-        }
+	return {
+		effectKey = effectKey or "menu/plain",
+		baseColor = baseColor,
+		accentColor = baseColor,
+		pulseColor = baseColor,
+		baseDarken = 0,
+		accentLighten = 0,
+		pulseLighten = 0,
+		vignetteAlpha = 0,
+		vignetteLighten = 0,
+	}
 end
 
 local lightenColor = function(color, factor)
-        return Color.lighten(color, factor)
+	return Color.lighten(color, factor)
 end
 
 local darkenColor = function(color, factor)
-        return Color.darken(color, factor)
+	return Color.darken(color, factor)
 end
 
 local withAlpha = function(color, alpha)
-        return Color.withAlpha(color, alpha)
+	return Color.withAlpha(color, alpha)
 end
 
 local function getCacheEntry(options)
-        local key = "default"
-        if options and options.effectKey then
-                key = tostring(options.effectKey)
-        end
+	local key = "default"
+	if options and options.effectKey then
+		key = tostring(options.effectKey)
+	end
 
-        local entry = backgroundCaches[key]
-        if not entry then
-                entry = {
-                        hash = nil,
-                        fillColor = nil,
-                        overlayColor = nil,
-                }
-                backgroundCaches[key] = entry
-        end
+	local entry = backgroundCaches[key]
+	if not entry then
+		entry = {
+			hash = nil,
+			fillColor = nil,
+			overlayColor = nil,
+		}
+		backgroundCaches[key] = entry
+	end
 
-        return entry
+	return entry
 end
 
 local function getBaseColor(options)
@@ -72,7 +72,7 @@ local function getBaseColor(options)
 		return copyColor(override)
 	end
 
-        return copyColor(Theme.bgColor or {0.07, 0.08, 0.11, 1})
+	return copyColor(Theme.bgColor or {0.07, 0.08, 0.11, 1})
 end
 
 local function computePalette(options)
@@ -131,17 +131,17 @@ local function computeHash(options)
 end
 
 function MenuScene.prepareBackground(options)
-        local entry = getCacheEntry(options)
-        local configHash = computeHash(options)
-        if entry.hash == configHash then
-                return
-        end
+	local entry = getCacheEntry(options)
+	local configHash = computeHash(options)
+	if entry.hash == configHash then
+		return
+	end
 
-        local fillColor, accentColor, pulseColor, vignette = computePalette(options)
+	local fillColor, accentColor, pulseColor, vignette = computePalette(options)
 
-        entry.hash = configHash
-        entry.fillColor = fillColor
-        entry.overlayColor = vignette and vignette.color or nil
+	entry.hash = configHash
+	entry.fillColor = fillColor
+	entry.overlayColor = vignette and vignette.color or nil
 end
 
 local function resolveFillColor(entry, options)
@@ -152,20 +152,20 @@ local function resolveFillColor(entry, options)
 end
 
 function MenuScene.drawBackground(sw, sh, options)
-        local entry = getCacheEntry(options)
-        MenuScene.prepareBackground(options)
+	local entry = getCacheEntry(options)
+	MenuScene.prepareBackground(options)
 
-        local fillColor = resolveFillColor(entry, options)
-        love.graphics.setColor(fillColor[1] or 0, fillColor[2] or 0, fillColor[3] or 0, fillColor[4] or 1)
-        love.graphics.rectangle("fill", 0, 0, sw, sh)
+	local fillColor = resolveFillColor(entry, options)
+	love.graphics.setColor(fillColor[1] or 0, fillColor[2] or 0, fillColor[3] or 0, fillColor[4] or 1)
+	love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-        if entry.overlayColor then
-                local overlay = entry.overlayColor
-                love.graphics.setColor(overlay[1] or 0, overlay[2] or 0, overlay[3] or 0, overlay[4] or 1)
-                love.graphics.rectangle("fill", 0, 0, sw, sh)
-        end
+	if entry.overlayColor then
+		local overlay = entry.overlayColor
+		love.graphics.setColor(overlay[1] or 0, overlay[2] or 0, overlay[3] or 0, overlay[4] or 1)
+		love.graphics.rectangle("fill", 0, 0, sw, sh)
+	end
 
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 function MenuScene.setDrawRole(role)

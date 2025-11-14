@@ -70,7 +70,7 @@ local function drawSawStencil()
 end
 
 local function copyColor(color)
-        return Color.copy(color, {default = Color.white})
+	return Color.copy(color, {default = Color.white})
 end
 
 local highlightCache = setmetatable({}, { __mode = "k" })

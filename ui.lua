@@ -276,21 +276,21 @@ local function calculateShadowPadding(defaultStrokeWidth, overrideStrokeWidth)
 end
 
 local function lightenColor(color, amount, out)
-        return Color.lighten(color, amount, {
-                target = out or {},
-                default = Color.white,
-                preserveAlpha = true,
-        })
+	return Color.lighten(color, amount, {
+		target = out or {},
+		default = Color.white,
+		preserveAlpha = true,
+	})
 end
 
 local function darkenColor(color, amount, out)
-        local scale = amount or 1
-        return Color.darken(color, 1 - scale, {
-                target = out or {},
-                default = Color.black,
-                scale = scale,
-                preserveAlpha = true,
-        })
+	local scale = amount or 1
+	return Color.darken(color, 1 - scale, {
+		target = out or {},
+		default = Color.black,
+		scale = scale,
+		preserveAlpha = true,
+	})
 end
 
 local function drawAlignedBorder(mode, x, y, w, h, radius, borderWidth)

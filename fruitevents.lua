@@ -108,7 +108,7 @@ local function applyComboReward(x, y)
 	if comboCount >= 2 then
 		SessionStats:add("combosTriggered", 1)
 	end
-        markComboWindowDirty()
+	markComboWindowDirty()
 	if comboState.windowDirty then
 		updateComboWindow()
 	end
@@ -135,7 +135,7 @@ local function applyComboReward(x, y)
 
 		local summary = string.format("Combo Bonus +%d", totalBonus)
 		FloatingText:add(summary, x, y - 74, {1, 0.95, 0.6, 1}, 1.3, 48)
-        end
+	end
 
 	Particles:spawnBurst(x, y, {
 		count = love.math.random(10, 14) + comboCount,

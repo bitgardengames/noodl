@@ -56,11 +56,11 @@ local function getTime()
 end
 
 local function copyColor(color, alpha)
-        return Color.copy(color, {
-                default = {1, 0.38, 0.18, alpha or 1},
-                defaultAlpha = alpha,
-                alpha = alpha,
-        })
+	return Color.copy(color, {
+		default = {1, 0.38, 0.18, alpha or 1},
+		defaultAlpha = alpha,
+		alpha = alpha,
+	})
 end
 
 local function clamp01(value)

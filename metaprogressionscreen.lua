@@ -161,13 +161,13 @@ local tabs = {
 local clampColorComponent = Color.clampComponent
 local copyColor = Color.copy
 local lightenColor = function(color, amount)
-        return Color.lighten(color, amount)
+	return Color.lighten(color, amount)
 end
 local darkenColor = function(color, amount)
-        return Color.darken(color, amount)
+	return Color.darken(color, amount)
 end
 local withAlpha = function(color, alpha)
-        return Color.withAlpha(color, alpha)
+	return Color.withAlpha(color, alpha)
 end
 
 local function setColor(color, alphaOverride)
@@ -290,7 +290,7 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 end
 
 function ProgressionScreen:getMenuBackgroundOptions()
-        return MenuScene.getPlainBackgroundOptions()
+	return MenuScene.getPlainBackgroundOptions()
 end
 
 local function drawBackground(sw, sh)
@@ -569,7 +569,7 @@ local function formatShaderDisplayName(typeId)
 end
 
 local function drawWindowFrame(x, y, width, height, options)
-        options = options or {}
+	options = options or {}
 
 	if not width or not height or width <= 0 or height <= 0 then
 		return

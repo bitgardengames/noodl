@@ -92,10 +92,10 @@ package.loaded["audio"] = {
 }
 
 package.loaded["renderlayers"] = {
-        withLayer = function(_, _, fn)
-                if fn then
-                        fn()
-                end
+	withLayer = function(_, _, fn)
+		if fn then
+			fn()
+		end
 	end,
 }
 
