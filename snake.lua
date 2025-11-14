@@ -593,12 +593,6 @@ local function addSnakeBodySpatialEntry(col, row, segment)
 	if not bucket then
 		bucket = {}
 		column[row] = bucket
-	else
-		for i = 1, #bucket do
-			if bucket[i] == segment then
-				return
-			end
-		end
 	end
 
 	bucket[#bucket + 1] = segment
@@ -646,7 +640,8 @@ function removeSnakeBodySpatialEntry(col, row, segment)
 
 	for i = #bucket, 1, -1 do
 		if bucket[i] == segment then
-			table.remove(bucket, i)
+			bucket[i] = bucket[#bucket]
+			bucket[#bucket] = nil
 			break
 		end
 	end
@@ -882,19 +877,23 @@ local function collectSnakeSegmentCandidatesForRect(x, y, w, h)
 	end
 
 	local generation = segmentCandidateGeneration
+	local spatialIndex = snakeBodySpatialIndex
+	local lookup = segmentCandidateLookup
+	local buffer = segmentCandidateBuffer
+	local count = segmentCandidateCount
 
 	for col = minCol, maxCol do
-		local column = snakeBodySpatialIndex[col]
+		local column = spatialIndex[col]
 		if column then
 			for row = minRow, maxRow do
 				local entries = column[row]
 				if entries then
 					for i = 1, #entries do
 						local segment = entries[i]
-						if segment and segmentCandidateLookup[segment] ~= generation then
-							segmentCandidateLookup[segment] = generation
-							segmentCandidateCount = segmentCandidateCount + 1
-							segmentCandidateBuffer[segmentCandidateCount] = segment
+						if segment and lookup[segment] ~= generation then
+							lookup[segment] = generation
+							count = count + 1
+							buffer[count] = segment
 						end
 					end
 				end
@@ -902,9 +901,10 @@ local function collectSnakeSegmentCandidatesForRect(x, y, w, h)
 		end
 	end
 
-	segmentCandidateBuffer[segmentCandidateCount + 1] = nil
+	segmentCandidateCount = count
+	buffer[count + 1] = nil
 
-	return segmentCandidateBuffer, segmentCandidateCount, segmentCandidateLookup, generation
+	return buffer, count, lookup, generation
 end
 
 local function collectSnakeSegmentCandidatesForCircle(cx, cy, radius)
