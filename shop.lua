@@ -225,9 +225,11 @@ local function updateMysteryReveal(self, card, state, dt)
 			applied = false,
 			info = pending,
 			approachDuration = pending.revealApproachDuration or pending.revealDelay or 0.55,
+			holdDuration = pending.revealHoldDuration or 0,
 			shakeDuration = pending.revealShakeDuration or 0.5,
 			flashInDuration = pending.revealFlashInDuration or 0.22,
 			flashOutDuration = pending.revealFlashOutDuration or 0.45,
+			flashHoldDuration = pending.revealFlashHoldDuration or 0,
 			shakeMagnitude = pending.revealShakeMagnitude or 9,
 			shakeFrequency = pending.revealShakeFrequency or 26,
 			applyThreshold = pending.revealApplyThreshold or 0.6,
@@ -259,17 +261,39 @@ local function updateMysteryReveal(self, card, state, dt)
 		local duration = reveal.approachDuration or 0
 		if duration <= 0 then
 			reveal.focusBoost = 1
-			reveal.phase = "shake"
-			reveal.timer = 0
+			if (reveal.holdDuration or 0) > 0 then
+				reveal.phase = "hold"
+				reveal.timer = 0
+			else
+				reveal.phase = "shake"
+				reveal.timer = 0
+			end
 		else
 			local progress = min(1, reveal.timer / duration)
 			local ease = progress * progress * (3 - 2 * progress)
 			reveal.focusBoost = ease
 			if reveal.timer >= duration then
 				reveal.focusBoost = 1
-				reveal.phase = "shake"
+				if (reveal.holdDuration or 0) > 0 then
+					reveal.phase = "hold"
+				else
+					reveal.phase = "shake"
+				end
 				reveal.timer = 0
 			end
+		end
+		return
+	end
+
+	if reveal.phase == "hold" then
+		reveal.white = 0
+		reveal.shakeOffset = 0
+		reveal.shakeRotation = 0
+		reveal.focusBoost = 1
+		local duration = reveal.holdDuration or 0
+		if duration <= 0 or reveal.timer >= duration then
+			reveal.phase = "shake"
+			reveal.timer = 0
 		end
 		return
 	end
@@ -308,6 +332,24 @@ local function updateMysteryReveal(self, card, state, dt)
 			Upgrades:applyCardReveal(card, info)
 			reveal.applied = true
 		end
+		if duration <= 0 or reveal.timer >= duration then
+			reveal.white = 1
+			reveal.timer = 0
+			if (reveal.flashHoldDuration or 0) > 0 then
+				reveal.phase = "flashHold"
+			else
+				reveal.phase = "flashOut"
+			end
+		end
+		return
+	end
+
+	if reveal.phase == "flashHold" then
+		reveal.white = 1
+		reveal.focusBoost = 1
+		reveal.shakeOffset = 0
+		reveal.shakeRotation = 0
+		local duration = reveal.flashHoldDuration or 0
 		if duration <= 0 or reveal.timer >= duration then
 			reveal.phase = "flashOut"
 			reveal.timer = 0
