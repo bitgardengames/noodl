@@ -95,6 +95,7 @@ end
 local shadowPalette = {
         body = {0, 0, 0, 0.25},
         outline = {0, 0, 0, 0.25},
+        singlePass = true,
 }
 
 
@@ -460,24 +461,34 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 	local outlineCoords = coords
 	local bodyCoords = coords
 
-	love.graphics.push("all")
-	if sharpCorners then
-		love.graphics.setLineStyle("rough")
-		love.graphics.setLineJoin("miter")
-	else
-		love.graphics.setLineStyle("smooth")
-		love.graphics.setLineJoin("bevel")
-	end
+        love.graphics.push("all")
+        if sharpCorners then
+                love.graphics.setLineStyle("rough")
+                love.graphics.setLineJoin("miter")
+        else
+                love.graphics.setLineStyle("smooth")
+                love.graphics.setLineJoin("bevel")
+        end
 
-	love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-	drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
-	drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
+        if palette and palette.singlePass then
+                local fillR, fillG, fillB, fillA = bodyR, bodyG, bodyB, bodyA
+                if outlineA and outlineA > fillA then
+                        fillR, fillG, fillB, fillA = outlineR, outlineG, outlineB, outlineA
+                end
+                love.graphics.setColor(fillR, fillG, fillB, fillA)
+                drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
+                drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
+        else
+                love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+                drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
+                drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
 
-	love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-	drawSnakeStroke(bodyCoords, half, options)
-	drawFruitBulges(trail, head, bulgeRadius)
+                love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+                drawSnakeStroke(bodyCoords, half, options)
+                drawFruitBulges(trail, head, bulgeRadius)
+        end
 
-	love.graphics.pop()
+        love.graphics.pop()
 
 end
 
@@ -675,23 +686,42 @@ drawTrailSegmentToCanvas = function(trail, half, options, paletteOverride, coord
 		return
 	end
 
-	local palette = paletteOverride or {}
-	local bodyColor = palette.body or SnakeCosmetics:getBodyColor()
-	local outlineColor = palette.outline or SnakeCosmetics:getOutlineColor()
+        local palette = paletteOverride or {}
+        local bodyColor = palette.body or SnakeCosmetics:getBodyColor()
+        local outlineColor = palette.outline or SnakeCosmetics:getOutlineColor()
+        local singlePass = palette.singlePass
 
 	love.graphics.push("all")
 	local skipStartCap = options and options.flatStartCap
 	local skipEndCap = options and options.flatEndCap
 
-	love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
-	if not (skipStartCap or skipEndCap) then
-		love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
-	end
-	love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
-	if not (skipStartCap or skipEndCap) then
-		love.graphics.circle("fill", hx, hy, half)
-	end
-	love.graphics.pop()
+        if singlePass then
+                local fillR = bodyColor[1] or 1
+                local fillG = bodyColor[2] or 1
+                local fillB = bodyColor[3] or 1
+                local fillA = bodyColor[4] or 1
+                local outlineA = outlineColor[4] or 0
+                if outlineA > fillA then
+                        fillR = outlineColor[1] or fillR
+                        fillG = outlineColor[2] or fillG
+                        fillB = outlineColor[3] or fillB
+                        fillA = outlineA
+                end
+                love.graphics.setColor(fillR, fillG, fillB, fillA)
+                if not (skipStartCap or skipEndCap) then
+                        love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+                end
+        else
+                love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
+                if not (skipStartCap or skipEndCap) then
+                        love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+                end
+                love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
+                if not (skipStartCap or skipEndCap) then
+                        love.graphics.circle("fill", hx, hy, half)
+                end
+        end
+        love.graphics.pop()
 end
 
 local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
