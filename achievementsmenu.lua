@@ -178,7 +178,7 @@ local heldDpadInterval = DPAD_REPEAT_INITIAL_DELAY
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 
 function AchievementsMenu:getMenuBackgroundOptions()
-	return {effectKey = "achievements"}
+        return MenuScene.getPlainBackgroundOptions()
 end
 
 local function copyColor(color)

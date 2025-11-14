@@ -366,7 +366,7 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 end
 
 function ProgressionScreen:getMenuBackgroundOptions()
-	return {effectKey = "metaprogression"}
+        return MenuScene.getPlainBackgroundOptions()
 end
 
 local function drawBackground(sw, sh)
