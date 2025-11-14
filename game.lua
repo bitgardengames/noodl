@@ -58,6 +58,27 @@ local currentRenderState
 local DEATH_HOLD_DURATION = 0.5
 local DEFAULT_SHADOW_COLOR = {0, 0, 0, 0.5}
 local DEFAULT_IMPACT_RIPPLE_COLOR = {1, 0.42, 0.32, 1}
+
+local function getFloorString(floorData, field)
+        if not floorData then
+                return ""
+        end
+
+        local key = floorData[field .. "Key"]
+        if key then
+                local value = Localization:get(key)
+                if value and value ~= key then
+                        return value
+                end
+        end
+
+        local fallback = floorData[field]
+        if type(fallback) == "string" then
+                return fallback
+        end
+
+        return ""
+end
 local DEFAULT_SURGE_RIPPLE_COLOR = {1, 0.9, 0.55, 1}
 local TAIL_CHOP_FEEDBACK_COLOR = {0.98, 0.22, 0.24, 1}
 
@@ -207,19 +228,24 @@ function Game:refreshTransitionTitleCanvas(data)
 		self.transitionPromptCanvas = nil
 	end
 
-	local cache = self.transitionTitleCache
-	if cache
-	and cache.canvas == titleCanvas
-	and cache.floorData == floorData
-	and cache.promptText == promptText
-	and cache.width == width
-	and cache.height == height
-	and cache.promptCanvas == (promptText and self.transitionPromptCanvas or nil) then
-		return cache
-	end
+        local localeRevision = Localization:getRevision()
+        local floorName = getFloorString(floorData, "name")
+        local floorFlavor = getFloorString(floorData, "flavor")
 
-	local shadow = Theme.shadowColor or DEFAULT_SHADOW_COLOR
-	local shadowAlpha = shadow[4] or 0.5
+        local cache = self.transitionTitleCache
+        if cache
+        and cache.canvas == titleCanvas
+        and cache.floorData == floorData
+        and cache.promptText == promptText
+        and cache.width == width
+        and cache.height == height
+        and cache.promptCanvas == promptCanvas
+        and cache.localeRevision == localeRevision then
+                return cache
+        end
+
+        local shadow = Theme.shadowColor or DEFAULT_SHADOW_COLOR
+        local shadowAlpha = shadow[4] or 0.5
 
 	love.graphics.push("all")
 	love.graphics.setCanvas({titleCanvas, stencil = true})
@@ -227,21 +253,21 @@ function Game:refreshTransitionTitleCanvas(data)
 	love.graphics.origin()
 	love.graphics.setBlendMode("alpha")
 
-	love.graphics.setFont(UI.fonts.title)
-	local titleY = (self.screenHeight or height) / 2 - 90
-	love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
-	love.graphics.printf(floorData.name or "", 2, titleY + 2, self.screenWidth or width, "center")
-	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.printf(floorData.name or "", 0, titleY, self.screenWidth or width, "center")
+        love.graphics.setFont(UI.fonts.title)
+        local titleY = (self.screenHeight or height) / 2 - 90
+        love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha)
+        love.graphics.printf(floorName or "", 2, titleY + 2, self.screenWidth or width, "center")
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf(floorName or "", 0, titleY, self.screenWidth or width, "center")
 
-	if floorData.flavor and floorData.flavor ~= "" then
-		love.graphics.setFont(UI.fonts.button)
-		local flavorY = titleY + UI.fonts.title:getHeight() + 32
-		love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha * 0.95)
-		love.graphics.printf(floorData.flavor, 2, flavorY + 2, self.screenWidth or width, "center")
-		love.graphics.setColor(1, 1, 1, 0.95)
-		love.graphics.printf(floorData.flavor, 0, flavorY, self.screenWidth or width, "center")
-	end
+        if floorFlavor and floorFlavor ~= "" then
+                love.graphics.setFont(UI.fonts.button)
+                local flavorY = titleY + UI.fonts.title:getHeight() + 32
+                love.graphics.setColor(shadow[1], shadow[2], shadow[3], shadowAlpha * 0.95)
+                love.graphics.printf(floorFlavor, 2, flavorY + 2, self.screenWidth or width, "center")
+                love.graphics.setColor(1, 1, 1, 0.95)
+                love.graphics.printf(floorFlavor, 0, flavorY, self.screenWidth or width, "center")
+        end
 
 	love.graphics.setCanvas()
 	love.graphics.pop()
@@ -265,18 +291,19 @@ function Game:refreshTransitionTitleCanvas(data)
 		love.graphics.pop()
 	end
 
-	cache = {
-		canvas = titleCanvas,
-		promptCanvas = promptCanvas,
-		floorData = floorData,
-		promptText = promptText,
-		width = width,
-		height = height,
-	}
+        cache = {
+                canvas = titleCanvas,
+                promptCanvas = promptCanvas,
+                floorData = floorData,
+                promptText = promptText,
+                width = width,
+                height = height,
+                localeRevision = localeRevision,
+        }
 
-	self.transitionTitleCache = cache
+        self.transitionTitleCache = cache
 
-	return cache
+        return cache
 end
 
 local RUN_ACTIVE_STATES = {
@@ -1125,17 +1152,42 @@ function Game:triggerVictory()
 
 	Audio:playSound("floor_advance")
 
-	local floorData = Floors[currentFloor] or {}
-	local floorName = floorData.name or string.format("Floor %d", currentFloor)
-	local endingMessage = Localization:get("gameover.victory_story_body", {floor = floorName})
-	if endingMessage == "gameover.victory_story_body" then
-		endingMessage = Floors.victoryMessage or string.format("With the festival feast safely reclaimed from %s, Noodl rockets home to start the parade.", floorName)
-	end
+        local floorData = Floors[currentFloor] or {}
+        local floorName = getFloorString(floorData, "name")
+        if floorName == "" then
+                floorName = string.format("Floor %d", currentFloor)
+        end
+        local endingMessage = Localization:get("gameover.victory_story_body", {floor = floorName})
+        if endingMessage == "gameover.victory_story_body" then
+                if Floors.victoryMessageKey then
+                        endingMessage = Localization:get(Floors.victoryMessageKey)
+                        if endingMessage == Floors.victoryMessageKey then
+                                endingMessage = Floors.victoryMessage
+                        end
+                else
+                        endingMessage = Floors.victoryMessage
+                end
 
-	local storyTitle = Localization:get("gameover.victory_story_title")
-	if storyTitle == "gameover.victory_story_title" then
-		storyTitle = Floors.storyTitle or "Noodl's Grand Feast"
-	end
+                if not endingMessage or endingMessage == "" then
+                        endingMessage = string.format("With the festival feast safely reclaimed from %s, Noodl rockets home to start the parade.", floorName)
+                end
+        end
+
+        local storyTitle = Localization:get("gameover.victory_story_title")
+        if storyTitle == "gameover.victory_story_title" then
+                if Floors.storyTitleKey then
+                        storyTitle = Localization:get(Floors.storyTitleKey)
+                        if storyTitle == Floors.storyTitleKey then
+                                storyTitle = Floors.storyTitle
+                        end
+                else
+                        storyTitle = Floors.storyTitle
+                end
+
+                if not storyTitle or storyTitle == "" then
+                        storyTitle = "Noodl's Grand Feast"
+                end
+        end
 
 	local result = Score:handleRunClear({
 		endingMessage = endingMessage,

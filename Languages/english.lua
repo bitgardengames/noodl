@@ -178,9 +178,9 @@ local english = {
 			language = "Language",
 			back = "Back",
 		},
-		achievements = {
-			title = "Achievements",
-			back_to_menu = "Back to Menu",
+                achievements = {
+                        title = "Achievements",
+                        back_to_menu = "Back to Menu",
 			popup_heading = "${title} Unlocked!",
 			popup_message = "${title}: ${description}",
 			progress = {
@@ -395,12 +395,48 @@ local english = {
 					"Snake blinked out of existence.",
 					"Cosmic forces intervened.",
 					"Snake entered the glitch dimension.",
-				},
-			},
-		},
-		game = {
-			floor_intro = {
-				prompt = "Press any key to descend",
+                                },
+                        },
+                },
+                floors = {
+                        story_title = "Harvest Complete",
+                        victory_message = "Noodl hauls the full harvest home, every fruit accounted for.",
+                        garden_gate = {
+                                name = "Garden Gate",
+                                flavor = "Noodl winds through the garden, scooping up fruit scattered among the vines.",
+                        },
+                        moonwell_caves = {
+                                name = "Moonwell Caves",
+                                flavor = "Moonlit pools mirror Noodl's glide as pears bob within easy reach.",
+                        },
+                        tide_vault = {
+                                name = "Tide Vault",
+                                flavor = "Slow waves roll shining citrus along the tiles while Noodl gathers every slice.",
+                        },
+                        frosty_cavern = {
+                                name = "Frosty Cavern",
+                                flavor = "",
+                        },
+                        crystal_run = {
+                                name = "Crystal Run",
+                                flavor = "Frosted crystals light the tunnel and chill each reclaimed apple in Noodl's pack.",
+                        },
+                        inferno_gates = {
+                                name = "Inferno Gates",
+                                flavor = "Heat rises, and the walls bleed with firelight.",
+                        },
+                        skywalk = {
+                                name = "Skywalk",
+                                flavor = "Lanterns line the high road, showing every peach for Noodl to scoop along the bridge.",
+                        },
+                        promise_gate = {
+                                name = "Promise Gate",
+                                flavor = "At the final gate, Noodl secures the last fruit and coils around the harvest.",
+                        },
+                },
+                game = {
+                        floor_intro = {
+                                prompt = "Press any key to descend",
 				heal_section_title = "Floor Rest",
 				heal_note = "Forged ${amount} shield(s).",
 				shield_note = "Forged ${amount} shield(s).",
