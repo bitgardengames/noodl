@@ -576,7 +576,7 @@ local english = {
 			},
 			thunder_dash = {
 				name = "Thunder Dash",
-				description = "Press Space (or A/Right Shoulder on a controller) to dash forward, smashing through rocks while briefly speeding up.",
+                                description = "Press Space (or ${dash_face}/${dash_shoulder} on a controller) to dash forward, smashing through rocks while briefly speeding up.",
 				activation_text = "Thunder Dash!",
 			},
 			sparkstep_relay = {
@@ -590,7 +590,7 @@ local english = {
 			},
 			temporal_anchor = {
 				name = "Temporal Anchor",
-				description = "Press Shift (or X/Left Shoulder) to briefly slow time, reducing all movement to 35% speed.",
+                                description = "Press Shift (or ${slow_face}/${slow_shoulder}) to briefly slow time, reducing all movement to 35% speed.",
 				activation_text = "Time Slow!",
 			},
 			momentum_coils = {

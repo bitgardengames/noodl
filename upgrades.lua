@@ -12,6 +12,7 @@ local Localization = require("localization")
 local MetaProgression = require("metaprogression")
 local PlayerStats = require("playerstats")
 local UpgradeHelpers = require("upgradehelpers")
+local GamepadAliases = require("gamepadaliases")
 local DataSchemas = require("dataschemas")
 local UpgradeVisuals = require("upgradevisuals")
 
@@ -23,16 +24,69 @@ local abs = math.abs
 local insert = table.insert
 
 local SHOP_RARITY_RANK = {
-	common = 1,
-	uncommon = 2,
-	rare = 3,
-	epic = 4,
-	legendary = 5,
+        common = 1,
+        uncommon = 2,
+        rare = 3,
+        epic = 4,
+        legendary = 5,
 }
 
+local function getUpgradeDescriptionReplacements(upgradeId)
+        if upgradeId == "thunder_dash" then
+                return GamepadAliases:getActionPromptReplacements("dash")
+        elseif upgradeId == "temporal_anchor" then
+                return GamepadAliases:getActionPromptReplacements("slow")
+        end
+
+        return nil
+end
+
+local function refreshCardLocalization(self)
+        if not self then
+                return
+        end
+
+        local localizationRevision = Localization and Localization.getRevision and Localization:getRevision() or 0
+        local layoutRevision = GamepadAliases and GamepadAliases.getRevision and GamepadAliases:getRevision() or 0
+
+        if self._localizationRevision == localizationRevision and self._gamepadRevision == layoutRevision then
+                return
+        end
+
+        self._localizationRevision = localizationRevision
+        self._gamepadRevision = layoutRevision
+
+        local upgrade = self.upgrade
+        if not upgrade then
+                return
+        end
+
+        if upgrade.nameKey then
+                self.name = Localization:get(upgrade.nameKey)
+        else
+                self.name = upgrade.name
+        end
+
+        if upgrade.descKey then
+                self.desc = Localization:get(upgrade.descKey, getUpgradeDescriptionReplacements(upgrade.id))
+        else
+                self.desc = upgrade.desc
+        end
+
+        local rarityInfo = getRarityInfo(upgrade.rarity)
+        if rarityInfo then
+                self.rarityColor = rarityInfo.color
+                if rarityInfo.labelKey then
+                        self.rarityLabel = Localization:get(rarityInfo.labelKey)
+                elseif rarityInfo.label then
+                        self.rarityLabel = rarityInfo.label
+                end
+        end
+end
+
 local Upgrades = {
-	cachedIndicators = nil,
-	hudIndicatorsDirty = true,
+        cachedIndicators = nil,
+        hudIndicatorsDirty = true,
 }
 
 local decorateCard
@@ -2014,15 +2068,18 @@ pool = {
 				revealInfo.name = decorated.name
 			end
 
-			if chosenUpgrade.descKey then
-				revealInfo.descKey = chosenUpgrade.descKey
-			elseif decorated then
-				revealInfo.desc = decorated.desc
-			end
+                        if chosenUpgrade.descKey then
+                                revealInfo.descKey = chosenUpgrade.descKey
+                                revealInfo.descReplacements = getUpgradeDescriptionReplacements(chosenUpgrade.id)
+                        elseif decorated then
+                                revealInfo.desc = decorated.desc
+                        end
 
-			return revealInfo
-		end,
-	}),
+                        revealInfo.upgradeId = chosenUpgrade.id
+
+                        return revealInfo
+                end,
+        }),
 
 	register({
 		id = "fresh_supplies",
@@ -2960,31 +3017,21 @@ function Upgrades:canOffer(upgrade, context, allowTaken)
 end
 
 decorateCard = function(upgrade)
-	local rarityInfo = getRarityInfo(upgrade.rarity)
-	local name = upgrade.name
-	local description = upgrade.desc
-	local rarityLabel = rarityInfo and rarityInfo.label
+        local rarityInfo = getRarityInfo(upgrade.rarity)
 
-	if upgrade.nameKey then
-		name = Localization:get(upgrade.nameKey)
-	end
-	if upgrade.descKey then
-		description = Localization:get(upgrade.descKey)
-	end
-	if rarityInfo and rarityInfo.labelKey then
-		rarityLabel = Localization:get(rarityInfo.labelKey)
-	end
+        local card = {
+                id = upgrade.id,
+                rarity = upgrade.rarity,
+                rarityColor = rarityInfo and rarityInfo.color,
+                rarityLabel = rarityInfo and rarityInfo.label,
+                restockShop = upgrade.restockShop,
+                upgrade = upgrade,
+                refreshLocalization = refreshCardLocalization,
+        }
 
-	return {
-		id = upgrade.id,
-		name = name,
-		desc = description,
-		rarity = upgrade.rarity,
-		rarityColor = rarityInfo.color,
-		rarityLabel = rarityLabel,
-		restockShop = upgrade.restockShop,
-		upgrade = upgrade,
-	}
+        card:refreshLocalization()
+
+        return card
 end
 
 local function matchesUnlockTag(upgrade, tag)
@@ -3196,11 +3243,15 @@ local function applyRevealToCard(card, revealInfo)
 		card.name = revealInfo.name
 	end
 
-	if revealInfo.descKey then
-		card.desc = Localization:get(revealInfo.descKey, revealInfo.descReplacements)
-	elseif revealInfo.desc then
-		card.desc = revealInfo.desc
-	end
+        if revealInfo.descKey then
+                local replacements = revealInfo.descReplacements
+                if not replacements and revealInfo.upgradeId then
+                        replacements = getUpgradeDescriptionReplacements(revealInfo.upgradeId)
+                end
+                card.desc = Localization:get(revealInfo.descKey, replacements)
+        elseif revealInfo.desc then
+                card.desc = revealInfo.desc
+        end
 
 	local appliedRarity = revealInfo.rarity
 	if appliedRarity then
