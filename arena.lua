@@ -3,6 +3,7 @@ local Audio = require("audio")
 local RenderLayers = require("renderlayers")
 local SharedCanvas = require("sharedcanvas")
 local Timer = require("timer")
+local Color = require("color")
 
 local abs = math.abs
 local ceil = math.ceil
@@ -90,16 +91,10 @@ local function clamp(value, minimum, maximum)
 end
 
 local function copyColor(color, defaultAlpha)
-	if not color then
-		return {0, 0, 0, defaultAlpha or 1}
-	end
-
-	return {
-		color[1] or 0,
-		color[2] or 0,
-		color[3] or 0,
-		color[4] or defaultAlpha or 1,
-	}
+        return Color.copy(color, {
+                default = {0, 0, 0, defaultAlpha or 1},
+                defaultAlpha = defaultAlpha,
+        })
 end
 
 local function getPaletteColor(palette, key, fallback, defaultAlpha)

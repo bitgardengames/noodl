@@ -11,6 +11,7 @@ local Achievements = require("achievements")
 local PlayerStats = require("playerstats")
 local Audio = require("audio")
 local MenuScene = require("menuscene")
+local Color = require("color")
 
 local abs = math.abs
 local ceil = math.ceil
@@ -102,46 +103,6 @@ local scrollbarDrag = {
 
 local drawCosmeticSnakePreview
 
-local function clampColorComponent(value)
-	if value < 0 then
-		return 0
-	elseif value > 1 then
-		return 1
-	end
-	return value
-end
-
-local function lightenColor(color, amount)
-	if type(color) ~= "table" then
-		return {1, 1, 1, 1}
-	end
-
-	amount = clampColorComponent(amount or 0)
-
-	local r = clampColorComponent((color[1] or 0) + (1 - (color[1] or 0)) * amount)
-	local g = clampColorComponent((color[2] or 0) + (1 - (color[2] or 0)) * amount)
-	local b = clampColorComponent((color[3] or 0) + (1 - (color[3] or 0)) * amount)
-	local a = clampColorComponent(color[4] or 1)
-
-	return {r, g, b, a}
-end
-
-local function darkenColor(color, amount)
-	if type(color) ~= "table" then
-		return {0, 0, 0, 1}
-	end
-
-	amount = clampColorComponent(amount or 0)
-
-	local scale = 1 - amount
-	local r = clampColorComponent((color[1] or 0) * scale)
-	local g = clampColorComponent((color[2] or 0) * scale)
-	local b = clampColorComponent((color[3] or 0) * scale)
-	local a = clampColorComponent(color[4] or 1)
-
-	return {r, g, b, a}
-end
-
 local function shallowCopy(value)
 	if type(value) ~= "table" then
 		return value
@@ -197,53 +158,16 @@ local tabs = {
 	},
 }
 
-local function copyColor(color)
-	if not color then
-		return {0, 0, 0, 1}
-	end
-
-	return {
-		color[1] or 0,
-		color[2] or 0,
-		color[3] or 0,
-		color[4] == nil and 1 or color[4],
-	}
+local clampColorComponent = Color.clampComponent
+local copyColor = Color.copy
+local lightenColor = function(color, amount)
+        return Color.lighten(color, amount)
 end
-
-local function lightenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r + (1 - r) * factor,
-		g + (1 - g) * factor,
-		b + (1 - b) * factor,
-		a * (0.65 + factor * 0.35),
-	}
+local darkenColor = function(color, amount)
+        return Color.darken(color, amount)
 end
-
-local function darkenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r * (1 - factor),
-		g * (1 - factor),
-		b * (1 - factor),
-		a,
-	}
-end
-
-local function withAlpha(color, alpha)
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {r, g, b, a * alpha}
+local withAlpha = function(color, alpha)
+        return Color.withAlpha(color, alpha)
 end
 
 local function setColor(color, alphaOverride)
@@ -644,21 +568,8 @@ local function formatShaderDisplayName(typeId)
 	return name
 end
 
-local function withAlpha(color, alpha)
-	if type(color) ~= "table" then
-		return {1, 1, 1, clampColorComponent(alpha or 1)}
-	end
-
-	return {
-		clampColorComponent(color[1] or 1),
-		clampColorComponent(color[2] or 1),
-		clampColorComponent(color[3] or 1),
-		clampColorComponent(alpha or color[4] or 1),
-	}
-end
-
 local function drawWindowFrame(x, y, width, height, options)
-	options = options or {}
+        options = options or {}
 
 	if not width or not height or width <= 0 or height <= 0 then
 		return

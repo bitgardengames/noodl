@@ -4,6 +4,7 @@ local Localization = require("localization")
 local Easing = require("easing")
 local Timer = require("timer")
 local RenderLayers = require("renderlayers")
+local Color = require("color")
 
 local abs = math.abs
 local floor = math.floor
@@ -275,35 +276,21 @@ local function calculateShadowPadding(defaultStrokeWidth, overrideStrokeWidth)
 end
 
 local function lightenColor(color, amount, out)
-	local target = out or {}
-	if not color then
-		target[1], target[2], target[3], target[4] = 1, 1, 1, 1
-		return target
-	end
-
-	local a = color[4] or 1
-	target[1] = color[1] + (1 - color[1]) * amount
-	target[2] = color[2] + (1 - color[2]) * amount
-	target[3] = color[3] + (1 - color[3]) * amount
-	target[4] = a
-
-	return target
+        return Color.lighten(color, amount, {
+                target = out or {},
+                default = Color.white,
+                preserveAlpha = true,
+        })
 end
 
 local function darkenColor(color, amount, out)
-	local target = out or {}
-	if not color then
-		target[1], target[2], target[3], target[4] = 0, 0, 0, 1
-		return target
-	end
-
-	local a = color[4] or 1
-	target[1] = color[1] * amount
-	target[2] = color[2] * amount
-	target[3] = color[3] * amount
-	target[4] = a
-
-	return target
+        local scale = amount or 1
+        return Color.darken(color, 1 - scale, {
+                target = out or {},
+                default = Color.black,
+                scale = scale,
+                preserveAlpha = true,
+        })
 end
 
 local function drawAlignedBorder(mode, x, y, w, h, radius, borderWidth)

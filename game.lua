@@ -37,6 +37,7 @@ local GameInput = require("gameinput")
 local ModuleUtil = require("moduleutil")
 local RenderLayers = require("renderlayers")
 local Timer = require("timer")
+local Color = require("color")
 local ceil = math.ceil
 local floor = math.floor
 local max = math.max
@@ -327,18 +328,12 @@ local FLOOR_INTRO_BACKGROUND_SYSTEMS = ModuleUtil.prepareSystems({
 })
 
 local function cloneColor(color, fallback, out)
-	local source = color or fallback or DEFAULT_IMPACT_RIPPLE_COLOR
-	if not source then
-		return nil
-	end
+        local source = color or fallback or DEFAULT_IMPACT_RIPPLE_COLOR
+        if not source then
+                return nil
+        end
 
-	out = out or {}
-	out[1] = source[1] or 1
-	out[2] = source[2] or 1
-	out[3] = source[3] or 1
-	out[4] = source[4] == nil and 1 or source[4]
-
-	return out
+        return Color.copy(source, {target = out or {}})
 end
 
 local function resetFeedbackState(self)

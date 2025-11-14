@@ -5,6 +5,7 @@ local Rocks = require("rocks")
 local Audio = require("audio")
 local Easing = require("easing")
 local Timer = require("timer")
+local Color = require("color")
 
 local abs = math.abs
 local floor = math.floor
@@ -55,19 +56,11 @@ local function getTime()
 end
 
 local function copyColor(color, alpha)
-	local r = 1
-	local g = 0.38
-	local b = 0.18
-	local a = alpha or 1
-
-	if type(color) == "table" then
-		r = color[1] or r
-		g = color[2] or g
-		b = color[3] or b
-		a = color[4] or a
-	end
-
-	return {r, g, b, a}
+        return Color.copy(color, {
+                default = {1, 0.38, 0.18, alpha or 1},
+                defaultAlpha = alpha,
+                alpha = alpha,
+        })
 end
 
 local function clamp01(value)

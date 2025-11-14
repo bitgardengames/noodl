@@ -5,6 +5,7 @@ local Rocks = require("rocks")
 local Particles = require("particles")
 local Audio = require("audio")
 local Timer = require("timer")
+local Color = require("color")
 
 local max = math.max
 local min = math.min
@@ -64,15 +65,11 @@ local function releaseOccupancy(emitter)
 end
 
 local function scaleColor(color, factor, alphaFactor)
-	if not color then
-		return {1, 1, 1, 1}
-	end
-
-	local r = clamp01((color[1] or 0) * factor)
-	local g = clamp01((color[2] or 0) * factor)
-	local b = clamp01((color[3] or 0) * factor)
-	local a = clamp01((color[4] or 1) * (alphaFactor or 1))
-	return {r, g, b, a}
+        local scale = factor or 1
+        return Color.scale(color, scale, {
+                default = Color.white,
+                alphaFactor = alphaFactor or scale,
+        })
 end
 
 local function lerp(a, b, t)
