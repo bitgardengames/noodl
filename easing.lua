@@ -64,22 +64,10 @@ function Easing.easeOutBack(t)
 end
 
 function Easing.easeInBack(t)
-        local c1 = 1.70158
-        local c3 = c1 + 1
+	local c1 = 1.70158
+	local c3 = c1 + 1
 
-        return c3 * pow(t, 3) - c1 * pow(t, 2)
-end
-
-function Easing.easeOutElastic(t)
-        if t <= 0 then
-                return 0
-        elseif t >= 1 then
-                return 1
-        end
-
-        local c4 = (2 * pi) / 3
-
-        return pow(2, -10 * t) * sin((t * 10 - 0.75) * c4) + 1
+	return c3 * pow(t, 3) - c1 * pow(t, 2)
 end
 
 function Easing.getTransitionAlpha(t, direction)
