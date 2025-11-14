@@ -36,6 +36,8 @@ Story payoff: **Harvest Complete** — "Noodl hauls the full harvest home, every
 | Rocks | (200, 199, 197, 255) | #C8C7C5 |
 | Saws | (210, 214, 218, 255) | #D2D6DA |
 
+**Background tone:** Base `#1B2A23` (27, 42, 35, 255) → overlay `#2F4136` (47, 65, 54, 140)
+
 **Background shader:** `gardenMellow` — Mellow canopy drift layers gentle dawn light and sparkling pollen. (Backdrops 0.54 / Arena 0.30)
 
 ---
@@ -58,6 +60,8 @@ Story payoff: **Harvest Complete** — "Noodl hauls the full harvest home, every
 | Snake | (199, 219, 250, 255) | #C7DBFA |
 | Rocks | (105, 148, 181, 255) | #6994B5 |
 | Saws | (176, 176, 189, 255) | #B0B0BD |
+
+**Background tone:** Base `#121A2B` (18, 26, 43, 255) → overlay `#1D2C40` (29, 44, 64, 148)
 
 **Background shader:** `softCavern` — Soft cavern haze with muted glints shimmering across pools. (Backdrops 0.54 / Arena 0.32)
 
@@ -82,6 +86,8 @@ Story payoff: **Harvest Complete** — "Noodl hauls the full harvest home, every
 | Rocks | (92, 143, 162, 255) | #5C8FA2 |
 | Saws | (158, 168, 171, 255) | #9EA8AB |
 
+**Background tone:** Base `#0F1D26` (15, 29, 38, 255) → overlay `#1C2F3A` (28, 47, 58, 148)
+
 **Background shader:** `abyssDrift` — Refracted indigo bands drift through fogged glass with vertical shimmers and rising motes. (Backdrops 0.64 / Arena 0.38)
 
 ---
@@ -104,6 +110,8 @@ Story payoff: **Harvest Complete** — "Noodl hauls the full harvest home, every
 | Snake | (199, 242, 227, 255) | #C7F2E3 |
 | Rocks | (81, 115, 138, 255) | #51738A |
 | Saws | (171, 224, 237, 255) | #ABE0ED |
+
+**Background tone:** Base `#0D1821` (13, 24, 33, 255) → overlay `#1A2831` (26, 40, 49, 153)
 
 **Background shader:** `mushroomPulse` — Glowcap blooms breathe in the dark, scattering bioluminescent haze. (Backdrops 0.68 / Arena 0.42)
 
@@ -128,6 +136,8 @@ Story payoff: **Harvest Complete** — "Noodl hauls the full harvest home, every
 | Rocks | (117, 133, 178, 255) | #7585B2 |
 | Saws | (173, 224, 255, 255) | #ADE0FF |
 
+**Background tone:** Base `#101C26` (16, 28, 38, 255) → overlay `#203143` (32, 49, 67, 140)
+
 **Background shader:** `auroraVeil` — Aurora veil ribbons arc overhead with layered light bands. (Backdrops 0.62 / Arena 0.42)
 
 ---
@@ -150,6 +160,8 @@ Story payoff: **Harvest Complete** — "Noodl hauls the full harvest home, every
 | Snake | (250, 194, 82, 255) | #FAC252 |
 | Rocks | (163, 102, 56, 255) | #A36638 |
 | Saws | (255, 158, 82, 255) | #FF9E52 |
+
+**Background tone:** Base `#28140C` (40, 20, 12, 255) → overlay `#3A2013` (58, 32, 19, 148)
 
 **Background shader:** `emberDrift` — Ember drift lifts warm cinders and shimmering ash currents. (Backdrops 0.62 / Arena 0.38)
 
@@ -176,6 +188,8 @@ Story payoff: **Harvest Complete** — "Noodl hauls the full harvest home, every
 | Bananas | (224, 173, 61, 255) | #E0AD3D |
 | Golden pears | (230, 148, 51, 255) | #E69433 |
 
+**Background tone:** Base `#39465D` (57, 70, 93, 255) → overlay `#4A5C76` (74, 92, 118, 128)
+
 **Background shader:** `auroraVeil` — High-altitude ribbons soften the skyline while lantern motes sweep the bridge. (Backdrops 0.48 / Arena 0.28)
 
 ---
@@ -198,6 +212,8 @@ Story payoff: **Harvest Complete** — "Noodl hauls the full harvest home, every
 | Snake | (235, 122, 250, 255) | #EB7AFA |
 | Rocks | (138, 82, 173, 255) | #8A52AD |
 | Saws | (255, 128, 178, 255) | #FF80B2 |
+
+**Background tone:** Base `#1E0F2E` (30, 15, 46, 255) → overlay `#2D1B3F` (45, 27, 63, 158)
 
 **Background shader:** `voidPulse` — Starfield pulses surge through the gateway's halo as the harvest seals. (Backdrops 0.74 / Arena 0.46)
 
