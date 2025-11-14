@@ -3,6 +3,7 @@ local SnakeUtils = require("snakeutils")
 local Theme = require("theme")
 local Arena = require("arena")
 local RenderLayers = require("renderlayers")
+local Color = require("color")
 
 local max = math.max
 local min = math.min
@@ -183,16 +184,7 @@ local idleSparkles = {}
 local drawList = {}
 
 local function copyColor(color)
-	if not color then
-		return {1, 1, 1, 1}
-	end
-
-	return {
-		color[1] or 1,
-		color[2] or 1,
-		color[3] or 1,
-		color[4] == nil and 1 or color[4],
-	}
+        return Color.copy(color, {default = Color.white})
 end
 
 -- Easing

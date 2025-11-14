@@ -1,5 +1,6 @@
 local Theme = require("theme")
 local Easing = require("easing")
+local Color = require("color")
 
 local MenuScene = {}
 
@@ -7,18 +8,7 @@ local backgroundCaches = {}
 local manualBackground = false
 local drawRole = nil
 
-local function copyColor(color)
-        if not color then
-                return {0, 0, 0, 1}
-        end
-
-        return {
-                color[1] or 0,
-                color[2] or 0,
-                color[3] or 0,
-                color[4] == nil and 1 or color[4],
-        }
-end
+local copyColor = Color.copy
 
 local function getPlainBackgroundBaseColor(override)
         if override then
@@ -45,40 +35,16 @@ function MenuScene.getPlainBackgroundOptions(effectKey, overrideColor)
         }
 end
 
-local function lightenColor(color, factor)
-        factor = factor or 0.35
-        local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r + (1 - r) * factor,
-		g + (1 - g) * factor,
-		b + (1 - b) * factor,
-		a * (0.65 + factor * 0.35),
-	}
+local lightenColor = function(color, factor)
+        return Color.lighten(color, factor)
 end
 
-local function darkenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r * (1 - factor),
-		g * (1 - factor),
-		b * (1 - factor),
-		a,
-	}
+local darkenColor = function(color, factor)
+        return Color.darken(color, factor)
 end
 
-local function withAlpha(color, alpha)
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {r, g, b, a * alpha}
+local withAlpha = function(color, alpha)
+        return Color.withAlpha(color, alpha)
 end
 
 local function getCacheEntry(options)

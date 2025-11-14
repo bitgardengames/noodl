@@ -12,6 +12,8 @@ local cos = math.cos
 local sin = math.sin
 local insert = table.insert
 
+local Color = require("color")
+
 local Saws = {}
 local current = {}
 local slots = {}
@@ -68,16 +70,7 @@ local function drawSawStencil()
 end
 
 local function copyColor(color)
-	if not color then
-		return {1, 1, 1, 1}
-	end
-
-	return {
-		color[1] or 1,
-		color[2] or 1,
-		color[3] or 1,
-		color[4] == nil and 1 or color[4],
-	}
+        return Color.copy(color, {default = Color.white})
 end
 
 local highlightCache = setmetatable({}, { __mode = "k" })

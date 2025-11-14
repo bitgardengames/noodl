@@ -1,4 +1,5 @@
 local RenderLayers = require("renderlayers")
+local Color = require("color")
 
 local floor = math.floor
 
@@ -35,24 +36,11 @@ local function deepcopy(value)
 end
 
 local function copyColor(color)
-	if not color then
-		return {1, 1, 1, 1}
-	end
-
-	return {
-		color[1] or 1,
-		color[2] or 1,
-		color[3] or 1,
-		color[4] == nil and 1 or color[4],
-	}
+        return Color.copy(color, {default = Color.white})
 end
 
 local function copyOptionalColor(color)
-	if not color then
-		return nil
-	end
-
-	return copyColor(color)
+        return Color.copyIfPresent(color, {default = Color.white})
 end
 
 local function drawShieldBadge(effect, progress)

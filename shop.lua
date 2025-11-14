@@ -6,6 +6,7 @@ local MetaProgression = require("metaprogression")
 local Theme = require("theme")
 local Floors = require("floors")
 local Timer = require("timer")
+local Color = require("color")
 local abs = math.abs
 local ceil = math.ceil
 local cos = math.cos
@@ -893,17 +894,11 @@ local function lerp(a, b, t)
 end
 
 local function scaleColor(color, factor, alphaFactor)
-	if not color then
-		return {1, 1, 1, alphaFactor or 1}
-	end
-
-	local alpha = (color[4] or 1) * (alphaFactor or 1)
-	return {
-		clamp01((color[1] or 0) * factor),
-		clamp01((color[2] or 0) * factor),
-		clamp01((color[3] or 0) * factor),
-		alpha,
-	}
+        local scale = factor or 1
+        return Color.scale(color, scale, {
+                default = Color.white,
+                alphaFactor = alphaFactor or scale,
+        })
 end
 
 local function formatColorKey(color)

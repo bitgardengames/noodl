@@ -11,6 +11,7 @@ local DailyChallenges = require("dailychallenges")
 local Upgrades = require("upgrades")
 local Shop = require("shop")
 local Timer = require("timer")
+local Color = require("color")
 
 local abs = math.abs
 local floor = math.floor
@@ -252,68 +253,24 @@ end
 
 local backgroundStyle = nil
 
-local function copyColor(color)
-	if type(color) ~= "table" then
-		return {1, 1, 1, 1}
-	end
-
-	return {
-		color[1] or 1,
-		color[2] or 1,
-		color[3] or 1,
-		color[4] == nil and 1 or color[4],
-	}
+local copyColor = function(color)
+        return Color.copy(color, {default = Color.white})
 end
 
-local function lightenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r + (1 - r) * factor,
-		g + (1 - g) * factor,
-		b + (1 - b) * factor,
-		a * (0.65 + factor * 0.35),
-	}
+local lightenColor = function(color, factor)
+        return Color.lighten(color, factor)
 end
 
-local function darkenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {
-		r * (1 - factor),
-		g * (1 - factor),
-		b * (1 - factor),
-		a,
-	}
+local darkenColor = function(color, factor)
+        return Color.darken(color, factor)
 end
 
-local function desaturateColor(color, amount)
-	amount = max(0, min(1, amount or 0.5))
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	local grey = (r * 0.299) + (g * 0.587) + (b * 0.114)
-	return {
-		r + (grey - r) * amount,
-		g + (grey - g) * amount,
-		b + (grey - b) * amount,
-		a,
-	}
+local desaturateColor = function(color, amount)
+        return Color.desaturate(color, amount)
 end
 
-local function withAlpha(color, alpha)
-	local r = color[1] or 1
-	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] == nil and 1 or color[4]
-	return {r, g, b, a * alpha}
+local withAlpha = function(color, alpha)
+        return Color.withAlpha(color, alpha)
 end
 
 local function rebuildBackgroundStyle()
