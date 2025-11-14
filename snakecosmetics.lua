@@ -1,5 +1,4 @@
 local Theme = require("theme")
-local Achievements = require("achievements")
 
 local max = math.max
 local insert = table.insert
@@ -30,340 +29,6 @@ local SKIN_DEFINITIONS = {
 		},
 		unlock = {default = true},
 		order = 0,
-	},
-	{
-		id = "candy_cane",
-		name = "Candy Cane Coil",
-		description = "Festive stripes that twirl with every holiday dash.",
-		colors = {
-			body = {0.88, 0.14, 0.22, 1.0},
-			outline = {0.28, 0.04, 0.07, 1.0},
-			glow = {0.98, 0.72, 0.78, 0.86},
-		},
-		effects = {
-			glow = {
-				intensity = 0.52,
-				radiusMultiplier = 1.35,
-				color = {0.98, 0.72, 0.78, 1.0},
-				step = 2,
-			},
-		},
-		unlock = {default = true},
-		order = 12,
-	},
-	{
-		id = "solar_flare",
-		name = "Solar Flare",
-		description = "Basked in reactor light until it took on a stellar sheen.",
-		colors = {
-			body = {0.98, 0.60, 0.18, 1.0},
-			outline = {0.28, 0.08, 0.00, 1.0},
-			glow = {1.00, 0.78, 0.32, 0.90},
-		},
-		unlock = {default = true},
-		order = 15,
-	},
-	{
-		id = "prismatic_tide",
-		name = "Prismatic Tide",
-		description = "Reflective scales tuned to the beat of the abyssal currents.",
-		colors = {
-			body = {0.32, 0.58, 0.95, 1.0},
-			outline = {0.06, 0.16, 0.35, 1.0},
-			glow = {0.52, 0.86, 1.00, 0.88},
-		},
-		unlock = {default = true},
-		order = 18,
-	},
-	{
-		id = "emberforge",
-		name = "Emberforge Alloy",
-		description = "Forged from repurposed saw cores. Unlocks at metaprogression level 3.",
-		colors = {
-			body = {0.82, 0.38, 0.28, 1.0},
-			outline = {0.20, 0.05, 0.02, 1.0},
-			glow = {0.95, 0.55, 0.30, 0.78},
-		},
-		unlock = {level = 3},
-		order = 20,
-	},
-	{
-		id = "aurora_current",
-		name = "Aurora Current",
-		description = "Caught light from the abyss. Unlocks at metaprogression level 6.",
-		colors = {
-			body = {0.48, 0.70, 0.98, 1.0},
-			outline = {0.08, 0.12, 0.28, 1.0},
-			glow = {0.60, 0.85, 1.00, 0.80},
-		},
-		effects = {
-			glow = {
-				intensity = 0.55,
-				radiusMultiplier = 1.45,
-				color = {0.60, 0.85, 1.00, 1.0},
-			},
-		},
-		unlock = {level = 6},
-		order = 30,
-	},
-	{
-		id = "orchard_sovereign",
-		name = "Orchard Sovereign",
-		description = "Proof that you've mastered fruit runs. Unlock the Apple Tycoon achievement to earn it.",
-		colors = {
-			body = {0.95, 0.58, 0.28, 1.0},
-			outline = {0.35, 0.12, 0.05, 1.0},
-			glow = {1.00, 0.78, 0.35, 0.82},
-		},
-		effects = {
-			glow = {
-				intensity = 0.45,
-				radiusMultiplier = 1.3,
-				color = {1.00, 0.78, 0.35, 1.0},
-			},
-		},
-		unlock = {achievement = "appleTycoon"},
-		order = 40,
-	},
-	{
-		id = "abyssal_vanguard",
-		name = "Abyssal Vanguard",
-		description = "Awarded for conquering the deepest floors. Unlocks at metaprogression level 12.",
-		colors = {
-			body = {0.28, 0.45, 0.82, 1.0},
-			outline = {0.06, 0.12, 0.28, 1.0},
-			glow = {0.52, 0.72, 1.00, 0.78},
-		},
-		effects = {
-			glow = {
-				intensity = 0.6,
-				radiusMultiplier = 1.6,
-				color = {0.36, 0.62, 1.00, 1.0},
-				step = 3,
-			},
-		},
-		unlock = {level = 12},
-		order = 50,
-	},
-	{
-		id = "ion_storm",
-		name = "Ion Storm",
-		description = "Charged scales hum with contained lightning. Unlocks at metaprogression level 9.",
-		colors = {
-			body = {0.24, 0.36, 0.94, 1.0},
-			outline = {0.04, 0.05, 0.22, 1.0},
-			glow = {0.58, 0.82, 1.00, 0.9},
-		},
-		effects = {
-			glow = {
-				intensity = 0.75,
-				radiusMultiplier = 1.55,
-				color = {0.62, 0.88, 1.00, 1.0},
-				step = 2,
-			},
-		},
-		unlock = {level = 9},
-		order = 60,
-	},
-	{
-		id = "luminous_bloom",
-		name = "Luminous Bloom",
-		description = "Bioluminescent petals trail with every turn. Unlocks at metaprogression level 13.",
-		colors = {
-			body = {0.52, 0.16, 0.58, 1.0},
-			outline = {0.14, 0.03, 0.18, 1.0},
-			glow = {0.96, 0.54, 0.88, 0.9},
-		},
-		effects = {
-			glow = {
-				intensity = 0.65,
-				radiusMultiplier = 1.5,
-				color = {0.94, 0.48, 0.88, 1.0},
-				step = 2,
-			},
-		},
-		unlock = {level = 13},
-		order = 70,
-	},
-	{
-		id = "void_wisp",
-		name = "Void Wisp",
-		description = "An afterimage from beyond the grid. Unlocks at metaprogression level 11.",
-		colors = {
-			body = {0.08, 0.12, 0.18, 1.0},
-			outline = {0.00, 0.00, 0.00, 1.0},
-			glow = {0.62, 0.32, 1.00, 0.92},
-		},
-		effects = {
-			glow = {
-				intensity = 0.65,
-				radiusMultiplier = 1.45,
-				color = {0.48, 0.28, 0.96, 0.9},
-				step = 1,
-			},
-		},
-		unlock = {level = 11},
-		order = 80,
-	},
-	{
-		id = "chrono_carapace",
-		name = "Chrono Carapace",
-		description = "Temporal plating gleaned from time-locked relics. Unlocks at metaprogression level 12.",
-		colors = {
-			body = {0.58, 0.72, 0.95, 1.0},
-			outline = {0.12, 0.18, 0.32, 1.0},
-			glow = {0.76, 0.92, 1.00, 0.88},
-		},
-		effects = {
-			glow = {
-				intensity = 0.7,
-				radiusMultiplier = 1.6,
-				color = {0.70, 0.88, 1.00, 1.0},
-				step = 2,
-			},
-		},
-		unlock = {level = 12},
-		order = 90,
-	},
-	{
-		id = "midnight_circuit",
-		name = "Midnight Circuit",
-		description = "Quantum filaments hum with midnight energy. Unlocks at metaprogression level 15.",
-		colors = {
-			body = {0.16, 0.20, 0.44, 1.0},
-			outline = {0.04, 0.06, 0.16, 1.0},
-			glow = {0.48, 0.82, 1.00, 0.88},
-		},
-		effects = {
-			glow = {
-				intensity = 0.68,
-				radiusMultiplier = 1.6,
-				color = {0.44, 0.80, 1.00, 1.0},
-				step = 2,
-			},
-		},
-		unlock = {level = 15},
-		order = 95,
-	},
-	{
-		id = "gilded_siren",
-		name = "Gilded Siren",
-		description = "Goldleaf fins that shimmer with every high score. Unlocks at metaprogression level 15.",
-		colors = {
-			body = {0.96, 0.78, 0.42, 1.0},
-			outline = {0.36, 0.20, 0.05, 1.0},
-			glow = {1.00, 0.88, 0.52, 0.86},
-		},
-		effects = {
-			glow = {
-				intensity = 0.68,
-				radiusMultiplier = 1.55,
-				color = {1.00, 0.90, 0.60, 1.0},
-				step = 3,
-			},
-		},
-		unlock = {level = 15},
-		order = 100,
-	},
-	{
-		id = "abyssal_constellation",
-		name = "Abyssal Constellation",
-		description = "Star-mapped scales that mirror the deepest currents. Unlocks at metaprogression level 14.",
-		colors = {
-			body = {0.14, 0.18, 0.34, 1.0},
-			outline = {0.04, 0.06, 0.14, 1.0},
-			glow = {0.54, 0.78, 1.00, 0.9},
-		},
-		effects = {
-			glow = {
-				intensity = 0.72,
-				radiusMultiplier = 1.7,
-				color = {0.58, 0.82, 1.00, 1.0},
-				step = 2,
-			},
-		},
-		unlock = {level = 14},
-		order = 110,
-	},
-	{
-		id = "crystalline_mire",
-		name = "Crystalline Mire",
-		description = "Speleotherm scales harvested from luminous caverns. Unlock the Daily Fun Champion achievement to claim it.",
-		colors = {
-			body = {0.26, 0.58, 0.48, 1.0},
-			outline = {0.05, 0.16, 0.14, 1.0},
-			glow = {0.60, 0.92, 0.68, 0.86},
-		},
-		effects = {
-			glow = {
-				intensity = 0.6,
-				radiusMultiplier = 1.48,
-				color = {0.62, 0.92, 0.70, 1.0},
-				step = 2,
-			},
-		},
-		unlock = {achievement = "dailyFunChampion"},
-		order = 120,
-	},
-	{
-		id = "obsidian_ritual",
-		name = "Obsidian Ritual",
-		description = "Scales quenched in volcanic rites. Unlocks at metaprogression level 10.",
-		colors = {
-			body = {0.18, 0.10, 0.16, 1.0},
-			outline = {0.02, 0.01, 0.04, 1.0},
-			glow = {0.94, 0.38, 0.32, 0.88},
-		},
-		effects = {
-			glow = {
-				intensity = 0.7,
-				radiusMultiplier = 1.62,
-				color = {0.96, 0.46, 0.42, 1.0},
-				step = 3,
-			},
-		},
-		unlock = {level = 10},
-		order = 130,
-	},
-	{
-		id = "midnight_mechanica",
-		name = "Midnight Mechanica",
-		description = "Clockwork plating salvaged from rogue automatons. Unlock the Rock Crusher achievement to claim it.",
-		colors = {
-			body = {0.18, 0.20, 0.28, 1.0},
-			outline = {0.05, 0.06, 0.10, 1.0},
-			glow = {0.80, 0.72, 0.46, 0.9},
-		},
-		effects = {
-			glow = {
-				intensity = 0.68,
-				radiusMultiplier = 1.52,
-				color = {0.90, 0.82, 0.58, 1.0},
-				step = 1,
-			},
-		},
-		unlock = {achievement = "rockCrusher"},
-		order = 140,
-	},
-	{
-		id = "tidal_resonance",
-		name = "Tidal Resonance",
-		description = "Harmonic fins tuned to echo clearing streaks. Unlock the Combo Inferno achievement to claim it.",
-		colors = {
-			body = {0.20, 0.44, 0.82, 1.0},
-			outline = {0.04, 0.12, 0.26, 1.0},
-			glow = {0.46, 0.88, 1.00, 0.88},
-		},
-		effects = {
-			glow = {
-				intensity = 0.74,
-				radiusMultiplier = 1.68,
-				color = {0.52, 0.92, 1.00, 1.0},
-				step = 2,
-			},
-		},
-		unlock = {achievement = "comboInferno"},
-		order = 150,
 	},
 }
 
@@ -515,8 +180,22 @@ function SnakeCosmetics:_ensureLoaded()
 		end
 	end
 
-	self.state.unlocked = self.state.unlocked or {}
-	self.state.unlocked[DEFAULT_SKIN_ID] = true
+	local sanitized = {}
+	for _, skin in ipairs(self._orderedSkins or {}) do
+		local unlock = skin.unlock or {}
+		if unlock.default then
+			sanitized[skin.id] = true
+		end
+	end
+	sanitized[DEFAULT_SKIN_ID] = true
+
+	for id, unlocked in pairs(self.state.unlocked or {}) do
+		if unlocked and sanitized[id] ~= nil then
+			sanitized[id] = true
+		end
+	end
+
+	self.state.unlocked = sanitized
 	self.state.unlockHistory = self.state.unlockHistory or {}
 	self.state.recentUnlocks = self.state.recentUnlocks or {}
 
@@ -597,128 +276,29 @@ function SnakeCosmetics:isSkinUnlocked(id)
 	return self.state.unlocked[id] == true
 end
 
-function SnakeCosmetics:_registerAchievementListener()
-	if self._achievementListenerRegistered then
-		return
-	end
-
-	if not (Achievements and Achievements.registerUnlockListener) then
-		return
-	end
-
-	Achievements:registerUnlockListener(function(id)
-		local ok, err = pcall(function()
-			self:onAchievementUnlocked(id)
-		end)
-		if not ok then
-			print("[snakecosmetics] failed to process achievement unlock", tostring(id), err)
-		end
-	end)
-
-	self._achievementListenerRegistered = true
-end
-
-local function matchesLevelRequirement(skin, level)
-	local unlock = skin.unlock or {}
-	if not unlock.level then
-		return false
-	end
-	return level >= unlock.level
-end
-
-local function matchesAchievementRequirement(skin, achievementId)
-	local unlock = skin.unlock or {}
-	if not unlock.achievement then
-		return false
-	end
-	return unlock.achievement == achievementId
-end
-
 function SnakeCosmetics:syncMetaLevel(level, context)
-	self:_ensureLoaded()
+        self:_ensureLoaded()
 
-	level = max(1, math.floor(level or 1))
-	self._highestKnownMetaLevel = max(self._highestKnownMetaLevel or 0, level)
-
-	local changed = false
-	for _, skin in ipairs(self._orderedSkins or {}) do
-		if matchesLevelRequirement(skin, level) then
-			local unlockContext = {
-				source = "metaLevel",
-				level = skin.unlock.level,
-			}
-			if context and type(context.levelUps) == "table" then
-				for _, lvl in ipairs(context.levelUps) do
-					if lvl == skin.unlock.level then
-						unlockContext.justUnlocked = true
-						break
-					end
-				end
-			end
-			changed = self:_unlockSkinInternal(skin.id, unlockContext) or changed
-		end
-	end
-
-	if changed then
-		self:_validateSelection()
-		self:_save()
-	end
+        level = max(1, math.floor(level or 1))
+        self._highestKnownMetaLevel = max(self._highestKnownMetaLevel or 0, level)
 end
 
 function SnakeCosmetics:syncAchievements()
-	self:_ensureLoaded()
-
-	local changed = false
-	for _, skin in ipairs(self._orderedSkins or {}) do
-		local unlock = skin.unlock or {}
-		if unlock.achievement then
-			local definition = Achievements:getDefinition(unlock.achievement)
-			if definition and definition.unlocked then
-				local unlockContext = {
-					source = "achievement",
-					achievement = unlock.achievement,
-				}
-				changed = self:_unlockSkinInternal(skin.id, unlockContext) or changed
-			end
-		end
-	end
-
-	if changed then
-		self:_validateSelection()
-		self:_save()
-	end
+        self:_ensureLoaded()
 end
 
 function SnakeCosmetics:onAchievementUnlocked(id)
-	self:_ensureLoaded()
-
-	local changed = false
-	for _, skin in ipairs(self._orderedSkins or {}) do
-		if matchesAchievementRequirement(skin, id) then
-			changed = self:_unlockSkinInternal(skin.id, {
-				source = "achievement",
-				achievement = id,
-			}) or changed
-		end
-	end
-
-	if changed then
-		self:_validateSelection()
-		self:_save()
-	end
+        self:_ensureLoaded()
 end
 
 function SnakeCosmetics:load(context)
-	self:_ensureLoaded()
-	self:_registerAchievementListener()
+        self:_ensureLoaded()
 
-	context = context or {}
+        context = context or {}
 
-	if context.metaLevel then
-		self:syncMetaLevel(context.metaLevel)
-	end
-
-	self:syncAchievements()
+        if context.metaLevel then
+                self:syncMetaLevel(context.metaLevel)
+        end
 end
 
 function SnakeCosmetics:getSkins()
@@ -823,45 +403,29 @@ function SnakeCosmetics:getOutlineColor()
 end
 
 function SnakeCosmetics:getGlowColor()
-	local skin = self:getActiveSkin()
-	local palette = skin and skin.colors or {}
-	local effects = skin and skin.effects or {}
-	local glowEffect = effects.glow or {}
-	if glowEffect.color then
-		return resolveColor(glowEffect.color)
-	end
-	return resolveColor(palette.glow, self:getBodyColor())
+        local skin = self:getActiveSkin()
+        local palette = skin and skin.colors or {}
+        return resolveColor(palette.glow, self:getBodyColor())
 end
 
 function SnakeCosmetics:getPaletteForSkin(skin)
-	local target = skin or self:getActiveSkin()
-	if not target then
-		return {
-			body = resolveColor(nil, Theme.snakeDefault),
-			outline = resolveColor(DEFAULT_OUTLINE_COLOR),
-			glow = resolveColor(nil, Theme.snakeDefault),
-		}
-	end
+        local target = skin or self:getActiveSkin()
+        if not target then
+                return {
+                        body = resolveColor(nil, Theme.snakeDefault),
+                        outline = resolveColor(DEFAULT_OUTLINE_COLOR),
+                        glow = resolveColor(nil, Theme.snakeDefault),
+                }
+        end
 
-	local palette = target.colors or {}
-	local effects = target.effects or {}
+        local palette = target.colors or {}
 
-	local result = {}
-	result.body = resolveColor(palette.body, Theme.snakeDefault)
-	result.outline = resolveColor(DEFAULT_OUTLINE_COLOR)
+        local result = {}
+        result.body = resolveColor(palette.body, Theme.snakeDefault)
+        result.outline = resolveColor(DEFAULT_OUTLINE_COLOR)
+        result.glow = resolveColor(palette.glow, result.body)
 
-	local glowEffect = effects.glow or {}
-	if glowEffect.color then
-		result.glow = resolveColor(glowEffect.color)
-	else
-		result.glow = resolveColor(palette.glow, result.body)
-	end
-
-	if effects.glow then
-		result.glowEffect = copyTable(effects.glow)
-	end
-
-	return result
+        return result
 end
 
 return SnakeCosmetics

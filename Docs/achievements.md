@@ -8,23 +8,23 @@ entry specifies the numerical goal, how progress is tracked, hidden status, and 
 
 - **Total achievements:** 16
 - **Categories:** Progress (3), Depth (0), Skill (11), Collection (2)
-- **Cosmetic unlocks:** Orchard Sovereign, Crystalline Mire, Midnight Mechanica, Tidal Resonance (4 total)
+- **Cosmetic unlocks:** None (cosmetics temporarily unavailable)
 
 ## Progress Achievements
 
 | Achievement | Goal | Requirement Detail | Tracking Source | Hidden | Unlocks |
 | --- | --- | --- | --- | --- | --- |
-| Apple Tycoon | 1,000 apples | Eat 1,000 apples across all runs. | `PlayerStats.totalApplesEaten` | No | Orchard Sovereign snake skin |
+| Apple Tycoon | 1,000 apples | Eat 1,000 apples across all runs. | `PlayerStats.totalApplesEaten` | No | — |
 | Daily Dabbler | 1 daily challenge | Complete a single daily challenge. | `PlayerStats.dailyChallengesCompleted` | No | — |
-| Daily Champion | 30 daily challenges | Complete 30 daily challenges overall. | `PlayerStats.dailyChallengesCompleted` | No | Crystalline Mire snake skin |
+| Daily Champion | 30 daily challenges | Complete 30 daily challenges overall. | `PlayerStats.dailyChallengesCompleted` | No | — |
 | Combo Spark | 3 fruit combo | Reach a 3-fruit combo streak (lifetime best). | `PlayerStats.bestComboStreak` | No | — |
 | Combo Surge | 6 fruit combo | Reach a 6-fruit combo streak (lifetime best). | `PlayerStats.bestComboStreak` | No | — |
-| Combo Inferno | 10 fruit combo | Reach a 10-fruit combo streak (lifetime best). | `PlayerStats.bestComboStreak` | No | Tidal Resonance snake skin |
+| Combo Inferno | 10 fruit combo | Reach a 10-fruit combo streak (lifetime best). | `PlayerStats.bestComboStreak` | No | — |
 | Shieldless Wonder* | 3 floors | Clear 3 floors in a single run without consuming a shield. | `SessionStats.runFloorsCleared`, `SessionStats.runShieldsSaved` | Yes | — |
 | Dragon Combo Fusion* | 1 run | In the same run, eat at least one dragonfruit and reach an 8-fruit combo streak. | `SessionStats.runDragonfruitEaten`, `SessionStats.runBestComboStreak` | Yes | — |
 | Ricochet Routine | 1 wall bounce | Bounce off a wall while shielded (cumulative). | `PlayerStats.shieldWallBounces` | No | — |
 | Stone Sneeze | 1 rock break | Break a rock by colliding with it while shielded (cumulative). | `PlayerStats.shieldRockBreaks` | No | — |
-| Rock Crusher | 25 rock breaks | Break 25 rocks with shields over time. | `PlayerStats.shieldRockBreaks` | No | Midnight Mechanica snake skin |
+| Rock Crusher | 25 rock breaks | Break 25 rocks with shields over time. | `PlayerStats.shieldRockBreaks` | No | — |
 | Saw Whisperer | 1 saw parry | Parry a saw blade using a shield (cumulative). | `PlayerStats.shieldSawParries` | No | — |
 | Saw Annihilator | 25 saw parries | Parry 25 saw blades with shields over time. | `PlayerStats.shieldSawParries` | No | — |
 | Crash-Test Maestro | 3 interactions | In a single run, block at least one wall, rock, and saw with shields. | `SessionStats.runShieldWallBounces`, `SessionStats.runShieldRockBreaks`, `SessionStats.runShieldSawParries` | No | — |

@@ -553,8 +553,6 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 			body = bodyColor,
 			outline = adjustHover(snakePalette.outline, hoverBoost * 0.5),
 			glow = adjustHover(snakePalette.glow, hoverBoost * 0.35),
-			glowEffect = snakePalette.glowEffect,
-			overlay = snakePalette.overlay,
 		}
 	elseif hoverBoost > 0 then
 		paletteOverride = {body = bodyColor}
