@@ -1,49 +1,57 @@
 local Floors = {
-	[1] = {
+	--[[[1] = {
 		name = "Garden Gate",
 		flavor = "Noodl winds through the garden, scooping up fruit scattered among the vines.",
 		palette = {
 			bgColor = {0.08, 0.10, 0.09, 1},
-			arenaBG = {0.21, 0.19, 0.22, 1},
-			arenaBorder = {0.52, 0.48, 0.38, 1},
-			rock = {0.58, 0.56, 0.52, 1},
+			arenaBG = {0.22, 0.20, 0.23, 1},
+			arenaBorder = {0.56, 0.50, 0.42},
+			rock = {0.60, 0.58, 0.54, 1},
 			sawColor = {0.78, 0.78, 0.80, 1},
+		},
+	},]]
+	[1] = {
+		name = "Inferno Gates",
+		flavor = "Heat rises, and the walls bleed with firelight.",
+		palette = {
+			bgColor     = {0.07, 0.03, 0.035, 1},    -- soot darkness (unchanged feeling)
+			arenaBG     = {0.11, 0.065, 0.10, 1},     -- volcanic plum (adds contrast)
+			arenaBorder = {0.42, 0.09, 0.10, 1},     -- saturated inferno red
+			rock        = {0.36, 0.30, 0.28, 1},     -- ashstone: brown-grey, stands out clearly
+			sawColor    = {0.78, 0.80, 0.85, 1},     -- crisp heated blade
 		},
 	},
 	[2] = {
 		name = "Moonwell Caves",
 		flavor = "Moonlit pools mirror Noodl's glide as pears bob within easy reach.",
 		palette = {
-			bgColor    = {0.035, 0.055, 0.095, 1},
-			arenaBG    = {0.13, 0.17, 0.25, 1},
-			arenaBorder= {0.44, 0.36, 0.62, 1},
-			snake      = {0.78, 0.86, 0.98, 1},
-			rock       = {0.41, 0.58, 0.71, 1},
-			sawColor   = {0.69, 0.69, 0.74, 1},
+			bgColor     = {0.05, 0.07, 0.10, 1},
+			arenaBG     = {0.17, 0.18, 0.24, 1},
+			arenaBorder = {0.47, 0.40, 0.57, 1},
+			rock        = {0.50, 0.53, 0.57, 1},
+			sawColor    = {0.72, 0.72, 0.76, 1},
 		},
 	},
 	[3] = {
 		name = "Tide Vault",
 		flavor = "Slow waves roll shining citrus along the tiles while Noodl gathers every slice.",
 		palette = {
-			bgColor    = {0.035, 0.070, 0.090, 1},
-			arenaBG    = {0.089, 0.242, 0.271, 1},
-			arenaBorder= {0.63, 0.36, 0.4, 1},
-			snake      = {0.84, 0.95, 0.58, 1},
-			rock       = {0.361, 0.561, 0.635, 1},
-			sawColor   = {0.62, 0.659, 0.671, 1},
+			bgColor     = {0.04, 0.07, 0.09, 1},
+			arenaBG     = {0.12, 0.21, 0.24, 1},
+			arenaBorder = {0.50, 0.39, 0.43, 1},
+			rock        = {0.50, 0.54, 0.56, 1},
+			sawColor    = {0.72, 0.72, 0.76, 1},
 		},
 	},
 	[4] = {
-		name = "Gloomshaft Hoist",
-		flavor = "Winches creak through echoing caverns while glimmering dew feeds Noodl's climb.",
+		name = "Frosty Cavern",
+		flavor = "",
 		palette = {
-			bgColor    = {0.032, 0.055, 0.085, 1},
-			arenaBG    = {0.112, 0.162, 0.214, 1},
-			arenaBorder= {0.368, 0.512, 0.62, 1},
-			snake      = {0.78, 0.95, 0.89, 1},
-			rock       = {0.318, 0.452, 0.54, 1},
-			sawColor   = {0.67, 0.88, 0.93, 1},
+			bgColor     = {0.038, 0.058, 0.085, 1},
+			arenaBG     = {0.22, 0.26, 0.38, 1},
+			arenaBorder = {0.62, 0.58, 0.74, 1},
+			rock        = {0.56, 0.60, 0.73, 1},
+			sawColor    = {0.75, 0.77, 0.82, 1},
 		},
 	},
 	[5] = {
@@ -51,10 +59,9 @@ local Floors = {
 		flavor = "Frosted crystals light the tunnel and chill each reclaimed apple in Noodl's pack.",
 		palette = {
 			bgColor    = {0.040, 0.070, 0.110, 1},
-			arenaBG    = {0.15, 0.18, 0.24, 1},
+			arenaBG    = {0.13, 0.17, 0.23, 1},
 			arenaBorder= {0.42, 0.68, 0.92, 1},
-			snake      = {0.78, 0.92, 1.0, 1},
-			rock       = {0.46, 0.52, 0.7, 1},
+			rock       = {0.52, 0.60, 0.82, 1},
 			sawColor   = {0.68, 0.88, 1.0, 1},
 		},
 	},
