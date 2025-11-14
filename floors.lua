@@ -3,12 +3,11 @@ local Floors = {
 		name = "Garden Gate",
 		flavor = "Noodl winds through the garden, scooping up fruit scattered among the vines.",
 		palette = {
-			bgColor     = {0.055, 0.085, 0.070, 1},
-			arenaBG     = {0.165, 0.192, 0.267, 1},
-			arenaBorder = {0.722, 0.663, 0.522, 1},
-			snake       = {0.463, 0.839, 0.765, 1},
-			rock        = {0.69, 0.663, 0.596, 1},
-			sawColor    = {0.824, 0.839, 0.855, 1},
+			bgColor = {0.08, 0.10, 0.09, 1},
+			arenaBG = {0.21, 0.19, 0.22, 1},
+			arenaBorder = {0.52, 0.48, 0.38, 1},
+			rock = {0.58, 0.56, 0.52, 1},
+			sawColor = {0.78, 0.78, 0.80, 1},
 		},
 	},
 	[2] = {

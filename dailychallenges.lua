@@ -874,46 +874,6 @@ DailyChallenges.challenges = {
 		end,
 		xpReward = 130,
 	},
-	{
-		id = "floor_cartographer",
-		titleKey = "menu.daily.floor_cartographer.title",
-		descriptionKey = "menu.daily.floor_cartographer.description",
-		goal = 4,
-		progressKey = "menu.daily.floor_cartographer.progress",
-		completeKey = "menu.daily.floor_cartographer.complete",
-		timeChunk = 180,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local floors = getStatValue(statsSource, "floorsCleared", context)
-			local timeSpent = getStatValue(statsSource, "totalFloorTime", context)
-			local value = min(floors, floor(timeSpent / (self.timeChunk or 1)))
-			return max(value, 0)
-		end,
-		getRunValue = function(self, statsSource)
-			local floors = getStatValue(statsSource, "floorsCleared")
-			local timeSpent = getStatValue(statsSource, "totalFloorTime")
-			local value = min(floors, floor(timeSpent / (self.timeChunk or 1)))
-			return max(value, 0)
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local floors = getStatValue(statsSource, "floorsCleared", context)
-			local timeSpent = getStatValue(statsSource, "totalFloorTime", context)
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				floors = floors,
-				minutes = string.format("%.1f", max(timeSpent / 60, 0)),
-				minutes_chunk = string.format("%.1f", (self.timeChunk or 1) / 60),
-			}
-		end,
-		descriptionReplacements = function(self)
-			return {
-				minutes_chunk = string.format("%.1f", (self.timeChunk or 1) / 60),
-			}
-		end,
-		xpReward = 100,
-	},
 }
 
 function DailyChallenges:getChallengeForIndex(index, context)
