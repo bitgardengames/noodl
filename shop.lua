@@ -130,51 +130,11 @@ local function getColorChannels(color, fallback)
 	return reference[1] or 0, reference[2] or 0, reference[3] or 0, reference[4] or 1
 end
 
-local function resolveToneColor(tone, index)
-        if not tone then
-                return nil
-        end
-
-        if type(tone) ~= "table" then
-                return nil
-        end
-
-        if index == 1 then
-                return tone.base or tone.primary or tone.dark or tone[1]
-        end
-
-        if index == 2 then
-                return tone.accent or tone.highlight or tone.secondary or tone.light or tone[2]
-        end
-
-        return tone[index]
-end
-
 local function drawBackground(screenW, screenH, palette)
-        local tone = palette and palette.backgroundTone
-        local baseTone = resolveToneColor(tone, 1)
-        local overlayTone = resolveToneColor(tone, 2)
-
-        if baseTone then
-                local baseR, baseG, baseB, baseA = getColorChannels(baseTone, palette and palette.bgColor)
-                love.graphics.setColor(baseR, baseG, baseB, baseA)
-                love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-
-                if overlayTone then
-                        local overlayR, overlayG, overlayB, overlayA = getColorChannels(overlayTone, baseTone)
-                        love.graphics.setColor(overlayR, overlayG, overlayB, overlayA)
-                        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-                end
-        else
-                local bgColor = (palette and palette.bgColor) or Theme.bgColor
-                local baseR, baseG, baseB, baseA = getColorChannels(bgColor)
-                love.graphics.setColor(baseR * 0.92, baseG * 0.92, baseB * 0.92, baseA)
-                love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-
-                local overlayR, overlayG, overlayB = getColorChannels(bgColor)
-                love.graphics.setColor(overlayR, overlayG, overlayB, 0.28)
-                love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-        end
+        local baseColor = Theme.shopBackgroundColor or (palette and palette.bgColor) or Theme.bgColor
+        local r, g, b, a = getColorChannels(baseColor)
+        love.graphics.setColor(r, g, b, a)
+        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
 
         love.graphics.setColor(1, 1, 1, 1)
 end

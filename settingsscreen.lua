@@ -441,10 +441,7 @@ local function getBaseColor()
 end
 
 function SettingsScreen:getMenuBackgroundOptions()
-	return {
-		effectKey = "settings",
-		baseColor = getBaseColor(),
-	}
+        return MenuScene.getPlainBackgroundOptions(nil, getBaseColor())
 end
 
 local function drawBackground(sw, sh)

@@ -8,21 +8,46 @@ local manualBackground = false
 local drawRole = nil
 
 local function copyColor(color)
-	if not color then
-		return {0, 0, 0, 1}
-	end
+        if not color then
+                return {0, 0, 0, 1}
+        end
 
-	return {
-		color[1] or 0,
-		color[2] or 0,
-		color[3] or 0,
-		color[4] == nil and 1 or color[4],
-	}
+        return {
+                color[1] or 0,
+                color[2] or 0,
+                color[3] or 0,
+                color[4] == nil and 1 or color[4],
+        }
+end
+
+local function getPlainBackgroundBaseColor(override)
+        if override then
+                return copyColor(override)
+        end
+
+        local base = Theme.menuBackgroundColor or Theme.bgColor or {0.07, 0.08, 0.11, 1}
+        return copyColor(base)
+end
+
+function MenuScene.getPlainBackgroundOptions(effectKey, overrideColor)
+        local baseColor = getPlainBackgroundBaseColor(overrideColor)
+
+        return {
+                effectKey = effectKey or "menu/plain",
+                baseColor = baseColor,
+                accentColor = baseColor,
+                pulseColor = baseColor,
+                baseDarken = 0,
+                accentLighten = 0,
+                pulseLighten = 0,
+                vignetteAlpha = 0,
+                vignetteLighten = 0,
+        }
 end
 
 local function lightenColor(color, factor)
-	factor = factor or 0.35
-	local r = color[1] or 1
+        factor = factor or 0.35
+        local r = color[1] or 1
 	local g = color[2] or 1
 	local b = color[3] or 1
 	local a = color[4] == nil and 1 or color[4]
@@ -81,7 +106,7 @@ local function getBaseColor(options)
 		return copyColor(override)
 	end
 
-	return copyColor(Theme.bgColor or {0.12, 0.12, 0.14, 1})
+        return copyColor(Theme.bgColor or {0.07, 0.08, 0.11, 1})
 end
 
 local function computePalette(options)
