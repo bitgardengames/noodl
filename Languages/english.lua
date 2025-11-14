@@ -125,12 +125,6 @@ local english = {
 					progress = "Current pace: ${pace}/${goal} (Fruit: ${apples}, Minutes: ${minutes})",
 					complete = "Fruit frenzy! Pace reached ${pace} per minute.",
 				},
-				combo_courier = {
-					title = "Combo Courier",
-					description = "Trigger ${combo_goal} combos while clearing ${floor_goal} floors in one run.",
-					progress = "Conditions: ${current}/${goal} (Combos: ${combos}/${combo_goal}, Floors: ${floors}/${floor_goal})",
-					complete = "Delivery complete! ${combos} combos and ${floors} floors cleared.",
-				},
 				fruit_frenzy = {
 					title = "Fruit Frenzy",
 					description = "Chomp ${target_apples} fruit within ${target_time}.",

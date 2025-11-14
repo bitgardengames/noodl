@@ -773,60 +773,6 @@ DailyChallenges.challenges = {
 		xpReward = 100,
 	},
 	{
-		id = "combo_courier",
-		titleKey = "menu.daily.combo_courier.title",
-		descriptionKey = "menu.daily.combo_courier.description",
-		goal = 1,
-		progressKey = "menu.daily.combo_courier.progress",
-		completeKey = "menu.daily.combo_courier.complete",
-		comboGoal = 5,
-		floorGoal = 4,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local combos = getStatValue(statsSource, "combosTriggered", context)
-			local floors = getStatValue(statsSource, "floorsCleared", context)
-
-			if combos >= (self.comboGoal or 0) and floors >= (self.floorGoal or 0) then
-				return 1
-			end
-
-			return 0
-		end,
-		getRunValue = function(self, statsSource)
-			local combos = getStatValue(statsSource, "combosTriggered")
-			local floors = getStatValue(statsSource, "floorsCleared")
-
-			if combos >= (self.comboGoal or 0) and floors >= (self.floorGoal or 0) then
-				return 1
-			end
-
-			return 0
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local combos = getStatValue(statsSource, "combosTriggered", context)
-			local floors = getStatValue(statsSource, "floorsCleared", context)
-			local comboGoal = self.comboGoal or 0
-			local floorGoal = self.floorGoal or 0
-
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				combos = combos,
-				combo_goal = comboGoal,
-				floors = floors,
-				floor_goal = floorGoal,
-			}
-		end,
-		descriptionReplacements = function(self)
-			return {
-				combo_goal = self.comboGoal or 0,
-				floor_goal = self.floorGoal or 0,
-			}
-		end,
-		xpReward = 125,
-	},
-	{
 		id = "fruit_frenzy",
 		titleKey = "menu.daily.fruit_frenzy.title",
 		descriptionKey = "menu.daily.fruit_frenzy.description",
