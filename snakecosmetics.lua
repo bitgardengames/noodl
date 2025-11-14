@@ -277,28 +277,28 @@ function SnakeCosmetics:isSkinUnlocked(id)
 end
 
 function SnakeCosmetics:syncMetaLevel(level, context)
-        self:_ensureLoaded()
+	self:_ensureLoaded()
 
-        level = max(1, math.floor(level or 1))
-        self._highestKnownMetaLevel = max(self._highestKnownMetaLevel or 0, level)
+	level = max(1, math.floor(level or 1))
+	self._highestKnownMetaLevel = max(self._highestKnownMetaLevel or 0, level)
 end
 
 function SnakeCosmetics:syncAchievements()
-        self:_ensureLoaded()
+	self:_ensureLoaded()
 end
 
 function SnakeCosmetics:onAchievementUnlocked(id)
-        self:_ensureLoaded()
+	self:_ensureLoaded()
 end
 
 function SnakeCosmetics:load(context)
-        self:_ensureLoaded()
+	self:_ensureLoaded()
 
-        context = context or {}
+	context = context or {}
 
-        if context.metaLevel then
-                self:syncMetaLevel(context.metaLevel)
-        end
+	if context.metaLevel then
+		self:syncMetaLevel(context.metaLevel)
+	end
 end
 
 function SnakeCosmetics:getSkins()
@@ -403,29 +403,29 @@ function SnakeCosmetics:getOutlineColor()
 end
 
 function SnakeCosmetics:getGlowColor()
-        local skin = self:getActiveSkin()
-        local palette = skin and skin.colors or {}
-        return resolveColor(palette.glow, self:getBodyColor())
+	local skin = self:getActiveSkin()
+	local palette = skin and skin.colors or {}
+	return resolveColor(palette.glow, self:getBodyColor())
 end
 
 function SnakeCosmetics:getPaletteForSkin(skin)
-        local target = skin or self:getActiveSkin()
-        if not target then
-                return {
-                        body = resolveColor(nil, Theme.snakeDefault),
-                        outline = resolveColor(DEFAULT_OUTLINE_COLOR),
-                        glow = resolveColor(nil, Theme.snakeDefault),
-                }
-        end
+	local target = skin or self:getActiveSkin()
+	if not target then
+		return {
+			body = resolveColor(nil, Theme.snakeDefault),
+			outline = resolveColor(DEFAULT_OUTLINE_COLOR),
+			glow = resolveColor(nil, Theme.snakeDefault),
+		}
+	end
 
-        local palette = target.colors or {}
+	local palette = target.colors or {}
 
-        local result = {}
-        result.body = resolveColor(palette.body, Theme.snakeDefault)
-        result.outline = resolveColor(DEFAULT_OUTLINE_COLOR)
-        result.glow = resolveColor(palette.glow, result.body)
+	local result = {}
+	result.body = resolveColor(palette.body, Theme.snakeDefault)
+	result.outline = resolveColor(DEFAULT_OUTLINE_COLOR)
+	result.glow = resolveColor(palette.glow, result.body)
 
-        return result
+	return result
 end
 
 return SnakeCosmetics
