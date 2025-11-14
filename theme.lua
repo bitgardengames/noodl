@@ -5,7 +5,7 @@ local Theme = {
 
 	-- General background / chrome
 	bgColor        = {0.07, 0.08, 0.11, 1.0},
-	menuBackgroundColor = {0.14, 0.12, 0.12},
+	menuBackgroundColor = {0.105, 0.115, 0.125},
 	shopBackgroundColor = {0.08, 0.06, 0.12, 1.0},
 	shadowColor    = {0.0, 0.0, 0.0, 0.25},
 	highlightColor = {1.0, 1.0, 1.0, 0.06},
