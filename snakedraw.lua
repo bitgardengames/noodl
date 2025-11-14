@@ -96,6 +96,7 @@ local shadowPalette = {
         body = {0, 0, 0, 0.25},
         outline = {0, 0, 0, 0.25},
         singlePass = true,
+        blendMode = "replace",
 }
 
 
@@ -462,6 +463,15 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 	local bodyCoords = coords
 
         love.graphics.push("all")
+
+        if palette and palette.blendMode then
+                if palette.blendAlphaMode then
+                        love.graphics.setBlendMode(palette.blendMode, palette.blendAlphaMode)
+                else
+                        love.graphics.setBlendMode(palette.blendMode)
+                end
+        end
+
         if sharpCorners then
                 love.graphics.setLineStyle("rough")
                 love.graphics.setLineJoin("miter")
@@ -691,7 +701,19 @@ drawTrailSegmentToCanvas = function(trail, half, options, paletteOverride, coord
         local outlineColor = palette.outline or SnakeCosmetics:getOutlineColor()
         local singlePass = palette.singlePass
 
-	love.graphics.push("all")
+        love.graphics.push("all")
+
+        if paletteOverride then
+                local blendMode = paletteOverride.blendMode
+                local blendAlphaMode = paletteOverride.blendAlphaMode
+                if blendMode then
+                        if blendAlphaMode then
+                                love.graphics.setBlendMode(blendMode, blendAlphaMode)
+                        else
+                                love.graphics.setBlendMode(blendMode)
+                        end
+                end
+        end
 	local skipStartCap = options and options.flatStartCap
 	local skipEndCap = options and options.flatEndCap
 
@@ -813,7 +835,15 @@ local function drawswiftFangsAura(hx, hy, SEGMENT_SIZE, data)
 	local fillG = 0.96 + 0.04 * highlight
 	local fillB = 0.88 + 0.08 * highlight
 
-	love.graphics.push("all")
+        love.graphics.push("all")
+
+        if palette and palette.blendMode then
+                if palette.blendAlphaMode then
+                        love.graphics.setBlendMode(palette.blendMode, palette.blendAlphaMode)
+                else
+                        love.graphics.setBlendMode(palette.blendMode)
+                end
+        end
 	love.graphics.translate(hx, hy + mouthDrop)
 
 	for side = -1, 1, 2 do
