@@ -204,7 +204,6 @@ local Arena = {
 	rows = 0,
 	exit = nil,
 	_exitDrawRequested = false,
-	backgroundPalette = nil,
 	backdropColor = nil,
 	arenaFillColor = nil,
 	borderFlare = 0,
@@ -336,8 +335,6 @@ function Arena:setFloorDecorations(floorNum, floorData)
 	self._decorationConfig = {
 		floor = floorNum or 0,
 		palette = floorData and floorData.palette,
-		theme = floorData and floorData.backgroundTheme,
-		variant = floorData and floorData.backgroundVariant,
 		seed = seed,
 	}
 
@@ -379,9 +376,6 @@ function Arena:rebuildTileDecorations()
 		accentTarget = copyColor(Theme.rock, 1)
 	end
 
-	local theme = config.theme
-	local variant = config.variant
-
 	local function averagePaletteColors(a, b)
 		if not a and not b then
 			return nil
@@ -404,11 +398,6 @@ function Arena:rebuildTileDecorations()
 	end
 
 	local function resolveThemeTint()
-		local tint = VARIANT_TINTS[variant] or THEME_TINTS[theme]
-		if tint then
-			return copyColor(tint, 1)
-		end
-
 		if palette then
 			local snakeColor = palette.snake and copyColor(palette.snake, 1)
 			local rockColor = palette.rock and copyColor(palette.rock, 1)
@@ -423,7 +412,7 @@ function Arena:rebuildTileDecorations()
 	local themeTint = resolveThemeTint()
 
 	local baseSeed = (config.seed or os.time()) % 2147483647
-	baseSeed = baseSeed + (config.floor or 0) * 131071 + hashString(theme) * 17 + hashString(variant) * 31
+	baseSeed = baseSeed + (config.floor or 0) * 131071
 	local rng = love.math.newRandomGenerator(baseSeed)
 
 	local tileSize = self.tileSize or 24
@@ -431,18 +420,6 @@ function Arena:rebuildTileDecorations()
 	local minClusterSize = 2
 	local maxClusterSize = 4
 	local colorJitter = 0.005
-
-	if theme == "botanical" then
-		clusterChance = clusterChance + 0.02
-		maxClusterSize = maxClusterSize + 1
-	elseif theme == "machine" then
-		clusterChance = max(0.06, clusterChance - 0.02)
-		colorJitter = 0.015
-	elseif theme == "oceanic" then
-		clusterChance = clusterChance + 0.01
-	elseif theme == "cavern" then
-		clusterChance = clusterChance + 0.005
-	end
 
 	clusterChance = clusterChance * (0.85 + rng:random() * 0.35)
 	clusterChance = max(0, min(0.25, clusterChance))
@@ -968,18 +945,8 @@ function Arena:getBounds()
 	return self.x, self.y, self.width, self.height
 end
 
-function Arena:setBackgroundEffect(effectData, palette)
-	self.backgroundPalette = palette
-
-	local backdrop = (palette and palette.bgColor) or Theme.bgColor or {0.12, 0.12, 0.14, 1}
-	local arenaColor = (palette and palette.arenaBG) or Theme.arenaBG or {0.18, 0.18, 0.22, 1}
-
-	self.backdropColor = copyColor(backdrop)
-	self.arenaFillColor = copyColor(arenaColor)
-end
-
 function Arena:drawBackdrop(sw, sh)
-	local color = self.backdropColor or Theme.bgColor or {0.12, 0.12, 0.14, 1}
+	local color = Theme.bgColor or {0.12, 0.12, 0.14, 1}
 	love.graphics.setColor(color[1] or 0, color[2] or 0, color[3] or 0, color[4] or 1)
 	love.graphics.rectangle("fill", 0, 0, sw, sh)
 
@@ -991,7 +958,7 @@ end
 function Arena:drawBackground()
 	local ax, ay, aw, ah = self:getBounds()
 
-	local arenaColor = self.arenaFillColor or Theme.arenaBG or {0.18, 0.18, 0.22, 1}
+	local arenaColor = Theme.arenaBG or {0.18, 0.18, 0.22, 1}
 	love.graphics.setColor(arenaColor[1] or 0, arenaColor[2] or 0, arenaColor[3] or 0, arenaColor[4] or 1)
 	love.graphics.rectangle("fill", ax, ay, aw, ah)
 

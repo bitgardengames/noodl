@@ -668,7 +668,6 @@ end
 
 function FloorSetup.prepare(floorNum, floorData)
 	applyPalette(floorData and floorData.palette)
-	Arena:setBackgroundEffect(floorData and floorData.backgroundEffect, floorData and floorData.palette)
 	resetFloorEntities()
 	Arena:setFloorDecorations(floorNum, floorData)
 	local safeZone, reservedCells, reservedSafeZone, rockSafeZone, spawnBuffer, reservedSpawnBuffer = prepareOccupancy()
