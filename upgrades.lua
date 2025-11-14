@@ -1926,7 +1926,7 @@ pool = {
 				local available = {}
 				local totalWeight = 0
 				for _, upgrade in ipairs(pool) do
-					if upgrade.id ~= "wildcard" and Upgrades:canOffer(upgrade, context, allowTaken) then
+					if upgrade.id ~= "wildcard" and upgrade.id ~= "fresh_supplies" and Upgrades:canOffer(upgrade, context, allowTaken) then
 						local rarityRank = SHOP_RARITY_RANK[upgrade.rarity] or 0
 						if rarityRank >= minimumRank then
 							local weight = calculateWeight(upgrade)
