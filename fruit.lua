@@ -507,27 +507,37 @@ local function prepareFruitDrawData(f, out)
 
 	out = out or {}
 
-	local offsetY = (f.offsetY or 0) + (f.bobOffset or 0)
+	-- Fruit sprite position (bobs)
+	local spriteOffsetY = (f.offsetY or 0) + (f.bobOffset or 0)
 	local x = f.x
-	local y = f.y + offsetY
+	local spriteY = f.y + spriteOffsetY
+
+	-- Grounded shadow position (no bob)
+	local shadowY = f.y + (f.offsetY or 0) + 3
+
 	local alpha = f.alpha or 1
 	local sx, sy = f.scaleX or 1, f.scaleY or 1
 	local radius = HITBOX_SIZE / 2
 	local pulse = f.glowPulse or 1
 	local bobOffset = f.bobOffset or 0
-	local bobStrength = bobOffset / IDLE_FLOAT_AMPLITUDE
-	local liftStrength = max(0, -bobStrength)
-	local shadowAlpha = 0.25 * alpha * (f.shadow or 1)
-	shadowAlpha = shadowAlpha * (1 + liftStrength * 0.4)
-	local shadowScale = 1 + liftStrength * 0.12
-	local shadowYOffset = min(0, bobOffset * 0.35)
-	local bodyColor = (f.type and f.type.color) or highlightDefault
-	local highlight = (f.type and f.type.highlightColor) or defaultHighlightColor
-	local isActive = (f == active)
+
+	-- Realistic shadow height interpretation
+	local h = -bobOffset                    -- higher fruit → positive h
+	local maxH = IDLE_FLOAT_AMPLITUDE       -- 3.6 px
+	local nh = clamp(h / maxH, 0, 1)        -- normalize 0→1
+
+	-- Shadow scale shrinks proportional to height
+	local shadowShrink = 0.14 * nh          -- subtle but realistic
+	local shadowScale = 1.0 - shadowShrink
+
+	-- Shadow alpha fades slightly with height
+	local baseShadowAlpha = 0.25 * alpha * (f.shadow or 1)
+	local shadowAlpha = baseShadowAlpha * (1.0 - 0.20 * nh)
 
 	out.fruit = f
 	out.x = x
-	out.y = y
+	out.y = spriteY
+	out.shadowY = shadowY
 	out.alpha = alpha
 	out.sx = sx
 	out.sy = sy
@@ -536,11 +546,11 @@ local function prepareFruitDrawData(f, out)
 	out.bobOffset = bobOffset
 	out.shadowAlpha = shadowAlpha
 	out.shadowScale = shadowScale
-	out.shadowYOffset = shadowYOffset
-	out.bodyColor = bodyColor
-	out.highlight = highlight
-	out.isActive = isActive
-	if isActive then
+	out.bodyColor = (f.type and f.type.color) or highlightDefault
+	out.highlight = (f.type and f.type.highlightColor) or defaultHighlightColor
+	out.isActive = (f == active)
+
+	if out.isActive then
 		out.idleSparkles = idleSparkles
 		out.idleSparkleCount = #idleSparkles
 		out.activeTimer = f.timer or 0
@@ -549,7 +559,9 @@ local function prepareFruitDrawData(f, out)
 		out.idleSparkleCount = 0
 		out.activeTimer = nil
 	end
-	out.isDragonfruitActive = isActive and f.type ~= nil and f.type.name == "Dragonfruit"
+
+	out.isDragonfruitActive =
+		out.isActive and f.type and f.type.name == "Dragonfruit"
 
 	return out
 end
@@ -557,20 +569,20 @@ end
 local function drawFruitShadow(data)
 	if not data then return end
 
-	local x, y = data.x, data.y
+	local x = data.x
+	local y = data.shadowY    -- grounded + 3px lower now
 	local sx, sy = data.sx, data.sy
 	local r = data.radius
 	local segments = 32
-	local shadowYOffset = data.shadowYOffset or 0
 
 	love.graphics.setColor(0, 0, 0, data.shadowAlpha)
 	love.graphics.ellipse(
-	"fill",
-	x + SHADOW_OFFSET,
-	y + SHADOW_OFFSET + shadowYOffset,
-	(r * sx + OUTLINE_SIZE * 0.5) * data.shadowScale,
-	(r * sy + OUTLINE_SIZE * 0.5) * data.shadowScale,
-	segments
+		"fill",
+		x + SHADOW_OFFSET,
+		y + SHADOW_OFFSET,
+		(r * sx + OUTLINE_SIZE * 0.5) * data.shadowScale,
+		(r * sy + OUTLINE_SIZE * 0.5) * data.shadowScale,
+		segments
 	)
 end
 
