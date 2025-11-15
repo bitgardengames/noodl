@@ -511,26 +511,17 @@ local function prepareFruitDrawData(f, out)
 	local spriteOffsetY = (f.offsetY or 0) + (f.bobOffset or 0)
 	local x = f.x
 	local spriteY = f.y + spriteOffsetY
-
-	-- Grounded shadow position (no bob)
 	local shadowY = f.y + (f.offsetY or 0) + 3
-
 	local alpha = f.alpha or 1
 	local sx, sy = f.scaleX or 1, f.scaleY or 1
 	local radius = HITBOX_SIZE / 2
 	local pulse = f.glowPulse or 1
 	local bobOffset = f.bobOffset or 0
-
-	-- Realistic shadow height interpretation
-	local h = -bobOffset                    -- higher fruit → positive h
-	local maxH = IDLE_FLOAT_AMPLITUDE       -- 3.6 px
-	local nh = clamp(h / maxH, 0, 1)        -- normalize 0→1
-
-	-- Shadow scale shrinks proportional to height
-	local shadowShrink = 0.14 * nh          -- subtle but realistic
+	local h = -bobOffset
+	local maxH = IDLE_FLOAT_AMPLITUDE
+	local nh = clamp(h / maxH, 0, 1)
+	local shadowShrink = 0.14 * nh
 	local shadowScale = 1.0 - shadowShrink
-
-	-- Shadow alpha fades slightly with height
 	local baseShadowAlpha = 0.25 * alpha * (f.shadow or 1)
 	local shadowAlpha = baseShadowAlpha * (1.0 - 0.20 * nh)
 
