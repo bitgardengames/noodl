@@ -19,12 +19,15 @@ local remove = table.remove
 local UI = {}
 
 local SHADOW_OFFSET = 5
+local BASE_SCREEN_WIDTH = 1920
+local BASE_SCREEN_HEIGHT = 1080
+local MIN_LAYOUT_SCALE = 0.6
+local MAX_LAYOUT_SCALE = 1.5
 
 UI.shadowOffset = SHADOW_OFFSET
 
 UI._cursorX = nil
 UI._cursorY = nil
-
 
 UI.fruitCollected = 0
 UI.fruitRequired = 0
@@ -70,11 +73,6 @@ UI.upgradeIndicators = {
 	_removeBuffer = {},
 	_listDirty = true,
 }
-
-local BASE_SCREEN_WIDTH = 1920
-local BASE_SCREEN_HEIGHT = 1080
-local MIN_LAYOUT_SCALE = 0.6
-local MAX_LAYOUT_SCALE = 1.5
 
 local fontDefinitions = {
 	title = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 72, min = 28},
