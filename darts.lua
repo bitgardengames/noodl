@@ -745,9 +745,7 @@ end
 
 local function drawEmitter(emitter)
 	local bodyColor, accentColor, telegraphColor = getEmitterColors()
-
-	-- Reduce emitter body size by 2px
-	local tileSize = (Arena.tileSize or BASE_EMITTER_SIZE) - 2
+	local tileSize = (Arena.tileSize or BASE_EMITTER_SIZE)
 	local half = tileSize * 0.5
 	local centerX = emitter.x or 0
 	local centerY = emitter.y or 0

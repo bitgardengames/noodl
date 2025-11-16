@@ -25,11 +25,11 @@ local Floors = {
 		nameKey = "floors.tide_vault.name",
 		flavorKey = "floors.tide_vault.flavor",
 		palette = {
-			bgColor     = {0.18, 0.13, 0.18, 1},     -- R64[1]  #2e222f (cool dark → fixes contrast + mood)
-			arenaBG     = {0.04, 0.37, 0.40, 1},     -- R64[40] #0b5e65 (perfect as-is)
-			arenaBorder = {0.22, 0.31, 0.29, 1},     -- R64[36] #374e4a (darker, more aquatic frame)
-			rock        = {0.61, 0.67, 0.70, 1},     -- R64[8]  #9babb2 (fine)
-			sawColor    = {0.78, 0.86, 0.82, 1},     -- R64[9]  #c7dcd0 (fine)
+			bgColor     = {0.18, 0.13, 0.18, 1},     -- R64[1]
+			arenaBG     = {0.20, 0.20, 0.33, 1},     -- R64[45]
+			arenaBorder = {0.22, 0.31, 0.29, 1},     -- R64[36]
+			rock        = {0.61, 0.67, 0.70, 1},     -- R64[8]
+			sawColor    = {0.78, 0.86, 0.82, 1},     -- R64[9]
 		},
 	},
 	[4] = {
@@ -39,7 +39,7 @@ local Floors = {
 			bgColor     = {0.20, 0.20, 0.33, 1},     -- R64[45] #323353 (closest to 0.038,0.058,0.085 — darkest cold tone)
 			arenaBG     = {0.28, 0.29, 0.47, 1},     -- R64[46] #484a77 (closest to 0.22,0.26,0.38)
 			arenaBorder = {0.56, 0.37, 0.66, 1},     -- R64[52] #905ea9 (closest to 0.62,0.58,0.74)
-			rock        = {0.30, 0.40, 0.71, 1},     -- R64[47] #4d65b4 (closest to 0.56,0.60,0.73 but R64 has no light blues—best viable hue)
+			rock        = {0.61, 0.67, 0.70, 1},     -- R64[47] #4d65b4 (closest to 0.56,0.60,0.73 but R64 has no light blues—best viable hue)
 			sawColor    = {0.78, 0.86, 0.82, 1},     -- R64[9]  #c7dcd0 (closest to 0.75,0.77,0.82)
 		},
 	},
