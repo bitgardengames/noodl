@@ -1277,12 +1277,14 @@ function Saws:draw()
 				love.graphics.setColor(trailColor[1], trailColor[2], trailColor[3], trailAlpha
 			)
 				if saw.dir == "horizontal" then
-				local height = radius * (0.95 + 0.18 * math.sin(phase * 2.6)
+				local height = radius * (0.95 + 0.18 * math.sin(phase * 2.6
+			)
 			)
 				love.graphics.rectangle("fill", glowX - trailLength * 0.5, glowY - height * 0.5, trailLength, height
 			)
 				else
-				local width = radius * (0.95 + 0.18 * math.cos(phase * 2.4)
+				local width = radius * (0.95 + 0.18 * math.cos(phase * 2.4
+			)
 			)
 				love.graphics.rectangle("fill", glowX - width * 0.5, glowY - trailLength * 0.5, width, trailLength
 			)
@@ -1293,12 +1295,14 @@ function Saws:draw()
 			)
 				love.graphics.setLineWidth(2
 			)
-				love.graphics.circle("line", glowX, glowY, radius * (1.18 + 0.12 * pulse)
+				love.graphics.circle("line", glowX, glowY, radius * (1.18 + 0.12 * pulse
+			)
 			)
 
 				love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha * 0.6
 			)
-				love.graphics.circle("line", glowX, glowY, radius * (0.88 + 0.1 * math.sin(phase * 4.4 + 0.8))
+				love.graphics.circle("line", glowX, glowY, radius * (0.88 + 0.1 * math.sin(phase * 4.4 + 0.8)
+			)
 			)
 				love.graphics.setLineWidth(1
 			)

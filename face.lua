@@ -189,7 +189,8 @@ registerDrawer("happy", function()
 	}
 )
 
-	love.graphics.line(curve:render(16)
+	love.graphics.line(curve:render(16
+)
 )
 	end
 
@@ -227,7 +228,8 @@ registerDrawer("veryHappy", function()
 	}
 )
 
-	love.graphics.line(curve:render(16)
+	love.graphics.line(curve:render(16
+)
 )
 	end
 

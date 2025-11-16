@@ -1037,7 +1037,8 @@ local function drawResonantShell(effect, progress)
 				sparkColor[1],
 				sparkColor[2],
 				sparkColor[3],
-				sparkAlpha * (0.75 + 0.2 * sin(progress * pi * 4.2 + index)
+				sparkAlpha * (0.75 + 0.2 * sin(progress * pi * 4.2 + index
+			)
 			)
 			)
 			love.graphics.circle("fill", x + cos(angle) * radius, y + sin(angle) * radius, size, 12)
@@ -1098,7 +1099,8 @@ local function drawAbyssalCatalyst(effect, progress)
 			accentColor[1],
 			accentColor[2],
 			accentColor[3],
-			shardAlphaBase * (0.8 + 0.2 * (index % 2)
+			shardAlphaBase * (0.8 + 0.2 * (index % 2
+		)
 		)
 		)
 		love.graphics.polygon("fill", baseX, baseY, leftX, leftY, tipX, tipY, rightX, rightY)
@@ -1121,7 +1123,8 @@ local function drawAbyssalCatalyst(effect, progress)
 				sparkColor[1],
 				sparkColor[2],
 				sparkColor[3],
-				spiralAlpha * (0.65 + 0.25 * sin(angle * 1.4 + progress * pi * 2)
+				spiralAlpha * (0.65 + 0.25 * sin(angle * 1.4 + progress * pi * 2
+			)
 			)
 			)
 			love.graphics.circle("fill", x + cos(angle) * radius, y + sin(angle) * radius, size, 14)

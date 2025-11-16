@@ -627,7 +627,8 @@ function Achievements:save()
 	local lines = {"return {"}
 	for key, value in pairs(data) do
 		insert(lines, string.format("  [\"%s\"] = {unlocked = %s, progress = %s},",
-			key, tostring(value.unlocked), serializeValue(value.progress or 0))
+			key, tostring(value.unlocked), serializeValue(value.progress or 0)
+		)
 		)
 	end
 	insert(lines, "}")

@@ -84,7 +84,7 @@ function DataSchemas.validate(schema, target, context)
 					entry.type,
 					type(target[key]
 				)
-					)
+				)
 				)
 			end
 		end
