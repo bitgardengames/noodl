@@ -11,6 +11,32 @@ OPEN_KEYWORDS = {"then", "do", "function", "repeat"}
 CLOSE_KEYWORDS = {"end", "until"}
 LEADING_DEDENT_KEYWORDS = {"end", "elseif", "else", "until"}
 
+def count_parens(line: str) -> Tuple[int, int]:
+	in_string = None
+	depth_open = 0
+	depth_close = 0
+	i = 0
+	while i < len(line):
+		ch = line[i]
+		if in_string:
+			if ch == "\\":
+				i += 2
+				continue
+			if ch == in_string:
+				in_string = None
+			i += 1
+			continue
+		if ch in ('"', "'"):
+			in_string = ch
+			i += 1
+			continue
+		if ch == "(":
+			depth_open += 1
+		elif ch == ")":
+			depth_close += 1
+		i += 1
+	return depth_open, depth_close
+
 
 def _match_long_bracket(line: str, start: int) -> Tuple[int, int] | None:
 	if line[start] != "[":
@@ -142,20 +168,51 @@ def count_leading_braces(line: str) -> int:
 def format_lines(lines: Iterable[str]) -> List[str]:
 	formatted: List[str] = []
 	indent = 0
+	paren_depth = 0          # NEW: track multiline parens
+
 	for line in lines:
+		# Compute paren changes BEFORE stripping whitespace
+		open_p, close_p = count_parens(line)
+		entering_paren_block = (paren_depth == 0 and open_p > close_p)
+		inside_paren_block = paren_depth > 0
+
 		stripped, open_kw, close_kw, leading_kw_dedent, open_br, close_br, leading_br_dedent, is_blank = analyse_tokens(line)
+
 		if is_blank:
 			formatted.append("")
 			continue
+
 		leading_braces = count_leading_braces(line)
+
+		# If inside a parentheses block, DO NOT apply your Lua indentation rules
+		if inside_paren_block or entering_paren_block:
+			# Preserve user-defined indentation but normalize tabs if desired:
+			# using single tab per indent level:
+			preserved = "\t" * indent + stripped
+			formatted.append(preserved)
+
+			# Update paren depth AFTER output
+			paren_depth += open_p - close_p
+			if paren_depth < 0:
+				paren_depth = 0
+			continue
+
+		# NORMAL LUA INDENTATION LOGIC (unchanged)
 		indent = max(indent - leading_kw_dedent - leading_braces, 0)
 		new_line = "\t" * indent + stripped
 		formatted.append(new_line)
+
 		indent += open_kw + open_br
 		indent -= max(close_kw - leading_kw_dedent, 0)
 		indent -= max(close_br - leading_braces, 0)
 		if indent < 0:
 			indent = 0
+
+		# Update paren depth AFTER processing
+		paren_depth += open_p - close_p
+		if paren_depth < 0:
+			paren_depth = 0
+
 	return formatted
 
 

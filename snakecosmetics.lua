@@ -23,8 +23,8 @@ local SKIN_DEFINITIONS = {
 		name = "Classic Expedition",
 		description = "Standard expedition scales issued to every new handler.",
 		colors = {
-			body = {0.52, 0.82, 0.72, 1},
-			outline = {0.05, 0.15, 0.12, 1.0},
+			body = Theme.defaultSnake,
+			outline = {0, 0, 0, 1.0},
 			glow = {0.35, 0.95, 0.80, 0.75},
 		},
 		unlock = {default = true},

@@ -69,7 +69,7 @@ function generateFloorPlan()
 			rocks = 6 + (chance(0.5) and 1 or 0),
 			saws = 2,
 			laserCount = 0,
-			dartCount = 0,
+			dartCount = 1, -- DEBUG
 			rockSpawnChance = 0.22,
 			sawSpeedMult = 1.02,
 			sawSpinMult = 0.96,
