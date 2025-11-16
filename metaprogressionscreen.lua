@@ -177,10 +177,10 @@ local function setColor(color, alphaOverride)
 	end
 
 	love.graphics.setColor(
-	color[1] or 1,
-	color[2] or 1,
-	color[3] or 1,
-	alphaOverride or color[4] or 1
+		color[1] or 1,
+		color[2] or 1,
+		color[3] or 1,
+		alphaOverride or color[4] or 1
 	)
 end
 
@@ -219,11 +219,11 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 		love.graphics.setLineWidth(outlineWidth)
 		local inset = outlineWidth * 0.5
 		love.graphics.rectangle(
-		"line",
-		trackX + inset,
-		trackY + inset,
-		trackWidth - outlineWidth,
-		trackHeight - outlineWidth,
+			"line",
+			trackX + inset,
+			trackY + inset,
+			trackWidth - outlineWidth,
+			trackHeight - outlineWidth,
 		max(0, trackRadius - inset)
 		)
 	end
@@ -561,7 +561,7 @@ local function formatShaderDisplayName(typeId)
 
 	name = name:gsub("^%l", string.upper)
 	name = name:gsub("(%s)(%l)", function(space, letter)
-		return space .. letter:upper()
+	return space .. letter:upper()
 	end)
 
 	return name
@@ -1143,7 +1143,7 @@ function ProgressionScreen:enter()
 	if SnakeCosmetics and SnakeCosmetics.load then
 		local metaLevel = progressionState and progressionState.level or nil
 		local ok, err = pcall(function()
-			SnakeCosmetics:load({metaLevel = metaLevel})
+		SnakeCosmetics:load({metaLevel = metaLevel})
 		end)
 		if not ok then
 			print("[metaprogressionscreen] failed to load cosmetics:", err)
@@ -1862,10 +1862,10 @@ local function drawStatsList(sw, sh)
 	local scissorReduction = 12
 
 	love.graphics.setScissor(
-	listX - 20,
-	clipY - 10 + scissorOffsetY,
-	CARD_WIDTH + 40,
-	clipH + 20 - scissorReduction
+		listX - 20,
+		clipY - 10 + scissorOffsetY,
+		CARD_WIDTH + 40,
+		clipH + 20 - scissorReduction
 	)
 
 	if #statsEntries == 0 then
@@ -1943,15 +1943,15 @@ local function drawStatsList(sw, sh)
 
 	if scrollbarState.visible then
 		drawScrollbar(
-		scrollbarState.trackX,
-		scrollbarState.trackY,
-		scrollbarState.trackWidth,
-		scrollbarState.trackHeight,
-		scrollbarState.thumbY,
-		scrollbarState.thumbHeight,
-		false,
-		false,
-		Theme.panelColor
+			scrollbarState.trackX,
+			scrollbarState.trackY,
+			scrollbarState.trackWidth,
+			scrollbarState.trackHeight,
+			scrollbarState.thumbY,
+			scrollbarState.thumbHeight,
+			false,
+			false,
+			Theme.panelColor
 		)
 	end
 end

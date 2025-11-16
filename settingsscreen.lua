@@ -107,10 +107,10 @@ local function setColor(color, alphaOverride)
 	end
 
 	love.graphics.setColor(
-	color[1] or 1,
-	color[2] or 1,
-	color[3] or 1,
-	alphaOverride or color[4] or 1
+		color[1] or 1,
+		color[2] or 1,
+		color[3] or 1,
+		alphaOverride or color[4] or 1
 	)
 end
 
@@ -810,11 +810,11 @@ local function drawSettingsScrollbar(trackX, trackY, trackWidth, trackHeight, th
 	love.graphics.setLineWidth(outlineWidth)
 	local inset = outlineWidth * 0.5
 	love.graphics.rectangle(
-	"line",
-	trackX + inset,
-	trackY + inset,
-	trackWidth - outlineWidth,
-	trackHeight - outlineWidth,
+		"line",
+		trackX + inset,
+		trackY + inset,
+		trackWidth - outlineWidth,
+		trackHeight - outlineWidth,
 	max(0, trackRadius - inset)
 	)
 
@@ -896,12 +896,12 @@ local function drawSettingsScrollbar(trackX, trackY, trackWidth, trackHeight, th
 			love.graphics.rectangle("fill", thumbX, bodyTop, thumbWidth, bodyHeight, thumbWidth * 0.45)
 		end
 		love.graphics.polygon(
-		"fill",
-		thumbX + thumbWidth * 0.15,
-		bodyBottom,
-		thumbX + thumbWidth * 0.85,
-		bodyBottom,
-		thumbX + thumbWidth * 0.5,
+			"fill",
+			thumbX + thumbWidth * 0.15,
+			bodyBottom,
+			thumbX + thumbWidth * 0.85,
+			bodyBottom,
+			thumbX + thumbWidth * 0.5,
 		min(thumbY + thumbHeight, bodyBottom + tailHeight)
 		)
 
@@ -919,12 +919,12 @@ local function drawSettingsScrollbar(trackX, trackY, trackWidth, trackHeight, th
 			for y = bellyTop + 3, bellyBottom - 3, stripeSpacing do
 				setColor(stripeColor)
 				love.graphics.rectangle(
-				"fill",
-				bellyX + stripeInset,
-				y,
-				bellyWidth - stripeInset * 2,
-				2,
-				bellyWidth * 0.35
+					"fill",
+					bellyX + stripeInset,
+					y,
+					bellyWidth - stripeInset * 2,
+					2,
+					bellyWidth * 0.35
 				)
 			end
 		end

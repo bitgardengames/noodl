@@ -93,10 +93,10 @@ end
 
 
 local shadowPalette = {
-        body = {0, 0, 0, 0.25},
-        outline = {0, 0, 0, 0.25},
-        singlePass = true,
-        blendMode = "replace",
+	body = {0, 0, 0, 0.25},
+	outline = {0, 0, 0, 0.25},
+	singlePass = true,
+	blendMode = "replace",
 }
 
 
@@ -462,43 +462,43 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 	local outlineCoords = coords
 	local bodyCoords = coords
 
-        love.graphics.push("all")
+	love.graphics.push("all")
 
-        if palette and palette.blendMode then
-                if palette.blendAlphaMode then
-                        love.graphics.setBlendMode(palette.blendMode, palette.blendAlphaMode)
-                else
-                        love.graphics.setBlendMode(palette.blendMode)
-                end
-        end
+	if palette and palette.blendMode then
+		if palette.blendAlphaMode then
+			love.graphics.setBlendMode(palette.blendMode, palette.blendAlphaMode)
+		else
+			love.graphics.setBlendMode(palette.blendMode)
+		end
+	end
 
-        if sharpCorners then
-                love.graphics.setLineStyle("rough")
-                love.graphics.setLineJoin("miter")
-        else
-                love.graphics.setLineStyle("smooth")
-                love.graphics.setLineJoin("bevel")
-        end
+	if sharpCorners then
+		love.graphics.setLineStyle("rough")
+		love.graphics.setLineJoin("miter")
+	else
+		love.graphics.setLineStyle("smooth")
+		love.graphics.setLineJoin("bevel")
+	end
 
-        if palette and palette.singlePass then
-                local fillR, fillG, fillB, fillA = bodyR, bodyG, bodyB, bodyA
-                if outlineA and outlineA > fillA then
-                        fillR, fillG, fillB, fillA = outlineR, outlineG, outlineB, outlineA
-                end
-                love.graphics.setColor(fillR, fillG, fillB, fillA)
-                drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
-                drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
-        else
-                love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-                drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
-                drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
+	if palette and palette.singlePass then
+		local fillR, fillG, fillB, fillA = bodyR, bodyG, bodyB, bodyA
+		if outlineA and outlineA > fillA then
+			fillR, fillG, fillB, fillA = outlineR, outlineG, outlineB, outlineA
+		end
+		love.graphics.setColor(fillR, fillG, fillB, fillA)
+		drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
+		drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
+	else
+		love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+		drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
+		drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
 
-                love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-                drawSnakeStroke(bodyCoords, half, options)
-                drawFruitBulges(trail, head, bulgeRadius)
-        end
+		love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+		drawSnakeStroke(bodyCoords, half, options)
+		drawFruitBulges(trail, head, bulgeRadius)
+	end
 
-        love.graphics.pop()
+	love.graphics.pop()
 
 end
 
@@ -696,54 +696,54 @@ drawTrailSegmentToCanvas = function(trail, half, options, paletteOverride, coord
 		return
 	end
 
-        local palette = paletteOverride or {}
-        local bodyColor = palette.body or SnakeCosmetics:getBodyColor()
-        local outlineColor = palette.outline or SnakeCosmetics:getOutlineColor()
-        local singlePass = palette.singlePass
+	local palette = paletteOverride or {}
+	local bodyColor = palette.body or SnakeCosmetics:getBodyColor()
+	local outlineColor = palette.outline or SnakeCosmetics:getOutlineColor()
+	local singlePass = palette.singlePass
 
-        love.graphics.push("all")
+	love.graphics.push("all")
 
-        if paletteOverride then
-                local blendMode = paletteOverride.blendMode
-                local blendAlphaMode = paletteOverride.blendAlphaMode
-                if blendMode then
-                        if blendAlphaMode then
-                                love.graphics.setBlendMode(blendMode, blendAlphaMode)
-                        else
-                                love.graphics.setBlendMode(blendMode)
-                        end
-                end
-        end
+	if paletteOverride then
+		local blendMode = paletteOverride.blendMode
+		local blendAlphaMode = paletteOverride.blendAlphaMode
+		if blendMode then
+			if blendAlphaMode then
+				love.graphics.setBlendMode(blendMode, blendAlphaMode)
+			else
+				love.graphics.setBlendMode(blendMode)
+			end
+		end
+	end
 	local skipStartCap = options and options.flatStartCap
 	local skipEndCap = options and options.flatEndCap
 
-        if singlePass then
-                local fillR = bodyColor[1] or 1
-                local fillG = bodyColor[2] or 1
-                local fillB = bodyColor[3] or 1
-                local fillA = bodyColor[4] or 1
-                local outlineA = outlineColor[4] or 0
-                if outlineA > fillA then
-                        fillR = outlineColor[1] or fillR
-                        fillG = outlineColor[2] or fillG
-                        fillB = outlineColor[3] or fillB
-                        fillA = outlineA
-                end
-                love.graphics.setColor(fillR, fillG, fillB, fillA)
-                if not (skipStartCap or skipEndCap) then
-                        love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
-                end
-        else
-                love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
-                if not (skipStartCap or skipEndCap) then
-                        love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
-                end
-                love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
-                if not (skipStartCap or skipEndCap) then
-                        love.graphics.circle("fill", hx, hy, half)
-                end
-        end
-        love.graphics.pop()
+	if singlePass then
+		local fillR = bodyColor[1] or 1
+		local fillG = bodyColor[2] or 1
+		local fillB = bodyColor[3] or 1
+		local fillA = bodyColor[4] or 1
+		local outlineA = outlineColor[4] or 0
+		if outlineA > fillA then
+			fillR = outlineColor[1] or fillR
+			fillG = outlineColor[2] or fillG
+			fillB = outlineColor[3] or fillB
+			fillA = outlineA
+		end
+		love.graphics.setColor(fillR, fillG, fillB, fillA)
+		if not (skipStartCap or skipEndCap) then
+			love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+		end
+	else
+		love.graphics.setColor(outlineColor[1] or 0, outlineColor[2] or 0, outlineColor[3] or 0, outlineColor[4] or 1)
+		if not (skipStartCap or skipEndCap) then
+			love.graphics.circle("fill", hx, hy, half + OUTLINE_SIZE)
+		end
+		love.graphics.setColor(bodyColor[1] or 1, bodyColor[2] or 1, bodyColor[3] or 1, bodyColor[4] or 1)
+		if not (skipStartCap or skipEndCap) then
+			love.graphics.circle("fill", hx, hy, half)
+		end
+	end
+	love.graphics.pop()
 end
 
 local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
@@ -835,15 +835,15 @@ local function drawswiftFangsAura(hx, hy, SEGMENT_SIZE, data)
 	local fillG = 0.96 + 0.04 * highlight
 	local fillB = 0.88 + 0.08 * highlight
 
-        love.graphics.push("all")
+	love.graphics.push("all")
 
-        if palette and palette.blendMode then
-                if palette.blendAlphaMode then
-                        love.graphics.setBlendMode(palette.blendMode, palette.blendAlphaMode)
-                else
-                        love.graphics.setBlendMode(palette.blendMode)
-                end
-        end
+	if palette and palette.blendMode then
+		if palette.blendAlphaMode then
+			love.graphics.setBlendMode(palette.blendMode, palette.blendAlphaMode)
+		else
+			love.graphics.setBlendMode(palette.blendMode)
+		end
+	end
 	love.graphics.translate(hx, hy + mouthDrop)
 
 	for side = -1, 1, 2 do
@@ -929,16 +929,16 @@ local function drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, data)
 		local highlightAlpha = (0.18 + 0.32 * flash) * (0.6 + 0.4 * intensity)
 		love.graphics.setColor(0.82, 0.96, 1.0, highlightAlpha)
 		love.graphics.polygon("fill",
-		leftCenterX - lensHalfWidth * 0.6, top + lensHeight * 0.2,
-		leftCenterX - lensHalfWidth * 0.2, top,
-		leftCenterX + lensHalfWidth * 0.2, top + lensHeight * 0.45,
-		leftCenterX - lensHalfWidth * 0.15, top + lensHeight * 0.6
+			leftCenterX - lensHalfWidth * 0.6, top + lensHeight * 0.2,
+			leftCenterX - lensHalfWidth * 0.2, top,
+			leftCenterX + lensHalfWidth * 0.2, top + lensHeight * 0.45,
+			leftCenterX - lensHalfWidth * 0.15, top + lensHeight * 0.6
 		)
 		love.graphics.polygon("fill",
-		rightCenterX + lensHalfWidth * 0.6, top + lensHeight * 0.2,
-		rightCenterX + lensHalfWidth * 0.2, top,
-		rightCenterX - lensHalfWidth * 0.2, top + lensHeight * 0.45,
-		rightCenterX + lensHalfWidth * 0.15, top + lensHeight * 0.6
+			rightCenterX + lensHalfWidth * 0.6, top + lensHeight * 0.2,
+			rightCenterX + lensHalfWidth * 0.2, top,
+			rightCenterX - lensHalfWidth * 0.2, top + lensHeight * 0.45,
+			rightCenterX + lensHalfWidth * 0.15, top + lensHeight * 0.6
 		)
 		love.graphics.setBlendMode("alpha")
 	end
@@ -1480,10 +1480,10 @@ local function drawTimeDilationAura(hx, hy, SEGMENT_SIZE, data)
 		local inner = baseRadius * 0.55
 		local outer = baseRadius * (1.25 + 0.1 * sin(time * 3 + i))
 		love.graphics.line(
-		hx + cos(angle) * inner,
-		hy + sin(angle) * inner,
-		hx + cos(angle) * outer,
-		hy + sin(angle) * outer
+			hx + cos(angle) * inner,
+			hy + sin(angle) * inner,
+			hx + cos(angle) * outer,
+			hy + sin(angle) * outer
 		)
 	end
 
@@ -1518,10 +1518,10 @@ local function drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, data)
 		love.graphics.setColor(0.68, 0.9, 1.0, (0.16 + 0.26 * readiness) * (0.6 + 0.4 * intensity))
 		love.graphics.setLineWidth(2.4 * sizeScale)
 		love.graphics.line(
-		hx + cos(angle) * inner,
-		hy + sin(angle) * inner,
-		hx + cos(angle) * outer,
-		hy + sin(angle) * outer
+			hx + cos(angle) * inner,
+			hy + sin(angle) * inner,
+			hx + cos(angle) * outer,
+			hy + sin(angle) * outer
 		)
 	end
 
@@ -1542,27 +1542,27 @@ local function drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, data)
 	love.graphics.setColor(0.72, 0.88, 1.0, 0.18 + 0.28 * (intensity + readiness * 0.5))
 	love.graphics.setLineWidth(2.2 * sizeScale)
 	love.graphics.polygon("line",
-	hx, hy,
-	hx - triangleWidth, topBaseY,
-	hx + triangleWidth, topBaseY
+		hx, hy,
+		hx - triangleWidth, topBaseY,
+		hx + triangleWidth, topBaseY
 	)
 	love.graphics.polygon("line",
-	hx, hy,
-	hx - triangleWidth, bottomBaseY,
-	hx + triangleWidth, bottomBaseY
+		hx, hy,
+		hx - triangleWidth, bottomBaseY,
+		hx + triangleWidth, bottomBaseY
 	)
 
 	local inset = triangleHeight * 0.12
 	love.graphics.setColor(0.52, 0.78, 1.0, 0.12 + 0.22 * (intensity + readiness * 0.6))
 	love.graphics.polygon("fill",
-	hx, hy,
-	hx - triangleWidth * 0.75, topBaseY + inset,
-	hx + triangleWidth * 0.75, topBaseY + inset
+		hx, hy,
+		hx - triangleWidth * 0.75, topBaseY + inset,
+		hx + triangleWidth * 0.75, topBaseY + inset
 	)
 	love.graphics.polygon("fill",
-	hx, hy,
-	hx - triangleWidth * 0.75, bottomBaseY - inset,
-	hx + triangleWidth * 0.75, bottomBaseY - inset
+		hx, hy,
+		hx - triangleWidth * 0.75, bottomBaseY - inset,
+		hx + triangleWidth * 0.75, bottomBaseY - inset
 	)
 
 	love.graphics.pop()
@@ -1697,9 +1697,9 @@ local function drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, data)
 		local pulse = 0.75 + 0.25 * sin(time * 10)
 		love.graphics.setColor(1, 0.95, 0.55, 0.5)
 		love.graphics.polygon("fill",
-		baseRadius * 0.75, 0,
-		baseRadius * (1.35 + 0.15 * pulse), -SEGMENT_SIZE * 0.34 * pulse,
-		baseRadius * (1.35 + 0.15 * pulse), SEGMENT_SIZE * 0.34 * pulse
+			baseRadius * 0.75, 0,
+			baseRadius * (1.35 + 0.15 * pulse), -SEGMENT_SIZE * 0.34 * pulse,
+			baseRadius * (1.35 + 0.15 * pulse), SEGMENT_SIZE * 0.34 * pulse
 		)
 		love.graphics.setBlendMode("alpha")
 	end
@@ -1801,46 +1801,46 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			hy = portalInfo.exitY or hy
 		end
 
-                local exitCoords = buildCoords(exitTrail)
+		local exitCoords = buildCoords(exitTrail)
 
-                local entryCoords
-                if entryTrail and #entryTrail > 0 then
-                        entryCoords = buildCoords(entryTrail)
-                end
+		local entryCoords
+		if entryTrail and #entryTrail > 0 then
+			entryCoords = buildCoords(entryTrail)
+		end
 
-                local entryPalette
-                if entryTrail and #entryTrail > 0 then
-                        entryPalette = fadePalette(palette, 0.55)
-                end
+		local entryPalette
+		if entryTrail and #entryTrail > 0 then
+			entryPalette = fadePalette(palette, 0.55)
+		end
 
-                RenderLayers:withLayer("shadows", function()
-                        love.graphics.push()
-                        love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-                        if exitTrail and #exitTrail > 0 then
-                                drawTrailSegmentToCanvas(exitTrail, half, options, shadowPalette, exitCoords)
-                        end
-                        if entryTrail and #entryTrail > 0 then
-                                drawTrailSegmentToCanvas(entryTrail, half, options, shadowPalette, entryCoords)
-                        end
-                        love.graphics.pop()
-                end)
+		RenderLayers:withLayer("shadows", function()
+		love.graphics.push()
+		love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+			if exitTrail and #exitTrail > 0 then
+		drawTrailSegmentToCanvas(exitTrail, half, options, shadowPalette, exitCoords)
+			end
+			if entryTrail and #entryTrail > 0 then
+		drawTrailSegmentToCanvas(entryTrail, half, options, shadowPalette, entryCoords)
+			end
+		love.graphics.pop()
+		end)
 
-                RenderLayers:withLayer("main", function()
-                        if exitTrail and #exitTrail > 0 then
-                                drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords)
-                        end
-                        if entryTrail and #entryTrail > 0 and entryPalette then
-                                drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
-                        end
-                end)
+		RenderLayers:withLayer("main", function()
+			if exitTrail and #exitTrail > 0 then
+		drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords)
+			end
+			if entryTrail and #entryTrail > 0 and entryPalette then
+		drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
+			end
+		end)
 
-                if exitHole then
-                        drawPortalHole(exitHole, true)
-                end
+		if exitHole then
+			drawPortalHole(exitHole, true)
+		end
 
-                if entryHole then
-                        drawPortalHole(entryHole, false)
-                end
+		if entryHole then
+			drawPortalHole(entryHole, false)
+		end
 
 		local entryX = (entryHole and entryHole.x) or portalInfo.entryX
 		local entryY = (entryHole and entryHole.y) or portalInfo.entryY
@@ -1890,14 +1890,14 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		local coords = buildCoords(trail)
 
 		RenderLayers:withLayer("shadows", function()
-			love.graphics.push()
-			love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-			drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
-			love.graphics.pop()
+		love.graphics.push()
+		love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+		drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
+		love.graphics.pop()
 		end)
 
 		RenderLayers:withLayer("main", function()
-			drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+		drawTrailSegmentToCanvas(trail, half, options, palette, coords)
 		end)
 	end
 
@@ -1905,80 +1905,80 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 	if shouldDrawOverlay then
 		RenderLayers:withLayer("overlay", function()
 			if hx and hy and drawFace ~= false then
-				if upgradeVisuals and upgradeVisuals.temporalAnchor then
-					drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
-				end
+			if upgradeVisuals and upgradeVisuals.temporalAnchor then
+		drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
+			end
 
-				if upgradeVisuals and upgradeVisuals.chronoWard then
-					drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
-				end
+			if upgradeVisuals and upgradeVisuals.chronoWard then
+		drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
+			end
 
-				if upgradeVisuals and upgradeVisuals.timeDilation then
-					drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
-				end
+			if upgradeVisuals and upgradeVisuals.timeDilation then
+		drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
+			end
 
-				if upgradeVisuals and upgradeVisuals.adrenaline then
-					drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
-				end
+			if upgradeVisuals and upgradeVisuals.adrenaline then
+		drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
+			end
 
-				if upgradeVisuals and upgradeVisuals.swiftFangs then
-					drawswiftFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.swiftFangs)
-				end
+			if upgradeVisuals and upgradeVisuals.swiftFangs then
+		drawswiftFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.swiftFangs)
+			end
 
-				if upgradeVisuals and upgradeVisuals.zephyrCoils then
-					drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
-				end
+			if upgradeVisuals and upgradeVisuals.zephyrCoils then
+		drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
+			end
 
-				if upgradeVisuals and upgradeVisuals.dash then
-					drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
-				end
+			if upgradeVisuals and upgradeVisuals.dash then
+		drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
+			end
 
-				if upgradeVisuals and upgradeVisuals.speedArcs then
-					drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
-				end
+			if upgradeVisuals and upgradeVisuals.speedArcs then
+		drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
+			end
 
-				local faceScale = 1
-				local faceOptions = upgradeVisuals and upgradeVisuals.face or nil
-				Face:draw(hx, hy, faceScale, faceOptions)
+			local faceScale = 1
+			local faceOptions = upgradeVisuals and upgradeVisuals.face or nil
+		Face:draw(hx, hy, faceScale, faceOptions)
 
-				if upgradeVisuals and upgradeVisuals.diffractionBarrier then
-					drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, upgradeVisuals.diffractionBarrier)
-				end
+			if upgradeVisuals and upgradeVisuals.diffractionBarrier then
+		drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, upgradeVisuals.diffractionBarrier)
+			end
 
-				drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
+		drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
 
-				if upgradeVisuals and upgradeVisuals.dash then
-					drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
-				end
+			if upgradeVisuals and upgradeVisuals.dash then
+		drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
+			end
 
-				if upgradeVisuals and upgradeVisuals.eventHorizon then
-					drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon)
-				end
+			if upgradeVisuals and upgradeVisuals.eventHorizon then
+		drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon)
+			end
 
-				if upgradeVisuals and upgradeVisuals.stormchaser then
-					drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
-				end
+			if upgradeVisuals and upgradeVisuals.stormchaser then
+		drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
+			end
 
-				if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
-					drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst)
-				end
+			if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
+		drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst)
+			end
 
-				if upgradeVisuals and upgradeVisuals.titanblood then
-					drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood)
-				end
+			if upgradeVisuals and upgradeVisuals.titanblood then
+		drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood)
+			end
 
-				if upgradeVisuals and upgradeVisuals.phoenixEcho then
-					drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
-				end
+			if upgradeVisuals and upgradeVisuals.phoenixEcho then
+		drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
+			end
 			end
 
 			if popTimer and popTimer > 0 and hx and hy then
-				local t = 1 - (popTimer / POP_DURATION)
-				if t < 1 then
-					local pulse = 0.8 + 0.4 * sin(t * pi)
-					love.graphics.setColor(1, 1, 1, 0.4)
-					love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
-				end
+		local t = 1 - (popTimer / POP_DURATION)
+			if t < 1 then
+		local pulse = 0.8 + 0.4 * sin(t * pi)
+		love.graphics.setColor(1, 1, 1, 0.4)
+		love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
+			end
 			end
 		end)
 	end

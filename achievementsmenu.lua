@@ -268,10 +268,10 @@ local function setColor(color, alphaOverride)
 	end
 
 	love.graphics.setColor(
-	color[1] or 1,
-	color[2] or 1,
-	color[3] or 1,
-	alphaOverride or color[4] or 1
+		color[1] or 1,
+		color[2] or 1,
+		color[3] or 1,
+		alphaOverride or color[4] or 1
 	)
 end
 
@@ -505,11 +505,11 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 		love.graphics.setLineWidth(outlineWidth)
 		local inset = outlineWidth * 0.5
 		love.graphics.rectangle(
-		"line",
-		trackX + inset,
-		trackY + inset,
-		trackWidth - outlineWidth,
-		trackHeight - outlineWidth,
+			"line",
+			trackX + inset,
+			trackY + inset,
+			trackWidth - outlineWidth,
+			trackHeight - outlineWidth,
 		max(0, trackRadius - inset)
 		)
 	end
@@ -952,14 +952,14 @@ function AchievementsMenu:enter()
 
 	buttonList:reset({
 		{
-			id = "achievementsBack",
-			x = sw / 2 - UI.spacing.buttonWidth / 2,
-			y = backButtonY,
-			w = UI.spacing.buttonWidth,
-			h = UI.spacing.buttonHeight,
-			textKey = "achievements.back_to_menu",
-			text = Localization:get("achievements.back_to_menu"),
-			action = "menu",
+		id = "achievementsBack",
+		x = sw / 2 - UI.spacing.buttonWidth / 2,
+		y = backButtonY,
+		w = UI.spacing.buttonWidth,
+		h = UI.spacing.buttonHeight,
+		textKey = "achievements.back_to_menu",
+		text = Localization:get("achievements.back_to_menu"),
+		action = "menu",
 		},
 	})
 
@@ -1276,15 +1276,15 @@ function AchievementsMenu:draw()
 		scrollbarState.scrollRange = scrollRange
 
 		drawScrollbar(
-		trackX,
-		trackY,
-		trackWidth,
-		trackHeight,
-		thumbY,
-		thumbHeight,
-		isOverScrollbar,
-		isOverThumb or scrollbarDrag.active,
-		panelColor
+			trackX,
+			trackY,
+			trackWidth,
+			trackHeight,
+			thumbY,
+			thumbHeight,
+			isOverScrollbar,
+			isOverThumb or scrollbarDrag.active,
+			panelColor
 		)
 	else
 		scrollbarState.visible = false

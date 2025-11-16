@@ -443,7 +443,7 @@ function MetaProgression:grantRunPoints(runStats)
 	local okCosmetics, Cosmetics = pcall(require, "snakecosmetics")
 	if okCosmetics and Cosmetics and Cosmetics.syncMetaLevel then
 		local okSync, err = pcall(function()
-			Cosmetics:syncMetaLevel(endSnapshot.level, {levelUps = copyTable(levelUps)})
+		Cosmetics:syncMetaLevel(endSnapshot.level, {levelUps = copyTable(levelUps)})
 		end)
 		if not okSync then
 			print("[metaprogression] failed to sync cosmetics:", err)

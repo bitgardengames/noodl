@@ -78,10 +78,10 @@ function DataSchemas.validate(schema, target, context)
 
 			if entry.type and target[key] ~= nil and type(target[key]) ~= entry.type then
 				error(string.format(
-				"%s field '%s' expected %s, received %s",
-				context,
-				key,
-				entry.type,
+					"%s field '%s' expected %s, received %s",
+					context,
+					key,
+					entry.type,
 				type(target[key])
 				))
 			end

@@ -8,7 +8,7 @@ local Score = {}
 
 Achievements:registerStateProvider(function(state)
 	if type(state) == "table" then
-		state.snakeScore = Score.current or 0
+	state.snakeScore = Score.current or 0
 	end
 end)
 

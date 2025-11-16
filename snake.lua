@@ -4642,14 +4642,14 @@ local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, ex
 				local shouldTest = not useCandidateFilter or (candidateLookup[segment] == candidateGeneration)
 				if shouldTest then
 					local intersects, cutX, cutY, t = segmentRectIntersection(
-					prevX,
-					prevY,
-					cx,
-					cy,
-					expandedX,
-					expandedY,
-					expandedW,
-					expandedH
+						prevX,
+						prevY,
+						cx,
+						cy,
+						expandedX,
+						expandedY,
+						expandedW,
+						expandedH
 					)
 
 					if intersects and t then

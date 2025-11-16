@@ -166,54 +166,72 @@ def count_leading_braces(line: str) -> int:
 
 
 def format_lines(lines: Iterable[str]) -> List[str]:
-	formatted: List[str] = []
-	indent = 0
-	paren_depth = 0          # NEW: track multiline parens
+    formatted: List[str] = []
+    indent = 0
+    paren_depth = 0
 
-	for line in lines:
-		# Compute paren changes BEFORE stripping whitespace
-		open_p, close_p = count_parens(line)
-		entering_paren_block = (paren_depth == 0 and open_p > close_p)
-		inside_paren_block = paren_depth > 0
+    for line in lines:
+        # Count parentheses BEFORE stripping whitespace
+        open_p, close_p = count_parens(line)
 
-		stripped, open_kw, close_kw, leading_kw_dedent, open_br, close_br, leading_br_dedent, is_blank = analyse_tokens(line)
+        # Token analysis (keywords/braces)
+        stripped, open_kw, close_kw, leading_kw_dedent, open_br, close_br, leading_br_dedent, is_blank = analyse_tokens(line)
 
-		if is_blank:
-			formatted.append("")
-			continue
+        if is_blank:
+            formatted.append("")
+            continue
 
-		leading_braces = count_leading_braces(line)
+        leading_braces = count_leading_braces(line)
 
-		# If inside a parentheses block, DO NOT apply your Lua indentation rules
-		if inside_paren_block or entering_paren_block:
-			# Preserve user-defined indentation but normalize tabs if desired:
-			# using single tab per indent level:
-			preserved = "\t" * indent + stripped
-			formatted.append(preserved)
+        # Determine if we are entering or inside a multiline parentheses block
+        entering_paren = (paren_depth == 0 and open_p > close_p)
+        inside_paren = (paren_depth > 0)
 
-			# Update paren depth AFTER output
-			paren_depth += open_p - close_p
-			if paren_depth < 0:
-				paren_depth = 0
-			continue
+        # ---------- MULTILINE PARENTHESIS LOGIC ----------
+        if inside_paren or entering_paren:
+            # Compute new depth BEFORE output so closing paren aligns properly
+            new_depth = paren_depth + open_p - close_p
+            if new_depth < 0:
+                new_depth = 0
 
-		# NORMAL LUA INDENTATION LOGIC (unchanged)
-		indent = max(indent - leading_kw_dedent - leading_braces, 0)
-		new_line = "\t" * indent + stripped
-		formatted.append(new_line)
+            if entering_paren:
+                # First line of the function call
+                formatted.append("\t" * indent + stripped)
 
-		indent += open_kw + open_br
-		indent -= max(close_kw - leading_kw_dedent, 0)
-		indent -= max(close_br - leading_braces, 0)
-		if indent < 0:
-			indent = 0
+            else:
+                # Inside parentheses block
+                if stripped.endswith(")"):
+                    # closing paren aligns with the function call
+                    formatted.append("\t" * indent + stripped)
+                else:
+                    # arguments get +1 indent relative to call
+                    formatted.append("\t" * (indent + 1) + stripped)
 
-		# Update paren depth AFTER processing
-		paren_depth += open_p - close_p
-		if paren_depth < 0:
-			paren_depth = 0
+            paren_depth = new_depth
+            continue
+        # --------------------------------------------------
 
-	return formatted
+        # ---------- NORMAL LUA INDENTATION LOGIC ----------
+        indent = max(indent - leading_kw_dedent - leading_braces, 0)
+
+        # Apply indentation
+        formatted.append("\t" * indent + stripped)
+
+        # Adjust indent based on keywords/braces
+        indent += open_kw + open_br
+        indent -= max(close_kw - leading_kw_dedent, 0)
+        indent -= max(close_br - leading_braces, 0)
+
+        if indent < 0:
+            indent = 0
+
+        # Update parentheses depth AFTER formatting normal line
+        paren_depth += open_p - close_p
+        if paren_depth < 0:
+            paren_depth = 0
+        # --------------------------------------------------
+
+    return formatted
 
 
 def process_file(path: str) -> bool:

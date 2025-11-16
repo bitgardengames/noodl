@@ -736,13 +736,13 @@ function UI.drawPanel(x, y, w, h, opts)
 	if shadowOffset and shadowOffset ~= 0 then
 		setColor(opts.shadowColor or UI.colors.shadow, opts.shadowAlpha or 1)
 		love.graphics.rectangle(
-		"fill",
-		x + shadowOffset - shadowPadding,
-		y + shadowOffset - shadowPadding,
-		w + shadowPadding * 2,
-		h + shadowPadding * 2,
-		shadowRadius,
-		shadowRadius
+			"fill",
+			x + shadowOffset - shadowPadding,
+			y + shadowOffset - shadowPadding,
+			w + shadowPadding * 2,
+			h + shadowPadding * 2,
+			shadowRadius,
+			shadowRadius
 		)
 	end
 
@@ -787,13 +787,13 @@ function UI.drawPanel(x, y, w, h, opts)
 		local focusWidth = opts.focusWidth or 3
 		love.graphics.setLineWidth(focusWidth)
 		drawAlignedBorder(
-		"line",
-		x - focusPadding,
-		y - focusPadding,
-		w + focusPadding * 2,
-		h + focusPadding * 2,
-		focusRadius,
-		focusWidth
+			"line",
+			x - focusPadding,
+			y - focusPadding,
+			w + focusPadding * 2,
+			h + focusPadding * 2,
+			focusRadius,
+			focusWidth
 		)
 		love.graphics.setLineWidth(1)
 	end
@@ -1046,13 +1046,13 @@ function UI.drawButton(id)
 		local shadowOffsetY = shadowOffset - 2
 		setColor(UI.colors.shadow)
 		love.graphics.rectangle(
-		"fill",
-		b.x + shadowOffsetX - shadowPadding,
-		b.y + shadowOffsetY + yOffset - shadowPadding,
-		b.w + shadowPadding * 2,
-		b.h + shadowPadding * 2,
-		shadowRadius,
-		shadowRadius
+			"fill",
+			b.x + shadowOffsetX - shadowPadding,
+			b.y + shadowOffsetY + yOffset - shadowPadding,
+			b.w + shadowPadding * 2,
+			b.h + shadowPadding * 2,
+			shadowRadius,
+			shadowRadius
 		)
 	end
 
@@ -1779,13 +1779,13 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		local leftX = -rightX
 		local function drawShieldPolygon(mode)
 			love.graphics.polygon(
-			mode,
-			0, topY,
-			rightX, midY,
-			lowerRightX, lowerY,
-			0, bottomY,
-			lowerLeftX, lowerY,
-			leftX, midY
+				mode,
+				0, topY,
+				rightX, midY,
+				lowerRightX, lowerY,
+				0, bottomY,
+				lowerLeftX, lowerY,
+				leftX, midY
 			)
 		end
 
@@ -1796,13 +1796,13 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		drawShieldPolygon("line")
 	elseif icon == "bolt" then
 		love.graphics.polygon(
-		"fill",
-		-radius * 0.28, -radius * 0.92,
-		radius * 0.42, -radius * 0.2,
-		radius * 0.08, -radius * 0.18,
-		radius * 0.48, radius * 0.82,
-		-radius * 0.2, radius * 0.14,
-		radius * 0.05, 0
+			"fill",
+			-radius * 0.28, -radius * 0.92,
+			radius * 0.42, -radius * 0.2,
+			radius * 0.08, -radius * 0.18,
+			radius * 0.48, radius * 0.82,
+			-radius * 0.2, radius * 0.14,
+			radius * 0.05, 0
 		)
 	elseif icon == "pickaxe" then
 		love.graphics.push()
@@ -1818,16 +1818,16 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		local baseHeight = radius * 0.86
 
 		love.graphics.polygon(
-		"fill",
-		0, 0,
-		-baseHalfWidth, -baseHeight,
-		baseHalfWidth, -baseHeight
+			"fill",
+			0, 0,
+			-baseHalfWidth, -baseHeight,
+			baseHalfWidth, -baseHeight
 		)
 		love.graphics.polygon(
-		"fill",
-		0, 0,
-		-baseHalfWidth, baseHeight,
-		baseHalfWidth, baseHeight
+			"fill",
+			0, 0,
+			-baseHalfWidth, baseHeight,
+			baseHalfWidth, baseHeight
 		)
 
 		local highlight = lightenColor(detail, 0.22, ICON_COLOR_HIGHLIGHT)
@@ -1836,16 +1836,16 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		local highlightBase = radius * 0.64
 		local highlightApexOffset = radius * 0.18
 		love.graphics.polygon(
-		"fill",
-		0, -highlightApexOffset,
-		-highlightHalfWidth, -highlightBase,
-		highlightHalfWidth, -highlightBase
+			"fill",
+			0, -highlightApexOffset,
+			-highlightHalfWidth, -highlightBase,
+			highlightHalfWidth, -highlightBase
 		)
 		love.graphics.polygon(
-		"fill",
-		0, highlightApexOffset,
-		-highlightHalfWidth, highlightBase,
-		highlightHalfWidth, highlightBase
+			"fill",
+			0, highlightApexOffset,
+			-highlightHalfWidth, highlightBase,
+			highlightHalfWidth, highlightBase
 		)
 
 		local sheen = lightenColor(detail, 0.42, ICON_COLOR_SHEEN)
@@ -1858,16 +1858,16 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.setColor(rim[1], rim[2], rim[3], rim[4] or 1)
 		love.graphics.setLineWidth(2.2)
 		love.graphics.polygon(
-		"line",
-		0, 0,
-		-baseHalfWidth, -baseHeight,
-		baseHalfWidth, -baseHeight
+			"line",
+			0, 0,
+			-baseHalfWidth, -baseHeight,
+			baseHalfWidth, -baseHeight
 		)
 		love.graphics.polygon(
-		"line",
-		0, 0,
-		-baseHalfWidth, baseHeight,
-		baseHalfWidth, baseHeight
+			"line",
+			0, 0,
+			-baseHalfWidth, baseHeight,
+			baseHalfWidth, baseHeight
 		)
 
 		local seam = darkenColor(detail, 0.25, ICON_COLOR_SEAM)
@@ -1877,13 +1877,13 @@ local function drawIndicatorIcon(icon, accentColor, x, y, radius, overlay)
 		love.graphics.line(-baseHalfWidth, baseHeight, baseHalfWidth, baseHeight)
 	elseif icon == "phoenix" then
 		love.graphics.polygon(
-		"fill",
-		-radius * 0.88, radius * 0.16,
-		-radius * 0.26, -radius * 0.7,
-		0, -radius * 0.25,
-		radius * 0.26, -radius * 0.7,
-		radius * 0.88, radius * 0.16,
-		0, radius * 0.88
+			"fill",
+			-radius * 0.88, radius * 0.16,
+			-radius * 0.26, -radius * 0.7,
+			0, -radius * 0.25,
+			radius * 0.26, -radius * 0.7,
+			radius * 0.88, radius * 0.16,
+			0, radius * 0.88
 		)
 	else
 		love.graphics.circle("fill", 0, 0, radius * 0.72, 28)
@@ -2411,10 +2411,10 @@ function UI:drawFruitSockets()
 
 				love.graphics.setLineWidth(4)
 				love.graphics.setColor(
-				min(1, glowColor[1] + 0.15),
-				min(1, glowColor[2] * 0.75),
-				min(1, glowColor[3] * 1.1),
-				accentAlpha
+					min(1, glowColor[1] + 0.15),
+					min(1, glowColor[2] * 0.75),
+					min(1, glowColor[3] * 1.1),
+					accentAlpha
 				)
 				love.graphics.circle("line", 0, 0, r + 4 + 3 * pulse, 40)
 
@@ -2431,10 +2431,10 @@ function UI:drawFruitSockets()
 				emptyGlow = emptyGlow + 0.08 * goalFlash
 			end
 			love.graphics.setColor(
-			highlightColor[1],
-			highlightColor[2],
-			highlightColor[3],
-			(highlightColor[4] or 1) * emptyGlow
+				highlightColor[1],
+				highlightColor[2],
+				highlightColor[3],
+				(highlightColor[4] or 1) * emptyGlow
 			)
 			love.graphics.circle("line", x, y, radius - 1.5, 32)
 		end
@@ -2450,19 +2450,19 @@ function UI:drawFruitSockets()
 	local shadowColor = Theme.shadowColor or {0, 0, 0, 0.5}
 	love.graphics.setColor(shadowColor[1], shadowColor[2], shadowColor[3], (shadowColor[4] or 1))
 	love.graphics.printf(
-	collected .. " / " .. required,
-	panelX + 2,
-	textY + 2,
-	panelW,
-	"right"
+		collected .. " / " .. required,
+		panelX + 2,
+		textY + 2,
+		panelW,
+		"right"
 	)
 	love.graphics.setColor(Theme.textColor)
 	love.graphics.printf(
-	collected .. " / " .. required,
-	panelX,
-	textY,
-	panelW,
-	"right"
+		collected .. " / " .. required,
+		panelX,
+		textY,
+		panelW,
+		"right"
 	)
 
 	self.fruitPanelBounds = {

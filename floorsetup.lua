@@ -389,15 +389,15 @@ end
 local function spawnRocks(numRocks, safeZone)
 	for _ = 1, numRocks do
 		local fx, fy = SnakeUtils.getSafeSpawn(
-		Snake:getSegments(),
-		Fruit,
-		Rocks,
-		safeZone,
-		{
+			Snake:getSegments(),
+			Fruit,
+			Rocks,
+			safeZone,
+			{
 			avoidFrontOfSnake = true,
 			direction = Snake:getDirection(),
 			frontBuffer = 5,
-		}
+			}
 		)
 		if fx then
 			Rocks:spawn(fx, fy, "small")
@@ -712,17 +712,17 @@ function FloorSetup.spawnHazards(spawnPlan)
 	end
 
 	spawnSaws(
-	spawnPlan.numSaws or 0,
-	spawnPlan.halfTiles,
-	spawnPlan.bladeRadius,
-	spawnPlan.spawnSafeCells,
-	{
+		spawnPlan.numSaws or 0,
+		spawnPlan.halfTiles,
+		spawnPlan.bladeRadius,
+		spawnPlan.spawnSafeCells,
+		{
 		emberCount = emberSawCount,
 		emberColor = EMBER_SAW_COLOR,
 		emberTrailColor = EMBER_SAW_TRAIL_COLOR,
 		emberGlowColor = EMBER_SAW_GLOW_COLOR,
 		spawnWithSink = true,
-	}
+		}
 	)
 	spawnLasers(spawnPlan.lasers or {})
 	spawnDarts(spawnPlan.darts or {})

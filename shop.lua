@@ -964,11 +964,11 @@ local function formatColorKey(color)
 	end
 
 	return string.format(
-	"%.3f,%.3f,%.3f,%.3f",
-	color[1] or 0,
-	color[2] or 0,
-	color[3] or 0,
-	color[4] or 1
+		"%.3f,%.3f,%.3f,%.3f",
+		color[1] or 0,
+		color[2] or 0,
+		color[3] or 0,
+		color[4] or 1
 	)
 end
 
@@ -996,7 +996,7 @@ local function drawStaticStyleLayers(style, borderColor, x, y, w, h, alphaMultip
 
 		local steps = max(1, def.steps or 16)
 		love.graphics.stencil(function()
-			love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
+		love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
 		end, "replace", 1)
 		love.graphics.setStencilTest("equal", 1)
 		local segmentHeight = h / steps
@@ -1022,7 +1022,7 @@ local function drawStaticStyleLayers(style, borderColor, x, y, w, h, alphaMultip
 
 		local steps = max(1, def.steps or 18)
 		love.graphics.stencil(function()
-			love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
+		love.graphics.rectangle("fill", x, y, w, h, cardRadius, cardRadius)
 		end, "replace", 1)
 		love.graphics.setStencilTest("equal", 1)
 		love.graphics.push()
@@ -1050,36 +1050,36 @@ local function drawStaticStyleLayers(style, borderColor, x, y, w, h, alphaMultip
 
 	if style.aura then
 		withTransformedScissor(x, y, w, h, function()
-			applyColor(setColor, style.aura.color)
-			local radius = max(w, h) * (style.aura.radius or 0.72)
-			local centerY = y + h * (style.aura.y or 0.4)
-			love.graphics.circle("fill", x + w * 0.5, centerY, radius)
+		applyColor(setColor, style.aura.color)
+		local radius = max(w, h) * (style.aura.radius or 0.72)
+		local centerY = y + h * (style.aura.y or 0.4)
+		love.graphics.circle("fill", x + w * 0.5, centerY, radius)
 		end)
 	end
 
 	if style.flare then
 		withTransformedScissor(x, y, w, h, function()
-			applyColor(setColor, style.flare.color)
-			local radius = min(w, h) * (style.flare.radius or 0.36)
-			love.graphics.circle("fill", x + w * 0.5, y + h * 0.32, radius)
+		applyColor(setColor, style.flare.color)
+		local radius = min(w, h) * (style.flare.radius or 0.36)
+		love.graphics.circle("fill", x + w * 0.5, y + h * 0.32, radius)
 		end)
 	end
 
 	if style.stripes then
 		withTransformedScissor(x, y, w, h, function()
-			love.graphics.push()
-			love.graphics.translate(x + w / 2, y + h / 2)
-			love.graphics.rotate(style.stripes.angle or -math.pi / 6)
-			local diag = math.sqrt(w * w + h * h)
+		love.graphics.push()
+		love.graphics.translate(x + w / 2, y + h / 2)
+		love.graphics.rotate(style.stripes.angle or -math.pi / 6)
+		local diag = math.sqrt(w * w + h * h)
 			local spacing = style.stripes.spacing or 34
 			local width = style.stripes.width or 22
-			applyColor(setColor, style.stripes.color)
+		applyColor(setColor, style.stripes.color)
 			local stripeCount = ceil((diag * 2) / spacing) + 2
 			for i = -stripeCount, stripeCount do
-				local pos = i * spacing
-				love.graphics.rectangle("fill", -diag, pos - width / 2, diag * 2, width)
+			local pos = i * spacing
+		love.graphics.rectangle("fill", -diag, pos - width / 2, diag * 2, width)
 			end
-			love.graphics.pop()
+		love.graphics.pop()
 		end)
 	end
 
@@ -1088,27 +1088,27 @@ local function drawStaticStyleLayers(style, borderColor, x, y, w, h, alphaMultip
 			local driftSpeed = style.sparkles.driftSpeed or 0
 			local driftMinY = style.sparkles.driftMinY or 0
 			local driftMaxY = style.sparkles.driftMaxY or 1
-			local driftSpan = max(0.0001, driftMaxY - driftMinY)
+		local driftSpan = max(0.0001, driftMaxY - driftMinY)
 			for i, pos in ipairs(style.sparkles.positions) do
-				local px = pos[1] or 0.5
-				local py = pos[2] or 0.5
-				local scale = pos[3] or 1
-				local phase = pos[4] or (i - 1) * 0.31
-				local pulse = 0.6 + 0.4 * sin(i * 0.9)
-				local radius = (style.sparkles.radius or 9) * scale * pulse
-				local sparkleColor = style.sparkles.color or borderColor
-				local sparkleAlphaBase = style.sparkles.opacity or sparkleColor[4] or 1
-				local sparkleAlpha = sparkleAlphaBase * pulse
-				local sparkleX = x + px * w
-				local sparkleY
-				if driftSpeed ~= 0 then
-					local normalized = wrap01(py - phase)
-					sparkleY = y + (driftMinY + normalized * driftSpan) * h
-				else
-					sparkleY = y + py * h
-				end
-				applyColor(setColor, sparkleColor, sparkleAlpha)
-				love.graphics.circle("fill", sparkleX, sparkleY, radius)
+			local px = pos[1] or 0.5
+			local py = pos[2] or 0.5
+			local scale = pos[3] or 1
+			local phase = pos[4] or (i - 1) * 0.31
+		local pulse = 0.6 + 0.4 * sin(i * 0.9)
+			local radius = (style.sparkles.radius or 9) * scale * pulse
+			local sparkleColor = style.sparkles.color or borderColor
+			local sparkleAlphaBase = style.sparkles.opacity or sparkleColor[4] or 1
+			local sparkleAlpha = sparkleAlphaBase * pulse
+			local sparkleX = x + px * w
+			local sparkleY
+			if driftSpeed ~= 0 then
+		local normalized = wrap01(py - phase)
+			sparkleY = y + (driftMinY + normalized * driftSpan) * h
+			else
+			sparkleY = y + py * h
+			end
+		applyColor(setColor, sparkleColor, sparkleAlpha)
+		love.graphics.circle("fill", sparkleX, sparkleY, radius)
 			end
 		end)
 	end
@@ -1904,7 +1904,7 @@ function Shop:draw(screenW, screenH)
 		end
 
 		local hovered = not self.selected and (
-		(usingFocusNavigation and self.focusIndex == i) or
+			(usingFocusNavigation and self.focusIndex == i) or
 		(not usingFocusNavigation and mouseHover)
 		)
 
@@ -1958,11 +1958,11 @@ function Shop:draw(screenW, screenH)
 		love.graphics.setFont(UI.fonts.button)
 		love.graphics.setColor(1, 0.88, 0.6, 0.9)
 		love.graphics.printf(
-		string.format("%s claimed", self.selected.name or "Relic"),
-		0,
-		screenH * 0.87,
-		screenW,
-		"center"
+			string.format("%s claimed", self.selected.name or "Relic"),
+			0,
+			screenH * 0.87,
+			screenW,
+			"center"
 		)
 	end
 

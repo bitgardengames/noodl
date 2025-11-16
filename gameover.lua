@@ -942,10 +942,10 @@ function GameOver:updateLayoutMetrics()
 			totalHeight = (function()
 				local total = baseHeight
 				if hasXpSection then
-					total = total + sectionSpacing + xpPanelHeight
+				total = total + sectionSpacing + xpPanelHeight
 				end
 				return total
-			end)(),
+				end)(),
 		}
 	end
 

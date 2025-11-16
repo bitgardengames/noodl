@@ -1439,26 +1439,26 @@ local function drawTransitionNotes(self, timer, outroAlpha, fadeAlpha)
 
 		if note.title and note.title ~= "" then
 			drawShadowedText(
-			buttonFont,
-			note.title,
-			x,
-			y + noteOffset,
-			width,
-			"center",
-			noteAlpha
+				buttonFont,
+				note.title,
+				x,
+				y + noteOffset,
+				width,
+				"center",
+				noteAlpha
 			)
 			y = y + buttonFont:getHeight() + 6
 		end
 
 		if note.text and note.text ~= "" then
 			drawShadowedText(
-			bodyFont,
-			note.text,
-			x,
-			y + noteOffset,
-			width,
-			"center",
-			noteAlpha
+				bodyFont,
+				note.text,
+				x,
+				y + noteOffset,
+				width,
+				"center",
+				noteAlpha
 			)
 			y = y + bodyFont:getHeight() + 10
 		end

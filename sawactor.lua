@@ -50,11 +50,11 @@ local function drawSawStencil()
 		end
 	else
 		love.graphics.rectangle(
-		"fill",
-		sawStencilState.x - sawStencilState.trackLength / 2 - sawStencilState.radius,
-		sawStencilState.y - STENCIL_EXTENT + sawStencilState.sinkOffset,
-		sawStencilState.trackLength + sawStencilState.radius * 2,
-		STENCIL_EXTENT
+			"fill",
+			sawStencilState.x - sawStencilState.trackLength / 2 - sawStencilState.radius,
+			sawStencilState.y - STENCIL_EXTENT + sawStencilState.sinkOffset,
+			sawStencilState.trackLength + sawStencilState.radius * 2,
+			STENCIL_EXTENT
 		)
 	end
 end
@@ -238,8 +238,8 @@ function SawActor:draw(x, y, scale)
 
 	love.graphics.push()
 	love.graphics.translate(
-	(px or x) + SHADOW_OFFSET * drawScale - offsetX,
-	(py or y) + SHADOW_OFFSET * drawScale - offsetY
+		(px or x) + SHADOW_OFFSET * drawScale - offsetX,
+		(py or y) + SHADOW_OFFSET * drawScale - offsetY
 	)
 	love.graphics.rotate(rotation)
 	love.graphics.scale(overallScale, overallScale)
@@ -282,10 +282,10 @@ function SawActor:draw(x, y, scale)
 	if not hideHubHighlight then
 		local highlight = getHighlightColor(baseColor)
 		love.graphics.setColor(
-		highlight[1],
-		highlight[2],
-		highlight[3],
-		(highlight[4] or 1) * highlightAlphaMult
+			highlight[1],
+			highlight[2],
+			highlight[3],
+			(highlight[4] or 1) * highlightAlphaMult
 		)
 		love.graphics.setLineWidth(2)
 		love.graphics.circle("line", 0, 0, highlightRadiusLocal)

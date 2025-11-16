@@ -40,8 +40,8 @@ end
 
 Achievements:registerStateProvider(function()
 	return {
-		currentCombo = comboState.count or 0,
-		bestComboStreak = max(comboState.best or 0, comboState.count or 0),
+	currentCombo = comboState.count or 0,
+	bestComboStreak = max(comboState.best or 0, comboState.count or 0),
 	}
 end)
 
@@ -71,24 +71,24 @@ end
 if Upgrades and Upgrades.addEventHandler then
 	Upgrades:addEventHandler("upgradeAcquired", function(data, runState)
 		if runState and runState.effects and (runState.effects.comboWindowBonus or 0) ~= 0 then
-			markComboWindowDirty()
-			return
+	markComboWindowDirty()
+		return
 		end
 
 		if not data or not data.upgrade then return end
 
 		local effects = data.upgrade.effects
 		if effects and (effects.comboWindowBonus or 0) ~= 0 then
-			markComboWindowDirty()
+	markComboWindowDirty()
 		end
 	end)
 end
 
 local function syncComboToUI()
 	UI:setCombo(
-	comboState.count or 0,
-	comboState.timer or 0,
-	comboState.window or DEFAULT_COMBO_WINDOW
+		comboState.count or 0,
+		comboState.timer or 0,
+		comboState.window or DEFAULT_COMBO_WINDOW
 	)
 end
 
@@ -316,15 +316,15 @@ function FruitEvents.handleConsumption(x, y)
 
 	if love.math.random() < Rocks:getSpawnChance() then
 		local fx, fy, tileCol, tileRow = SnakeUtils.getSafeSpawn(
-		segments,
-		Fruit,
-		Rocks,
-		safeZone,
-		{
+			segments,
+			Fruit,
+			Rocks,
+			safeZone,
+			{
 			avoidFrontOfSnake = true,
 			direction = Snake:getDirection(),
 			frontBuffer = 5,
-		}
+			}
 		)
 		if fx then
 			Rocks:spawn(fx, fy, "small")

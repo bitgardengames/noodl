@@ -857,29 +857,29 @@ local function drawGuidingCompass(effect, progress)
 
 		love.graphics.setColor(pointerColor[1], pointerColor[2], pointerColor[3], pointerAlpha * 0.9)
 		love.graphics.polygon(
-		"fill",
-		x + cos(pointerAngle) * tipRadius,
-		y + sin(pointerAngle) * tipRadius,
-		x + cos(leftAngle) * tailRadius,
-		y + sin(leftAngle) * tailRadius,
-		x,
-		y,
-		x + cos(rightAngle) * tailRadius,
-		y + sin(rightAngle) * tailRadius
+			"fill",
+			x + cos(pointerAngle) * tipRadius,
+			y + sin(pointerAngle) * tipRadius,
+			x + cos(leftAngle) * tailRadius,
+			y + sin(leftAngle) * tailRadius,
+			x,
+			y,
+			x + cos(rightAngle) * tailRadius,
+			y + sin(rightAngle) * tailRadius
 		)
 
 		love.graphics.setLineWidth(2)
 		love.graphics.setColor(pointerColor[1], pointerColor[2], pointerColor[3], pointerAlpha)
 		love.graphics.polygon(
-		"line",
-		x + cos(pointerAngle) * tipRadius,
-		y + sin(pointerAngle) * tipRadius,
-		x + cos(leftAngle) * tailRadius,
-		y + sin(leftAngle) * tailRadius,
-		x,
-		y,
-		x + cos(rightAngle) * tailRadius,
-		y + sin(rightAngle) * tailRadius
+			"line",
+			x + cos(pointerAngle) * tipRadius,
+			y + sin(pointerAngle) * tipRadius,
+			x + cos(leftAngle) * tailRadius,
+			y + sin(leftAngle) * tailRadius,
+			x,
+			y,
+			x + cos(rightAngle) * tailRadius,
+			y + sin(rightAngle) * tailRadius
 		)
 	end
 
@@ -1016,10 +1016,10 @@ local function drawResonantShell(effect, progress)
 
 			love.graphics.setLineWidth(thickness)
 			love.graphics.setColor(
-			waveColor[1],
-			waveColor[2],
-			waveColor[3],
-			waveAlphaBase * (0.7 + 0.2 * (1 - (index - 1) / waveCount)) * fade
+				waveColor[1],
+				waveColor[2],
+				waveColor[3],
+				waveAlphaBase * (0.7 + 0.2 * (1 - (index - 1) / waveCount)) * fade
 			)
 			love.graphics.arc("line", "open", x, y, radius, startAngle, endAngle, 40)
 		end
@@ -1034,9 +1034,9 @@ local function drawResonantShell(effect, progress)
 			local radius = baseRadius + sin(progress * pi * (6 + index * 0.3)) * innerRadius * 0.18
 			local size = innerRadius * (0.18 + 0.06 * sin(progress * pi * 5.4 + index))
 			love.graphics.setColor(
-			sparkColor[1],
-			sparkColor[2],
-			sparkColor[3],
+				sparkColor[1],
+				sparkColor[2],
+				sparkColor[3],
 			sparkAlpha * (0.75 + 0.2 * sin(progress * pi * 4.2 + index))
 			)
 			love.graphics.circle("fill", x + cos(angle) * radius, y + sin(angle) * radius, size, 12)
@@ -1094,9 +1094,9 @@ local function drawAbyssalCatalyst(effect, progress)
 		local rightY = baseY - perpY * width
 
 		love.graphics.setColor(
-		accentColor[1],
-		accentColor[2],
-		accentColor[3],
+			accentColor[1],
+			accentColor[2],
+			accentColor[3],
 		shardAlphaBase * (0.8 + 0.2 * (index % 2))
 		)
 		love.graphics.polygon("fill", baseX, baseY, leftX, leftY, tipX, tipY, rightX, rightY)
@@ -1116,9 +1116,9 @@ local function drawAbyssalCatalyst(effect, progress)
 			radius = radius + sin(progress * pi * 5 + index) * innerRadius * 0.12
 			local size = innerRadius * (0.16 + 0.08 * t)
 			love.graphics.setColor(
-			sparkColor[1],
-			sparkColor[2],
-			sparkColor[3],
+				sparkColor[1],
+				sparkColor[2],
+				sparkColor[3],
 			spiralAlpha * (0.65 + 0.25 * sin(angle * 1.4 + progress * pi * 2))
 			)
 			love.graphics.circle("fill", x + cos(angle) * radius, y + sin(angle) * radius, size, 14)
@@ -1211,19 +1211,19 @@ function UpgradeVisuals:draw()
 	if #self.effects == 0 then return end
 
 	RenderLayers:withLayer("overlay", function()
-		love.graphics.push("all")
+	love.graphics.push("all")
 
 		for _, effect in ipairs(self.effects) do
-			local progress = clamp01(effect.age / effect.life)
-			if effect.showBase ~= false then
-				drawGlow(effect, progress)
-				drawRings(effect, progress)
-				drawBadge(effect, progress)
-			end
-			drawVariant(effect, progress)
+	local progress = clamp01(effect.age / effect.life)
+		if effect.showBase ~= false then
+	drawGlow(effect, progress)
+	drawRings(effect, progress)
+	drawBadge(effect, progress)
+		end
+	drawVariant(effect, progress)
 		end
 
-		love.graphics.pop()
+	love.graphics.pop()
 	end)
 end
 

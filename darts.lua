@@ -917,8 +917,8 @@ local function drawTelegraphPath(emitter)
 		local tipHalfHeight = shaftThickness * 0.55
 		love.graphics.setColor(tipColor[1], tipColor[2], tipColor[3], clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength)))
 		love.graphics.polygon("fill",
-		tipX, tipBaseY,
-		baseX, tipBaseY - tipHalfHeight,
+			tipX, tipBaseY,
+			baseX, tipBaseY - tipHalfHeight,
 		baseX, tipBaseY + tipHalfHeight)
 	else
 		local baseY = muzzleY - facing * (tileSize * 0.02)
@@ -936,8 +936,8 @@ local function drawTelegraphPath(emitter)
 		local tipHalfWidth = shaftThickness * 0.55
 		love.graphics.setColor(tipColor[1], tipColor[2], tipColor[3], clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength)))
 		love.graphics.polygon("fill",
-		tipBaseX, tipY,
-		tipBaseX - tipHalfWidth, baseY,
+			tipBaseX, tipY,
+			tipBaseX - tipHalfWidth, baseY,
 		tipBaseX + tipHalfWidth, baseY)
 	end
 
@@ -1054,9 +1054,9 @@ local function drawDart(emitter)
 		drawPoly(fletchTop, tailColor)
 		drawPoly(fletchBot, tailColor)
 
-	-----------------------------------------------------
-	-- VERTICAL DART
-	-----------------------------------------------------
+		-----------------------------------------------------
+		-- VERTICAL DART
+		-----------------------------------------------------
 	else
 		local facing = emitter.facing or 1
 		local cx = emitter.dartX or emitter.startX

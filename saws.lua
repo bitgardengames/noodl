@@ -49,11 +49,11 @@ local sawStencilState = {
 local function drawSawStencil()
 	if sawStencilState.dir == "horizontal" then
 		love.graphics.rectangle(
-		"fill",
-		sawStencilState.x - TRACK_LENGTH / 2 - sawStencilState.radius,
-		sawStencilState.y - STENCIL_EXTENT + sawStencilState.sinkOffset,
-		TRACK_LENGTH + sawStencilState.radius * 2,
-		STENCIL_EXTENT
+			"fill",
+			sawStencilState.x - TRACK_LENGTH / 2 - sawStencilState.radius,
+			sawStencilState.y - STENCIL_EXTENT + sawStencilState.sinkOffset,
+			TRACK_LENGTH + sawStencilState.radius * 2,
+			STENCIL_EXTENT
 		)
 		return
 	end
@@ -1103,58 +1103,58 @@ function Saws:draw()
 		if not isBladeHidden and #points >= 6 then
 			local needsShadowStencil = (saw.dir == "horizontal")
 			RenderLayers:withLayer("shadows", function()
-				love.graphics.push()
+			love.graphics.push()
 
-				local shadowBaseX = (px or anchorX)
-				local shadowBaseY = (py or anchorY)
+			local shadowBaseX = (px or anchorX)
+			local shadowBaseY = (py or anchorY)
 				local shadowSinkOffset = offsetY
 				local applyShadowClip = false
 
 				if saw.dir == "horizontal" then
-					-- When the saw sinks into the track, the shadow should shrink upwards
-					-- instead of following the blade down. Move the base upward based on the
-					-- sink progress so the clipped result visually tightens towards the slot.
-					shadowSinkOffset = SINK_OFFSET - sinkOffset
-					local trackTop = anchorY - 5
-					local trackWidth = TRACK_LENGTH + outer * 2
+				-- When the saw sinks into the track, the shadow should shrink upwards
+				-- instead of following the blade down. Move the base upward based on the
+				-- sink progress so the clipped result visually tightens towards the slot.
+				shadowSinkOffset = SINK_OFFSET - sinkOffset
+				local trackTop = anchorY - 5
+				local trackWidth = TRACK_LENGTH + outer * 2
 
-					love.graphics.stencil(function()
-						love.graphics.rectangle(
-						"fill",
-						anchorX - TRACK_LENGTH / 2 - outer,
-						trackTop,
-						trackWidth,
-						STENCIL_EXTENT
-						)
-					end, "replace", 1)
-					love.graphics.setStencilTest("equal", 1)
-					applyShadowClip = true
+			love.graphics.stencil(function()
+				love.graphics.rectangle(
+				"fill",
+				anchorX - TRACK_LENGTH / 2 - outer,
+				trackTop,
+				trackWidth,
+				STENCIL_EXTENT
+			)
+			end, "replace", 1)
+			love.graphics.setStencilTest("equal", 1)
+				applyShadowClip = true
 				else
-					if offsetX > 0 then
-						shadowBaseX = shadowBaseX + offsetX
-					end
+				if offsetX > 0 then
+				shadowBaseX = shadowBaseX + offsetX
+				end
 				end
 
 				if shadowSinkOffset and shadowSinkOffset ~= 0 then
-					shadowBaseY = shadowBaseY + shadowSinkOffset
+				shadowBaseY = shadowBaseY + shadowSinkOffset
 				end
 
 				local shadowOffsetX = SHADOW_OFFSET
 				local shadowOffsetY = SHADOW_OFFSET
 
-				love.graphics.translate(shadowBaseX + shadowOffsetX, shadowBaseY + shadowOffsetY)
-				love.graphics.rotate(rotation)
-				love.graphics.scale(sinkScale, sinkScale)
+			love.graphics.translate(shadowBaseX + shadowOffsetX, shadowBaseY + shadowOffsetY)
+			love.graphics.rotate(rotation)
+			love.graphics.scale(sinkScale, sinkScale)
 
-				local alpha = SHADOW_ALPHA * (1 - 0.4 * sinkVisualProgress)
-				love.graphics.setColor(0, 0, 0, alpha)
-				love.graphics.polygon("fill", points)
+			local alpha = SHADOW_ALPHA * (1 - 0.4 * sinkVisualProgress)
+			love.graphics.setColor(0, 0, 0, alpha)
+			love.graphics.polygon("fill", points)
 
 				if applyShadowClip then
-					love.graphics.setStencilTest()
+			love.graphics.setStencilTest()
 				end
 
-				love.graphics.pop()
+			love.graphics.pop()
 			end, needsShadowStencil)
 		end
 
@@ -1216,10 +1216,10 @@ function Saws:draw()
 		if not hideHubHighlight then
 			local highlight = getHighlightColor(baseColor)
 			love.graphics.setColor(
-			highlight[1],
-			highlight[2],
-			highlight[3],
-			(highlight[4] or 1) * highlightAlphaMult
+				highlight[1],
+				highlight[2],
+				highlight[3],
+				(highlight[4] or 1) * highlightAlphaMult
 			)
 			love.graphics.setLineWidth(2)
 			love.graphics.circle("line", 0, 0, highlightRadius)
@@ -1251,24 +1251,24 @@ function Saws:draw()
 			local pulse = 0.9 + 0.08 * math.sin(phase * 3.1)
 
 			RenderLayers:withLayer("effects", function()
-				local trailAlpha = (trailColor[4] or 1)
-				love.graphics.setColor(trailColor[1], trailColor[2], trailColor[3], trailAlpha)
+			local trailAlpha = (trailColor[4] or 1)
+			love.graphics.setColor(trailColor[1], trailColor[2], trailColor[3], trailAlpha)
 				if saw.dir == "horizontal" then
-					local height = radius * (0.95 + 0.18 * math.sin(phase * 2.6))
-					love.graphics.rectangle("fill", glowX - trailLength * 0.5, glowY - height * 0.5, trailLength, height)
+			local height = radius * (0.95 + 0.18 * math.sin(phase * 2.6))
+			love.graphics.rectangle("fill", glowX - trailLength * 0.5, glowY - height * 0.5, trailLength, height)
 				else
-					local width = radius * (0.95 + 0.18 * math.cos(phase * 2.4))
-					love.graphics.rectangle("fill", glowX - width * 0.5, glowY - trailLength * 0.5, width, trailLength)
+			local width = radius * (0.95 + 0.18 * math.cos(phase * 2.4))
+			love.graphics.rectangle("fill", glowX - width * 0.5, glowY - trailLength * 0.5, width, trailLength)
 				end
 
 				local outerAlpha = (glowColor[4] or 1) * 0.6
-				love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha)
-				love.graphics.setLineWidth(2)
-				love.graphics.circle("line", glowX, glowY, radius * (1.18 + 0.12 * pulse))
+			love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha)
+			love.graphics.setLineWidth(2)
+			love.graphics.circle("line", glowX, glowY, radius * (1.18 + 0.12 * pulse))
 
-				love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha * 0.6)
-				love.graphics.circle("line", glowX, glowY, radius * (0.88 + 0.1 * math.sin(phase * 4.4 + 0.8)))
-				love.graphics.setLineWidth(1)
+			love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha * 0.6)
+			love.graphics.circle("line", glowX, glowY, radius * (0.88 + 0.1 * math.sin(phase * 4.4 + 0.8)))
+			love.graphics.setLineWidth(1)
 			end)
 		end
 

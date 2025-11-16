@@ -1160,13 +1160,13 @@ function Arena:drawBorder()
 
 	RenderLayers:withLayer("shadows", function()
 		if borderCanvas then
-			love.graphics.setColor(0, 0, 0, 0.25)
-			love.graphics.draw(borderCanvas, shadowOffset, shadowOffset)
+	love.graphics.setColor(0, 0, 0, 0.25)
+	love.graphics.draw(borderCanvas, shadowOffset, shadowOffset)
 		else
-			love.graphics.push("all")
-			love.graphics.translate(shadowOffset, shadowOffset)
-			drawBorderShape({0, 0, 0, 0.25}, {0, 0, 0, 0.25})
-			love.graphics.pop()
+	love.graphics.push("all")
+	love.graphics.translate(shadowOffset, shadowOffset)
+	drawBorderShape({0, 0, 0, 0.25}, {0, 0, 0, 0.25})
+	love.graphics.pop()
 		end
 	end)
 

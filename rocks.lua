@@ -579,12 +579,12 @@ end
 
 local function drawRockShadow(rock)
 	withRockTransform(rock, function()
-		love.graphics.setColor(0, 0, 0, 0.4)
-		love.graphics.push()
-		love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-		love.graphics.scale(1.1, 1.1)
-		love.graphics.polygon("fill", rock.shape)
-		love.graphics.pop()
+	love.graphics.setColor(0, 0, 0, 0.4)
+	love.graphics.push()
+	love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+	love.graphics.scale(1.1, 1.1)
+	love.graphics.polygon("fill", rock.shape)
+	love.graphics.pop()
 	end)
 end
 
@@ -592,21 +592,21 @@ local function drawRockBody(rock)
 	withRockTransform(rock, function()
 		local baseColor = Theme.rock
 		if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
-			baseColor = HIT_FLASH_COLOR
+		baseColor = HIT_FLASH_COLOR
 		end
 
-		love.graphics.setColor(baseColor)
-		love.graphics.polygon("fill", rock.shape)
+	love.graphics.setColor(baseColor)
+	love.graphics.polygon("fill", rock.shape)
 
 		if rock.highlightShape then
-			local highlight = getHighlightColor(baseColor)
-			love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-			love.graphics.polygon("fill", rock.highlightShape)
+	local highlight = getHighlightColor(baseColor)
+	love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+	love.graphics.polygon("fill", rock.highlightShape)
 		end
 
-		love.graphics.setColor(0, 0, 0, 1)
-		love.graphics.setLineWidth(3)
-		love.graphics.polygon("line", rock.shape)
+	love.graphics.setColor(0, 0, 0, 1)
+	love.graphics.setLineWidth(3)
+	love.graphics.polygon("line", rock.shape)
 	end)
 end
 
@@ -617,13 +617,13 @@ function Rocks:draw()
 
 	RenderLayers:withLayer("shadows", function()
 		for _, rock in ipairs(current) do
-			drawRockShadow(rock)
+	drawRockShadow(rock)
 		end
 	end)
 
 	RenderLayers:withLayer("main", function()
 		for _, rock in ipairs(current) do
-			drawRockBody(rock)
+	drawRockBody(rock)
 		end
 	end)
 end

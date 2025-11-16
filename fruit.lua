@@ -50,13 +50,13 @@ defaultHighlightColor = computeHighlightColor(nil, {0, 0, 0, 0})
 local function attachFruitTypeMetatable(entry)
 	refreshFruitHighlight(entry)
 	return setmetatable(entry, {
-		__newindex = function(t, key, value)
-			rawset(t, key, value)
-			if key == "weight" then
-				markFruitWeightsDirty()
-			elseif key == "color" then
-				refreshFruitHighlight(t)
-			end
+	__newindex = function(t, key, value)
+	rawset(t, key, value)
+		if key == "weight" then
+	markFruitWeightsDirty()
+		elseif key == "color" then
+	refreshFruitHighlight(t)
+		end
 		end,
 	})
 end
@@ -104,12 +104,12 @@ for i = 1, #fruitTypes do
 end
 
 setmetatable(fruitTypes, {
-	__newindex = function(t, key, value)
-		if type(value) == "table" then
-			value = attachFruitTypeMetatable(value)
-		end
-		rawset(t, key, value)
-		markFruitWeightsDirty()
+__newindex = function(t, key, value)
+	if type(value) == "table" then
+value = attachFruitTypeMetatable(value)
+	end
+rawset(t, key, value)
+markFruitWeightsDirty()
 	end,
 })
 
@@ -454,50 +454,50 @@ function Fruit:checkCollisionWith(x, y, trail, rocks)
 
 	local half = HITBOX_SIZE / 2
 	if aabb(x - half, y - half, HITBOX_SIZE, HITBOX_SIZE,
-	active.x - half, active.y - half, HITBOX_SIZE, HITBOX_SIZE) then
-		lastCollectedType = active.type
-		lastCollectedMeta = {
-			isBonus = active.isBonus or false,
-			countsForGoal = active.countsForGoal ~= false,
-			eventTag = active.eventTag,
-		}
-		active.onExpire = nil
-		local drawCache = fading and fading.drawCache or fadingDrawCache
+		active.x - half, active.y - half, HITBOX_SIZE, HITBOX_SIZE) then
+	lastCollectedType = active.type
+	lastCollectedMeta = {
+		isBonus = active.isBonus or false,
+		countsForGoal = active.countsForGoal ~= false,
+		eventTag = active.eventTag,
+	}
+	active.onExpire = nil
+	local drawCache = fading and fading.drawCache or fadingDrawCache
 
-		fading = {
-			x = active.x,
-			y = active.y,
-			alpha = 1,
-			scaleX = active.scaleX,
-			scaleY = active.scaleY,
-			shadow = active.shadow,
-			type = active.type,
-			drawCache = drawCache,
-		}
-		fadingDrawCache = drawCache
-		fadeTimer = 0
-		active.phase = "inactive"
-		active.alpha = 0
-		active.bobOffset = 0
-		active.glowPulse = 1
-		idleSparkles = {}
+	fading = {
+		x = active.x,
+		y = active.y,
+		alpha = 1,
+		scaleX = active.scaleX,
+		scaleY = active.scaleY,
+		shadow = active.shadow,
+		type = active.type,
+		drawCache = drawCache,
+	}
+	fadingDrawCache = drawCache
+	fadeTimer = 0
+	active.phase = "inactive"
+	active.alpha = 0
+	active.bobOffset = 0
+	active.glowPulse = 1
+	idleSparkles = {}
 
-		local fxColor = (active.type and active.type.highlightColor) or defaultHighlightColor
-		Particles:spawnBurst(active.x, active.y, {
-			count = love.math.random(10, 14),
-			speed = 120,
-			speedVariance = 90,
-			life = 0.45,
-			size = 3.2,
-			color = {fxColor[1], fxColor[2], fxColor[3], 0.95},
-			spread = pi * 2,
-			drag = 2.7,
-			gravity = -60,
-			fadeTo = 0,
-		})
-		return true
-	end
-	return false
+	local fxColor = (active.type and active.type.highlightColor) or defaultHighlightColor
+	Particles:spawnBurst(active.x, active.y, {
+		count = love.math.random(10, 14),
+		speed = 120,
+		speedVariance = 90,
+		life = 0.45,
+		size = 3.2,
+		color = {fxColor[1], fxColor[2], fxColor[3], 0.95},
+		spread = pi * 2,
+		drag = 2.7,
+		gravity = -60,
+		fadeTo = 0,
+	})
+	return true
+end
+return false
 end
 
 local function prepareFruitDrawData(f, out)
@@ -552,7 +552,7 @@ local function prepareFruitDrawData(f, out)
 	end
 
 	out.isDragonfruitActive =
-		out.isActive and f.type and f.type.name == "Dragonfruit"
+	out.isActive and f.type and f.type.name == "Dragonfruit"
 
 	return out
 end
@@ -680,15 +680,15 @@ function Fruit:draw()
 	local list = drawList
 	RenderLayers:withLayer("shadows", function()
 		for i = 1, drawCount do
-			local data = list[i]
-			drawFruitShadow(data)
+		local data = list[i]
+	drawFruitShadow(data)
 		end
 	end)
 
 	RenderLayers:withLayer("main", function()
 		for i = 1, drawCount do
-			local data = list[i]
-			drawFruitMain(data)
+		local data = list[i]
+	drawFruitMain(data)
 		end
 	end)
 end

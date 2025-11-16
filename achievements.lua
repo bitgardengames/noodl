@@ -182,7 +182,7 @@ function Achievements:_finalizeOrdering()
 
 		for stat, ids in pairs(self._statIndex) do
 			sort(ids, function(a, b)
-				return (position[a] or 0) < (position[b] or 0)
+			return (position[a] or 0) < (position[b] or 0)
 			end)
 		end
 	end
