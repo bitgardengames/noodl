@@ -1363,7 +1363,8 @@ function Snake:onShieldConsumed(x, y, cause)
 			x = x,
 			y = y,
 			cause = cause or "unknown",
-		})
+			}
+		)
 	end
 end
 
@@ -4013,7 +4014,8 @@ function Snake:activateDash()
 		Upgrades:notify("dashActivated", {
 			x = hx,
 			y = hy,
-		})
+			}
+		)
 	end
 
 	return dash.active
@@ -4046,7 +4048,8 @@ function Snake:onDashBreakRock(x, y)
 		Upgrades:notify("dashBreakRock", {
 			x = x,
 			y = y,
-		})
+			}
+		)
 	end
 end
 
@@ -4087,7 +4090,8 @@ function Snake:activateTimeDilation()
 		Upgrades:notify("timeDilationActivated", {
 			x = hx,
 			y = hy,
-		})
+			}
+		)
 	end
 
 	return ability.active
@@ -4412,7 +4416,8 @@ local function addSeveredTrail(pieceTrail, segmentEstimate)
 		life = SEVERED_TAIL_LIFE,
 		fadeDuration = fadeDuration,
 		segmentCount = max(1, segmentEstimate or #pieceTrail),
-	})
+		}
+	)
 end
 
 local function spawnSawCutParticles(x, y, count)
@@ -4431,7 +4436,8 @@ local function spawnSawCutParticles(x, y, count)
 		drag = 3.0,
 		gravity = 220,
 		fadeTo = 0,
-	})
+		}
+	)
 end
 
 function Snake:handleSawBodyCut(context)

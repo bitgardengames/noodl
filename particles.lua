@@ -260,7 +260,8 @@ function Particles:draw()
 	end
 
 	RenderLayers:withLayer("overlay", function()
-	particleBatch:clear()
+		particleBatch:clear(
+	)
 
 		for i = 1, count do
 		local normAge = self.normAge[i]
@@ -269,17 +270,24 @@ function Particles:draw()
 		normAge = 1 - currentT
 		end
 
-	local currentSize = self.baseSize[i] * (0.8 + normAge * 0.6)
+		local currentSize = self.baseSize[i] * (0.8 + normAge * 0.6
+	)
 		local scale = currentSize / particleSpriteRadius
 
-	particleBatch:setColor(self.r[i], self.g[i], self.b[i], self.alpha[i])
-	particleBatch:add(self.x[i], self.y[i], 0, scale, scale, particleSpriteRadius, particleSpriteRadius)
+		particleBatch:setColor(self.r[i], self.g[i], self.b[i], self.alpha[i]
+	)
+		particleBatch:add(self.x[i], self.y[i], 0, scale, scale, particleSpriteRadius, particleSpriteRadius
+	)
 		end
 
-	particleBatch:setColor(1, 1, 1, 1)
-	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.draw(particleBatch)
-	end)
+		particleBatch:setColor(1, 1, 1, 1
+	)
+		love.graphics.setColor(1, 1, 1, 1
+	)
+		love.graphics.draw(particleBatch
+	)
+		end
+	)
 end
 
 function Particles:reset()
@@ -334,7 +342,8 @@ function Particles:spawnBlood(x, y, options)
 			drag = options.drag or 2.1,
 			gravity = options.gravity or 280,
 			fadeTo = options.fadeTo or 0.1,
-		})
+			}
+		)
 	end
 
 	local dropletCount = max(0, options.dropletCount or 8)
@@ -352,7 +361,8 @@ function Particles:spawnBlood(x, y, options)
 			drag = options.dropletDrag or 3.4,
 			gravity = options.dropletGravity or 340,
 			fadeTo = options.dropletFadeTo or 0,
-		})
+			}
+		)
 	end
 end
 

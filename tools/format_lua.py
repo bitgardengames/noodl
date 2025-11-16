@@ -201,10 +201,21 @@ def format_lines(lines: Iterable[str]) -> List[str]:
             else:
                 # Inside parentheses block
                 if stripped.endswith(")"):
-                    # closing paren aligns with the function call
-                    formatted.append("\t" * indent + stripped)
+                    # Look at the content BEFORE the closing paren
+                    inner = stripped[:-1].rstrip()
+
+                    if inner:
+                        # CASE: mixed content + closing paren, e.g.
+                        #   clamp01(blah))
+                        # Emit argument on its own line
+                        formatted.append("\t" * (indent + 1) + inner)
+                        # Emit final ')' on its own line at base indent
+                        formatted.append("\t" * indent + ")")
+                    else:
+                        # CASE: pure closing paren
+                        formatted.append("\t" * indent + ")")
                 else:
-                    # arguments get +1 indent relative to call
+                    # Argument / table line: +1 indent
                     formatted.append("\t" * (indent + 1) + stripped)
 
             paren_depth = new_depth

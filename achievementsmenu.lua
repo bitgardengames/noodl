@@ -496,7 +496,8 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 		borderWidth = 1,
 		shadowColor = withAlpha(Theme.shadowColor or {0,0,0,0.35}, (Theme.shadowColor and Theme.shadowColor[4] or 0.35) * 0.85),
 		shadowOffset = 3,
-	})
+		}
+	)
 
 	-- Track outline for visibility
 	if trackOutlineColor then
@@ -510,7 +511,8 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 			trackY + inset,
 			trackWidth - outlineWidth,
 			trackHeight - outlineWidth,
-		max(0, trackRadius - inset)
+			max(0, trackRadius - inset
+		)
 		)
 	end
 
@@ -569,7 +571,8 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 		flipVertical = true,
 		drawFace = true,
 		faceAtBottom = true,
-	})
+		}
+	)
 
 	love.graphics.pop()
 end
@@ -961,7 +964,8 @@ function AchievementsMenu:enter()
 		text = Localization:get("achievements.back_to_menu"),
 		action = "menu",
 		},
-	})
+		}
+	)
 
 	applyBackButtonLayout(layout, sw, sh)
 
@@ -1066,7 +1070,8 @@ function AchievementsMenu:draw()
 		highlightAlpha = 1,
 		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.85),
 		shadowOffset = summaryShadowOffset,
-	})
+		}
+	)
 
 	love.graphics.pop()
 
@@ -1074,11 +1079,13 @@ function AchievementsMenu:draw()
 	local unlockedLabel = Localization:get("achievements.summary.unlocked", {
 		unlocked = totals.unlocked,
 		total = totals.total,
-	})
+		}
+	)
 	local completionPercent = toPercent(totals.completion)
 	local completionLabel = Localization:get("achievements.summary.completion", {
 		percent = completionPercent,
-	})
+		}
+	)
 	local achieveFont = UI.fonts.achieve
 
 	love.graphics.setFont(achieveFont)
@@ -1108,7 +1115,8 @@ function AchievementsMenu:draw()
 		highlightAlpha = 1,
 		shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.35) * 0.9),
 		shadowOffset = panelShadowOffset,
-	})
+		}
+	)
 	love.graphics.pop()
 
 	local clipX = panelX + panelPaddingX
@@ -1155,7 +1163,8 @@ function AchievementsMenu:draw()
 				highlightAlpha = unlocked and 1 or 0.8,
 				shadowColor = withAlpha(shadowColor, (shadowColor[4] or 0.3) * 0.9),
 				shadowOffset = panelShadowOffset,
-			})
+				}
+			)
 			love.graphics.pop()
 
 			if icon then

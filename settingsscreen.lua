@@ -671,7 +671,8 @@ function SettingsScreen:enter()
 			sliderTrack = nil,
 			baseY = y,
 			focusable = opt.type ~= "header",
-		})
+			}
+		)
 
 		local entry = buttons[#buttons]
 
@@ -815,7 +816,8 @@ local function drawSettingsScrollbar(trackX, trackY, trackWidth, trackHeight, th
 		trackY + inset,
 		trackWidth - outlineWidth,
 		trackHeight - outlineWidth,
-	max(0, trackRadius - inset)
+		max(0, trackRadius - inset
+	)
 	)
 
 	local thumbPadding = 2
@@ -875,7 +877,8 @@ local function drawSettingsScrollbar(trackX, trackY, trackWidth, trackHeight, th
 		flipVertical = true,
 		drawFace = true,
 		faceAtBottom = true,
-	})
+		}
+	)
 
 	if not snakeDrawn then
 		love.graphics.push()
@@ -902,7 +905,8 @@ local function drawSettingsScrollbar(trackX, trackY, trackWidth, trackHeight, th
 			thumbX + thumbWidth * 0.85,
 			bodyBottom,
 			thumbX + thumbWidth * 0.5,
-		min(thumbY + thumbHeight, bodyBottom + tailHeight)
+			min(thumbY + thumbHeight, bodyBottom + tailHeight
+		)
 		)
 
 		local bellyWidth = thumbWidth * 0.6
@@ -956,7 +960,8 @@ function SettingsScreen:draw()
 	local panelShadowOffset = max(0, (UI.shadowOffset or 0) - 2)
 	UI.drawPanel(panel.x, panel.y, panel.w, panel.h, {
 		shadowOffset = panelShadowOffset,
-	})
+		}
+	)
 
 	local titleText = Localization:get("settings.title")
 	local headerY = UI.getHeaderY(sw, sh)
@@ -965,7 +970,8 @@ function SettingsScreen:draw()
 		shadow = true,
 		shadowOffsetX = 1,
 		shadowOffsetY = 1,
-	})
+		}
+	)
 
 	self:updateButtonPositions()
 
@@ -1032,7 +1038,8 @@ function SettingsScreen:draw()
 					valueShadow = true,
 					valueShadowOffsetX = 1,
 					valueShadowOffsetY = 1,
-				})
+					}
+				)
 
 				btn.sliderTrack = btn.sliderTrack or {}
 				btn.sliderTrack.x = trackX
@@ -1065,7 +1072,8 @@ function SettingsScreen:draw()
 					shadow = true,
 					shadowOffsetX = 1,
 					shadowOffsetY = 1,
-				})
+					}
+				)
 
 				-- Decorative line removed for cleaner section headers
 			end

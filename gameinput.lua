@@ -48,7 +48,8 @@ function GameInput.new(game, transition)
 		game = game,
 		transition = transition,
 		axisState = {horizontal = nil, vertical = nil},
-	}, GameInput)
+		}, GameInput
+	)
 end
 
 function GameInput:resetAxes()

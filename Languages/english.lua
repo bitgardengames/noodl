@@ -53,12 +53,6 @@ local english = {
 					description = "Trigger ${goal} combos in a single run.",
 					progress = "Combos triggered: ${current}/${goal}",
 				},
-				shields = {
-					title = "Shield Specialist",
-					description = "Trigger ${goal} shields in a single run.",
-					progress = "Emergency saves: ${current}/${goal}",
-					complete = "Shield mastery! ${current} clutch saves.",
-				},
 				shield_bounce = {
 					title = "Shield Wall Master",
 					description = "Bounce off walls with your shield ${goal} times in one run.",

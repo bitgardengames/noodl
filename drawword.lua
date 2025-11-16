@@ -49,7 +49,8 @@ function DrawWord.draw(word, ox, oy, cellSize, spacing)
 			-- Disable the built-in face rendering here to avoid double faces.
 			SnakeDraw.run(snakeTrail, #snakeTrail, cellSize, nil, nil, nil, nil, nil, {
 				drawFace = false,
-			})
+				}
+			)
 
 			x = x + (3 * cellSize) + spacing
 		end

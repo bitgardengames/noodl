@@ -1257,7 +1257,8 @@ function GameOver:enter(data)
 		apples = stats.apples or 0,
 		score = stats.score or 0,
 		bonusXP = challengeBonusXP,
-	})
+		}
+	)
 
 	self.xpSectionHeight = nil
 	self.baseXpSectionHeight = nil
@@ -1414,7 +1415,8 @@ local function drawCelebrationsList(anim, x, startY, width)
 				color = {UI.colors.text[1], UI.colors.text[2], UI.colors.text[3], alpha},
 				shadow = true,
 				shadowOffset = TEXT_SHADOW_OFFSET,
-			})
+				}
+			)
 
 			if event.subtitle and event.subtitle ~= "" then
 				UI.drawLabel(event.subtitle, cardX + 18, cardY + 32, cardWidth - 36, "left", {
@@ -1422,7 +1424,8 @@ local function drawCelebrationsList(anim, x, startY, width)
 					color = {UI.colors.mutedText[1], UI.colors.mutedText[2], UI.colors.mutedText[3], alpha},
 					shadow = true,
 					shadowOffset = TEXT_SHADOW_OFFSET,
-				})
+					}
+				)
 			end
 
 			love.graphics.pop()
@@ -1577,7 +1580,8 @@ local function drawXpSection(self, x, y, width)
 			color = UI.colors.highlight or UI.colors.text,
 			shadow = true,
 			shadowOffset = TEXT_SHADOW_OFFSET,
-		})
+			}
+		)
 		labelY = labelY + fontProgressSmall:getHeight() + 6
 	end
 
@@ -1587,7 +1591,8 @@ local function drawXpSection(self, x, y, width)
 			color = self.dailyStreakColor or UI.colors.highlight or UI.colors.text,
 			shadow = true,
 			shadowOffset = TEXT_SHADOW_OFFSET,
-		})
+			}
+		)
 		labelY = labelY + fontProgressSmall:getHeight() + 6
 	end
 
@@ -1596,13 +1601,15 @@ local function drawXpSection(self, x, y, width)
 	if (anim.xpForLevel or 0) <= 0 then
 		totalLabel = Localization:get("gameover.meta_progress_total_summary_max", {
 			total = formatXpValue(totalValue),
-		})
+			}
+		)
 	else
 		local remaining = max(0, ceil((anim.xpForLevel or 0) - (anim.xpIntoLevel or 0)))
 		totalLabel = Localization:get("gameover.meta_progress_total_summary_next", {
 			total = formatXpValue(totalValue),
 			remaining = formatXpValue(remaining),
-		})
+			}
+		)
 	end
 
 	local xpLabelFont = fontProgressLabel or fontProgressSmall
@@ -1612,7 +1619,8 @@ local function drawXpSection(self, x, y, width)
 		color = UI.colors.text,
 		shadow = true,
 		shadowOffset = TEXT_SHADOW_OFFSET,
-	})
+		}
+	)
 
 	labelY = labelY + xpLabelHeight + 4
 	local celebrationStart = labelY + xpLabelHeight + 16
@@ -1669,7 +1677,8 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 			color = mutedColor,
 			shadow = true,
 			shadowOffset = TEXT_SHADOW_OFFSET,
-		})
+			}
+		)
 
 		local valueText = entry.value or "0"
 		local displayFont = valueFont
@@ -1695,7 +1704,8 @@ local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSp
 			color = color,
 			shadow = true,
 			shadowOffset = TEXT_SHADOW_OFFSET,
-		})
+			}
+		)
 	end
 end
 
@@ -1724,7 +1734,8 @@ local function drawAchievementsPanel(self, x, y, width, height, sectionPadding, 
 		color = UI.colors.text,
 		shadow = true,
 		shadowOffset = TEXT_SHADOW_OFFSET,
-	})
+		}
+	)
 
 	entryY = entryY + fontProgressSmall:getHeight() + innerSpacing
 
@@ -1766,7 +1777,8 @@ local function drawAchievementsPanel(self, x, y, width, height, sectionPadding, 
 			color = UI.colors.highlight or UI.colors.text,
 			shadow = true,
 			shadowOffset = TEXT_SHADOW_OFFSET,
-		})
+			}
+		)
 		entryY = entryY + fontSmall:getHeight()
 
 		if entry.description and entry.description ~= "" then
@@ -1775,7 +1787,8 @@ local function drawAchievementsPanel(self, x, y, width, height, sectionPadding, 
 				color = UI.colors.mutedText or UI.colors.text,
 				shadow = true,
 				shadowOffset = TEXT_SHADOW_OFFSET,
-			})
+				}
+			)
 			entryY = entryY + (entry.descriptionLines or 0) * fontProgressSmall:getHeight()
 		end
 
@@ -1812,7 +1825,8 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 			color = UI.colors.mutedText or UI.colors.text,
 			shadow = true,
 			shadowOffset = TEXT_SHADOW_OFFSET,
-		})
+			}
+		)
 		currentY = currentY + messagePanelHeight
 	end
 
@@ -1889,7 +1903,8 @@ function GameOver:draw()
 		color = UI.colors.text,
 		shadow = true,
 		shadowOffset = TITLE_SHADOW_OFFSET,
-	})
+		}
+	)
 
 	drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 
@@ -2308,7 +2323,8 @@ function GameOver:drawUnlockOverlay()
 		color = titleColor,
 		shadow = true,
 		shadowOffset = TITLE_SHADOW_OFFSET,
-	})
+		}
+	)
 
 	local nextY = cardY + cardHeight + 28
 	if nameText and nameText ~= "" then
@@ -2317,7 +2333,8 @@ function GameOver:drawUnlockOverlay()
 			color = titleColor,
 			shadow = true,
 			shadowOffset = TEXT_SHADOW_OFFSET,
-		})
+			}
+		)
 		local nameHeight = (nameFont and nameFont:getHeight()) or 0
 		nextY = nextY + nameHeight + 12
 	end
@@ -2330,7 +2347,8 @@ function GameOver:drawUnlockOverlay()
 			color = mutedColor,
 			shadow = true,
 			shadowOffset = TEXT_SHADOW_OFFSET,
-		})
+			}
+		)
 		local smallHeight = (smallFont and smallFont:getHeight() * smallFont:getLineHeight()) or 0
 		nextY = nextY + max(32, smallHeight + 18)
 	end
@@ -2341,7 +2359,8 @@ function GameOver:drawUnlockOverlay()
 		color = continueColor,
 		shadow = true,
 		shadowOffset = TEXT_SHADOW_OFFSET,
-	})
+		}
+	)
 
 	love.graphics.pop()
 end

@@ -210,7 +210,8 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 		borderWidth = 1,
 		shadowColor = withAlpha(Theme.shadowColor or {0,0,0,0.35}, (Theme.shadowColor and Theme.shadowColor[4] or 0.35) * 0.85),
 		shadowOffset = 3,
-	})
+		}
+	)
 
 	-- Track outline for visibility
 	if trackOutlineColor then
@@ -224,7 +225,8 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 			trackY + inset,
 			trackWidth - outlineWidth,
 			trackHeight - outlineWidth,
-		max(0, trackRadius - inset)
+			max(0, trackRadius - inset
+		)
 		)
 	end
 
@@ -283,7 +285,8 @@ local function drawScrollbar(trackX, trackY, trackWidth, trackHeight, thumbY, th
 		flipVertical = true,
 		drawFace = true,
 		faceAtBottom = true,
-	})
+		}
+	)
 
 	love.graphics.pop()
 end
@@ -561,8 +564,10 @@ local function formatShaderDisplayName(typeId)
 
 	name = name:gsub("^%l", string.upper)
 	name = name:gsub("(%s)(%l)", function(space, letter)
-	return space .. letter:upper()
-	end)
+		return space .. letter:upper(
+	)
+		end
+	)
 
 	return name
 end
@@ -770,7 +775,8 @@ local function getSkinRequirementText(skin)
 		local achievementName = resolveAchievementName(unlock.achievement)
 		return Localization:get("metaprogression.cosmetics.locked_achievement", {
 			name = achievementName,
-		})
+			}
+		)
 	end
 
 	return Localization:get("metaprogression.cosmetics.locked_generic")
@@ -1143,8 +1149,10 @@ function ProgressionScreen:enter()
 	if SnakeCosmetics and SnakeCosmetics.load then
 		local metaLevel = progressionState and progressionState.level or nil
 		local ok, err = pcall(function()
-		SnakeCosmetics:load({metaLevel = metaLevel})
-		end)
+			SnakeCosmetics:load({metaLevel = metaLevel}
+		)
+			end
+		)
 		if not ok then
 			print("[metaprogressionscreen] failed to load cosmetics:", err)
 		end
@@ -1284,7 +1292,8 @@ local function drawSummaryPanel(sw)
 		accentHeight = 0,
 		accentInsetY = WINDOW_PADDING_Y * 0.5,
 		accentAlpha = 0.32,
-	})
+		}
+	)
 
 	local glow = withAlpha(lightenColor(accentColor, 0.45), 0.22)
 
@@ -1441,7 +1450,8 @@ local function drawTrack(sw, sh)
 		accentHeight = 0,
 		accentInsetY = WINDOW_PADDING_Y * 0.5,
 		accentAlpha = 0.18,
-	})
+		}
+	)
 
 	love.graphics.push()
 	love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
@@ -1599,7 +1609,8 @@ function drawCosmeticSnakePreview(previewX, previewY, previewW, previewH, skin, 
 		drawFace = false,
 		skinOverride = skin,
 		paletteOverride = palette,
-	})
+		}
+	)
 	love.graphics.pop()
 end
 
@@ -1623,7 +1634,8 @@ local function drawCosmeticsList(sw, sh)
 		accentHeight = 0,
 		accentInsetY = WINDOW_PADDING_Y * 0.5,
 		accentAlpha = 0.24,
-	})
+		}
+	)
 
 	love.graphics.push()
 	love.graphics.setScissor(listX - 20, clipY - 10, CARD_WIDTH + 40, clipH + 20)
@@ -1855,7 +1867,8 @@ local function drawStatsList(sw, sh)
 		accentHeight = 0,
 		accentInsetY = WINDOW_PADDING_Y * 0.5,
 		accentAlpha = 0.18,
-	})
+		}
+	)
 
 	love.graphics.push()
 	local scissorOffsetY = 6

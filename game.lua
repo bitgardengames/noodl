@@ -325,7 +325,8 @@ local ENTITY_UPDATE_ORDER = ModuleUtil.prepareSystems({
 	Achievements,
 	FloatingText,
 	Score,
-})
+	}
+)
 
 local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
 	Face,
@@ -337,7 +338,8 @@ local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
 	Achievements,
 	FloatingText,
 	Score,
-})
+	}
+)
 
 local FLOOR_INTRO_BACKGROUND_SYSTEMS = ModuleUtil.prepareSystems({
 	Face,
@@ -352,7 +354,8 @@ local FLOOR_INTRO_BACKGROUND_SYSTEMS = ModuleUtil.prepareSystems({
 	Achievements,
 	FloatingText,
 	Score,
-})
+	}
+)
 
 local function cloneColor(color, fallback, out)
 	local source = color or fallback or DEFAULT_IMPACT_RIPPLE_COLOR
@@ -1013,7 +1016,8 @@ function Game:load(options)
 		transitionAdvance = false,
 		transitionAwaitInput = true,
 		transitionFloorData = Floors[self.floor] or Floors[1],
-	})
+		}
+	)
 end
 
 function Game:reset()
@@ -1057,7 +1061,8 @@ function Game:enter(data)
 
 	Achievements:checkAll({
 		sessionsPlayed = PlayerStats:get("sessionsPlayed"),
-	})
+		}
+	)
 
 	self:updateMouseVisibility()
 end
@@ -1192,7 +1197,8 @@ function Game:triggerVictory()
 	local result = Score:handleRunClear({
 		endingMessage = endingMessage,
 		storyTitle = storyTitle,
-	})
+		}
+	)
 
 	Achievements:save()
 

@@ -127,7 +127,8 @@ local function computeHash(options)
 		tostring((options and options.vignetteAlpha) or 0.28),
 		tostring((options and options.vignetteSteps) or 3),
 		tostring(options and options.vignetteThickness or "nil"),
-	}, "|")
+		}, "|"
+	)
 end
 
 function MenuScene.prepareBackground(options)

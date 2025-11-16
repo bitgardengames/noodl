@@ -28,7 +28,8 @@ local GAMEPLAY_SYSTEMS = ModuleUtil.prepareSystems({
 	Rocks,
 	Saws,
 	UI,
-})
+	}
+)
 
 local gameplayContext = {}
 

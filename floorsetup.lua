@@ -319,7 +319,8 @@ local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
 		ember = true,
 		emberTrailColor = options.emberTrailColor or EMBER_SAW_TRAIL_COLOR,
 		emberGlowColor = options.emberGlowColor or EMBER_SAW_GLOW_COLOR,
-	})
+		}
+	)
 
 	local nextSpecialIndex = 1
 
@@ -693,7 +694,8 @@ function FloorSetup.prepare(floorNum, floorData)
 		reservedCells = reservedCells,
 		reservedSafeZone = reservedSafeZone,
 		reservedSpawnBuffer = reservedSpawnBuffer,
-	})
+		}
+	)
 
 	return {
 		traitContext = traitContext,

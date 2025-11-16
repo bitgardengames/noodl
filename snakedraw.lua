@@ -1030,7 +1030,8 @@ local function drawZephyrSlipstream(trail, SEGMENT_SIZE, data)
 		intensity = intensity,
 		ratio = ratio,
 		time = time,
-	})
+		}
+	)
 
 	love.graphics.pop()
 end
@@ -1814,25 +1815,34 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		end
 
 		RenderLayers:withLayer("shadows", function()
-		love.graphics.push()
-		love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+			love.graphics.push(
+		)
+			love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET
+		)
 			if exitTrail and #exitTrail > 0 then
-		drawTrailSegmentToCanvas(exitTrail, half, options, shadowPalette, exitCoords)
+			drawTrailSegmentToCanvas(exitTrail, half, options, shadowPalette, exitCoords
+		)
 			end
 			if entryTrail and #entryTrail > 0 then
-		drawTrailSegmentToCanvas(entryTrail, half, options, shadowPalette, entryCoords)
+			drawTrailSegmentToCanvas(entryTrail, half, options, shadowPalette, entryCoords
+		)
 			end
-		love.graphics.pop()
-		end)
+			love.graphics.pop(
+		)
+			end
+		)
 
 		RenderLayers:withLayer("main", function()
 			if exitTrail and #exitTrail > 0 then
-		drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords)
+			drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords
+		)
 			end
 			if entryTrail and #entryTrail > 0 and entryPalette then
-		drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
+			drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords
+		)
 			end
-		end)
+			end
+		)
 
 		if exitHole then
 			drawPortalHole(exitHole, true)
@@ -1890,15 +1900,22 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		local coords = buildCoords(trail)
 
 		RenderLayers:withLayer("shadows", function()
-		love.graphics.push()
-		love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-		drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
-		love.graphics.pop()
-		end)
+			love.graphics.push(
+		)
+			love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET
+		)
+			drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords
+		)
+			love.graphics.pop(
+		)
+			end
+		)
 
 		RenderLayers:withLayer("main", function()
-		drawTrailSegmentToCanvas(trail, half, options, palette, coords)
-		end)
+			drawTrailSegmentToCanvas(trail, half, options, palette, coords
+		)
+			end
+		)
 	end
 
 	local shouldDrawOverlay = (hx and hy and drawFace ~= false) or (popTimer and popTimer > 0 and hx and hy)
@@ -1906,81 +1923,103 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		RenderLayers:withLayer("overlay", function()
 			if hx and hy and drawFace ~= false then
 			if upgradeVisuals and upgradeVisuals.temporalAnchor then
-		drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor)
+			drawTemporalAnchorGlyphs(hx, hy, SEGMENT_SIZE, upgradeVisuals.temporalAnchor
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.chronoWard then
-		drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard)
+			drawChronoWardPulse(hx, hy, SEGMENT_SIZE, upgradeVisuals.chronoWard
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.timeDilation then
-		drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation)
+			drawTimeDilationAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.timeDilation
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.adrenaline then
-		drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline)
+			drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.swiftFangs then
-		drawswiftFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.swiftFangs)
+			drawswiftFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.swiftFangs
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.zephyrCoils then
-		drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils)
+			drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.dash then
-		drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash)
+			drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.speedArcs then
-		drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs)
+			drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs
+		)
 			end
 
 			local faceScale = 1
 			local faceOptions = upgradeVisuals and upgradeVisuals.face or nil
-		Face:draw(hx, hy, faceScale, faceOptions)
+			Face:draw(hx, hy, faceScale, faceOptions
+		)
 
 			if upgradeVisuals and upgradeVisuals.diffractionBarrier then
-		drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, upgradeVisuals.diffractionBarrier)
+			drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, upgradeVisuals.diffractionBarrier
+		)
 			end
 
-		drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
+			drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer
+		)
 
 			if upgradeVisuals and upgradeVisuals.dash then
-		drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash)
+			drawDashStreaks(trail, SEGMENT_SIZE, upgradeVisuals.dash
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.eventHorizon then
-		drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon)
+			drawEventHorizonSheath(trail, SEGMENT_SIZE, upgradeVisuals.eventHorizon
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.stormchaser then
-		drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser)
+			drawStormchaserCurrent(trail, SEGMENT_SIZE, upgradeVisuals.stormchaser
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
-		drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst)
+			drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.titanblood then
-		drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood)
+			drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood
+		)
 			end
 
 			if upgradeVisuals and upgradeVisuals.phoenixEcho then
-		drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho)
+			drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho
+		)
 			end
 			end
 
 			if popTimer and popTimer > 0 and hx and hy then
-		local t = 1 - (popTimer / POP_DURATION)
+			local t = 1 - (popTimer / POP_DURATION
+		)
 			if t < 1 then
-		local pulse = 0.8 + 0.4 * sin(t * pi)
-		love.graphics.setColor(1, 1, 1, 0.4)
-		love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse)
+			local pulse = 0.8 + 0.4 * sin(t * pi
+		)
+			love.graphics.setColor(1, 1, 1, 0.4
+		)
+			love.graphics.circle("fill", hx, hy, thickness * 0.6 * pulse
+		)
 			end
 			end
-		end)
+			end
+		)
 	end
 
 	love.graphics.setColor(1, 1, 1, 1)

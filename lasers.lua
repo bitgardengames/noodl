@@ -60,7 +60,8 @@ local function copyColor(color, alpha)
 		default = {1, 0.38, 0.18, alpha or 1},
 		defaultAlpha = alpha,
 		alpha = alpha,
-	})
+		}
+	)
 end
 
 local function clamp01(value)
@@ -893,7 +894,8 @@ function Lasers:onShieldedHit(beam, hitX, hitY)
 			emitterY = beam.y,
 			impactX = beam.impactX,
 			impactY = beam.impactY,
-		})
+			}
+		)
 	end
 end
 

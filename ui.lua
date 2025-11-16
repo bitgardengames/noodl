@@ -280,7 +280,8 @@ local function lightenColor(color, amount, out)
 		target = out or {},
 		default = Color.white,
 		preserveAlpha = true,
-	})
+		}
+	)
 end
 
 local function darkenColor(color, amount, out)
@@ -290,7 +291,8 @@ local function darkenColor(color, amount, out)
 		default = Color.black,
 		scale = scale,
 		preserveAlpha = true,
-	})
+		}
+	)
 end
 
 local function drawAlignedBorder(mode, x, y, w, h, radius, borderWidth)
@@ -880,7 +882,8 @@ function UI.drawSlider(id, x, y, w, value, opts)
 		focused = focused,
 		focusColor = opts.focusColor or UI.colors.highlight,
 		focusAlpha = opts.focusAlpha,
-	})
+		}
+	)
 
 	local label = opts.label
 	if label then
@@ -1227,7 +1230,8 @@ function UI:addFruit(fruitType)
 		celebrationGlow = nil,
 		celebrationDelay = nil,
 		pendingCelebration = nil,
-	})
+		}
+	)
 end
 
 function UI:removeFruit(count)

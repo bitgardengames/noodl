@@ -1037,7 +1037,8 @@ local function drawResonantShell(effect, progress)
 				sparkColor[1],
 				sparkColor[2],
 				sparkColor[3],
-			sparkAlpha * (0.75 + 0.2 * sin(progress * pi * 4.2 + index))
+				sparkAlpha * (0.75 + 0.2 * sin(progress * pi * 4.2 + index)
+			)
 			)
 			love.graphics.circle("fill", x + cos(angle) * radius, y + sin(angle) * radius, size, 12)
 		end
@@ -1097,7 +1098,8 @@ local function drawAbyssalCatalyst(effect, progress)
 			accentColor[1],
 			accentColor[2],
 			accentColor[3],
-		shardAlphaBase * (0.8 + 0.2 * (index % 2))
+			shardAlphaBase * (0.8 + 0.2 * (index % 2)
+		)
 		)
 		love.graphics.polygon("fill", baseX, baseY, leftX, leftY, tipX, tipY, rightX, rightY)
 
@@ -1119,7 +1121,8 @@ local function drawAbyssalCatalyst(effect, progress)
 				sparkColor[1],
 				sparkColor[2],
 				sparkColor[3],
-			spiralAlpha * (0.65 + 0.25 * sin(angle * 1.4 + progress * pi * 2))
+				spiralAlpha * (0.65 + 0.25 * sin(angle * 1.4 + progress * pi * 2)
+			)
 			)
 			love.graphics.circle("fill", x + cos(angle) * radius, y + sin(angle) * radius, size, 14)
 		end
@@ -1211,20 +1214,28 @@ function UpgradeVisuals:draw()
 	if #self.effects == 0 then return end
 
 	RenderLayers:withLayer("overlay", function()
-	love.graphics.push("all")
+		love.graphics.push("all"
+	)
 
 		for _, effect in ipairs(self.effects) do
-	local progress = clamp01(effect.age / effect.life)
+		local progress = clamp01(effect.age / effect.life
+	)
 		if effect.showBase ~= false then
-	drawGlow(effect, progress)
-	drawRings(effect, progress)
-	drawBadge(effect, progress)
+		drawGlow(effect, progress
+	)
+		drawRings(effect, progress
+	)
+		drawBadge(effect, progress
+	)
 		end
-	drawVariant(effect, progress)
+		drawVariant(effect, progress
+	)
 		end
 
-	love.graphics.pop()
-	end)
+		love.graphics.pop(
+	)
+		end
+	)
 end
 
 function UpgradeVisuals:reset()

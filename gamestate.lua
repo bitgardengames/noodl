@@ -228,7 +228,8 @@ function GameState:switch(stateName, data)
 			time = 0,
 			from = previousName,
 			to = self.current,
-		})
+			}
+		)
 
 		return
 	end
@@ -263,7 +264,8 @@ function GameState:switch(stateName, data)
 			time = 0,
 			from = nil,
 			to = self.current,
-		})
+			}
+		)
 
 		return
 	end
@@ -288,7 +290,8 @@ function GameState:switch(stateName, data)
 		time = 0,
 		from = self.current,
 		to = self.next,
-	})
+		}
+	)
 end
 
 function GameState:update(dt)
@@ -314,7 +317,8 @@ function GameState:update(dt)
 			time = progress * (self.transitionDuration or 0),
 			from = fromName,
 			to = self.current,
-		})
+			}
+		)
 
 		local outgoingContext = self.transitionOutgoingContext
 		if outgoingContext then
@@ -363,7 +367,8 @@ function GameState:update(dt)
 				time = 0,
 				from = nil,
 				to = self.current,
-			})
+				}
+			)
 
 			if self.queuedState then
 				local queuedState, queuedData = self.queuedState, self.queuedData
@@ -411,7 +416,8 @@ function GameState:update(dt)
 				time = 0,
 				from = self.transitionFrom,
 				to = self.current,
-			})
+				}
+			)
 		elseif self.transitionDirection == -1 and self.transitionTime >= 1 then
 			local activeState = getCurrentState(self)
 			if activeState and activeState.onTransitionEnd then
@@ -435,7 +441,8 @@ function GameState:update(dt)
 				time = 0,
 				from = nil,
 				to = self.current,
-			})
+				}
+			)
 		else
 			local fromName, toName
 			if self.transitionDirection == 1 then
@@ -454,7 +461,8 @@ function GameState:update(dt)
 				time = self.transitionTime * self.transitionDuration,
 				from = fromName,
 				to = toName,
-			})
+				}
+			)
 		end
 
 		return callCurrentState(self, "transitionUpdate", dt, self.transitionDirection, self.transitionTime, context)
@@ -468,7 +476,8 @@ function GameState:update(dt)
 		time = 0,
 		from = nil,
 		to = self.current,
-	})
+		}
+	)
 
 	return callCurrentState(self, "update", dt)
 end

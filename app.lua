@@ -48,7 +48,8 @@ function App:loadSubsystems()
 	local metaState = MetaProgression:getState() or {}
 	SnakeCosmetics:load({
 		metaLevel = metaState.level or 1,
-	})
+		}
+	)
 end
 
 function App:resolveAction(action)

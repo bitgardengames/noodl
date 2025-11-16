@@ -230,7 +230,8 @@ function Rocks:spawn(x, y)
 		shape = nil,
 		col = col,
 		row = row,
-	})
+		}
+	)
 	local rock = current[#current]
 	rock.shape = generateRockShape(ROCK_SIZE, love.math.random(1, 999999))
 	rock.highlightShape = buildRockHighlight(rock.shape)
@@ -288,7 +289,8 @@ local function spawnShatterFX(x, y)
 		scaleMin = 0.54,
 		scaleVariance = 0.72,
 		fadeTo = 0.06,
-	})
+		}
+	)
 
 	Particles:spawnBurst(x, y, {
 		count = love.math.random(3, 5),
@@ -304,7 +306,8 @@ local function spawnShatterFX(x, y)
 		scaleMin = 0.38,
 		scaleVariance = 0.3,
 		fadeTo = 0,
-	})
+		}
+	)
 end
 
 local function removeRockAt(index, spawnFX)
@@ -444,7 +447,8 @@ function Rocks:shatterNearest(x, y, count)
 					sourceX = x,
 					sourceY = y,
 					rock = shattered,
-				})
+					}
+				)
 			end
 		end
 	end
@@ -545,7 +549,8 @@ function Rocks:update(dt)
 					scaleMin = 0.6,
 					scaleVariance = 0.5,
 					fadeTo = 0.1,
-				})
+					}
+				)
 			end
 
 		elseif rock.phase == "squash" then
@@ -579,13 +584,20 @@ end
 
 local function drawRockShadow(rock)
 	withRockTransform(rock, function()
-	love.graphics.setColor(0, 0, 0, 0.4)
-	love.graphics.push()
-	love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-	love.graphics.scale(1.1, 1.1)
-	love.graphics.polygon("fill", rock.shape)
-	love.graphics.pop()
-	end)
+		love.graphics.setColor(0, 0, 0, 0.4
+	)
+		love.graphics.push(
+	)
+		love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET
+	)
+		love.graphics.scale(1.1, 1.1
+	)
+		love.graphics.polygon("fill", rock.shape
+	)
+		love.graphics.pop(
+	)
+		end
+	)
 end
 
 local function drawRockBody(rock)
@@ -595,19 +607,28 @@ local function drawRockBody(rock)
 		baseColor = HIT_FLASH_COLOR
 		end
 
-	love.graphics.setColor(baseColor)
-	love.graphics.polygon("fill", rock.shape)
+		love.graphics.setColor(baseColor
+	)
+		love.graphics.polygon("fill", rock.shape
+	)
 
 		if rock.highlightShape then
-	local highlight = getHighlightColor(baseColor)
-	love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-	love.graphics.polygon("fill", rock.highlightShape)
+		local highlight = getHighlightColor(baseColor
+	)
+		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4]
+	)
+		love.graphics.polygon("fill", rock.highlightShape
+	)
 		end
 
-	love.graphics.setColor(0, 0, 0, 1)
-	love.graphics.setLineWidth(3)
-	love.graphics.polygon("line", rock.shape)
-	end)
+		love.graphics.setColor(0, 0, 0, 1
+	)
+		love.graphics.setLineWidth(3
+	)
+		love.graphics.polygon("line", rock.shape
+	)
+		end
+	)
 end
 
 function Rocks:draw()
@@ -617,15 +638,19 @@ function Rocks:draw()
 
 	RenderLayers:withLayer("shadows", function()
 		for _, rock in ipairs(current) do
-	drawRockShadow(rock)
+		drawRockShadow(rock
+	)
 		end
-	end)
+		end
+	)
 
 	RenderLayers:withLayer("main", function()
 		for _, rock in ipairs(current) do
-	drawRockBody(rock)
+		drawRockBody(rock
+	)
 		end
-	end)
+		end
+	)
 end
 
 function Rocks:getSpawnChance()

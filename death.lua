@@ -22,7 +22,8 @@ function Death:spawnFromSnake(trail, SEGMENT_SIZE)
 				dy = math.sin(angle) * speed,
 				life = 1.0,
 				size = SEGMENT_SIZE * 0.75
-			})
+				}
+			)
 		end
 	end
 

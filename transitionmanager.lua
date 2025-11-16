@@ -28,7 +28,8 @@ function TransitionManager.new(game)
 		duration = 0,
 		data = {},
 		shopCloseRequested = false,
-	}, TransitionManager)
+		}, TransitionManager
+	)
 end
 
 local function getResumeState(self)
@@ -238,7 +239,8 @@ function TransitionManager:startFloorTransition(advance, skipFade)
 		pendingFloor = pendingFloor,
 		transitionFloorData = floorData,
 		floorApplied = false,
-	})
+		}
+	)
 
 	self.shopCloseRequested = false
 	self:startPhase("fadeout", skipFade and 0 or 1.2)

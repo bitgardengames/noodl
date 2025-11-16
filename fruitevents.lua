@@ -43,7 +43,8 @@ Achievements:registerStateProvider(function()
 	currentCombo = comboState.count or 0,
 	bestComboStreak = max(comboState.best or 0, comboState.count or 0),
 	}
-end)
+	end
+)
 
 local function getUpgradeEffect(name)
 	if Upgrades and Upgrades.getEffect then
@@ -71,7 +72,8 @@ end
 if Upgrades and Upgrades.addEventHandler then
 	Upgrades:addEventHandler("upgradeAcquired", function(data, runState)
 		if runState and runState.effects and (runState.effects.comboWindowBonus or 0) ~= 0 then
-	markComboWindowDirty()
+		markComboWindowDirty(
+	)
 		return
 		end
 
@@ -79,9 +81,11 @@ if Upgrades and Upgrades.addEventHandler then
 
 		local effects = data.upgrade.effects
 		if effects and (effects.comboWindowBonus or 0) ~= 0 then
-	markComboWindowDirty()
+		markComboWindowDirty(
+	)
 		end
-	end)
+		end
+	)
 end
 
 local function syncComboToUI()
@@ -147,7 +151,8 @@ local function applyComboReward(x, y)
 		gravity = 30,
 		drag = 2.5,
 		fadeTo = 0
-	})
+		}
+	)
 end
 
 local function addFloatingText(label, x, y, color, duration, size)
@@ -360,7 +365,8 @@ function FruitEvents.handleConsumption(x, y)
 		fruitType = fruitType,
 		name = name,
 		combo = comboState.count or 0,
-	})
+		}
+	)
 
 	local state = {
 		snakeScore = Score:get(),

@@ -302,7 +302,8 @@ function Popup:draw()
 		shadowOffset = UI.shadowOffset,
 		fill = {panelColor[1] or 1, panelColor[2] or 1, panelColor[3] or 1, (panelColor[4] or 1) * self.alpha},
 		borderColor = Theme.panelBorder,
-	})
+		}
+	)
 
 	local colors = UI.colors or {}
 	local textColor = colors.text or {1, 1, 1, 1}

@@ -10,7 +10,8 @@ Achievements:registerStateProvider(function(state)
 	if type(state) == "table" then
 	state.snakeScore = Score.current or 0
 	end
-end)
+	end
+)
 
 Score.current = 0
 Score.highscore = 0
@@ -26,7 +27,8 @@ Score._pendingApples = 0
 local function updateAchievementChecks(self)
 	Achievements:checkAll({
 		totalApplesEaten = (PlayerStats:get("totalApplesEaten") or 0) + (self._pendingApples or 0),
-	})
+		}
+	)
 end
 
 function Score:load()
@@ -183,7 +185,8 @@ local function finalizeRunResult(self, options)
 	Achievements:checkAll({
 		bestScore = PlayerStats:get("snakeScore"),
 		snakeScore = self.current,
-	})
+		}
+	)
 
 	self:setHighScore(self.current)
 

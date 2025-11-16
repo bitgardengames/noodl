@@ -50,15 +50,20 @@ defaultHighlightColor = computeHighlightColor(nil, {0, 0, 0, 0})
 local function attachFruitTypeMetatable(entry)
 	refreshFruitHighlight(entry)
 	return setmetatable(entry, {
-	__newindex = function(t, key, value)
-	rawset(t, key, value)
+		__newindex = function(t, key, value
+	)
+		rawset(t, key, value
+	)
 		if key == "weight" then
-	markFruitWeightsDirty()
+		markFruitWeightsDirty(
+	)
 		elseif key == "color" then
-	refreshFruitHighlight(t)
+		refreshFruitHighlight(t
+	)
 		end
 		end,
-	})
+		}
+	)
 end
 
 local fruitTypes = {
@@ -104,14 +109,19 @@ for i = 1, #fruitTypes do
 end
 
 setmetatable(fruitTypes, {
-__newindex = function(t, key, value)
+	__newindex = function(t, key, value
+)
 	if type(value) == "table" then
-value = attachFruitTypeMetatable(value)
+	value = attachFruitTypeMetatable(value
+)
 	end
-rawset(t, key, value)
-markFruitWeightsDirty()
+	rawset(t, key, value
+)
+	markFruitWeightsDirty(
+)
 	end,
-})
+	}
+)
 
 local function refreshFruitWeightCache()
 	local total = 0
@@ -397,7 +407,8 @@ function Fruit:update(dt)
 				scaleMin = 0.55,
 				scaleVariance = 0.65,
 				fadeTo = 0,
-			})
+				}
+			)
 			active.phase = "squash"
 			active.timer = 0
 			active.offsetY = 0
@@ -494,7 +505,8 @@ function Fruit:checkCollisionWith(x, y, trail, rocks)
 		drag = 2.7,
 		gravity = -60,
 		fadeTo = 0,
-	})
+		}
+	)
 	return true
 end
 return false
@@ -681,16 +693,20 @@ function Fruit:draw()
 	RenderLayers:withLayer("shadows", function()
 		for i = 1, drawCount do
 		local data = list[i]
-	drawFruitShadow(data)
+		drawFruitShadow(data
+	)
 		end
-	end)
+		end
+	)
 
 	RenderLayers:withLayer("main", function()
 		for i = 1, drawCount do
 		local data = list[i]
-	drawFruitMain(data)
+		drawFruitMain(data
+	)
 		end
-	end)
+		end
+	)
 end
 
 -- Queries

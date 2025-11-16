@@ -36,6 +36,14 @@ local BASE_EMITTER_SIZE = 18
 local FLASH_DECAY = 3.5
 local IMPACT_FLASH_DURATION = 0.32
 local ROCK_EDGE_INSET = 2
+local OUT = 3
+local RADIUS = 3
+local SHADOW_OFS = 3
+local SHADOW_ALPHA = 0.25
+local HALO_LINE = 2
+local MUZZLE_INSET = 5
+local MUZZLE_RADIUS = 2
+local FIN_BACK = 5
 
 local BASE_EMITTER_COLOR = {0.32, 0.34, 0.38, 0.95}
 local BASE_ACCENT_COLOR = {0.46, 0.56, 0.62, 1.0}
@@ -69,7 +77,8 @@ local function scaleColor(color, factor, alphaFactor)
 	return Color.scale(color, scale, {
 		default = Color.white,
 		alphaFactor = alphaFactor or scale,
-	})
+		}
+	)
 end
 
 local function lerp(a, b, t)
@@ -313,7 +322,8 @@ local function triggerImpactBurst(emitter, impactType, x, y)
 		scaleMin = 0.5,
 		scaleVariance = 0.42,
 		fadeTo = (impactType == "rock") and 0.03 or 0.07,
-	})
+		}
+	)
 end
 
 local function randomCooldownDuration(emitter)
@@ -735,7 +745,9 @@ end
 
 local function drawEmitter(emitter)
 	local bodyColor, accentColor, telegraphColor = getEmitterColors()
-	local tileSize = Arena.tileSize or BASE_EMITTER_SIZE
+
+	-- Reduce emitter body size by 2px
+	local tileSize = (Arena.tileSize or BASE_EMITTER_SIZE) - 2
 	local half = tileSize * 0.5
 	local centerX = emitter.x or 0
 	local centerY = emitter.y or 0
@@ -744,20 +756,10 @@ local function drawEmitter(emitter)
 
 	love.graphics.push("all")
 
-	-----------------------------------------------------
-	-- STYLE CONSTANTS (match dart style)
-	-----------------------------------------------------
-	local OUT         = 3      -- 3px outline
-	local RADIUS      = 3      -- 3px corner radius
-	local SHADOW_OFS  = 3      -- 3px shadow offset
-	local SHADOW_ALPHA = 0.25  -- 25% opacity shadow
-
 	local flash    = clamp01(emitter.flashTimer or 0)
 	local strength = clamp01(emitter.telegraphStrength or 0)
 
-	-----------------------------------------------------
-	-- DROP SHADOW (simple, flat)
-	-----------------------------------------------------
+	-- DROP SHADOW
 	love.graphics.setColor(0, 0, 0, SHADOW_ALPHA)
 	love.graphics.rectangle(
 		"fill",
@@ -769,18 +771,14 @@ local function drawEmitter(emitter)
 		RADIUS
 	)
 
-	-----------------------------------------------------
-	-- MAIN HOUSING FILL
-	-----------------------------------------------------
+	-- MAIN HOUSING
 	local housingAlpha = clamp01((bodyColor[4] or 1) + flash * 0.1)
-	love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], housingAlpha)
+	love.graphics.setColor(bodyColor)
 	love.graphics.rectangle("fill", baseX, baseY, tileSize, tileSize, RADIUS, RADIUS)
 
-	-----------------------------------------------------
-	-- INSET / BEVEL (flat, geometric)
-	-----------------------------------------------------
+	-- INSET
+	local insetPad = 2
 	local insetColor = scaleColor(bodyColor, 0.78 + strength * 0.12, 1)
-	local insetPad   = 2
 
 	love.graphics.setColor(insetColor)
 	love.graphics.rectangle(
@@ -793,27 +791,13 @@ local function drawEmitter(emitter)
 		RADIUS - 1
 	)
 
-	-----------------------------------------------------
-	-- OUTER 3PX BLACK OUTLINE
-	-----------------------------------------------------
-	local borderAlpha = clamp01(0.9 + flash * 0.1 + strength * 0.1)
-	love.graphics.setColor(0, 0, 0, borderAlpha)
+	-- OUTER BLACK OUTLINE
+	love.graphics.setColor(0, 0, 0, clamp01(0.9 + flash * 0.1 + strength * 0.1))
 	love.graphics.setLineWidth(OUT)
-	love.graphics.rectangle(
-		"line",
-		baseX,
-		baseY,
-		tileSize,
-		tileSize,
-		RADIUS,
-		RADIUS
-	)
+	love.graphics.rectangle("line", baseX, baseY, tileSize, tileSize, RADIUS, RADIUS)
 
-	-----------------------------------------------------
-	-- INNER ACCENT STROKE (same accentColor as before)
-	-----------------------------------------------------
-	local accentAlpha = clamp01((accentColor[4] or 0.8) + flash * 0.25 + strength * 0.3)
-	love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], accentAlpha)
+	-- ACCENT OUTLINE
+	love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], clamp01((accentColor[4] or 0.8) + flash * 0.25 + strength * 0.3))
 	love.graphics.setLineWidth(1)
 	love.graphics.rectangle(
 		"line",
@@ -825,34 +809,32 @@ local function drawEmitter(emitter)
 		RADIUS - 1
 	)
 
-	-----------------------------------------------------
-	-- MUZZLE / EXIT HOLE (kept as circle for now)
-	-----------------------------------------------------
-	local muzzleOffset = tileSize * 0.34
-	local muzzleRadius = tileSize * 0.18
-	local muzzleX = centerX
-	local muzzleY = centerY
+	-- MUZZLE POSITIONING (pixel perfect)
 	local facing = emitter.facing or 1
+	local muzzleX, muzzleY = centerX, centerY
 
 	if emitter.dir == "horizontal" then
-		muzzleX = centerX + facing * muzzleOffset
+		muzzleX = centerX + facing * MUZZLE_INSET
 	else
-		muzzleY = centerY + facing * muzzleOffset
+		muzzleY = centerY + facing * MUZZLE_INSET
 	end
 
-	-- Inner dark fill (same logic as before, just simplified a bit)
-	local muzzleFillAlpha = clamp01(0.75 + strength * 0.15 + flash * 0.1)
-	love.graphics.setColor(0, 0, 0, muzzleFillAlpha)
-	love.graphics.circle("fill", muzzleX, muzzleY, muzzleRadius, 16)
+	-- HALO RING
+	local haloRadius = MUZZLE_RADIUS + 2
+	love.graphics.setColor(accentColor)
+	love.graphics.setLineWidth(HALO_LINE)
+	love.graphics.circle("line", muzzleX, muzzleY, haloRadius, 24)
 
-	-- Outline of muzzle (use same 3px outline for consistency)
+	-- MUZZLE BLACK FILL
+	love.graphics.setColor(0, 0, 0, clamp01(0.72 + strength * 0.15 + flash * 0.1))
+	love.graphics.circle("fill", muzzleX, muzzleY, MUZZLE_RADIUS, 24)
+
+	-- MUZZLE OUTLINE
 	love.graphics.setColor(0, 0, 0, 0.9 + flash * 0.1)
 	love.graphics.setLineWidth(OUT)
-	love.graphics.circle("line", muzzleX, muzzleY, muzzleRadius, 16)
+	love.graphics.circle("line", muzzleX, muzzleY, MUZZLE_RADIUS, 24)
 
-	-----------------------------------------------------
-	-- FLASH FRAME (outer white rectangle when firing)
-	-----------------------------------------------------
+	-- FLASH FRAME
 	if flash > 0 then
 		love.graphics.setColor(1, 1, 1, 0.3 * flash)
 		love.graphics.setLineWidth(1)
@@ -877,68 +859,92 @@ local function drawTelegraphPath(emitter)
 
 	local _, _, telegraphColor, bodyColor, tipColor = getEmitterColors()
 	local strength = clamp01(emitter.telegraphStrength or 0)
-	if strength <= 0 then
-		return
-	end
+	if strength <= 0 then return end
 
 	love.graphics.push("all")
 
-	local tileSize = Arena.tileSize or BASE_EMITTER_SIZE
+	local tileSize = (Arena.tileSize or BASE_EMITTER_SIZE) - 2
 	local centerX = emitter.x or 0
 	local centerY = emitter.y or 0
-	local facing = emitter.facing or 1
-	local muzzleOffset = tileSize * 0.34
-	local muzzleX = centerX
-	local muzzleY = centerY
+	local facing  = emitter.facing or 1
+
+	-- MUZZLE POSITIONING
+	local muzzleX, muzzleY = centerX, centerY
+
 	if emitter.dir == "horizontal" then
-		muzzleX = centerX + facing * muzzleOffset
+		muzzleX = centerX + facing * MUZZLE_INSET
 	else
-		muzzleY = centerY + facing * muzzleOffset
+		muzzleY = centerY + facing * MUZZLE_INSET
 	end
 
-	local peekDistance = tileSize * (0.16 + strength * 0.28)
+	-- TELEGRAPH SHAPING
+	local peekDistance   = tileSize * (0.16 + strength * 0.28)
 	local shaftThickness = tileSize * 0.18
-	local tipLength = tileSize * 0.22
-	local shaftLength = max(0, peekDistance - tipLength * 0.35)
+	local tipLength      = tileSize * 0.22
+	local shaftLength    = max(0, peekDistance - tipLength * 0.35)
 
 	if emitter.dir == "horizontal" then
-		local baseX = muzzleX - facing * (tileSize * 0.02)
-		local tipX = baseX + facing * peekDistance
+		local baseX  = muzzleX - facing * 2
+		local tipX   = baseX + facing * peekDistance
 		local shaftStart = baseX - facing * shaftLength
+
 		local shaftY = muzzleY - shaftThickness * 0.34
-		local shaftHeight = shaftThickness * 0.68
+		local shaftH = shaftThickness * 0.68
 
 		if shaftLength > 0 then
-			love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], clamp01((bodyColor[4] or 1) * (0.6 + 0.4 * strength)))
-			love.graphics.rectangle("fill", min(shaftStart, baseX), shaftY, abs(baseX - shaftStart), shaftHeight, 3, 3)
+			love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3],
+				clamp01((bodyColor[4] or 1) * (0.6 + 0.4 * strength))
+			)
+			love.graphics.rectangle("fill",
+				min(shaftStart, baseX),
+				shaftY,
+				abs(baseX - shaftStart),
+				shaftH,
+				3,3
+			)
 		end
 
-		local tipBaseY = muzzleY
-		local tipHalfHeight = shaftThickness * 0.55
-		love.graphics.setColor(tipColor[1], tipColor[2], tipColor[3], clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength)))
+		-- Tip
+		local tipHalf = shaftThickness * 0.55
+		love.graphics.setColor(tipColor[1], tipColor[2], tipColor[3],
+			clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength))
+		)
 		love.graphics.polygon("fill",
-			tipX, tipBaseY,
-			baseX, tipBaseY - tipHalfHeight,
-		baseX, tipBaseY + tipHalfHeight)
-	else
-		local baseY = muzzleY - facing * (tileSize * 0.02)
-		local tipY = baseY + facing * peekDistance
+			tipX, muzzleY,
+			baseX, muzzleY - tipHalf,
+			baseX, muzzleY + tipHalf
+		)
+
+	else -- vertical emitter
+		local baseY  = muzzleY - facing * 2
+		local tipY   = baseY + facing * peekDistance
 		local shaftStart = baseY - facing * shaftLength
+
 		local shaftX = muzzleX - shaftThickness * 0.34
-		local shaftWidth = shaftThickness * 0.68
+		local shaftW = shaftThickness * 0.68
 
 		if shaftLength > 0 then
-			love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3], clamp01((bodyColor[4] or 1) * (0.6 + 0.4 * strength)))
-			love.graphics.rectangle("fill", shaftX, min(shaftStart, baseY), shaftWidth, abs(baseY - shaftStart), 3, 3)
+			love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3],
+				clamp01((bodyColor[4] or 1) * (0.6 + 0.4 * strength))
+			)
+			love.graphics.rectangle("fill",
+				shaftX,
+				min(shaftStart, baseY),
+				shaftW,
+				abs(baseY - shaftStart),
+				3,3
+			)
 		end
 
-		local tipBaseX = muzzleX
-		local tipHalfWidth = shaftThickness * 0.55
-		love.graphics.setColor(tipColor[1], tipColor[2], tipColor[3], clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength)))
+		local tipHalf = shaftThickness * 0.55
+		love.graphics.setColor(tipColor[1], tipColor[2], tipColor[3],
+			clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength))
+		)
 		love.graphics.polygon("fill",
-			tipBaseX, tipY,
-			tipBaseX - tipHalfWidth, baseY,
-		tipBaseX + tipHalfWidth, baseY)
+			muzzleX, tipY,
+			muzzleX - tipHalf, baseY,
+			muzzleX + tipHalf, baseY
+		)
 	end
 
 	love.graphics.pop()
@@ -957,20 +963,10 @@ local function drawDart(emitter)
 
 	love.graphics.push("all")
 
-	-----------------------------------------------------
-	-- STYLE CONSTANTS
-	-----------------------------------------------------
-	local OUT = 3         -- crisp outline
-	local SHADOW_OFS = 3  -- shadow offset
-	local SHADOW_A   = 0.25
-	local FIN_BACK   = 5  --shift fins backward
-
-	-----------------------------------------------------
 	-- COMMON HELPERS
-	-----------------------------------------------------
 	local function drawPoly(points, fillColor)
 		-- Shadow
-		love.graphics.setColor(0,0,0,SHADOW_A)
+		love.graphics.setColor(0,0,0,SHADOW_ALPHA)
 		local sh = {}
 		for i=1,#points,2 do
 			sh[i]   = points[i]   + SHADOW_OFS
@@ -990,7 +986,7 @@ local function drawDart(emitter)
 
 	local function drawRect(x,y,w,h,fillColor)
 		-- Shadow
-		love.graphics.setColor(0,0,0,SHADOW_A)
+		love.graphics.setColor(0,0,0,SHADOW_ALPHA)
 		love.graphics.rectangle("fill", x+SHADOW_OFS, y+SHADOW_OFS, w, h)
 
 		-- Outline
@@ -1003,9 +999,7 @@ local function drawDart(emitter)
 		love.graphics.rectangle("fill", x,y,w,h)
 	end
 
-	-----------------------------------------------------
 	-- HORIZONTAL DART
-	-----------------------------------------------------
 	if emitter.dir == "horizontal" then
 		local facing = emitter.facing or 1
 		local cx = emitter.dartX or emitter.startX
@@ -1032,9 +1026,7 @@ local function drawDart(emitter)
 		}
 		drawPoly(tipPoly, tipColor)
 
-		-----------------------------------------------------
-		-- ARROW FLETCHING (longer + moved backward)
-		-----------------------------------------------------
+		-- ARROW FLETCHING
 		local finOuter = tailX + facing * (tailInset * 2.6 - FIN_BACK)
 		local finInner = tailX + facing * (tailInset * 1.0 - FIN_BACK)
 		local finH = 6
@@ -1054,9 +1046,7 @@ local function drawDart(emitter)
 		drawPoly(fletchTop, tailColor)
 		drawPoly(fletchBot, tailColor)
 
-		-----------------------------------------------------
 		-- VERTICAL DART
-		-----------------------------------------------------
 	else
 		local facing = emitter.facing or 1
 		local cx = emitter.dartX or emitter.startX
@@ -1083,9 +1073,7 @@ local function drawDart(emitter)
 		}
 		drawPoly(tipPoly, tipColor)
 
-		-----------------------------------------------------
-		-- ARROW FLETCHING (vertical, moved backward)
-		-----------------------------------------------------
+		-- ARROW FLETCHING
 		local finOuter = tailY + facing * (tailInset * 2.6 - FIN_BACK)
 		local finInner = tailY + facing * (tailInset * 1.0 - FIN_BACK)
 		local finW = 6

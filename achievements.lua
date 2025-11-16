@@ -182,8 +182,10 @@ function Achievements:_finalizeOrdering()
 
 		for stat, ids in pairs(self._statIndex) do
 			sort(ids, function(a, b)
-			return (position[a] or 0) < (position[b] or 0)
-			end)
+				return (position[a] or 0) < (position[b] or 0
+			)
+				end
+			)
 		end
 	end
 end
@@ -213,7 +215,8 @@ function Achievements:_ensureInitialized()
 			state.shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0
 			state.shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0
 			state.shieldSawParries = PlayerStats:get("shieldSawParries") or 0
-		end)
+			end
+		)
 
 		self:registerStateProvider(function(state)
 			state.runFloorsCleared = SessionStats:get("floorsCleared") or 0
@@ -223,7 +226,8 @@ function Achievements:_ensureInitialized()
 			state.runShieldsSaved = SessionStats:get("shieldsSaved") or 0
 			state.runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0
 			state.runBestComboStreak = SessionStats:get("bestComboStreak") or 0
-		end)
+			end
+		)
 
 		self._defaultProvidersRegistered = true
 	end
@@ -592,7 +596,8 @@ function Achievements:draw()
 	local message = Localization:get("achievements.popup_message", {
 		title = localizedTitle,
 		description = localizedDescription,
-	})
+		}
+	)
 	love.graphics.printf(message, x + padding + iconSpace, y + 50, width - (padding * 2) - iconSpace, "left")
 
 	love.graphics.pop()
@@ -622,7 +627,8 @@ function Achievements:save()
 	local lines = {"return {"}
 	for key, value in pairs(data) do
 		insert(lines, string.format("  [\"%s\"] = {unlocked = %s, progress = %s},",
-		key, tostring(value.unlocked), serializeValue(value.progress or 0)))
+			key, tostring(value.unlocked), serializeValue(value.progress or 0))
+		)
 	end
 	insert(lines, "}")
 
@@ -703,7 +709,8 @@ function Achievements:getProgressLabel(def)
 		return Localization:get("achievements.progress.label", {
 			current = progress,
 			goal = goal,
-		})
+			}
+		)
 	end
 
 	return nil

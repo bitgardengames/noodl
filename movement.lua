@@ -451,7 +451,8 @@ local function portalThroughWall(headX, headY)
 			duration = portalDuration,
 			dx = dx,
 			dy = dy,
-		})
+			}
+		)
 		if started then
 			newHeadX, newHeadY = Snake:getHead()
 		end
@@ -711,7 +712,8 @@ local function handleSawCollision(headX, headY, hazardGraceActive)
 			Particles:spawnBlood(headX, headY, {
 				dirX = normalX,
 				dirY = normalY,
-			})
+				}
+			)
 		end
 
 		return "hit", "saw", {

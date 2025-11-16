@@ -94,7 +94,8 @@ local function copyColor(color, defaultAlpha)
 	return Color.copy(color, {
 		default = {0, 0, 0, defaultAlpha or 1},
 		defaultAlpha = defaultAlpha,
-	})
+		}
+	)
 end
 
 local function getPaletteColor(palette, key, fallback, defaultAlpha)
@@ -728,7 +729,8 @@ function Arena:_rebuildArenaInsetMesh(ax, ay, aw, ah)
 		4, 7, 8,
 		4, 8, 1,
 		1, 8, 5,
-	})
+		}
+	)
 
 	self._arenaInsetMesh = mesh
 end
@@ -1160,15 +1162,22 @@ function Arena:drawBorder()
 
 	RenderLayers:withLayer("shadows", function()
 		if borderCanvas then
-	love.graphics.setColor(0, 0, 0, 0.25)
-	love.graphics.draw(borderCanvas, shadowOffset, shadowOffset)
+		love.graphics.setColor(0, 0, 0, 0.25
+	)
+		love.graphics.draw(borderCanvas, shadowOffset, shadowOffset
+	)
 		else
-	love.graphics.push("all")
-	love.graphics.translate(shadowOffset, shadowOffset)
-	drawBorderShape({0, 0, 0, 0.25}, {0, 0, 0, 0.25})
-	love.graphics.pop()
+		love.graphics.push("all"
+	)
+		love.graphics.translate(shadowOffset, shadowOffset
+	)
+		drawBorderShape({0, 0, 0, 0.25}, {0, 0, 0, 0.25}
+	)
+		love.graphics.pop(
+	)
 		end
-	end)
+		end
+	)
 
 	if borderCanvas then
 		love.graphics.setColor(1, 1, 1, 1)

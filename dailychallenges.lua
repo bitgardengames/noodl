@@ -490,16 +490,6 @@ DailyChallenges.challenges = {
 		xpReward = 60,
 	},
 	{
-		id = "shield_specialist",
-		titleKey = "menu.daily.shields.title",
-		descriptionKey = "menu.daily.shields.description",
-		sessionStat = "shieldsSaved",
-		goal = 3,
-		progressKey = "menu.daily.shields.progress",
-		completeKey = "menu.daily.shields.complete",
-		xpReward = 80,
-	},
-	{
 		id = "shield_wall_master",
 		titleKey = "menu.daily.shield_bounce.title",
 		descriptionKey = "menu.daily.shield_bounce.description",
@@ -951,8 +941,10 @@ function DailyChallenges:applyRunResults(statsSource, options)
 		local achievements = getAchievements()
 		if achievements and achievements.checkAll then
 			local ok, err = pcall(function()
-			achievements:checkAll()
-			end)
+				achievements:checkAll(
+			)
+				end
+			)
 			if not ok then
 				print("[DailyChallenges] Failed to update achievements after daily challenge completion:", err)
 			end

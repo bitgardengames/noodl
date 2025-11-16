@@ -702,7 +702,8 @@ function Menu:draw()
 				maxWidth = panelWidth,
 				offset = menuLayout.tooltipOffset or 14,
 				delay = 0.12,
-			})
+				}
+			)
 		else
 			Tooltip:hide("dailyChallengeReset")
 		end
