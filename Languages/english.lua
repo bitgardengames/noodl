@@ -599,17 +599,9 @@ local english = {
 				title = "Combo Surge",
 				description = "Chain a combo of 6 fruit",
 			},
-			comboInferno = {
-				title = "Combo Inferno",
-				description = "Chain a combo of 10 fruit",
-			},
 			rockCrusher = {
 				title = "Rock Crusher",
 				description = "Pulverize 25 rocks with the help of shields.",
-			},
-			sawParry = {
-				title = "Saw Whisperer",
-				description = "Let a shield devour a saw for you.",
 			},
 			sawAnnihilator = {
 				title = "Saw Annihilator",
@@ -621,7 +613,7 @@ local english = {
 			},
 			dragonConnoisseur = {
 				title = "Dragon Connoisseur",
-				description = "Collect 10 total dragonfruit.",
+				description = "Collect 5 total dragonfruit.",
 			},
 			dailyFunDabbler = {
 				title = "Daily Dabbler",

@@ -174,17 +174,14 @@ local shieldStatMap = {
 	saw = {
 		lifetime = "shieldSawParries",
 		run = "runShieldSawParries",
-		achievements = {"sawParry"},
 	},
 	laser = {
 		lifetime = "shieldSawParries",
 		run = "runShieldSawParries",
-		achievements = {"sawParry"},
 	},
 	dart = {
 		lifetime = "shieldSawParries",
 		run = "runShieldSawParries",
-		achievements = {"sawParry"},
 	},
 }
 

@@ -599,17 +599,9 @@ local german = {
 					title = "Combo-Welle",
 					description = "Kette eine Combo aus 6 Früchten.",
 				},
-				comboInferno = {
-					title = "Combo-Inferno",
-					description = "Kette eine Combo aus 10 Früchten.",
-				},
 				rockCrusher = {
 					title = "Felscrusher",
 					description = "Pulverisiere 25 Felsen mit Hilfe von Schilden.",
-				},
-				sawParry = {
-					title = "Sägenflüsterer",
-					description = "Lass eine Säge von einem Schild für dich verschlingen.",
 				},
 				sawAnnihilator = {
 					title = "Sägenvernichter",
@@ -621,7 +613,7 @@ local german = {
 				},
 				dragonConnoisseur = {
 					title = "Drachenkenner",
-					description = "Sammle insgesamt 10 Drachenfrüchte.",
+					description = "Sammle insgesamt 5 Drachenfrüchte.",
 				},
 				dailyFunDabbler = {
 					title = "Tagesprobierer",
