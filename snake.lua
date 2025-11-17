@@ -37,6 +37,7 @@ local descendingHole = nil
 local segmentCount = 1
 local popTimer = 0
 local isDead = false
+local developerGodMode = false
 
 local clippedTrailBuffer = {}
 local clippedTrailProxy = {drawX = 0, drawY = 0}
@@ -2706,6 +2707,7 @@ function Snake:load(w, h)
 	popTimer = 0
 	moveProgress = 0
 	isDead = false
+	developerGodMode = false
 	self.shieldFlashTimer = 0
 	self.hazardGraceTimer = 0
 	self.damageFlashTimer = 0
@@ -2814,6 +2816,14 @@ function Snake:setDead(state)
 	else
 		rebuildOccupancyFromTrail()
 	end
+end
+
+function Snake:setDeveloperGodMode(state)
+	developerGodMode = not not state
+end
+
+function Snake:isDeveloperGodMode()
+	return developerGodMode
 end
 
 function Snake:getDirection()
