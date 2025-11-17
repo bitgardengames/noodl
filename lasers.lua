@@ -64,6 +64,16 @@ local function copyColor(color, alpha)
 	)
 end
 
+local function clamp(value, minimum, maximum)
+	if minimum and value < minimum then
+		return minimum
+	end
+	if maximum and value > maximum then
+		return maximum
+	end
+	return value
+end
+
 local function clamp01(value)
 	if value < 0 then
 		return 0
@@ -276,16 +286,6 @@ local function getFacingFromPosition(dir, col, row)
 	end
 
 	return 1
-end
-
-local function clamp(value, minimum, maximum)
-	if minimum and value < minimum then
-		return minimum
-	end
-	if maximum and value > maximum then
-		return maximum
-	end
-	return value
 end
 
 local function applyDurationModifiers(base, mult, flat, minimum)
