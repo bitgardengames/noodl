@@ -607,10 +607,6 @@ comboInferno = {
 title = "Combo Inferno",
 description = "Chain a combo of 10 fruit",
 },
-                        wallRicochet = {
-                                title = "Ricochet Routine",
-                                description = "Bounce off a wall using a shield.",
-                        },
 rockCrusher = {
 title = "Rock Crusher",
 description = "Pulverize 25 rocks with the help of shields.",

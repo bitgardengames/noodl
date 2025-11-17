@@ -166,7 +166,6 @@ local shieldStatMap = {
         wall = {
                 lifetime = "shieldWallBounces",
                 run = "runShieldWallBounces",
-                achievements = {"wallRicochet"},
         },
         rock = {
                 lifetime = "shieldRockBreaks",

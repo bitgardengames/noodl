@@ -607,10 +607,6 @@ comboInferno = {
 title = "Combo-Inferno",
 description = "Kette eine Combo aus 10 Früchten.",
 },
-wallRicochet = {
-                                        title = "Rückprall-Routine",
-                                        description = "Pralle mit einem Schild von einer Wand ab.",
-                                },
 rockCrusher = {
 title = "Felscrusher",
 description = "Pulverisiere 25 Felsen mit Hilfe von Schilden.",
