@@ -163,17 +163,17 @@ local DART_SHIELD_BURST_OPTIONS = {
 }
 
 local shieldStatMap = {
-        wall = {
-                lifetime = "shieldWallBounces",
-                run = "runShieldWallBounces",
-        },
-        rock = {
-                lifetime = "shieldRockBreaks",
-                run = "runShieldRockBreaks",
-        },
-        saw = {
-                lifetime = "shieldSawParries",
-                run = "runShieldSawParries",
+	wall = {
+		lifetime = "shieldWallBounces",
+		run = "runShieldWallBounces",
+	},
+	rock = {
+		lifetime = "shieldRockBreaks",
+		run = "runShieldRockBreaks",
+	},
+	saw = {
+		lifetime = "shieldSawParries",
+		run = "runShieldSawParries",
 		achievements = {"sawParry"},
 	},
 	laser = {
@@ -202,11 +202,11 @@ local function recordShieldEvent(cause)
 		PlayerStats:add(info.lifetime, 1)
 	end
 
-        if info.achievements then
-                for _, achievementId in ipairs(info.achievements) do
-                        Achievements:check(achievementId)
-                end
-        end
+	if info.achievements then
+		for _, achievementId in ipairs(info.achievements) do
+			Achievements:check(achievementId)
+		end
+	end
 end
 
 -- AABB collision check

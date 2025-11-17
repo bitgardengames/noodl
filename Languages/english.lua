@@ -590,31 +590,31 @@ local english = {
 				description = "Colliding with a wall opens a portal that ejects you from the opposite side of the arena.",
 			},
 		},
-                        achievements_definitions = {
-                        comboSpark = {
-                                title = "Combo Spark",
-                                description = "Trigger a 3-fruit combo.",
+		achievements_definitions = {
+			comboSpark = {
+				title = "Combo Spark",
+				description = "Trigger a 3-fruit combo.",
 			},
 			comboSurge = {
 				title = "Combo Surge",
 				description = "Chain a combo of 6 fruit",
 			},
-comboInferno = {
-title = "Combo Inferno",
-description = "Chain a combo of 10 fruit",
-},
-rockCrusher = {
-title = "Rock Crusher",
-description = "Pulverize 25 rocks with the help of shields.",
-},
-sawParry = {
-title = "Saw Whisperer",
-description = "Let a shield devour a saw for you.",
-},
-sawAnnihilator = {
-title = "Saw Annihilator",
-description = "Reduce 25 saws to splinters using shields.",
-},
+			comboInferno = {
+				title = "Combo Inferno",
+				description = "Chain a combo of 10 fruit",
+			},
+			rockCrusher = {
+				title = "Rock Crusher",
+				description = "Pulverize 25 rocks with the help of shields.",
+			},
+			sawParry = {
+				title = "Saw Whisperer",
+				description = "Let a shield devour a saw for you.",
+			},
+			sawAnnihilator = {
+				title = "Saw Annihilator",
+				description = "Reduce 25 saws to splinters using shields.",
+			},
 			dragonHunter = {
 				title = "Dragon Hunter",
 				description = "Collect the legendary Dragonfruit.",
@@ -622,10 +622,6 @@ description = "Reduce 25 saws to splinters using shields.",
 			dragonConnoisseur = {
 				title = "Dragon Connoisseur",
 				description = "Collect 10 total dragonfruit.",
-			},
-			dragonComboFusion = {
-				title = "Dragon Combo Fusion",
-				description = "Eat a dragonfruit and reach an 8-fruit combo in the same run.",
 			},
 			dailyFunDabbler = {
 				title = "Daily Dabbler",

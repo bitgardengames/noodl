@@ -200,38 +200,38 @@ function Achievements:_ensureInitialized()
 		error("Failed to load achievement definitions: " .. tostring(definitions))
 	end
 
-        for _, def in ipairs(definitions) do
-                self:_addDefinition(def)
-        end
+	for _, def in ipairs(definitions) do
+		self:_addDefinition(def)
+	end
 
-        self:_finalizeOrdering()
+	self:_finalizeOrdering()
 
-        if not self._defaultProvidersRegistered then
-                self:registerStateProvider(function(state)
-                        state.totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0
-                        state.totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0
-                        state.bestComboStreak = PlayerStats:get("bestComboStreak") or 0
-                        state.dailyChallengesCompleted = PlayerStats:get("dailyChallengesCompleted") or 0
-                        state.shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0
-                        state.shieldSawParries = PlayerStats:get("shieldSawParries") or 0
-                end
-                )
+	if not self._defaultProvidersRegistered then
+		self:registerStateProvider(function(state)
+			state.totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0
+			state.totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0
+			state.bestComboStreak = PlayerStats:get("bestComboStreak") or 0
+			state.dailyChallengesCompleted = PlayerStats:get("dailyChallengesCompleted") or 0
+			state.shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0
+			state.shieldSawParries = PlayerStats:get("shieldSawParries") or 0
+			end
+		)
 
-                self:registerStateProvider(function(state)
-                        state.runFloorsCleared = SessionStats:get("floorsCleared") or 0
-                        state.runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0
-                        state.runShieldSawParries = SessionStats:get("runShieldSawParries") or 0
-                        state.runShieldsSaved = SessionStats:get("shieldsSaved") or 0
-                        state.runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0
-                        state.runBestComboStreak = SessionStats:get("bestComboStreak") or 0
-                end
-                )
+		self:registerStateProvider(function(state)
+			state.runFloorsCleared = SessionStats:get("floorsCleared") or 0
+			state.runShieldRockBreaks = SessionStats:get("runShieldRockBreaks") or 0
+			state.runShieldSawParries = SessionStats:get("runShieldSawParries") or 0
+			state.runShieldsSaved = SessionStats:get("shieldsSaved") or 0
+			state.runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0
+			state.runBestComboStreak = SessionStats:get("bestComboStreak") or 0
+			end
+		)
 
-                self._defaultProvidersRegistered = true
-        end
+		self._defaultProvidersRegistered = true
+	end
 
-        self._iconCache = {}
-        self._initialized = true
+	self._iconCache = {}
+	self._initialized = true
 end
 
 local function mergeStateValue(target, key, value)
@@ -625,7 +625,8 @@ function Achievements:save()
 	local lines = {"return {"}
 	for key, value in pairs(data) do
 		insert(lines, string.format("  [\"%s\"] = {unlocked = %s, progress = %s},",
-			key, tostring(value.unlocked), serializeValue(value.progress or 0)
+			key, tostring(value.unlocked), serializeValue(value.progress or 0
+		)
 		)
 		)
 	end

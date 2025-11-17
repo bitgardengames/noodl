@@ -891,7 +891,8 @@ local function drawTelegraphPath(emitter)
 
 		if shaftLength > 0 then
 			love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3],
-				clamp01((bodyColor[4] or 1) * (0.6 + 0.4 * strength)
+				clamp01((bodyColor[4] or 1) * (0.6 + 0.4 * strength
+			)
 			)
 			)
 			love.graphics.rectangle("fill",
@@ -906,7 +907,8 @@ local function drawTelegraphPath(emitter)
 		-- Tip
 		local tipHalf = shaftThickness * 0.55
 		love.graphics.setColor(tipColor[1], tipColor[2], tipColor[3],
-			clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength)
+			clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength
+		)
 		)
 		)
 		love.graphics.polygon("fill",
@@ -925,7 +927,8 @@ local function drawTelegraphPath(emitter)
 
 		if shaftLength > 0 then
 			love.graphics.setColor(bodyColor[1], bodyColor[2], bodyColor[3],
-				clamp01((bodyColor[4] or 1) * (0.6 + 0.4 * strength)
+				clamp01((bodyColor[4] or 1) * (0.6 + 0.4 * strength
+			)
 			)
 			)
 			love.graphics.rectangle("fill",
@@ -939,7 +942,8 @@ local function drawTelegraphPath(emitter)
 
 		local tipHalf = shaftThickness * 0.55
 		love.graphics.setColor(tipColor[1], tipColor[2], tipColor[3],
-			clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength)
+			clamp01((tipColor[4] or 1) * (0.65 + 0.35 * strength
+		)
 		)
 		)
 		love.graphics.polygon("fill",

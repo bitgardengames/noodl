@@ -590,31 +590,31 @@ local german = {
 					description = "Beim Aufprall auf eine Wand öffnet sich ein Portal, das dich auf der gegenüberliegenden Seite der Arena wieder ausspuckt.",
 				},
 			},
-                        achievements_definitions = {
-                                comboSpark = {
-                                        title = "Combo-Funken",
-                                        description = "Löse eine 3-Früchte-Combo aus.",
-                                },
+			achievements_definitions = {
+				comboSpark = {
+					title = "Combo-Funken",
+					description = "Löse eine 3-Früchte-Combo aus.",
+				},
 				comboSurge = {
 					title = "Combo-Welle",
 					description = "Kette eine Combo aus 6 Früchten.",
 				},
-comboInferno = {
-title = "Combo-Inferno",
-description = "Kette eine Combo aus 10 Früchten.",
-},
-rockCrusher = {
-title = "Felscrusher",
-description = "Pulverisiere 25 Felsen mit Hilfe von Schilden.",
-},
-sawParry = {
-title = "Sägenflüsterer",
-description = "Lass eine Säge von einem Schild für dich verschlingen.",
-},
-sawAnnihilator = {
-title = "Sägenvernichter",
-description = "Reduziere 25 Sägen mit Schilden zu Splittern.",
-},
+				comboInferno = {
+					title = "Combo-Inferno",
+					description = "Kette eine Combo aus 10 Früchten.",
+				},
+				rockCrusher = {
+					title = "Felscrusher",
+					description = "Pulverisiere 25 Felsen mit Hilfe von Schilden.",
+				},
+				sawParry = {
+					title = "Sägenflüsterer",
+					description = "Lass eine Säge von einem Schild für dich verschlingen.",
+				},
+				sawAnnihilator = {
+					title = "Sägenvernichter",
+					description = "Reduziere 25 Sägen mit Schilden zu Splittern.",
+				},
 				dragonHunter = {
 					title = "Drachenjäger",
 					description = "Sammle die legendäre Drachenfrucht.",
@@ -623,16 +623,12 @@ description = "Reduziere 25 Sägen mit Schilden zu Splittern.",
 					title = "Drachenkenner",
 					description = "Sammle insgesamt 10 Drachenfrüchte.",
 				},
-				dragonComboFusion = {
-					title = "Drachen-Combo-Fusion",
-					description = "Iss eine Drachenfrucht und erreiche in demselben Lauf eine 8-Früchte-Combo.",
+				dailyFunDabbler = {
+					title = "Tagesprobierer",
+					description = "Schließe 1 Tagesherausforderung ab.",
 				},
-			dailyFunDabbler = {
-				title = "Tagesprobierer",
-				description = "Schließe 1 Tagesherausforderung ab.",
 			},
 		},
-	},
-}
+	}
 
-return german
+	return german

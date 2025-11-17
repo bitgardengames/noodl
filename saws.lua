@@ -1301,7 +1301,8 @@ function Saws:draw()
 
 				love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], outerAlpha * 0.6
 			)
-				love.graphics.circle("line", glowX, glowY, radius * (0.88 + 0.1 * math.sin(phase * 4.4 + 0.8)
+				love.graphics.circle("line", glowX, glowY, radius * (0.88 + 0.1 * math.sin(phase * 4.4 + 0.8
+			)
 			)
 			)
 				love.graphics.setLineWidth(1

@@ -940,12 +940,12 @@ local STATE_UPDATERS = {
 }
 
 local function drawAdrenalineGlow(self)
-local glowStrength = Score:getHighScoreGlowStrength()
+	local glowStrength = Score:getHighScoreGlowStrength()
 
--- Previously the adrenaline effect would brighten the entire screen while active.
--- This felt distracting, so the screen glow is now reserved for the high score glow
--- and is no longer affected by adrenaline.
-if glowStrength <= 0 then return end
+	-- Previously the adrenaline effect would brighten the entire screen while active.
+	-- This felt distracting, so the screen glow is now reserved for the high score glow
+	-- and is no longer affected by adrenaline.
+	if glowStrength <= 0 then return end
 
 	local time = Timer.getTime()
 	local pulse = 0.85 + 0.15 * sin(time * 2.25)
