@@ -58,11 +58,11 @@ local Floors = {
 		nameKey = "floors.inferno_gates.name",
 		flavorKey = "floors.inferno_gates.flavor",
 		palette = {
-			bgColor     = {0.12, 0.10, 0.10, 1},
-			arenaBG     = {0.38, 0.18, 0.20, 1},   -- ember plum/red
-			arenaBorder = {0.62, 0.22, 0.22, 1},   -- volcanic crimson
-			rock        = {0.42, 0.36, 0.28, 1},   -- dark ashstone
-			sawColor    = {0.92, 0.85, 0.80, 1},   -- heated metal
+			bgColor     = {0.11, 0.09, 0.09, 1},   -- dark iron soot
+			arenaBG     = {0.28, 0.16, 0.13, 1},   -- burnt clay / lava rock
+			arenaBorder = {0.62, 0.18, 0.15, 1},   -- red iron oxide
+			rock        = {0.38, 0.32, 0.26, 1},   -- ashy basalt
+			sawColor    = {0.94, 0.84, 0.76, 1},   -- heated soft metal
 		},
 	},
 	[7] = {
