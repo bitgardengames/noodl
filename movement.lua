@@ -22,6 +22,10 @@ local Movement = {}
 
 local MAX_SNAKE_TIME_STEP = 1 / 60
 
+local function isDeveloperGodMode()
+        return Snake.isDeveloperGodMode and Snake:isDeveloperGodMode()
+end
+
 local cachedRockCandidates = {}
 local cachedRockHeadCol
 local cachedRockHeadRow
@@ -898,20 +902,24 @@ function Movement:update(dt)
 	local remaining = dt
 	local maxStep = MAX_SNAKE_TIME_STEP
 
-	while remaining > 0 do
-		local step = min(remaining, maxStep)
-		if step <= 0 then
-			break
-		end
-		remaining = remaining - step
+        while remaining > 0 do
+                local step = min(remaining, maxStep)
+                if step <= 0 then
+                        break
+                end
+                remaining = remaining - step
 
-		local alive, cause, context = Snake:update(step)
-		if not alive then
-			if context and context.fatal then
-				return "dead", cause or "self", context
-			end
-			return "hit", cause or "self", context
-		end
+                local developerGodMode = isDeveloperGodMode()
+
+                local alive, cause, context = Snake:update(step)
+                if not alive then
+                        if not developerGodMode then
+                                if context and context.fatal then
+                                        return "dead", cause or "self", context
+                                end
+                                return "hit", cause or "self", context
+                        end
+                end
 
 		local headX, headY = Snake:getHead()
 		local hazardGraceActive = Snake.isHazardGraceActive and Snake:isHazardGraceActive() or false
@@ -938,9 +946,9 @@ function Movement:update(dt)
 
 		local wallCause, wallContext
 		headX, headY, wallCause, wallContext = handleWallCollision(headX, headY)
-		if wallCause then
-			return "hit", wallCause, wallContext
-		end
+                if wallCause and not developerGodMode then
+                        return "hit", wallCause, wallContext
+                end
 
 		local headCol, headRow
 		if Arena and Arena.getTileFromWorld then
@@ -948,31 +956,31 @@ function Movement:update(dt)
 		end
 
 		local rockRevision = Rocks.getRevision and Rocks:getRevision() or nil
-		local state, stateCause, stateContext = handleRockCollision(headX, headY, headCol, headRow, rockRevision)
-		if state then
-			return state, stateCause, stateContext
-		end
+                local state, stateCause, stateContext = handleRockCollision(headX, headY, headCol, headRow, rockRevision)
+                if state and not developerGodMode then
+                        return state, stateCause, stateContext
+                end
 
-		if not hazardGraceActive and laserEmitterCount > 0 then
-			local laserState, laserCause, laserContext = handleLaserCollision(headX, headY, hazardGraceActive)
-			if laserState then
-				return laserState, laserCause, laserContext
-			end
-		end
+                if not hazardGraceActive and laserEmitterCount > 0 then
+                        local laserState, laserCause, laserContext = handleLaserCollision(headX, headY, hazardGraceActive)
+                        if laserState and not developerGodMode then
+                                return laserState, laserCause, laserContext
+                        end
+                end
 
-		if not hazardGraceActive and dartEmitterCount > 0 then
-			local dartState, dartCause, dartContext = handleDartCollision(headX, headY, hazardGraceActive)
-			if dartState then
-				return dartState, dartCause, dartContext
-			end
-		end
+                if not hazardGraceActive and dartEmitterCount > 0 then
+                        local dartState, dartCause, dartContext = handleDartCollision(headX, headY, hazardGraceActive)
+                        if dartState and not developerGodMode then
+                                return dartState, dartCause, dartContext
+                        end
+                end
 
-		if not hazardGraceActive and sawCount > 0 then
-			local sawState, sawCause, sawContext = handleSawCollision(headX, headY, hazardGraceActive)
-			if sawState then
-				return sawState, sawCause, sawContext
-			end
-		end
+                if not hazardGraceActive and sawCount > 0 then
+                        local sawState, sawCause, sawContext = handleSawCollision(headX, headY, hazardGraceActive)
+                        if sawState and not developerGodMode then
+                                return sawState, sawCause, sawContext
+                        end
+                end
 
 		if Snake.checkLaserBodyCollision and not hazardGraceActive and laserEmitterCount > 0 then
 			Snake:checkLaserBodyCollision()
