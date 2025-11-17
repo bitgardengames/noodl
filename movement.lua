@@ -163,19 +163,18 @@ local DART_SHIELD_BURST_OPTIONS = {
 }
 
 local shieldStatMap = {
-	wall = {
-		lifetime = "shieldWallBounces",
-		run = "runShieldWallBounces",
-		achievements = {"wallRicochet"},
-	},
-	rock = {
-		lifetime = "shieldRockBreaks",
-		run = "runShieldRockBreaks",
-		achievements = {"rockShatter"},
-	},
-	saw = {
-		lifetime = "shieldSawParries",
-		run = "runShieldSawParries",
+        wall = {
+                lifetime = "shieldWallBounces",
+                run = "runShieldWallBounces",
+                achievements = {"wallRicochet"},
+        },
+        rock = {
+                lifetime = "shieldRockBreaks",
+                run = "runShieldRockBreaks",
+        },
+        saw = {
+                lifetime = "shieldSawParries",
+                run = "runShieldSawParries",
 		achievements = {"sawParry"},
 	},
 	laser = {
