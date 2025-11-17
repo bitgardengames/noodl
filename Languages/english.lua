@@ -635,10 +635,6 @@ description = "Reduce 25 saws to splinters using shields.",
 				title = "Daily Dabbler",
 				description = "Complete 1 daily challenge.",
 			},
-			dailyFunChampion = {
-				title = "Daily Champion",
-				description = "Complete 30 daily challenges.",
-			},
 		},
 	},
 }

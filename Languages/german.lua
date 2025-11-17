@@ -631,16 +631,12 @@ description = "Reduziere 25 Sägen mit Schilden zu Splittern.",
 					title = "Drachen-Combo-Fusion",
 					description = "Iss eine Drachenfrucht und erreiche in demselben Lauf eine 8-Früchte-Combo.",
 				},
-				dailyFunDabbler = {
-					title = "Tagesprobierer",
-					description = "Schließe 1 Tagesherausforderung ab.",
-				},
-				dailyFunChampion = {
-					title = "Tageschampion",
-					description = "Schließe 30 Tagesherausforderungen ab.",
-				},
+			dailyFunDabbler = {
+				title = "Tagesprobierer",
+				description = "Schließe 1 Tagesherausforderung ab.",
 			},
 		},
-	}
+	},
+}
 
-	return german
+return german
