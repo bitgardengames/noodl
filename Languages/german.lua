@@ -590,15 +590,11 @@ local german = {
 					description = "Beim Aufprall auf eine Wand öffnet sich ein Portal, das dich auf der gegenüberliegenden Seite der Arena wieder ausspuckt.",
 				},
 			},
-			achievements_definitions = {
-				appleTycoon = {
-					title = "Apfel-Tycoon",
-					description = "Iss insgesamt 1.000 Früchte.",
-				},
-				comboSpark = {
-					title = "Combo-Funken",
-					description = "Löse eine 3-Früchte-Combo aus.",
-				},
+                        achievements_definitions = {
+                                comboSpark = {
+                                        title = "Combo-Funken",
+                                        description = "Löse eine 3-Früchte-Combo aus.",
+                                },
 				comboSurge = {
 					title = "Combo-Welle",
 					description = "Kette eine Combo aus 6 Früchten.",

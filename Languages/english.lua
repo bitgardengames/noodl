@@ -590,14 +590,10 @@ local english = {
 				description = "Colliding with a wall opens a portal that ejects you from the opposite side of the arena.",
 			},
 		},
-		achievements_definitions = {
-			appleTycoon = {
-				title = "Apple Tycoon",
-				description = "Eat 1,000 total fruit",
-			},
-			comboSpark = {
-				title = "Combo Spark",
-				description = "Trigger a 3-fruit combo.",
+                        achievements_definitions = {
+                        comboSpark = {
+                                title = "Combo Spark",
+                                description = "Trigger a 3-fruit combo.",
 			},
 			comboSurge = {
 				title = "Combo Surge",

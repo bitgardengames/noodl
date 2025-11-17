@@ -1,15 +1,5 @@
+
 local definitions = {
-	{
-		id = "appleTycoon",
-		titleKey = "achievements_definitions.appleTycoon.title",
-		descriptionKey = "achievements_definitions.appleTycoon.description",
-		icon = "fruit1000",
-		goal = 1000,
-		stat = "totalApplesEaten",
-		category = "progress",
-		categoryOrder = 1,
-		order = 40,
-	},
 	{
 		id = "dailyFunDabbler",
 		titleKey = "achievements_definitions.dailyFunDabbler.title",
