@@ -627,10 +627,6 @@ sawAnnihilator = {
 title = "Sägenvernichter",
 description = "Reduziere 25 Sägen mit Schilden zu Splittern.",
 },
-shieldlessWonder = {
-title = "Wunder ohne Schild",
-description = "Schließe 3 Ebenen ohne Schilde ab.",
-},
 				dragonHunter = {
 					title = "Drachenjäger",
 					description = "Sammle die legendäre Drachenfrucht.",

@@ -66,26 +66,6 @@ local definitions = {
 		order = 16,
 	},
 	{
-		id = "shieldlessWonder",
-		titleKey = "achievements_definitions.shieldlessWonder.title",
-		descriptionKey = "achievements_definitions.shieldlessWonder.description",
-		icon = "Apple",
-		goal = 1,
-		category = "skill",
-		categoryOrder = 2,
-		order = 19,
-		hidden = true,
-		progressFn = function(state)
-			if (state.runFloorsCleared or 0) >= 3 and (state.runShieldsSaved or 0) == 0 then
-				return 1
-			end
-			return 0
-		end,
-		condition = function(state)
-			return (state.runFloorsCleared or 0) >= 3 and (state.runShieldsSaved or 0) == 0
-		end,
-	},
-	{
 		id = "dragonComboFusion",
 		titleKey = "achievements_definitions.dragonComboFusion.title",
 		descriptionKey = "achievements_definitions.dragonComboFusion.description",

@@ -627,10 +627,6 @@ sawAnnihilator = {
 title = "Saw Annihilator",
 description = "Reduce 25 saws to splinters using shields.",
 },
-shieldlessWonder = {
-title = "Shieldless Wonder",
-description = "Clear 3 floors without using shields.",
-},
 			dragonHunter = {
 				title = "Dragon Hunter",
 				description = "Collect the legendary Dragonfruit.",
