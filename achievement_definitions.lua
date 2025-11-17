@@ -22,17 +22,6 @@ local definitions = {
 		order = 140,
 	},
 	{
-		id = "dailyFunChampion",
-		titleKey = "achievements_definitions.dailyFunChampion.title",
-		descriptionKey = "achievements_definitions.dailyFunChampion.description",
-		icon = "Default",
-		goal = 30,
-		stat = "dailyChallengesCompleted",
-		category = "progress",
-		categoryOrder = 1,
-		order = 160,
-	},
-	{
 		id = "comboSpark",
 		titleKey = "achievements_definitions.comboSpark.title",
 		descriptionKey = "achievements_definitions.comboSpark.description",
