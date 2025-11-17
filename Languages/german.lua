@@ -603,11 +603,11 @@ local german = {
 					title = "Combo-Welle",
 					description = "Kette eine Combo aus 6 Früchten.",
 				},
-				comboInferno = {
-					title = "Combo-Inferno",
-					description = "Kette eine Combo aus 10 Früchten.",
-				},
-				wallRicochet = {
+comboInferno = {
+title = "Combo-Inferno",
+description = "Kette eine Combo aus 10 Früchten.",
+},
+wallRicochet = {
 					title = "Rückprall-Routine",
 					description = "Pralle mit einem Schild von einer Wand ab.",
 				},
@@ -615,26 +615,22 @@ local german = {
 					title = "Stein-Nieser",
 					description = "Zerbrich einen Felsen frontal mit einem Schild.",
 				},
-				rockCrusher = {
-					title = "Felscrusher",
-					description = "Pulverisiere 25 Felsen mit Hilfe von Schilden.",
-				},
-				sawParry = {
-					title = "Sägenflüsterer",
-					description = "Lass eine Säge von einem Schild für dich verschlingen.",
-				},
-				sawAnnihilator = {
-					title = "Sägenvernichter",
-					description = "Reduziere 25 Sägen mit Schilden zu Splittern.",
-				},
-				shieldTriad = {
-					title = "Crash-Test-Maestro",
-					description = "Blockiere in einem Lauf eine Wand, einen Felsen und eine Säge mit Schilden.",
-				},
-				shieldlessWonder = {
-					title = "Wunder ohne Schild",
-					description = "Schließe 3 Ebenen ohne Schilde ab.",
-				},
+rockCrusher = {
+title = "Felscrusher",
+description = "Pulverisiere 25 Felsen mit Hilfe von Schilden.",
+},
+sawParry = {
+title = "Sägenflüsterer",
+description = "Lass eine Säge von einem Schild für dich verschlingen.",
+},
+sawAnnihilator = {
+title = "Sägenvernichter",
+description = "Reduziere 25 Sägen mit Schilden zu Splittern.",
+},
+shieldlessWonder = {
+title = "Wunder ohne Schild",
+description = "Schließe 3 Ebenen ohne Schilde ab.",
+},
 				dragonHunter = {
 					title = "Drachenjäger",
 					description = "Sammle die legendäre Drachenfrucht.",

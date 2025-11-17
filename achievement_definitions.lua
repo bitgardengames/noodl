@@ -149,59 +149,17 @@ local definitions = {
 		categoryOrder = 2,
 		order = 80,
 	},
-	{
-		id = "sawAnnihilator",
-		titleKey = "achievements_definitions.sawAnnihilator.title",
-		descriptionKey = "achievements_definitions.sawAnnihilator.description",
-		icon = "Apple",
-		goal = 25,
-		stat = "shieldSawParries",
-		category = "skill",
-		categoryOrder = 2,
-		order = 82,
-	},
-	{
-		id = "shieldTriad",
-		titleKey = "achievements_definitions.shieldTriad.title",
-		descriptionKey = "achievements_definitions.shieldTriad.description",
-		icon = "Apple",
-		goal = 3,
-		category = "skill",
-		categoryOrder = 2,
-		order = 85,
-		progressFn = function(state)
-			local count = 0
-			local keys = {
-				"runShieldWallBounces",
-				"runShieldRockBreaks",
-				"runShieldSawParries",
-			}
-
-			for _, key in ipairs(keys) do
-				if (state[key] or 0) > 0 then
-					count = count + 1
-				end
-			end
-
-			return count
-		end,
-		condition = function(state)
-			local progress = 0
-			local keys = {
-				"runShieldWallBounces",
-				"runShieldRockBreaks",
-				"runShieldSawParries",
-			}
-
-			for _, key in ipairs(keys) do
-				if (state[key] or 0) > 0 then
-					progress = progress + 1
-				end
-			end
-
-			return progress >= 3
-		end,
-	},
+{
+id = "sawAnnihilator",
+titleKey = "achievements_definitions.sawAnnihilator.title",
+descriptionKey = "achievements_definitions.sawAnnihilator.description",
+icon = "Apple",
+goal = 25,
+stat = "shieldSawParries",
+category = "skill",
+categoryOrder = 2,
+order = 82,
+},
 	{
 		id = "dragonHunter",
 		titleKey = "achievements_definitions.dragonHunter.title",

@@ -603,11 +603,11 @@ local english = {
 				title = "Combo Surge",
 				description = "Chain a combo of 6 fruit",
 			},
-			comboInferno = {
-				title = "Combo Inferno",
-				description = "Chain a combo of 10 fruit",
-			},
-			wallRicochet = {
+comboInferno = {
+title = "Combo Inferno",
+description = "Chain a combo of 10 fruit",
+},
+wallRicochet = {
 				title = "Ricochet Routine",
 				description = "Bounce off a wall using a shield.",
 			},
@@ -615,26 +615,22 @@ local english = {
 				title = "Stone Sneeze",
 				description = "Break a rock head-on using a shield.",
 			},
-			rockCrusher = {
-				title = "Rock Crusher",
-				description = "Pulverize 25 rocks with the help of shields.",
-			},
-			sawParry = {
-				title = "Saw Whisperer",
-				description = "Let a shield devour a saw for you.",
-			},
-			sawAnnihilator = {
-				title = "Saw Annihilator",
-				description = "Reduce 25 saws to splinters using shields.",
-			},
-			shieldTriad = {
-				title = "Crash-Test Maestro",
-				description = "In one run, block a wall, rock, and saw using shields.",
-			},
-			shieldlessWonder = {
-				title = "Shieldless Wonder",
-				description = "Clear 3 floors without using shields.",
-			},
+rockCrusher = {
+title = "Rock Crusher",
+description = "Pulverize 25 rocks with the help of shields.",
+},
+sawParry = {
+title = "Saw Whisperer",
+description = "Let a shield devour a saw for you.",
+},
+sawAnnihilator = {
+title = "Saw Annihilator",
+description = "Reduce 25 saws to splinters using shields.",
+},
+shieldlessWonder = {
+title = "Shieldless Wonder",
+description = "Clear 3 floors without using shields.",
+},
 			dragonHunter = {
 				title = "Dragon Hunter",
 				description = "Collect the legendary Dragonfruit.",

@@ -204,13 +204,11 @@ local function recordShieldEvent(cause)
 		PlayerStats:add(info.lifetime, 1)
 	end
 
-	if info.achievements then
-		for _, achievementId in ipairs(info.achievements) do
-			Achievements:check(achievementId)
-		end
-	end
-
-	Achievements:check("shieldTriad")
+        if info.achievements then
+                for _, achievementId in ipairs(info.achievements) do
+                        Achievements:check(achievementId)
+                end
+        end
 end
 
 -- AABB collision check
