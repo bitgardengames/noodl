@@ -20,12 +20,13 @@ local slots = {}
 local nextSlotId = 0
 
 local SAW_RADIUS = 24
-local COLLISION_RADIUS_MULT = 0.55 -- keep the visual size but ease up on collision tightness
+local COLLISION_RADIUS_MULT = 0.75 -- keep the visual size but ease up on collision tightness
 local SAW_TEETH = 12
 local HUB_HOLE_RADIUS = 4
 local HUB_HIGHLIGHT_PADDING = 3
 local TRACK_LENGTH = 120 -- how far the saw moves on its track
-local MOVE_SPEED = 60    -- units per second along the track
+local MOVE_SPEED = 56    -- units per second along the track
+local TRAVEL_PADDING = 4 -- how far we stop from the edge of the track
 local SPAWN_DURATION = 0.3
 local SQUASH_DURATION = 0.15
 local SINK_OFFSET = 2
@@ -609,16 +610,16 @@ local function getSawCenterForProgress(saw, progress)
 				halfStep = radius
 			end
 
-			minX = trackMinX + halfStep
-			maxX = trackMaxX - halfStep
+			minX = trackMinX + halfStep + TRAVEL_PADDING
+			maxX = trackMaxX - halfStep - TRAVEL_PADDING
 
 			if minX > maxX then
-				minX = anchorX - TRACK_LENGTH/2 + radius
-				maxX = anchorX + TRACK_LENGTH/2 - radius
+				minX = anchorX - TRACK_LENGTH/2 + radius + TRAVEL_PADDING
+				maxX = anchorX + TRACK_LENGTH/2 - radius - TRAVEL_PADDING
 			end
 		else
-			minX = anchorX - TRACK_LENGTH/2 + radius
-			maxX = anchorX + TRACK_LENGTH/2 - radius
+			minX = anchorX - TRACK_LENGTH/2 + radius + TRAVEL_PADDING
+			maxX = anchorX + TRACK_LENGTH/2 - radius - TRAVEL_PADDING
 		end
 
 		local px = minX + (maxX - minX) * clamped
@@ -637,16 +638,16 @@ local function getSawCenterForProgress(saw, progress)
 			halfStep = radius
 		end
 
-		minY = trackMinY + halfStep
-		maxY = trackMaxY - halfStep
+		minY = trackMinY + halfStep + TRAVEL_PADDING
+		maxY = trackMaxY - halfStep - TRAVEL_PADDING
 
 		if minY > maxY then
-			minY = anchorY - TRACK_LENGTH/2 + radius
-			maxY = anchorY + TRACK_LENGTH/2 - radius
+			minY = anchorY - TRACK_LENGTH/2 + radius + TRAVEL_PADDING
+			maxY = anchorY + TRACK_LENGTH/2 - radius - TRAVEL_PADDING
 		end
 	else
-		minY = anchorY - TRACK_LENGTH/2 + radius
-		maxY = anchorY + TRACK_LENGTH/2 - radius
+		minY = anchorY - TRACK_LENGTH/2 + radius + TRAVEL_PADDING
+		maxY = anchorY + TRACK_LENGTH/2 - radius - TRAVEL_PADDING
 	end
 
 	local py = minY + (maxY - minY) * clamped
