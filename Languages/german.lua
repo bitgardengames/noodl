@@ -65,12 +65,6 @@ local german = {
 					progress = "Parierte Sägen: ${current}/${goal}",
 					complete = "Sägen weggeschleudert: ${current}!",
 				},
-				time_keeper = {
-					title = "Zeitwächter",
-					description = "Überlebe ${goal} Minuten in einem Lauf.",
-					progress = "Überlebenszeit: ${current}/${goal}",
-					complete = "Ausdauer-Profi! ${current} Minuten überlebt.",
-				},
 				depth_delver = {
 					title = "Tiefengänger",
 					description = "Erreiche Ebene ${goal} in einem Lauf.",

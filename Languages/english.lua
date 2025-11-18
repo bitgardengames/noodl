@@ -65,12 +65,6 @@ local english = {
 					progress = "Saws parried: ${current}/${goal}",
 					complete = "Saws sent flying: ${current}!",
 				},
-				time_keeper = {
-					title = "Time Keeper",
-					description = "Survive for ${goal} minutes in one run.",
-					progress = "Run survival: ${current}/${goal}",
-					complete = "Endurance expert! Survived ${current} minutes.",
-				},
 				depth_delver = {
 					title = "Depth Delver",
 					description = "Reach floor ${goal} in a single run.",

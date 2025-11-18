@@ -495,27 +495,6 @@ DailyChallenges.challenges = {
 		xpReward = 90,
 	},
 	{
-		id = "time_keeper",
-		titleKey = "menu.daily.time_keeper.title",
-		descriptionKey = "menu.daily.time_keeper.description",
-		sessionStat = "timeAlive",
-		goal = 600,
-		progressKey = "menu.daily.time_keeper.progress",
-		progressReplacements = function(self, current, goal)
-			return {
-				current = formatSecondsFloor(current),
-				goal = formatSecondsFloor(goal),
-			}
-		end,
-		descriptionReplacements = function(self, current, goal)
-			return {
-				goal = floor((goal or 0) / 60),
-				current = floor((current or 0) / 60),
-			}
-		end,
-		xpReward = 90,
-	},
-	{
 		id = "depth_delver",
 		titleKey = "menu.daily.depth_delver.title",
 		descriptionKey = "menu.daily.depth_delver.description",
