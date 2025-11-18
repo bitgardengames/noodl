@@ -32,6 +32,19 @@ local BUTTON_VERTICAL_OFFSET = 30
 local TEXT_SHADOW_OFFSET = 2
 local TITLE_SHADOW_OFFSET = 3
 
+local function getLocalizedOrFallback(key, fallback)
+        if not key then
+                return fallback
+        end
+
+        local localized = Localization:get(key)
+        if localized == nil or localized == "" or localized == key then
+                return fallback
+        end
+
+        return localized
+end
+
 local function getBackgroundColor()
         return (UI.colors and UI.colors.background) or Theme.bgColor
 end
