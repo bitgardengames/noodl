@@ -44,7 +44,6 @@ local function getAchievements()
 end
 
 local DailyChallenges = {}
-DailyChallenges.defaultXpReward = 120
 
 local defaultDateProvider = function()
 	return os.date("*t")
@@ -425,7 +424,6 @@ local function evaluateChallenge(self, challenge, context)
 		current = current,
 		ratio = ratio,
 		completed = completed,
-		xpReward = challenge.xpReward or DailyChallenges.defaultXpReward,
 		statusBar = statusBar,
 	}
 end
@@ -445,7 +443,6 @@ DailyChallenges.challenges = {
 				goal = goal or 0,
 			}
 		end,
-		xpReward = 70,
 	},
 	{
 		id = "pathfinder",
@@ -453,7 +450,6 @@ DailyChallenges.challenges = {
 		descriptionKey = "menu.daily.pathfinder.description",
 		sessionStat = "floorsCleared",
 		goal = 5,
-		xpReward = 80,
 	},
 	{
 		id = "combo_conductor",
@@ -462,7 +458,6 @@ DailyChallenges.challenges = {
 		sessionStat = "combosTriggered",
 		goal = 8,
 		progressKey = "menu.daily.combos.progress",
-		xpReward = 60,
 	},
 	{
 		id = "shield_wall_master",
@@ -472,7 +467,6 @@ DailyChallenges.challenges = {
 		goal = 5,
 		progressKey = "menu.daily.shield_bounce.progress",
 		completeKey = "menu.daily.shield_bounce.complete",
-		xpReward = 80,
 	},
 	{
 		id = "stonebreaker_protocol",
@@ -482,7 +476,6 @@ DailyChallenges.challenges = {
 		goal = 4,
 		progressKey = "menu.daily.stonebreaker_protocol.progress",
 		completeKey = "menu.daily.stonebreaker_protocol.complete",
-		xpReward = 80,
 	},
 	{
 		id = "saw_parry_ace",
@@ -492,7 +485,6 @@ DailyChallenges.challenges = {
 		goal = 2,
 		progressKey = "menu.daily.saw_parry.progress",
 		completeKey = "menu.daily.saw_parry.complete",
-		xpReward = 90,
 	},
 	{
 		id = "depth_delver",
@@ -508,63 +500,6 @@ DailyChallenges.challenges = {
 				goal = goal or 0,
 			}
 		end,
-		xpReward = 110,
-	},
-	{
-		id = "shield_triathlon",
-		titleKey = "menu.daily.shield_triathlon.title",
-		descriptionKey = "menu.daily.shield_triathlon.description",
-		goal = 3,
-		progressKey = "menu.daily.shield_triathlon.progress",
-		completeKey = "menu.daily.shield_triathlon.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local bounces = getStatValue(statsSource, "runShieldWallBounces", context)
-			local rocks = getStatValue(statsSource, "runShieldRockBreaks", context)
-			local saws = getStatValue(statsSource, "runShieldSawParries", context)
-
-			local completed = 0
-			if bounces > 0 then
-				completed = completed + 1
-			end
-			if rocks > 0 then
-				completed = completed + 1
-			end
-			if saws > 0 then
-				completed = completed + 1
-			end
-
-			return completed
-		end,
-		getRunValue = function(self, statsSource)
-			local bounces = getStatValue(statsSource, "runShieldWallBounces")
-			local rocks = getStatValue(statsSource, "runShieldRockBreaks")
-			local saws = getStatValue(statsSource, "runShieldSawParries")
-
-			local completed = 0
-			if bounces > 0 then
-				completed = completed + 1
-			end
-			if rocks > 0 then
-				completed = completed + 1
-			end
-			if saws > 0 then
-				completed = completed + 1
-			end
-
-			return completed
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				bounces = getStatValue(statsSource, "runShieldWallBounces", context),
-				rocks = getStatValue(statsSource, "runShieldRockBreaks", context),
-				saws = getStatValue(statsSource, "runShieldSawParries", context),
-			}
-		end,
-		xpReward = 120,
 	},
 	{
 		id = "floor_speedrunner",
@@ -608,62 +543,6 @@ DailyChallenges.challenges = {
 				seconds = self.targetSeconds or 0,
 			}
 		end,
-		xpReward = 110,
-	},
-	{
-		id = "shielded_marathon",
-		titleKey = "menu.daily.shielded_marathon.title",
-		descriptionKey = "menu.daily.shielded_marathon.description",
-		goal = 2,
-		progressKey = "menu.daily.shielded_marathon.progress",
-		completeKey = "menu.daily.shielded_marathon.complete",
-		targetShields = 2,
-		targetTiles = 320,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local shields = getStatValue(statsSource, "shieldsSaved", context)
-			local tiles = getStatValue(statsSource, "tilesTravelled", context)
-			local completed = 0
-			if shields >= (self.targetShields or 0) then
-				completed = completed + 1
-			end
-			if tiles >= (self.targetTiles or 0) then
-				completed = completed + 1
-			end
-			return completed
-		end,
-		getRunValue = function(self, statsSource)
-			local shields = getStatValue(statsSource, "shieldsSaved")
-			local tiles = getStatValue(statsSource, "tilesTravelled")
-			local completed = 0
-			if shields >= (self.targetShields or 0) then
-				completed = completed + 1
-			end
-			if tiles >= (self.targetTiles or 0) then
-				completed = completed + 1
-			end
-			return completed
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local shields = getStatValue(statsSource, "shieldsSaved", context)
-			local tiles = getStatValue(statsSource, "tilesTravelled", context)
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				shields = shields,
-				tiles = tiles,
-				target_shields = self.targetShields or 0,
-				target_tiles = self.targetTiles or 0,
-			}
-		end,
-		descriptionReplacements = function(self)
-			return {
-				target_shields = self.targetShields or 0,
-				target_tiles = self.targetTiles or 0,
-			}
-		end,
-		xpReward = 115,
 	},
 	{
 		id = "fruit_frenzy",
@@ -711,7 +590,6 @@ DailyChallenges.challenges = {
 				target_time = formatSeconds(self.targetSeconds or 0),
 			}
 		end,
-		xpReward = 130,
 	},
 }
 
@@ -786,7 +664,6 @@ function DailyChallenges:applyRunResults(statsSource, options)
 	end
 
 	local alreadyCompleted = isStoredComplete(self, challenge, resolvedDate, prefix)
-	local xpAwarded = 0
 	local completedNow = false
 	local streakInfo = nil
 
@@ -797,7 +674,6 @@ function DailyChallenges:applyRunResults(statsSource, options)
 
 	if goal > 0 and runValue >= goal and not alreadyCompleted then
 		setStoredComplete(self, challenge, resolvedDate, true, prefix)
-		xpAwarded = challenge.xpReward or self.defaultXpReward
 		completedNow = true
 
 		PlayerStats:add("dailyChallengesCompleted", 1)
@@ -878,7 +754,6 @@ function DailyChallenges:applyRunResults(statsSource, options)
 		progress = best,
 		completed = alreadyCompleted or completedNow,
 		completedNow = completedNow,
-		xpAwarded = xpAwarded,
 		streakInfo = streakInfo,
 	}
 end

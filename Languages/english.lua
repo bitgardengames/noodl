@@ -77,12 +77,6 @@ local english = {
 					progress = "No-turn chain: ${current}/${goal}",
 					complete = "Flawless flow! Chain reached ${current}.",
 				},
-				shield_triathlon = {
-					title = "Shield Triathlon",
-					description = "Bounce, break, and parry with your shield in a single run.",
-					progress = "Bounces: ${bounces} | Rocks: ${rocks} | Saws: ${saws} (${current}/${goal})",
-					complete = "Shield trifecta! All three maneuvers completed.",
-				},
 				floor_speedrunner = {
 					title = "Floor Speedrunner",
 					description = "Clear any floor in under ${seconds} seconds.",
@@ -94,12 +88,6 @@ local english = {
 					description = "Maintain an average pace of ${pace} tiles per minute.",
 					progress = "Current pace: ${pace}/${goal} (Tiles: ${tiles}, Minutes: ${minutes})",
 					complete = "Steady sprint! Pace hit ${pace} tiles per minute.",
-				},
-				shielded_marathon = {
-					title = "Shielded Marathon",
-					description = "Trigger ${target_shields} emergency shields and slither ${target_tiles} tiles in one run.",
-					progress = "Conditions: ${current}/${goal} (Saves: ${shields}/${target_shields}, Tiles: ${tiles}/${target_tiles})",
-					complete = "Endurance secured! Both shield and distance goals met.",
 				},
 				fruit_frenzy = {
 					title = "Fruit Frenzy",

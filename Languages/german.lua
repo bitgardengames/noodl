@@ -77,12 +77,6 @@ local german = {
 					progress = "Ohne-Abbiegen-Kette: ${current}/${goal}",
 					complete = "Fehlerloser Flow! Kette bis ${current}.",
 				},
-				shield_triathlon = {
-					title = "Schild-Triathlon",
-					description = "Pralle ab, brich und pariere mit deinem Schild in einem Lauf.",
-					progress = "Abpraller: ${bounces} | Felsen: ${rocks} | Sägen: ${saws} (${current}/${goal})",
-					complete = "Schild-Trifecta! Alle drei Manöver abgeschlossen.",
-				},
 				floor_speedrunner = {
 					title = "Ebenen-Speedrunner",
 					description = "Schließe eine beliebige Ebene in unter ${seconds} Sekunden ab.",
@@ -94,12 +88,6 @@ local german = {
 					description = "Halte ein Durchschnittstempo von ${pace} Feldern pro Minute.",
 					progress = "Aktuelles Tempo: ${pace}/${goal} (Felder: ${tiles}, Minuten: ${minutes})",
 					complete = "Stetiger Sprint! Tempo von ${pace} Feldern pro Minute erreicht.",
-				},
-				shielded_marathon = {
-					title = "Schild-Marathon",
-					description = "Löse ${target_shields} Notfall-Schilde aus und schlängle dich ${target_tiles} Felder in einem Lauf.",
-					progress = "Bedingungen: ${current}/${goal} (Rettungen: ${shields}/${target_shields}, Felder: ${tiles}/${target_tiles})",
-					complete = "Ausdauer gesichert! Schild- und Distanzziele erfüllt.",
 				},
 				fruit_frenzy = {
 					title = "Frucht-Frenzy",
