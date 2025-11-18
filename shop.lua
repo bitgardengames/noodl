@@ -3,7 +3,6 @@ local Localization = require("localization")
 local GamepadAliases = require("gamepadaliases")
 local Upgrades = require("upgrades")
 local Audio = require("audio")
-local MetaProgression = require("metaprogression")
 local Theme = require("theme")
 local Floors = require("floors")
 local Timer = require("timer")
@@ -491,10 +490,7 @@ function Shop:refreshCards(options)
 		upgradeBonus = max(0, floor(Upgrades:getEffect("shopSlots") or 0))
 	end
 
-	local metaBonus = 0
-	if MetaProgression and MetaProgression.getShopBonusSlots then
-		metaBonus = max(0, MetaProgression:getShopBonusSlots() or 0)
-	end
+        local metaBonus = 0
 
 	local extraChoices = upgradeBonus + metaBonus
 
