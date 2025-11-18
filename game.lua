@@ -140,8 +140,8 @@ local function easeOutCubic(t)
 end
 
 local function clamp(value, minimum, maximum)
-        if value < minimum then
-                return minimum
+	if value < minimum then
+		return minimum
 	elseif value > maximum then
 		return maximum
 	end
@@ -149,63 +149,63 @@ local function clamp(value, minimum, maximum)
 end
 
 local function circleSegments(radius)
-        return clamp(ceil(radius / 6), 12, 48)
+	return clamp(ceil(radius / 6), 12, 48)
 end
 
 local function createEffects()
-        local effects = {
-                shakeTimer = 0,
-                shakeDuration = 0,
-                shakeMagnitude = 0,
-        }
+	local effects = {
+		shakeTimer = 0,
+		shakeDuration = 0,
+		shakeMagnitude = 0,
+	}
 
-        function effects:shake(amount)
-                amount = max(amount or 0, 0)
+	function effects:shake(amount)
+		amount = max(amount or 0, 0)
 
-                if amount <= 0 then
-                        return
-                end
+		if amount <= 0 then
+			return
+		end
 
-                local duration = 0.22 + amount * 0.38
-                self.shakeDuration = max(self.shakeDuration or 0, duration)
-                self.shakeTimer = self.shakeDuration
+		local duration = 0.22 + amount * 0.38
+		self.shakeDuration = max(self.shakeDuration or 0, duration)
+		self.shakeTimer = self.shakeDuration
 
-                local magnitude = 14 * amount
-                self.shakeMagnitude = max(self.shakeMagnitude or 0, magnitude)
-        end
+		local magnitude = 14 * amount
+		self.shakeMagnitude = max(self.shakeMagnitude or 0, magnitude)
+	end
 
-        function effects:update(dt)
-                if not dt or dt <= 0 then
-                        return
-                end
+	function effects:update(dt)
+		if not dt or dt <= 0 then
+			return
+		end
 
-                if self.shakeTimer and self.shakeTimer > 0 then
-                        self.shakeTimer = max(0, self.shakeTimer - dt)
-                end
-        end
+		if self.shakeTimer and self.shakeTimer > 0 then
+			self.shakeTimer = max(0, self.shakeTimer - dt)
+		end
+	end
 
-        function effects:getShakeOffset()
-                if not self.shakeTimer or self.shakeTimer <= 0 then
-                        return 0, 0
-                end
+	function effects:getShakeOffset()
+		if not self.shakeTimer or self.shakeTimer <= 0 then
+			return 0, 0
+		end
 
-                if not self.shakeDuration or self.shakeDuration <= 0 then
-                        return 0, 0
-                end
+		if not self.shakeDuration or self.shakeDuration <= 0 then
+			return 0, 0
+		end
 
-                local progress = clamp01(self.shakeTimer / self.shakeDuration)
-                local intensity = (self.shakeMagnitude or 0) * progress
+		local progress = clamp01(self.shakeTimer / self.shakeDuration)
+		local intensity = (self.shakeMagnitude or 0) * progress
 
-                if intensity <= 0 then
-                        return 0, 0
-                end
+		if intensity <= 0 then
+			return 0, 0
+		end
 
-                local dx = love.math.random(-intensity, intensity)
-                local dy = love.math.random(-intensity, intensity)
-                return dx, dy
-        end
+		local dx = love.math.random(-intensity, intensity)
+		local dy = love.math.random(-intensity, intensity)
+		return dx, dy
+	end
 
-        return effects
+	return effects
 end
 
 local function updateScreenDimensions(self, width, height)
@@ -1046,17 +1046,17 @@ function Game:load(options)
 	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
 	Face:set("idle")
 
-        self.transition = TransitionManager.new(self)
-        self.input = GameInput.new(self, self.transition)
-        self.input:resetAxes()
+	self.transition = TransitionManager.new(self)
+	self.input = GameInput.new(self, self.transition)
+	self.input:resetAxes()
 
-        Snake:setDeveloperGodMode(false)
+	Snake:setDeveloperGodMode(false)
 
-        resetFeedbackState(self)
+	resetFeedbackState(self)
 
-        self.Effects = createEffects()
+	self.Effects = createEffects()
 
-        self.singleTouchDeath = true
+	self.singleTouchDeath = true
 
 	self.hudIndicatorRefreshInterval = 1 / 30
 	self.hudIndicatorActiveRefreshInterval = 1 / 60
@@ -1093,13 +1093,13 @@ function Game:reset()
 	self.deathHoldTimer = nil
 	self.deathHoldDuration = nil
 
-        self:invalidateTransitionTitleCache()
+	self:invalidateTransitionTitleCache()
 
-        resetFeedbackState(self)
+	resetFeedbackState(self)
 
-        self.Effects = createEffects()
+	self.Effects = createEffects()
 
-        self.hudIndicatorRefreshInterval = 1 / 30
+	self.hudIndicatorRefreshInterval = 1 / 30
 	self.hudIndicatorActiveRefreshInterval = 1 / 60
 	self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshInterval
 
@@ -1368,7 +1368,7 @@ function Game:updateGameplay(dt)
 		local fruitX, fruitY = Fruit:getDrawPosition()
 		FruitEvents.handleConsumption(fruitX, fruitY)
 
-		self:triggerScreenShake(0.12)
+		--self:triggerScreenShake(0.02)
 
 		local goalReached = UI:isGoalReached()
 		if goalReached then
@@ -1434,19 +1434,19 @@ end
 local function drawPlayfieldLayers(self, stateOverride)
 	local renderState = stateOverride or self.state
 
-        RenderLayers:begin(self.screenWidth or love.graphics.getWidth(), self.screenHeight or love.graphics.getHeight())
+	RenderLayers:begin(self.screenWidth or love.graphics.getWidth(), self.screenHeight or love.graphics.getHeight())
 
-        currentGame = self
-        currentRenderState = renderState
+	currentGame = self
+	currentRenderState = renderState
 
-        local shakeOffsetX, shakeOffsetY = 0, 0
-        if self.Effects and self.Effects.getShakeOffset then
-                shakeOffsetX, shakeOffsetY = self.Effects:getShakeOffset()
-        end
+	local shakeOffsetX, shakeOffsetY = 0, 0
+	if self.Effects and self.Effects.getShakeOffset then
+		shakeOffsetX, shakeOffsetY = self.Effects:getShakeOffset()
+	end
 
-        RenderLayers:withLayer("background", drawBackgroundLayer)
+	RenderLayers:withLayer("background", drawBackgroundLayer)
 
-        Death:applyShake()
+	Death:applyShake()
 
 	local needsMainStencil = false
 	if renderState == "descending" then
@@ -1459,12 +1459,12 @@ local function drawPlayfieldLayers(self, stateOverride)
 		end
 	end
 
-        RenderLayers:withLayer("main", drawMainLayer, needsMainStencil)
+	RenderLayers:withLayer("main", drawMainLayer, needsMainStencil)
 
-        RenderLayers:present(shakeOffsetX, shakeOffsetY)
+	RenderLayers:present(shakeOffsetX, shakeOffsetY)
 
-        currentGame = nil
-        currentRenderState = nil
+	currentGame = nil
+	currentRenderState = nil
 end
 
 local function drawDeveloperGodModeBadge(self)
@@ -1723,19 +1723,19 @@ function Game:drawDescending()
 end
 
 function Game:update(dt)
-        self:updateMouseVisibility()
+	self:updateMouseVisibility()
 
-        local scaledDt = getScaledDeltaTime(self, dt)
-        updateFeedbackState(self, scaledDt)
-        updateHitStopState(self, dt)
+	local scaledDt = getScaledDeltaTime(self, dt)
+	updateFeedbackState(self, scaledDt)
+	updateHitStopState(self, dt)
 
-        if self.Effects and self.Effects.update then
-                self.Effects:update(scaledDt)
-        end
+	if self.Effects and self.Effects.update then
+		self.Effects:update(scaledDt)
+	end
 
-        if handlePauseMenu(self, dt) then
-                return
-        end
+	if handlePauseMenu(self, dt) then
+		return
+	end
 
 	if self.state == "victory" then
 		local delay = self.victoryDelay or 0

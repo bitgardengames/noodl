@@ -456,31 +456,6 @@ DailyChallenges.challenges = {
 		xpReward = 80,
 	},
 	{
-		id = "shield_showoff",
-		titleKey = "menu.daily.shield_showoff.title",
-		descriptionKey = "menu.daily.shield_showoff.description",
-		goal = 6,
-		progressKey = "menu.daily.shield_showoff.progress",
-		completeKey = "menu.daily.shield_showoff.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local rocks = getStatValue(statsSource, "runShieldRockBreaks", context)
-			local saws = getStatValue(statsSource, "runShieldSawParries", context)
-
-			return (rocks or 0) + (saws or 0)
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				rocks = getStatValue(statsSource, "runShieldRockBreaks", context),
-				saws = getStatValue(statsSource, "runShieldSawParries", context),
-			}
-		end,
-		xpReward = 95,
-	},
-	{
 		id = "combo_conductor",
 		titleKey = "menu.daily.combos.title",
 		descriptionKey = "menu.daily.combos.description",

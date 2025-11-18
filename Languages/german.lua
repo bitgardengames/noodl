@@ -42,12 +42,6 @@ local german = {
 					title = "Pfadfinder",
 					description = "Schließe ${goal} Ebenen in einem Lauf ab.",
 				},
-				shield_showoff = {
-					title = "Schildeinsatz",
-					description = "Zerbrich Felsen und pariere Sägen insgesamt ${goal} Mal in einem Lauf.",
-					progress = "Felsen: ${rocks} | Sägen: ${saws} (Gesamt ${current}/${goal})",
-					complete = "Schildspektakel! ${current} Manöver ausgeführt.",
-				},
 				combos = {
 					title = "Combo-Dirigent",
 					description = "Löse ${goal} Combos in einem Lauf aus.",

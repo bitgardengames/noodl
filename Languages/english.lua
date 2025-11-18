@@ -42,12 +42,6 @@ local english = {
 					title = "Pathfinder",
 					description = "Clear ${goal} floors in one run.",
 				},
-				shield_showoff = {
-					title = "Shield Showoff",
-					description = "Break rocks and parry saws ${goal} times total in a single run.",
-					progress = "Rocks: ${rocks} | Saws: ${saws} (Total ${current}/${goal})",
-					complete = "Shield spectacle! ${current} maneuvers performed.",
-				},
 				combos = {
 					title = "Combo Conductor",
 					description = "Trigger ${goal} combos in a single run.",
