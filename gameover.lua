@@ -3,6 +3,7 @@ local SessionStats = require("sessionstats")
 local Achievements = require("achievements")
 local Audio = require("audio")
 local Theme = require("theme")
+local MenuScene = require("menuscene")
 local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
@@ -30,6 +31,22 @@ local ANALOG_DEADZONE = 0.3
 local BUTTON_VERTICAL_OFFSET = 30
 local TEXT_SHADOW_OFFSET = 2
 local TITLE_SHADOW_OFFSET = 3
+
+local function getBackgroundColor()
+        return (UI.colors and UI.colors.background) or Theme.bgColor
+end
+
+function GameOver:getMenuBackgroundOptions()
+        return MenuScene.getPlainBackgroundOptions(nil, getBackgroundColor())
+end
+
+local function drawBackground(sw, sh)
+        if not MenuScene.shouldDrawBackground() then
+                return
+        end
+
+        MenuScene.drawBackground(sw, sh, GameOver:getMenuBackgroundOptions())
+end
 
 local function pickDeathMessage(cause)
 	local deathTable = Localization:getTable("gameover.deaths") or {}
