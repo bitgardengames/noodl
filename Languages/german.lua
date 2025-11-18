@@ -380,10 +380,6 @@ local german = {
 					description = "Wenn du eine Frucht sammelst, breitet sich von diesem Feld eine Schockwelle aus und stößt nahe Gefahren ein Feld weg.",
 					activation_text = "Schockwellenblüte",
 				},
-				contract_of_cinders = {
-					name = "Glutvertrag",
-					description = "Erhalte sofort +2 Schilde. Jedes Mal, wenn ein Schild bricht, bleibt eine Glut zurück, die auf der nächsten Ebene eine Säge erscheinen lässt.",
-				},
 				blade_override = { -- ship
 					name = "Klingenbann",
 					description = "Nach jeder Frucht tauchen Sägen für 1,6 Sekunden unter ihre Schienen.",

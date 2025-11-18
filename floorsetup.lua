@@ -644,9 +644,6 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
 	local dartPlan, desiredDarts = buildDartPlan(traitContext)
 	local spawnSafeCells = mergeCells(rockSafeZone, spawnBuffer)
 
-	local emberSaws = max(0, floor((traitContext.contractOfCindersEmberSaws or 0) + 0.5))
-	traitContext.contractOfCindersEmberSaws = emberSaws
-
 	return {
 		numRocks = traitContext.rocks,
 		numSaws = traitContext.saws,
@@ -663,8 +660,7 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
 		laserCount = desiredLasers,
 		darts = dartPlan,
 		dartCount = desiredDarts,
-		emberSawCount = emberSaws,
-	}
+}
 end
 
 function FloorSetup.prepare(floorNum, floorData)

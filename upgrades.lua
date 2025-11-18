@@ -1747,102 +1747,6 @@ pool = {
 		},
 		}),
 	register({
-		id = "contract_of_cinders",
-		nameKey = "upgrades.contract_of_cinders.name",
-		descKey = "upgrades.contract_of_cinders.description",
-		rarity = "epic",
-		tags = {"defense", "risk", "hazard"},
-		onAcquire = function(state
-	)
-		grantShields(2
-	)
-		if state then
-		state.counters = state.counters or {}
-		state.counters.contractOfCindersPendingSaws = state.counters.contractOfCindersPendingSaws or 0
-		end
-
-		local emberColor = {1.0, 0.46, 0.18, 1}
-		local celebrationOptions = {
-		color = emberColor,
-		particleCount = 18,
-		particleSpeed = 150,
-		particleLife = 0.52,
-		textOffset = 46,
-		textScale = 1.14,
-		particles = {
-		count = 16,
-		speed = 170,
-		speedVariance = 60,
-		life = 0.58,
-		size = 3.4,
-		spread = pi * 0.6,
-		angleOffset = -pi / 2,
-		angleJitter = pi * 0.5,
-		drag = 1.6,
-		gravity = -220,
-		fadeTo = 0.05,
-		},
-		}
-		applySegmentPosition(celebrationOptions, 0.42
-	)
-		celebrateUpgrade(getUpgradeString("contract_of_cinders", "name"), nil, celebrationOptions
-	)
-		end,
-		handlers = {
-		shieldConsumed = function(data, state
-	)
-		if not state or getStacks(state, "contract_of_cinders") <= 0 then
-		return
-		end
-
-		state.counters = state.counters or {}
-		state.counters.contractOfCindersPendingSaws = (state.counters.contractOfCindersPendingSaws or 0) + 1
-
-		local emberColor = {1.0, 0.46, 0.18, 1}
-		celebrateUpgrade(nil, data, {
-		skipText = true,
-		color = emberColor,
-		particles = {
-		count = 9,
-		speed = 180,
-		speedVariance = 70,
-		life = 0.64,
-		size = 3.0,
-		spread = pi * 0.32,
-		angleOffset = -pi / 2,
-		angleJitter = pi * 0.36,
-		drag = 1.9,
-		gravity = -250,
-		fadeTo = 0.04,
-		},
-		}
-	)
-
-		local fx, fy = getEventPosition(data
-	)
-		if fx and fy then
-		UpgradeVisuals:spawn(fx, fy, {
-		variant = "phoenix_flare",
-		life = 0.78,
-		innerRadius = 10,
-		outerRadius = 30,
-		ringCount = 2,
-		ringSpacing = 7,
-		addBlend = true,
-		color = {1.0, 0.44, 0.18, 0.85},
-		glowAlpha = 0.28,
-		haloAlpha = 0.12,
-		showBase = false,
-		variantColor = {1.0, 0.46, 0.16, 0.95},
-		variantSecondaryColor = {1.0, 0.62, 0.24, 0.85},
-		variantTertiaryColor = {1.0, 0.86, 0.42, 0.78},
-		}
-	)
-		end
-		end,
-		},
-		}),
-	register({
 		id = "blade_override",
 		nameKey = "upgrades.blade_override.name",
 		descKey = "upgrades.blade_override.description",
@@ -2851,21 +2755,6 @@ function Upgrades:modifyFloorContext(context)
 		local lasers = context.laserCount + effects.laserSpawnBonus
 		lasers = floor(lasers + 0.5)
 		context.laserCount = clamp(lasers, 0)
-	end
-
-	local state = self.runState
-	if state and state.counters then
-		local emberPending = state.counters.contractOfCindersPendingSaws
-		if emberPending and emberPending > 0 then
-			context.saws = context.saws or 0
-			context.contractOfCindersEmberSaws = (context.contractOfCindersEmberSaws or 0) + emberPending
-			context.saws = context.saws + emberPending
-			state.counters.contractOfCindersActiveSaws = emberPending
-			state.counters.contractOfCindersPendingSaws = 0
-		else
-			state.counters.contractOfCindersActiveSaws = nil
-		end
-
 	end
 
 	return context

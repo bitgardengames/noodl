@@ -380,11 +380,7 @@ local english = {
 				description = "When you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away.",
 				activation_text = "Shockwave Bloom",
 			},
-			contract_of_cinders = {
-				name = "Contract of Cinders",
-				description = "Gain +2 shields immediately. Each time a shield breaks, it leaves an ember that spawns a saw on the next floor.",
-			},
-			blade_override = { -- ship
+				blade_override = { -- ship
 				name = "Blade Override",
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
 			},
