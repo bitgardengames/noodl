@@ -1859,12 +1859,10 @@ function Shop:draw(screenW, screenH)
                         end
 
                         local focusEase = focusValue * focusValue * (3 - 2 * focusValue)
-                        local wobbleClock = (self.time or 0) * 1.1 + i * 0.4
+                        -- Keep a subtle positional nudge for focus without drifting the card at rest.
                         local hoverStrength = state.hover or 0
-                        local floatAmount = 6 + 10 * focusEase + 8 * hoverStrength
-                        yOffset = yOffset + sin(wobbleClock) * floatAmount * eased
-                        local driftAmount = 2 + 5 * focusEase + 4 * hoverStrength
-                        xOffset = xOffset + cos(wobbleClock * 0.9 + 0.45) * driftAmount * eased
+                        yOffset = yOffset - 6 * focusEase * eased
+                        xOffset = xOffset + 4 * hoverStrength * focusEase * eased
 
                         local bounce = state.focusBounce or 0
                         if bounce > 0 then
