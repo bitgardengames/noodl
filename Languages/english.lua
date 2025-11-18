@@ -230,7 +230,6 @@ local english = {
 				saw = {
 					"That wasn’t a salad spinner.",
 					"Just rub some dirt on it.",
-					"OSHA has entered the chat.",
 					"Snake auditioned for a horror movie.",
 				},
 				flame = {

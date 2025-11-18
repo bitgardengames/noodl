@@ -230,7 +230,6 @@ local german = {
 					saw = {
 						"Das war kein Salatschneider.",
 						"Reib ein bisschen Erde drauf.",
-						"Die Arbeitssicherheit schaut gerade zu.",
 						"Die Schlange hat für einen Horrorfilm vorgesprochen.",
 					},
 					flame = {
