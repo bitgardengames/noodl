@@ -1,6 +1,7 @@
 local PlayerStats = require("playerstats")
 local SessionStats = require("sessionstats")
 local Achievements = require("achievements")
+local DailyChallenges = require("dailychallenges")
 local max = math.max
 local insert = table.insert
 
@@ -174,13 +175,15 @@ function Score:getHighScoreGlowStrength()
 end
 
 local function finalizeRunResult(self, options)
-	options = options or {}
-	local cause = options.cause or "unknown"
-	local won = options.won or false
+        options = options or {}
+        local cause = options.cause or "unknown"
+        local won = options.won or false
 
-	self:flushPendingStats()
+        self:flushPendingStats()
 
-	PlayerStats:updateMax("snakeScore", self.current)
+        DailyChallenges:applyRunResults(SessionStats, {date = options.date})
+
+        PlayerStats:updateMax("snakeScore", self.current)
 
 	Achievements:checkAll({
 		bestScore = PlayerStats:get("snakeScore"),
