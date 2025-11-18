@@ -101,12 +101,6 @@ local german = {
 					progress = "Bedingungen: ${current}/${goal} (Rettungen: ${shields}/${target_shields}, Felder: ${tiles}/${target_tiles})",
 					complete = "Ausdauer gesichert! Schild- und Distanzziele erfüllt.",
 				},
-				fruit_rush = {
-					title = "Frucht-Rausch",
-					description = "Halte ${pace} Früchte pro Minute.",
-					progress = "Aktuelles Tempo: ${pace}/${goal} (Früchte: ${apples}, Minuten: ${minutes})",
-					complete = "Früchte-Explosion! Tempo von ${pace} pro Minute erreicht.",
-				},
 				fruit_frenzy = {
 					title = "Frucht-Frenzy",
 					description = "Verschlinge ${target_apples} Früchte in ${target_time}.",

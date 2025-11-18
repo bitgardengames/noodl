@@ -101,12 +101,6 @@ local english = {
 					progress = "Conditions: ${current}/${goal} (Saves: ${shields}/${target_shields}, Tiles: ${tiles}/${target_tiles})",
 					complete = "Endurance secured! Both shield and distance goals met.",
 				},
-				fruit_rush = {
-					title = "Fruit Rush",
-					description = "Maintain ${pace} fruit per minute.",
-					progress = "Current pace: ${pace}/${goal} (Fruit: ${apples}, Minutes: ${minutes})",
-					complete = "Fruit frenzy! Pace reached ${pace} per minute.",
-				},
 				fruit_frenzy = {
 					title = "Fruit Frenzy",
 					description = "Chomp ${target_apples} fruit within ${target_time}.",

@@ -666,57 +666,6 @@ DailyChallenges.challenges = {
 		xpReward = 115,
 	},
 	{
-		id = "fruit_rush",
-		titleKey = "menu.daily.fruit_rush.title",
-		descriptionKey = "menu.daily.fruit_rush.description",
-		goal = 16,
-		progressKey = "menu.daily.fruit_rush.progress",
-		completeKey = "menu.daily.fruit_rush.complete",
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten", context)
-			local timeAlive = getStatValue(statsSource, "timeAlive", context)
-			if timeAlive <= 0 then
-				return 0
-			end
-
-			return floor((apples / timeAlive) * 60)
-		end,
-		getRunValue = function(self, statsSource)
-			local apples = getStatValue(statsSource, "applesEaten")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
-			if timeAlive <= 0 then
-				return 0
-			end
-
-			return floor((apples / timeAlive) * 60)
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten", context)
-			local timeAlive = getStatValue(statsSource, "timeAlive", context)
-			local minutes = timeAlive / 60
-			local pace = 0
-			if timeAlive > 0 then
-				pace = floor((apples / timeAlive) * 60)
-			end
-
-			return {
-				current = pace,
-				goal = goal or 0,
-				pace = pace,
-				apples = apples,
-				minutes = string.format("%.1f", max(minutes, 0)),
-			}
-		end,
-		descriptionReplacements = function(self, current, goal)
-			return {
-				pace = goal or self.goal or 0,
-			}
-		end,
-		xpReward = 100,
-	},
-	{
 		id = "fruit_frenzy",
 		titleKey = "menu.daily.fruit_frenzy.title",
 		descriptionKey = "menu.daily.fruit_frenzy.description",
