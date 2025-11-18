@@ -24,6 +24,8 @@ local remove = table.remove
 
 local GameOver = {isVictory = false}
 
+local buttonDefs = {}
+
 local ANALOG_DEADZONE = 0.3
 local BUTTON_VERTICAL_OFFSET = 30
 local TEXT_SHADOW_OFFSET = 2
@@ -257,12 +259,29 @@ local function clamp(value, minimum, maximum)
 end
 
 local function easeOutQuad(t)
-	local inv = 1 - t
-	return 1 - inv * inv
+        local inv = 1 - t
+        return 1 - inv * inv
+end
+
+local function ensureFonts()
+        fontTitle = UI.fonts.title or love.graphics.getFont()
+        fontScore = UI.fonts.heading or love.graphics.getFont()
+        fontScoreValue = UI.fonts.display or fontScore
+        fontSmall = UI.fonts.body or love.graphics.getFont()
+        fontMessage = UI.fonts.body or love.graphics.getFont()
+        fontBadge = UI.fonts.badge or UI.fonts.small or fontSmall
+        fontProgressTitle = UI.fonts.subtitle or fontScore
+        fontProgressValue = UI.fonts.display or fontScoreValue
+        fontProgressSmall = UI.fonts.small or fontSmall
+        fontProgressLabel = UI.fonts.caption or fontProgressSmall
 end
 
 local function randomRange(minimum, maximum)
-	return minimum + (maximum - minimum) * love.math.random()
+        return minimum + (maximum - minimum) * love.math.random()
+end
+
+local function handleButtonAction(_, action)
+        return action
 end
 
 local function drawScorePanel(self, x, y, width, height, sectionPadding, innerSpacing, smallSpacing)
@@ -488,15 +507,161 @@ local function drawCombinedPanel(self, contentWidth, contentX, padding, panelY)
 		end
 
 		currentY = currentY + (layout.columnsHeight or 0)
-	end
+        end
 
 end
 
+function GameOver:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
+        local contentHeight = self.summaryPanelHeight or 0
+        local padding = self.contentPadding or 24
+        local buttonGap = buttonSpacing or 0
+
+        local topMargin = padding * 1.5
+        local bottomMargin = padding * 2
+
+        local availableHeight = max(0, sh - topMargin - bottomMargin)
+        local totalStackHeight = contentHeight + buttonGap + totalButtonHeight
+        local panelY = topMargin
+
+        if totalStackHeight < availableHeight then
+                panelY = topMargin + (availableHeight - totalStackHeight) * 0.3
+        end
+
+        local buttonY = panelY + contentHeight + buttonGap
+
+        return panelY, buttonY
+end
+
+function GameOver:updateLayoutMetrics()
+        ensureFonts()
+
+        local sw, sh = Screen:get()
+        if not sw or not sh then
+            return false
+        end
+
+        local changed = (self._cachedWidth ~= sw) or (self._cachedHeight ~= sh)
+        self._cachedWidth, self._cachedHeight = sw, sh
+
+        local margin = 24
+        local fallbackMaxAllowed = max(40, sw - margin)
+        local fallbackSafe = max(80, sw - margin * 2)
+        fallbackSafe = min(fallbackSafe, fallbackMaxAllowed)
+        local fallbackPreferred = min(sw * 0.72, 640)
+        local fallbackMin = min(320, fallbackSafe)
+        local contentWidth = max(fallbackMin, min(fallbackPreferred, fallbackSafe))
+
+        local padding = self.contentPadding or 24
+        local sectionPadding = getSectionPadding()
+        local sectionSpacing = getSectionSpacing()
+        local innerSpacing = getSectionInnerSpacing()
+        local smallSpacing = getSectionSmallSpacing()
+
+        local innerWidth = max(0, contentWidth - padding * 2)
+        local wrapLimit = max(0, innerWidth - sectionPadding * 2)
+        local messageText = self.deathMessage or Localization:get("gameover.default_message")
+
+        local _, lineCount = fontMessage:getWrap(messageText or "", wrapLimit)
+        local messageHeight = (fontMessage:getHeight() or 0) * (lineCount or 1)
+        local messagePanelHeight = sectionPadding * 2 + messageHeight
+
+        local labelFont = fontProgressLabel or fontProgressSmall
+        local valueFont = fontScoreValue or fontScore or fontProgressValue
+        local scorePanelHeight = sectionPadding * 2
+        scorePanelHeight = scorePanelHeight + (labelFont and labelFont:getHeight() or 0)
+        scorePanelHeight = scorePanelHeight + innerSpacing + (valueFont and valueFont:getHeight() or 0)
+
+        local layout = {
+                entries = {
+                        {
+                                id = "score",
+                                width = max(0, innerWidth - sectionPadding * 2),
+                                height = scorePanelHeight,
+                                x = 0,
+                                y = 0,
+                        },
+                },
+                columnsHeight = scorePanelHeight,
+        }
+
+        local primaryWidth = max(0, innerWidth - sectionPadding * 2)
+        local primaryOffset = sectionPadding
+        local panelHeight = padding + messagePanelHeight + sectionSpacing + layout.columnsHeight + padding
+
+        self.contentWidth = contentWidth
+        self.innerContentWidth = innerWidth
+        self.wrapLimit = wrapLimit
+        self.sectionPaddingValue = sectionPadding
+        self.sectionSpacingValue = sectionSpacing
+        self.sectionInnerSpacingValue = innerSpacing
+        self.sectionSmallSpacingValue = smallSpacing
+        self.primaryPanelWidth = primaryWidth
+        self.primaryPanelOffset = primaryOffset
+        self.messagePanelHeight = messagePanelHeight
+        self.summaryPanelHeight = panelHeight
+        self.summarySectionLayout = layout
+
+        return changed
+end
+
+function GameOver:updateButtonLayout()
+        local sw, sh = Screen:get()
+        local buttonWidth, buttonHeight, buttonSpacing = getButtonMetrics()
+        local totalButtonHeight = #buttonDefs * buttonHeight + max(0, (#buttonDefs - 1) * buttonSpacing)
+        local panelY, buttonStartY = self:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
+
+        local x = (sw - buttonWidth) / 2
+        local defs = {}
+
+        for i, entry in ipairs(buttonDefs) do
+                defs[i] = {
+                        id = entry.id or ("button" .. i),
+                        x = x,
+                        y = buttonStartY + (i - 1) * (buttonHeight + buttonSpacing),
+                        w = buttonWidth,
+                        h = buttonHeight,
+                        textKey = entry.textKey,
+                        text = entry.textKey and Localization:get(entry.textKey) or entry.text,
+                        action = entry.action,
+                }
+        end
+
+        buttonList:reset(defs)
+        self._panelY = panelY
+end
+
+function GameOver:enter(data)
+        data = data or {}
+
+        UI.clearButtons()
+        ensureFonts()
+        resetAnalogAxis()
+
+        stats.score = data.score or 0
+        stats.highScore = data.highScore or stats.score or 0
+        stats.apples = data.apples or 0
+        stats.totalApples = data.totalApples or 0
+
+        self.isVictory = not not data.won
+        self.deathCause = data.cause or "unknown"
+        self.deathMessage = data.endingMessage or pickDeathMessage(self.deathCause)
+        self.customTitle = data.storyTitle
+
+        buttonDefs = {
+                {id = "playAgain", textKey = "gameover.play_again", action = "game"},
+                {id = "quitToMenu", textKey = "gameover.quit_to_menu", action = "menu"},
+        }
+
+        self._cachedWidth, self._cachedHeight = nil, nil
+        self:updateLayoutMetrics()
+        self:updateButtonLayout()
+end
+
 function GameOver:draw()
-	local sw, sh = Screen:get()
-	local layoutChanged = self:updateLayoutMetrics()
-	if layoutChanged then
-		self:updateButtonLayout()
+        local sw, sh = Screen:get()
+        local layoutChanged = self:updateLayoutMetrics()
+        if layoutChanged then
+                self:updateButtonLayout()
 	end
 	drawBackground(sw, sh)
 
