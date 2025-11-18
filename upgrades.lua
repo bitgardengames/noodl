@@ -9,7 +9,6 @@ local UI = require("ui")
 local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 local Localization = require("localization")
-local MetaProgression = require("metaprogression")
 local PlayerStats = require("playerstats")
 local UpgradeHelpers = require("upgradehelpers")
 local GamepadAliases = require("gamepadaliases")
@@ -1322,7 +1321,6 @@ pool = {
 		descKey = "upgrades.deliberate_coil.description",
 		rarity = "epic",
 		tags = {"speed", "risk"},
-		unlockTag = "speedcraft",
 		onAcquire = function(state
 	)
 		Snake:addSpeedMultiplier(0.85
@@ -1935,7 +1933,6 @@ pool = {
 		rarity = "uncommon",
 		requiresTags = {"defense"},
 		tags = {"defense"},
-		unlockTag = "specialist",
 		onAcquire = function(state
 	)
 		applyVelocityRegulatorBonus(state
@@ -2233,7 +2230,6 @@ pool = {
 		rarity = "epic",
 		allowDuplicates = false,
 		tags = {"defense", "risk"},
-		unlockTag = "abyssal_protocols",
 		onAcquire = function(state
 	)
 		state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 0.85
@@ -2288,7 +2284,6 @@ pool = {
 		descKey = "upgrades.titanblood_pact.description",
 		rarity = "epic",
 		tags = {"defense", "risk"},
-		unlockTag = "abyssal_protocols",
 		weight = 1,
 		onAcquire = function(state
 	)
@@ -2308,7 +2303,6 @@ pool = {
 		descKey = "upgrades.phoenix_echo.description",
 		rarity = "epic",
 		tags = {"defense", "risk"},
-		unlockTag = "abyssal_protocols",
 		onAcquire = function(state
 	)
 		state.counters.phoenixEchoCharges = (state.counters.phoenixEchoCharges or 0) + 1
@@ -2321,7 +2315,6 @@ pool = {
 		rarity = "rare",
 		tags = {"mobility"},
 		allowDuplicates = false,
-		unlockTag = "abilities",
 		onAcquire = function(state
 	)
 		local dash = state.effects.dash or {}
@@ -2361,7 +2354,6 @@ pool = {
 		rarity = "uncommon",
 		requiresTags = {"mobility"},
 		tags = {"mobility", "defense"},
-		unlockTag = "stormtech",
 		handlers = {
 		dashActivated = function(data
 	)
@@ -2399,7 +2391,6 @@ pool = {
 		rarity = "rare",
 		tags = {"defense", "utility"},
 		allowDuplicates = false,
-		unlockTag = "timekeeper",
 		onAcquire = function(state
 	)
 		state.effects = state.effects or {}
@@ -2443,7 +2434,6 @@ pool = {
 		rarity = "rare",
 		tags = {"utility", "defense"},
 		allowDuplicates = false,
-		unlockTag = "timekeeper",
 		onAcquire = function(state
 	)
 		local ability = state.effects.timeSlow or {}
@@ -2482,7 +2472,6 @@ pool = {
 		descKey = "upgrades.momentum_coils.description",
 		rarity = "rare",
 		tags = {"mobility", "risk"},
-		unlockTag = "stormtech",
 		onAcquire = function(state
 	)
 		Snake:addSpeedMultiplier(1.15
@@ -2508,7 +2497,6 @@ pool = {
 		tags = {"defense", "mobility"},
 		allowDuplicates = false,
 		weight = 1,
-		unlockTag = "legendary",
 		onAcquire = function(state
 	)
 		state.effects.wallPortal = true
@@ -3162,33 +3150,9 @@ function Upgrades:canOffer(upgrade, context, allowTaken)
 		end
 	end
 
-	local combinedUnlockTags = nil
-	if type(upgrade.unlockTags) == "table" then
-		combinedUnlockTags = {}
-		for _, tag in ipairs(upgrade.unlockTags) do
-			combinedUnlockTags[#combinedUnlockTags + 1] = tag
-		end
-	end
-	if upgrade.unlockTag then
-		combinedUnlockTags = combinedUnlockTags or {}
-		combinedUnlockTags[#combinedUnlockTags + 1] = upgrade.unlockTag
-	end
-
-	if combinedUnlockTags and MetaProgression and MetaProgression.isTagUnlocked then
-		for _, tag in ipairs(combinedUnlockTags) do
-			if tag and not MetaProgression:isTagUnlocked(tag) then
-				return false
-			end
-		end
-	elseif upgrade.unlockTag and MetaProgression and MetaProgression.isTagUnlocked then
-		if not MetaProgression:isTagUnlocked(upgrade.unlockTag) then
-			return false
-		end
-	end
-
-	if upgrade.condition and not upgrade.condition(self.runState, context) then
-		return false
-	end
+        if upgrade.condition and not upgrade.condition(self.runState, context) then
+                return false
+        end
 
 	return true
 end
@@ -3211,82 +3175,12 @@ decorateCard = function(upgrade)
 	return card
 end
 
-local function matchesUnlockTag(upgrade, tag)
-	if not upgrade or not tag then
-		return false
-	end
-
-	if upgrade.unlockTag == tag then
-		return true
-	end
-
-	if type(upgrade.unlockTags) == "table" then
-		for _, unlockTag in ipairs(upgrade.unlockTags) do
-			if unlockTag == tag then
-				return true
-			end
-		end
-	end
-
-	return false
-end
-
 function Upgrades:getDefinition(id)
 	if not id then
 		return nil
 	end
 
 	return poolById[id]
-end
-
-function Upgrades:getShowcaseCardForTag(tag)
-	if not tag then
-		return nil
-	end
-
-	for _, upgrade in ipairs(pool) do
-		if matchesUnlockTag(upgrade, tag) then
-			return decorateCard(upgrade)
-		end
-	end
-
-	return nil
-end
-
-function Upgrades:getShowcaseCardForUnlock(unlock)
-	if not unlock then
-		return nil
-	end
-
-	if unlock.previewUpgradeId then
-		local upgrade = self:getDefinition(unlock.previewUpgradeId)
-		if upgrade then
-			return decorateCard(upgrade)
-		end
-	end
-
-	if type(unlock.unlockTags) == "table" then
-		for _, tag in ipairs(unlock.unlockTags) do
-			local card = self:getShowcaseCardForTag(tag)
-			if card then
-				return card
-			end
-		end
-	elseif unlock.unlockTag then
-		local card = self:getShowcaseCardForTag(unlock.unlockTag)
-		if card then
-			return card
-		end
-	end
-
-	if unlock.id then
-		local upgrade = self:getDefinition(unlock.id)
-		if upgrade then
-			return decorateCard(upgrade)
-		end
-	end
-
-	return nil
 end
 
 function Upgrades:getRandom(n, context)

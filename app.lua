@@ -4,7 +4,6 @@ local Settings = require("settings")
 local Display = require("display")
 local Audio = require("audio")
 local Achievements = require("achievements")
-local MetaProgression = require("metaprogression")
 local Score = require("score")
 local PlayerStats = require("playerstats")
 local UI = require("ui")
@@ -25,7 +24,6 @@ local App = {
 		game = require("game"),
 		gameover = require("gameover"),
 		achievementsmenu = require("achievementsmenu"),
-		metaprogression = require("metaprogressionscreen"),
 		settings = require("settingsscreen"),
 	}
 }
@@ -45,11 +43,7 @@ function App:loadSubsystems()
 	Achievements:load()
 	Score:load()
 	PlayerStats:load()
-	local metaState = MetaProgression:getState() or {}
-	SnakeCosmetics:load({
-		metaLevel = metaState.level or 1,
-		}
-	)
+        SnakeCosmetics:load({})
 end
 
 function App:resolveAction(action)
