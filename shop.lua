@@ -1826,6 +1826,7 @@ function Shop:draw(screenW, screenH)
                 local alpha = 1
                 local scale = 1
                 local yOffset = 0
+                local xOffset = 0
                 local extraRotation = 0
                 local state = self.cardStates and self.cardStates[i]
                 local revealState = state and state.mysteryReveal or nil
@@ -1862,8 +1863,8 @@ function Shop:draw(screenW, screenH)
                         local hoverStrength = state.hover or 0
                         local floatAmount = 6 + 10 * focusEase + 8 * hoverStrength
                         yOffset = yOffset + sin(wobbleClock) * floatAmount * eased
-                        local swayAmount = 0.012 + 0.018 * focusEase + 0.012 * hoverStrength
-                        extraRotation = extraRotation + sin(wobbleClock * 0.8 + 0.6) * swayAmount * eased
+                        local driftAmount = 2 + 5 * focusEase + 4 * hoverStrength
+                        xOffset = xOffset + cos(wobbleClock * 0.9 + 0.45) * driftAmount * eased
 
                         local bounce = state.focusBounce or 0
                         if bounce > 0 then
@@ -1935,21 +1936,22 @@ function Shop:draw(screenW, screenH)
 
 		local centerX = baseX + cardWidth / 2
 		local centerY = baseY + cardHeight / 2 - yOffset
-		if cardSelected or combinedFocus > 0 then
-			local focusAmount = combinedFocus
-			centerX = centerX + (screenW / 2 - centerX) * focusAmount
-			local targetY = layoutCenterY
-			centerY = centerY + (targetY - centerY) * focusAmount
-		else
-			if discardData then
-				centerX = centerX + discardOffsetX
+                if cardSelected or combinedFocus > 0 then
+                        local focusAmount = combinedFocus
+                        centerX = centerX + (screenW / 2 - centerX) * focusAmount
+                        local targetY = layoutCenterY
+                        centerY = centerY + (targetY - centerY) * focusAmount
+                else
+                        if discardData then
+                                centerX = centerX + discardOffsetX
 				centerY = centerY + discardOffsetY
 			else
 				centerY = centerY + 28 * fadeEase
 			end
-		end
+                end
 
-		centerX = centerX + shakeOffset
+                centerX = centerX + xOffset
+                centerX = centerX + shakeOffset
 
 		local drawWidth = cardWidth * scale
 		local drawHeight = cardHeight * scale
