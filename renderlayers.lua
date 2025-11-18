@@ -309,17 +309,17 @@ function RenderLayers:getActiveLayerMSAASamples(layerName)
 	return 0
 end
 
-function RenderLayers:present()
-	processQueuedDraws()
+function RenderLayers:present(offsetX, offsetY)
+        processQueuedDraws()
 
-	love.graphics.push("all")
-	love.graphics.setCanvas()
-	love.graphics.origin()
-	love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.push("all")
+        love.graphics.setCanvas()
+        love.graphics.origin()
+        love.graphics.setColor(1, 1, 1, 1)
 
-	drawLayers(0, 0)
+        drawLayers(offsetX or 0, offsetY or 0)
 
-	love.graphics.pop()
+        love.graphics.pop()
 end
 
 return RenderLayers
