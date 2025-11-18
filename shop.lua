@@ -543,16 +543,19 @@ function Shop:refreshCards(options)
 			hover = 0,
 			focus = 0,
 			fadeOut = 0,
-			selectionFlash = nil,
-			revealSoundPlayed = false,
-			selectSoundPlayed = false,
-			discardActive = false,
-			discard = nil,
-			mysteryReveal = nil,
-			revealHoldTimer = nil,
-			backgroundKey = backgroundKey,
-		}
-	end
+                        selectionFlash = nil,
+                        revealSoundPlayed = false,
+                        selectSoundPlayed = false,
+                        discardActive = false,
+                        discard = nil,
+                        focusClock = 0,
+                        focusBounce = 0,
+                        wasFocused = false,
+                        mysteryReveal = nil,
+                        revealHoldTimer = nil,
+                        backgroundKey = backgroundKey,
+                }
+        end
 end
 
 function Shop:beginRestock()
@@ -717,18 +720,30 @@ function Shop:update(dt)
 			state.selectSoundPlayed = false
 		end
 
-		if state.selectionFlash then
-			local flashDuration = 0.75
-			state.selectionFlash = state.selectionFlash + dt
-			if state.selectionFlash >= flashDuration then
-				state.selectionFlash = nil
-			end
-		end
+                if state.selectionFlash then
+                        local flashDuration = 0.75
+                        state.selectionFlash = state.selectionFlash + dt
+                        if state.selectionFlash >= flashDuration then
+                                state.selectionFlash = nil
+                        end
+                end
 
-		if card and card.upgrade and card.upgrade.id == "mystery_card" then
-			updateMysteryReveal(self, card, state, dt)
-		end
-	end
+                if isFocused and not restock and not isSelected and not state.wasFocused then
+                        state.focusBounce = 1
+                end
+
+                if isFocused then
+                        state.focusClock = (state.focusClock or 0) + dt
+                else
+                        state.focusClock = 0
+                end
+                state.focusBounce = max(0, (state.focusBounce or 0) - dt * 2.6)
+                state.wasFocused = isFocused
+
+                if card and card.upgrade and card.upgrade.id == "mystery_card" then
+                        updateMysteryReveal(self, card, state, dt)
+                end
+        end
 
 	if self.selected then
 		self.selectionTimer = (self.selectionTimer or 0) + dt
@@ -1808,12 +1823,15 @@ function Shop:draw(screenW, screenH)
 		local rowIndex = floor((i - 1) / columns)
 		local baseX = startX + columnIndex * (cardWidth + spacing)
 		local baseY = startY + rowIndex * (cardHeight + rowSpacing)
-		local alpha = 1
-		local scale = 1
-		local yOffset = 0
-		local state = self.cardStates and self.cardStates[i]
-		local revealState = state and state.mysteryReveal or nil
-		if state then
+                local alpha = 1
+                local scale = 1
+                local yOffset = 0
+                local extraRotation = 0
+                local state = self.cardStates and self.cardStates[i]
+                local revealState = state and state.mysteryReveal or nil
+                local focusValue = state and state.focus or 0
+                local fadeOut = state and state.fadeOut or 0
+                if state then
 			local progress = state.progress or 0
 			local eased = progress * progress * (3 - 2 * progress)
 			alpha = eased
@@ -1832,17 +1850,31 @@ function Shop:draw(screenW, screenH)
 				yOffset = yOffset - 8 * hoverEase
 			end
 
-			local selection = state.selection or 0
-			if selection > 0 then
-				local pulse = 1 + 0.05 * sin((state.selectionClock or 0) * 8)
-				scale = scale * (1 + 0.08 * selection) * pulse
-				alpha = min(1, alpha * (1 + 0.2 * selection))
-			end
-		end
+                        local selection = state.selection or 0
+                        if selection > 0 then
+                                local pulse = 1 + 0.05 * sin((state.selectionClock or 0) * 8)
+                                scale = scale * (1 + 0.08 * selection) * pulse
+                                alpha = min(1, alpha * (1 + 0.2 * selection))
+                        end
 
-		local focus = state and state.focus or 0
-		local fadeOut = state and state.fadeOut or 0
-		local focusEase = focus * focus * (3 - 2 * focus)
+                        local focusEase = focusValue * focusValue * (3 - 2 * focusValue)
+                        local wobbleClock = (self.time or 0) * 1.1 + i * 0.4
+                        local hoverStrength = state.hover or 0
+                        local floatAmount = 6 + 10 * focusEase + 8 * hoverStrength
+                        yOffset = yOffset + sin(wobbleClock) * floatAmount * eased
+                        local swayAmount = 0.012 + 0.018 * focusEase + 0.012 * hoverStrength
+                        extraRotation = extraRotation + sin(wobbleClock * 0.8 + 0.6) * swayAmount * eased
+
+                        local bounce = state.focusBounce or 0
+                        if bounce > 0 then
+                                local bounceEase = bounce * bounce * (3 - 2 * bounce)
+                                scale = scale * (1 + 0.09 * bounceEase)
+                                yOffset = yOffset - 10 * bounceEase
+                        end
+                end
+
+                local focus = focusValue
+                local focusEase = focusValue * focusValue * (3 - 2 * focusValue)
 		local revealFocus = 0
 		if revealState then
 			local boost = revealState.focusBoost or 0
@@ -1898,8 +1930,8 @@ function Shop:draw(screenW, screenH)
 
 		alpha = max(0, min(alpha, 1))
 
-		local shakeOffset = (revealState and revealState.shakeOffset) or 0
-		local extraRotation = (revealState and revealState.shakeRotation) or 0
+                local shakeOffset = (revealState and revealState.shakeOffset) or 0
+                extraRotation = extraRotation + ((revealState and revealState.shakeRotation) or 0)
 
 		local centerX = baseX + cardWidth / 2
 		local centerY = baseY + cardHeight / 2 - yOffset
