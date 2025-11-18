@@ -1307,6 +1307,8 @@ function Game:updateGameplay(dt)
 		local fruitX, fruitY = Fruit:getDrawPosition()
 		FruitEvents.handleConsumption(fruitX, fruitY)
 
+		self:triggerScreenShake(0.12)
+
 		local goalReached = UI:isGoalReached()
 		if goalReached then
 			Arena:spawnExit()
