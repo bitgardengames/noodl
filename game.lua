@@ -968,16 +968,16 @@ function Game:load(options)
 		requestedFloor = min(requestedFloor, totalFloors)
 	end
 
-        self.state = "playing"
-        self.startFloor = requestedFloor
-        self.floor = requestedFloor
-        self.runTimer = 0
-        self.floorTimer = 0
-        self.pauseReturnState = nil
+	self.state = "playing"
+	self.startFloor = requestedFloor
+	self.floor = requestedFloor
+	self.runTimer = 0
+	self.floorTimer = 0
+	self.pauseReturnState = nil
 
-        self.developerGodMode = false
+	self.developerGodMode = false
 
-        self.mouseCursorState = nil
+	self.mouseCursorState = nil
 
 	self:invalidateTransitionTitleCache()
 
@@ -990,11 +990,11 @@ function Game:load(options)
 	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
 	Face:set("idle")
 
-        self.transition = TransitionManager.new(self)
-        self.input = GameInput.new(self, self.transition)
-        self.input:resetAxes()
+	self.transition = TransitionManager.new(self)
+	self.input = GameInput.new(self, self.transition)
+	self.input:resetAxes()
 
-        Snake:setDeveloperGodMode(false)
+	Snake:setDeveloperGodMode(false)
 
 	resetFeedbackState(self)
 
@@ -1022,20 +1022,20 @@ end
 function Game:reset()
 	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
 	Face:set("idle")
-        self.state = "playing"
-        self.floor = self.startFloor or 1
-        self.runTimer = 0
-        self.floorTimer = 0
-        self.pauseReturnState = nil
+	self.state = "playing"
+	self.floor = self.startFloor or 1
+	self.runTimer = 0
+	self.floorTimer = 0
+	self.pauseReturnState = nil
 
-        self.developerGodMode = false
+	self.developerGodMode = false
 
-        self.mouseCursorState = nil
+	self.mouseCursorState = nil
 
-        self.deathHoldTimer = nil
-        self.deathHoldDuration = nil
+	self.deathHoldTimer = nil
+	self.deathHoldDuration = nil
 
-        self:invalidateTransitionTitleCache()
+	self:invalidateTransitionTitleCache()
 
 	resetFeedbackState(self)
 
@@ -1047,11 +1047,11 @@ function Game:reset()
 		self.transition:reset()
 	end
 
-        if self.input then
-                self.input:resetAxes()
-        end
+	if self.input then
+		self.input:resetAxes()
+	end
 
-        Snake:setDeveloperGodMode(false)
+	Snake:setDeveloperGodMode(false)
 end
 
 function Game:enter(data)
@@ -1071,43 +1071,44 @@ function Game:enter(data)
 end
 
 function Game:leave()
-        self:releaseMouseVisibility()
+	self:releaseMouseVisibility()
 
-        Snake:resetModifiers()
+	Snake:resetModifiers()
 
-        self.developerGodMode = false
-        Snake:setDeveloperGodMode(false)
+	self.developerGodMode = false
+	Snake:setDeveloperGodMode(false)
 
-        UI:setUpgradeIndicators(nil)
+	UI:setUpgradeIndicators(nil)
 end
 
 function Game:beginDeath()
-        if self.state ~= "dying" then
-                self.state = "dying"
-                Snake:setDead(true)
-                local trail = Snake:getSegments()
-                Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
-                Audio:playSound("death")
-                self.deathHoldTimer = nil
-                self.deathHoldDuration = DEATH_HOLD_DURATION
-        end
+	if self.state ~= "dying" then
+		self.state = "dying"
+		Snake:setDead(true)
+		local trail = Snake:getSegments()
+		Death:spawnFromSnake(trail, SnakeUtils.SEGMENT_SIZE)
+		Audio:playSound("death")
+		self.deathHoldTimer = nil
+		self.deathHoldDuration = DEATH_HOLD_DURATION
+	end
 end
 
 function Game:toggleDeveloperGodMode()
-        self.developerGodMode = not self.developerGodMode
-        Snake:setDeveloperGodMode(self.developerGodMode)
+	self.developerGodMode = not self.developerGodMode
+	Snake:setDeveloperGodMode(self.developerGodMode)
 
-        local font = UI.fonts and (UI.fonts.subtitle or UI.fonts.display)
-        local label = self.developerGodMode and "GOD MODE ENABLED" or "GOD MODE DISABLED"
-        local color = self.developerGodMode and {1, 0.9, 0.4, 1} or {1, 0.6, 0.45, 1}
-        local x = (self.screenWidth or love.graphics.getWidth() or 0) * 0.5
-        local y = (self.screenHeight or love.graphics.getHeight() or 0) * 0.22
+	local font = UI.fonts and (UI.fonts.subtitle or UI.fonts.display)
+	local label = self.developerGodMode and "GOD MODE ENABLED" or "GOD MODE DISABLED"
+	local color = self.developerGodMode and {1, 0.9, 0.4, 1} or {1, 0.6, 0.45, 1}
+	local x = (self.screenWidth or love.graphics.getWidth() or 0) * 0.5
+	local y = (self.screenHeight or love.graphics.getHeight() or 0) * 0.22
 
-        FloatingText:add(label, x, y, color, 1.4, 38, font, {
-                wobbleMagnitude = 0.4,
-                wobbleFrequency = 2.2,
-                popScaleFactor = 1.18,
-        })
+	FloatingText:add(label, x, y, color, 1.4, 38, font, {
+		wobbleMagnitude = 0.4,
+		wobbleFrequency = 2.2,
+		popScaleFactor = 1.18,
+		}
+	)
 end
 
 function Game:applyDamage(amount, cause, context)
@@ -1313,8 +1314,6 @@ function Game:updateGameplay(dt)
 		if goalReached then
 			Arena:spawnExit()
 		end
-
-		-- Removed surge feedback when collecting fruit to eliminate the outward ring effect.
 	end
 
 	local snakeX, snakeY = Snake:getHead()
@@ -1373,7 +1372,7 @@ function Game:handleDeath(dt)
 end
 
 local function drawPlayfieldLayers(self, stateOverride)
-        local renderState = stateOverride or self.state
+	local renderState = stateOverride or self.state
 
 	RenderLayers:begin(self.screenWidth or love.graphics.getWidth(), self.screenHeight or love.graphics.getHeight())
 
@@ -1397,48 +1396,48 @@ local function drawPlayfieldLayers(self, stateOverride)
 
 	RenderLayers:withLayer("main", drawMainLayer, needsMainStencil)
 
-        RenderLayers:present()
+	RenderLayers:present()
 
-        currentGame = nil
-        currentRenderState = nil
+	currentGame = nil
+	currentRenderState = nil
 end
 
 local function drawDeveloperGodModeBadge(self)
-        if not (Snake and Snake.isDeveloperGodMode and Snake:isDeveloperGodMode()) then
-                return
-        end
+	if not (Snake and Snake.isDeveloperGodMode and Snake:isDeveloperGodMode()) then
+		return
+	end
 
-        local font = (UI.fonts and (UI.fonts.caption or UI.fonts.prompt)) or love.graphics.getFont()
-        local label = "DEVELOPER GOD MODE"
-        local padding = 14
-        local bgPadding = 10
-        local textWidth = font:getWidth(label)
-        local textHeight = font:getHeight()
-        local x = padding
-        local y = padding
+	local font = (UI.fonts and (UI.fonts.caption or UI.fonts.prompt)) or love.graphics.getFont()
+	local label = "DEVELOPER GOD MODE"
+	local padding = 14
+	local bgPadding = 10
+	local textWidth = font:getWidth(label)
+	local textHeight = font:getHeight()
+	local x = padding
+	local y = padding
 
-        love.graphics.push("all")
-        love.graphics.setFont(font)
-        love.graphics.setColor(0.12, 0.08, 0.18, 0.82)
-        love.graphics.rectangle("fill", x - bgPadding, y - bgPadding * 0.6, textWidth + bgPadding * 2, textHeight + bgPadding * 1.2, 8, 8)
-        love.graphics.setColor(1, 0.9, 0.35, 1)
-        love.graphics.print(label, x, y)
-        love.graphics.pop()
+	love.graphics.push("all")
+	love.graphics.setFont(font)
+	love.graphics.setColor(0.12, 0.08, 0.18, 0.82)
+	love.graphics.rectangle("fill", x - bgPadding, y - bgPadding * 0.6, textWidth + bgPadding * 2, textHeight + bgPadding * 1.2, 8, 8)
+	love.graphics.setColor(1, 0.9, 0.35, 1)
+	love.graphics.print(label, x, y)
+	love.graphics.pop()
 end
 
 local function drawInterfaceLayers(self)
-        FloatingText:draw()
+	FloatingText:draw()
 
-        drawAdrenalineGlow(self)
+	drawAdrenalineGlow(self)
 
-        drawFeedbackOverlay(self)
+	drawFeedbackOverlay(self)
 
-        Death:drawFlash(self.screenWidth, self.screenHeight)
-        PauseMenu:draw(self.screenWidth, self.screenHeight)
-        UI:draw()
-        Achievements:draw()
+	Death:drawFlash(self.screenWidth, self.screenHeight)
+	PauseMenu:draw(self.screenWidth, self.screenHeight)
+	UI:draw()
+	Achievements:draw()
 
-        drawDeveloperGodModeBadge(self)
+	drawDeveloperGodModeBadge(self)
 end
 
 local function drawTransitionFadeOut(self, timer, duration)
@@ -1805,15 +1804,15 @@ function Game:resize(width, height)
 end
 
 function Game:keypressed(key)
-        if key == "f1" then
-                self:toggleDeveloperGodMode()
-                return
-        end
+	if key == "f1" then
+		self:toggleDeveloperGodMode()
+		return
+	end
 
-        if key == "escape" and self.state ~= "gameover" then
-                self:togglePause()
-                return
-        end
+	if key == "escape" and self.state ~= "gameover" then
+		self:togglePause()
+		return
+	end
 
 	if self.state == "paused" then
 		local action = PauseMenu:keypressed(key)

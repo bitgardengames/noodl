@@ -36,10 +36,10 @@ local Floors = {
 		nameKey = "floors.frosty_cavern.name",
 		flavorKey = "floors.frosty_cavern.flavor",
 		palette = {
-			bgColor     = {0.10, 0.11, 0.13, 1},
-			arenaBG     = {0.34, 0.42, 0.58, 1},   -- icy slate blue
-			arenaBorder = {0.50, 0.48, 0.70, 1},   -- frost-kissed violet
-			rock        = {0.78, 0.82, 0.84, 1},   -- frosted stones
+			bgColor     = {0.10, 0.12, 0.15, 1},   -- cold twilight slate
+			arenaBG     = {0.26, 0.39, 0.52, 1},   -- deep ice-slate blue (no pastel)
+			arenaBorder = {0.38, 0.50, 0.68, 1},   -- cold steel-blue frame
+			rock        = {0.78, 0.84, 0.90, 1},   -- frosted pebbles
 			sawColor    = {0.92, 0.95, 0.98, 1},   -- bright cold steel
 		},
 	},
