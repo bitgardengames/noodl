@@ -161,12 +161,12 @@ local function buildChallengeSignature(challenge)
 		return "__none"
 	end
 
-local parts = {
-tostring(challenge.titleKey or ""),
-tostring(challenge.descriptionKey or ""),
-buildReplacementsSignature(challenge.descriptionReplacements),
-challenge.completed and "1" or "0",
-}
+	local parts = {
+		tostring(challenge.titleKey or ""),
+		tostring(challenge.descriptionKey or ""),
+		buildReplacementsSignature(challenge.descriptionReplacements),
+		challenge.completed and "1" or "0",
+	}
 
 	local statusBar = challenge.statusBar
 	if statusBar then
@@ -201,7 +201,7 @@ local function getDailyPanelCacheEntry(challenge, panelWidth, padding, bodyFont,
 		return entry
 	end
 
-local headerText = Localization:get("menu.daily_panel_header")
+	local headerText = Localization:get("menu.daily_panel_header")
 
 	local titleText = Localization:get(challenge.titleKey, challenge.descriptionReplacements)
 	local descriptionText = Localization:get(challenge.descriptionKey, challenge.descriptionReplacements)
@@ -472,7 +472,7 @@ function Menu:enter()
 	local labels = {
 		{key = "menu.start_game",   action = "game"},
 		{key = "menu.achievements", action = "achievementsmenu"},
-                {key = "menu.settings",     action = "settings"},
+		{key = "menu.settings",     action = "settings"},
 		{key = "menu.quit",         action = "quit"},
 	}
 

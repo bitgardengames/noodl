@@ -160,8 +160,8 @@ local english = {
 				multiple = "Rewards",
 				cosmetic_skin = "${name} snake skin",
 			},
-                },
-                pause = {
+		},
+		pause = {
 			title = "Game Paused",
 			floor_label = "Floor ${number}: ${name}",
 			resume = "Resume",

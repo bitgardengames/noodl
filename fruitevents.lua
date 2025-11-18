@@ -25,29 +25,29 @@ local FruitEvents = {}
 local DEFAULT_COMBO_WINDOW = 2.25
 
 local function getComboMultiplier(comboCount)
-        comboCount = comboCount or 0
-        if comboCount >= 15 then
-                return 4.0
-        elseif comboCount >= 10 then
-                return 3.0
-        elseif comboCount >= 7 then
-                return 2.0
-        elseif comboCount >= 5 then
-                return 1.5
-        elseif comboCount >= 3 then
-                return 1.2
-        elseif comboCount >= 1 then
-                return 1.0
-        end
+	comboCount = comboCount or 0
+	if comboCount >= 15 then
+		return 4.0
+	elseif comboCount >= 10 then
+		return 3.0
+	elseif comboCount >= 7 then
+		return 2.0
+	elseif comboCount >= 5 then
+		return 1.5
+	elseif comboCount >= 3 then
+		return 1.2
+	elseif comboCount >= 1 then
+		return 1.0
+	end
 
-        return 1.0
+	return 1.0
 end
 
 local comboState = {
-        count = 0,
-        timer = 0,
-        window = DEFAULT_COMBO_WINDOW,
-        baseWindow = DEFAULT_COMBO_WINDOW,
+	count = 0,
+	timer = 0,
+	window = DEFAULT_COMBO_WINDOW,
+	baseWindow = DEFAULT_COMBO_WINDOW,
 	baseOverride = DEFAULT_COMBO_WINDOW,
 	best = 0,
 	windowDirty = true,
@@ -78,14 +78,14 @@ local function getBaseWindow()
 end
 
 local function updateComboWindow()
-        if not comboState.windowDirty then
-                return
-        end
+	if not comboState.windowDirty then
+		return
+	end
 
-        comboState.baseWindow = getBaseWindow()
-        comboState.window = max(0.75, comboState.baseWindow)
-        comboState.timer = max(0, comboState.timer or 0)
-        comboState.windowDirty = false
+	comboState.baseWindow = getBaseWindow()
+	comboState.window = max(0.75, comboState.baseWindow)
+	comboState.timer = max(0, comboState.timer or 0)
+	comboState.windowDirty = false
 end
 
 if Upgrades and Upgrades.addEventHandler then
@@ -116,36 +116,36 @@ local function syncComboToUI()
 end
 
 local function applyComboReward(fruitType, x, y, comboCount, wasComboActive)
-        comboCount = comboCount or 1
+	comboCount = comboCount or 1
 
-        if comboState.windowDirty then
-                updateComboWindow()
-        end
+	if comboState.windowDirty then
+		updateComboWindow()
+	end
 
-        local baseWindow = comboState.window or DEFAULT_COMBO_WINDOW
-        local extension = (fruitType and fruitType.comboExtension) or 0
-        local previousTimer = comboState.timer or 0
+	local baseWindow = comboState.window or DEFAULT_COMBO_WINDOW
+	local extension = (fruitType and fruitType.comboExtension) or 0
+	local previousTimer = comboState.timer or 0
 
-        comboState.count = comboCount
-        comboState.best = max(comboState.best or 0, comboCount)
-        local bestStreak = comboState.best or comboCount or 0
-        PlayerStats:updateMax("bestComboStreak", bestStreak)
-        SessionStats:updateMax("bestComboStreak", bestStreak)
-        if comboCount >= 2 then
-                SessionStats:add("combosTriggered", 1)
-        end
+	comboState.count = comboCount
+	comboState.best = max(comboState.best or 0, comboCount)
+	local bestStreak = comboState.best or comboCount or 0
+	PlayerStats:updateMax("bestComboStreak", bestStreak)
+	SessionStats:updateMax("bestComboStreak", bestStreak)
+	if comboCount >= 2 then
+		SessionStats:add("combosTriggered", 1)
+	end
 
-        if wasComboActive and previousTimer > 0 then
-                comboState.timer = previousTimer + extension
-        else
-                comboState.timer = baseWindow + extension
-        end
+	if wasComboActive and previousTimer > 0 then
+		comboState.timer = previousTimer + extension
+	else
+		comboState.timer = baseWindow + extension
+	end
 
-        syncComboToUI()
+	syncComboToUI()
 
-        if comboCount < 2 then
-                return
-        end
+	if comboCount < 2 then
+		return
+	end
 
 	local burstColor = {1, 0.82, 0.3, 1}
 	local baseBonus = min((comboCount - 1) * 2, 10)
@@ -288,20 +288,20 @@ function FruitEvents.boostComboTimer(amount)
 end
 
 function FruitEvents.handleConsumption(x, y)
-        local basePoints = Fruit:getPoints()
-        local wasComboActive = (comboState.timer or 0) > 0
-        local nextComboCount = wasComboActive and (comboState.count or 0) + 1 or 1
-        local comboMultiplier = getComboMultiplier(nextComboCount)
-        local multiplier = getUpgradeEffect("fruitValueMult") or 1
-        if multiplier < 1 then
-                multiplier = 1
-        end
-        local points = basePoints * comboMultiplier * multiplier
-        if points < 0 then
-                points = 0
-        else
-                points = floor(points + 0.0001)
-        end
+	local basePoints = Fruit:getPoints()
+	local wasComboActive = (comboState.timer or 0) > 0
+	local nextComboCount = wasComboActive and (comboState.count or 0) + 1 or 1
+	local comboMultiplier = getComboMultiplier(nextComboCount)
+	local multiplier = getUpgradeEffect("fruitValueMult") or 1
+	if multiplier < 1 then
+		multiplier = 1
+	end
+	local points = basePoints * comboMultiplier * multiplier
+	if points < 0 then
+		points = 0
+	else
+		points = floor(points + 0.0001)
+	end
 	local name = Fruit:getTypeName()
 	local fruitType = Fruit:getType()
 	local collectedMeta = Fruit:getLastCollectedMeta()
@@ -366,12 +366,12 @@ function FruitEvents.handleConsumption(x, y)
 	end
 
 	Saws:onFruitCollected()
-        if Rocks.onFruitCollected then
-                Rocks:onFruitCollected(x, y)
-        end
+	if Rocks.onFruitCollected then
+		Rocks:onFruitCollected(x, y)
+	end
 
-        applyComboReward(fruitType, x, y, nextComboCount, wasComboActive)
-        applyRunRewards(fruitType, x, y)
+	applyComboReward(fruitType, x, y, nextComboCount, wasComboActive)
+	applyRunRewards(fruitType, x, y)
 
 	if Arena and Arena.triggerBorderFlare then
 		local comboCount = FruitEvents.getComboCount and FruitEvents.getComboCount() or 0

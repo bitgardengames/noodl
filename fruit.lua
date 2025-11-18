@@ -67,46 +67,46 @@ local function attachFruitTypeMetatable(entry)
 end
 
 local fruitTypes = {
-    {
-        id = "apple",
-        name = "Apple",
-        color = Theme.appleColor,
-        points = 1,
-        weight = 70,
-        comboExtension = 0.35,
-    },
-    {
-        id = "banana",
-        name = "Banana",
-        color = Theme.bananaColor,
-        points = 3,
-        weight = 20,
-        comboExtension = 0.55,
-    },
-    {
-        id = "blueberry",
-        name = "Blueberry",
-        color = Theme.blueberryColor,
-        points = 5,
-        weight = 8,
-        comboExtension = 0.75,
-    },
-    {
-        id = "goldenPear",
-        name = "GoldenPear",
-        color = Theme.goldenPearColor,
-        points = 10,
-        weight = 2,
-        comboExtension = 1.10,
-    },
-    {
-        id = "dragonfruit",
-        name = "Dragonfruit",
-        color = Theme.dragonfruitColor,
-        points = 50,
-        weight = 0.2,
-        comboExtension = 1.60,
-    },
+	{
+		id = "apple",
+		name = "Apple",
+		color = Theme.appleColor,
+		points = 1,
+		weight = 70,
+		comboExtension = 0.35,
+	},
+	{
+		id = "banana",
+		name = "Banana",
+		color = Theme.bananaColor,
+		points = 3,
+		weight = 20,
+		comboExtension = 0.55,
+	},
+	{
+		id = "blueberry",
+		name = "Blueberry",
+		color = Theme.blueberryColor,
+		points = 5,
+		weight = 8,
+		comboExtension = 0.75,
+	},
+	{
+		id = "goldenPear",
+		name = "GoldenPear",
+		color = Theme.goldenPearColor,
+		points = 10,
+		weight = 2,
+		comboExtension = 1.10,
+	},
+	{
+		id = "dragonfruit",
+		name = "Dragonfruit",
+		color = Theme.dragonfruitColor,
+		points = 50,
+		weight = 0.2,
+		comboExtension = 1.60,
+	},
 }
 
 for i = 1, #fruitTypes do

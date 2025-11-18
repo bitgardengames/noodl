@@ -182,8 +182,10 @@ function Achievements:_finalizeOrdering()
 
 		for stat, ids in pairs(self._statIndex) do
 			sort(ids, function(a, b)
-				return (position[a] or 0) < (position[b] or 0)
-			end)
+				return (position[a] or 0) < (position[b] or 0
+			)
+				end
+			)
 		end
 	end
 end
@@ -213,7 +215,8 @@ function Achievements:_ensureInitialized()
 			state.shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0
 			state.shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0
 			state.shieldSawParries = PlayerStats:get("shieldSawParries") or 0
-		end)
+			end
+		)
 
 		self:registerStateProvider(function(state)
 			state.runFloorsCleared = SessionStats:get("floorsCleared") or 0
@@ -222,7 +225,8 @@ function Achievements:_ensureInitialized()
 			state.runShieldSawParries = SessionStats:get("runShieldSawParries") or 0
 			state.runDragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0
 			state.runBestComboStreak = SessionStats:get("bestComboStreak") or 0
-		end)
+			end
+		)
 
 		self._defaultProvidersRegistered = true
 	end
@@ -622,7 +626,8 @@ function Achievements:save()
 	local lines = {"return {"}
 	for key, value in pairs(data) do
 		insert(lines, string.format("  [\"%s\"] = {unlocked = %s, progress = %s},",
-			key, tostring(value.unlocked), serializeValue(value.progress or 0)
+			key, tostring(value.unlocked), serializeValue(value.progress or 0
+		)
 		)
 		)
 	end

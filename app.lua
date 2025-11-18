@@ -43,7 +43,7 @@ function App:loadSubsystems()
 	Achievements:load()
 	Score:load()
 	PlayerStats:load()
-        SnakeCosmetics:load({})
+	SnakeCosmetics:load({})
 end
 
 function App:resolveAction(action)

@@ -3039,9 +3039,9 @@ function Upgrades:canOffer(upgrade, context, allowTaken)
 		end
 	end
 
-        if upgrade.condition and not upgrade.condition(self.runState, context) then
-                return false
-        end
+	if upgrade.condition and not upgrade.condition(self.runState, context) then
+		return false
+	end
 
 	return true
 end

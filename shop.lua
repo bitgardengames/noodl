@@ -490,7 +490,7 @@ function Shop:refreshCards(options)
 		upgradeBonus = max(0, floor(Upgrades:getEffect("shopSlots") or 0))
 	end
 
-        local metaBonus = 0
+	local metaBonus = 0
 
 	local extraChoices = upgradeBonus + metaBonus
 
