@@ -6,7 +6,6 @@ local Theme = require("theme")
 local UI = require("ui")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
-local MetaProgression = require("metaprogression")
 local DailyChallenges = require("dailychallenges")
 local Upgrades = require("upgrades")
 local Shop = require("shop")
@@ -1134,7 +1133,7 @@ function GameOver:enter(data)
 
 	self.unlockOverlayQueue = {}
 	self.activeUnlockOverlay = nil
-	self.progressionComplete = false
+	self.progressionComplete = true
 
 	Audio:playMusic("scorescreen")
 	Screen:update()
@@ -1200,10 +1199,6 @@ function GameOver:enter(data)
 	end
 
 	self.dailyChallengeResult = DailyChallenges:applyRunResults(SessionStats)
-	local challengeBonusXP = 0
-	if self.dailyChallengeResult then
-		challengeBonusXP = max(0, self.dailyChallengeResult.xpAwarded or 0)
-	end
 
 	self.dailyStreakMessage = nil
 	self.dailyStreakColor = nil
@@ -1253,108 +1248,10 @@ function GameOver:enter(data)
 		end
 	end
 
-	self.progression = MetaProgression:grantRunPoints({
-		apples = stats.apples or 0,
-		score = stats.score or 0,
-		bonusXP = challengeBonusXP,
-		}
-	)
-
-	self.xpSectionHeight = nil
-	self.baseXpSectionHeight = nil
+	self.progression = nil
+	self.xpSectionHeight = 0
+	self.baseXpSectionHeight = 0
 	self.progressionAnimation = nil
-
-	if self.progression then
-		local startSnapshot = self.progression.start or {total = 0, level = 1, xpIntoLevel = 0, xpForNext = MetaProgression:getXpForLevel(1)}
-		local resultSnapshot = self.progression.result or startSnapshot
-
-		local fillSpeed = max(60, (self.progression.gained or 0) / 1.2)
-		self.progressionAnimation = {
-			displayedTotal = startSnapshot.total or 0,
-			targetTotal = resultSnapshot.total or (startSnapshot.total or 0),
-			displayedLevel = startSnapshot.level or 1,
-			xpIntoLevel = startSnapshot.xpIntoLevel or 0,
-			xpForLevel = startSnapshot.xpForNext or MetaProgression:getXpForLevel(startSnapshot.level or 1),
-			displayedGained = 0,
-			fillSpeed = fillSpeed,
-			levelFlash = 0,
-			levelPopDuration = 0.65,
-			levelPopTimer = 0.65,
-			celebrations = {},
-			pendingMilestones = {},
-			levelUnlocks = {},
-			bonusXP = challengeBonusXP,
-			barPulse = 0,
-			pendingFruitXp = 0,
-			fruitDelivered = 0,
-			fillEaseSpeed = clamp(fillSpeed / 12, 6, 16),
-			streakColor = self.dailyStreakColor,
-		}
-
-		local applesCollected = max(0, stats.apples or 0)
-		local fruitPoints = 0
-		if self.progression and self.progression.breakdown then
-			fruitPoints = max(0, self.progression.breakdown.fruitPoints or 0)
-		end
-		local xpPerFruit = 0
-		if applesCollected > 0 and fruitPoints > 0 then
-			xpPerFruit = fruitPoints / applesCollected
-		end
-		local spawnInterval = 0.08
-		if xpPerFruit > 0 and fillSpeed > 0 then
-			spawnInterval = clamp(xpPerFruit / fillSpeed, 0.03, 0.16)
-		end
-
-		self.progressionAnimation.fruitTotal = applesCollected
-		self.progressionAnimation.fruitRemaining = applesCollected
-		self.progressionAnimation.fruitAnimations = {}
-		self.progressionAnimation.fruitSpawnTimer = 0
-		self.progressionAnimation.fruitSpawnInterval = spawnInterval
-		self.progressionAnimation.fruitPalette = {
-			Theme.appleColor,
-			Theme.bananaColor,
-			Theme.blueberryColor,
-			Theme.goldenPearColor,
-			Theme.dragonfruitColor,
-		}
-		self.progressionAnimation.fruitXpPer = xpPerFruit
-		self.progressionAnimation.fruitPoints = fruitPoints
-
-		local startLevel = self.progressionAnimation.displayedLevel or startSnapshot.level or 1
-		if (self.progressionAnimation.xpForLevel or 0) > 0 then
-			self.progressionAnimation.visualPercent = clamp((self.progressionAnimation.xpIntoLevel or 0) / self.progressionAnimation.xpForLevel, 0, 1)
-		else
-			self.progressionAnimation.visualPercent = 0
-		end
-		self.progressionAnimation.visualProgress = max(0, (startLevel - 1) + (self.progressionAnimation.visualPercent or 0))
-
-		if type(self.progression.milestones) == "table" then
-			for _, milestone in ipairs(self.progression.milestones) do
-				self.progressionAnimation.pendingMilestones[#self.progressionAnimation.pendingMilestones + 1] = {
-					threshold = milestone.threshold,
-					triggered = false,
-				}
-			end
-		end
-
-		if type(self.progression.unlocks) == "table" then
-			for _, unlock in ipairs(self.progression.unlocks) do
-				local level = unlock.level
-				self.progressionAnimation.levelUnlocks[level] = self.progressionAnimation.levelUnlocks[level] or {}
-				local entry = {
-					name = unlock.name,
-					description = unlock.description,
-					level = unlock.level,
-					id = unlock.id,
-					unlockTags = cloneArray(unlock.unlockTags),
-					previewUpgradeId = unlock.previewUpgradeId,
-				}
-				insert(self.progressionAnimation.levelUnlocks[level], entry)
-			end
-		end
-	end
-
-	self.progressionComplete = self.progressionAnimation == nil
 
 	self:updateLayoutMetrics()
 	self:updateButtonLayout()
@@ -1920,158 +1817,10 @@ function GameOver:draw()
 end
 
 function GameOver:update(dt)
-	local anim = self.progressionAnimation
-	if not anim then
-		local layoutChanged = self:updateLayoutMetrics()
-		if layoutChanged then
-			self:updateButtonLayout()
-		end
-		self:_updateUnlockOverlay(dt)
-		return
-	end
-
-	local targetTotal = anim.targetTotal or anim.displayedTotal or 0
-	local startTotal = 0
-	if self.progression and self.progression.start then
-		startTotal = self.progression.start.total or 0
-	end
-
-	local previousTotal = anim.displayedTotal or startTotal
-	local fruitPoints = max(0, anim.fruitPoints or 0)
-	local deliveredFruit = max(0, anim.fruitDelivered or 0)
-	local pendingFruit = max(0, anim.pendingFruitXp or 0)
-	local allowedTarget = targetTotal
-
-	if fruitPoints > 0 and deliveredFruit < fruitPoints then
-		local gatedTarget = startTotal + min(fruitPoints, deliveredFruit + pendingFruit)
-		allowedTarget = min(allowedTarget, gatedTarget)
-	end
-
-	local newTotal = previousTotal
-	if previousTotal < allowedTarget then
-		local increment = min(anim.fillSpeed * dt, allowedTarget - previousTotal)
-		newTotal = previousTotal + increment
-
-		if fruitPoints > 0 and deliveredFruit < fruitPoints then
-			local newDelivered = min(fruitPoints, deliveredFruit + increment)
-			local used = newDelivered - deliveredFruit
-			anim.fruitDelivered = newDelivered
-			anim.pendingFruitXp = max(0, pendingFruit - used)
-		end
-	elseif previousTotal < targetTotal then
-		newTotal = min(targetTotal, previousTotal)
-	else
-		newTotal = targetTotal
-	end
-
-	anim.displayedTotal = newTotal
-	if newTotal >= targetTotal - 1e-6 then
-		anim.displayedTotal = targetTotal
-		anim.displayedGained = (self.progression and self.progression.gained) or 0
-		anim.pendingFruitXp = 0
-		anim.fruitDelivered = fruitPoints
-	else
-		anim.displayedGained = min((self.progression and self.progression.gained) or 0, newTotal - startTotal)
-	end
-
-	local previousLevel = anim.displayedLevel or 1
-	local level, xpIntoLevel, xpForNext = MetaProgression:getProgressForTotal(anim.displayedTotal)
-	if level > previousLevel then
-		anim.levelPopDuration = anim.levelPopDuration or 0.65
-		anim.levelPopTimer = 0
-		anim.levelFlash = 0.9
-	end
-
-	anim.displayedLevel = level
-	anim.xpIntoLevel = xpIntoLevel
-	anim.xpForLevel = xpForNext
-
-	local xpForLevel = anim.xpForLevel or 0
-	local targetPercent = 0
-	if xpForLevel > 0 then
-		targetPercent = clamp((anim.xpIntoLevel or 0) / xpForLevel, 0, 1)
-	end
-
-	local easeSpeed = anim.fillEaseSpeed or 9
-	if xpForLevel <= 0 then
-		anim.visualProgress = max(0, (level - 1))
-		anim.visualPercent = targetPercent
-	else
-		local targetProgress = max(0, (level - 1) + targetPercent)
-		if not anim.visualProgress then
-			local basePercent = anim.visualPercent or targetPercent
-			anim.visualProgress = max(0, (previousLevel - 1) + basePercent)
-		end
-
-		local currentProgress = anim.visualProgress or 0
-		targetProgress = max(targetProgress, currentProgress)
-		anim.visualProgress = approachExp(currentProgress, targetProgress, dt, easeSpeed)
-
-		local loops = floor(max(0, anim.visualProgress))
-		local fraction = anim.visualProgress - loops
-		anim.visualPercent = clamp(fraction, 0, 1)
-	end
-
-	if anim.levelFlash then
-		anim.levelFlash = max(0, anim.levelFlash - dt)
-	end
-
-	local popDuration = anim.levelPopDuration or 0.65
-	if popDuration > 0 then
-		local timer = anim.levelPopTimer or popDuration
-		anim.levelPopTimer = min(popDuration, timer + dt)
-	else
-		anim.levelPopTimer = 0
-	end
-
-	if anim.pendingMilestones then
-		for _, milestone in ipairs(anim.pendingMilestones) do
-			if not milestone.triggered and (anim.displayedTotal or 0) >= (milestone.threshold or 0) then
-				milestone.triggered = true
-			end
-		end
-	end
-
-	if anim.celebrations then
-		for index = #anim.celebrations, 1, -1 do
-			local event = anim.celebrations[index]
-			event.timer = (event.timer or 0) + dt
-			if event.timer >= (event.duration or 4.5) then
-				remove(anim.celebrations, index)
-			end
-		end
-	end
-
-	updateFruitAnimations(anim, dt)
-
-	if anim.barPulse then
-		anim.barPulse = max(0, anim.barPulse - dt * 2.4)
-	end
-
-	local celebrationCount = (anim.celebrations and #anim.celebrations) or 0
-	local xpWidth = (self.xpLayout and self.xpLayout.width) or 0
-	if xpWidth <= 0 then
-		local innerWidth = self.innerContentWidth or 0
-		local sectionPadding = self.sectionPaddingValue or getSectionPadding()
-		xpWidth = max(0, innerWidth - sectionPadding * 2)
-	end
-
-	local baseHeight = measureXpPanelHeight(self, xpWidth, 0)
-	local targetHeight = measureXpPanelHeight(self, xpWidth, celebrationCount)
-	self.baseXpSectionHeight = baseHeight
-	self.xpSectionHeight = self.xpSectionHeight or baseHeight
-	local smoothing = min(dt * 6, 1)
-	self.xpSectionHeight = self.xpSectionHeight + (targetHeight - self.xpSectionHeight) * smoothing
-
-	if not self.progressionComplete and self:_isProgressionFillComplete(anim) then
-		self.progressionComplete = true
-	end
-
 	local layoutChanged = self:updateLayoutMetrics()
 	if layoutChanged then
 		self:updateButtonLayout()
 	end
-
 	self:_updateUnlockOverlay(dt)
 end
 
