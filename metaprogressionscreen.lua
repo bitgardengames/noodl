@@ -127,7 +127,7 @@ local statsEntries = {}
 local cosmeticsEntries = {}
 local cosmeticsSummary = {unlocked = 0, total = 0, newUnlocks = 0}
 local progressionState = nil
-local activeTab = "experience"
+local activeTab = "cosmetics"
 local cosmeticsFocusIndex = nil
 local hoveredCosmeticIndex = nil
 local pressedCosmeticIndex = nil
@@ -141,21 +141,16 @@ local function compareStatsEntries(a, b)
 end
 
 local tabs = {
-	{
-		id = "experience",
-		action = "tab_experience",
-		labelKey = "metaprogression.tabs.experience",
-	},
-	{
-		id = "cosmetics",
-		action = "tab_cosmetics",
-		labelKey = "metaprogression.tabs.cosmetics",
-	},
-	{
-		id = "stats",
-		action = "tab_stats",
-		labelKey = "metaprogression.tabs.stats",
-	},
+        {
+                id = "cosmetics",
+                action = "tab_cosmetics",
+                labelKey = "metaprogression.tabs.cosmetics",
+        },
+        {
+                id = "stats",
+                action = "tab_stats",
+                labelKey = "metaprogression.tabs.stats",
+        },
 }
 
 local clampColorComponent = Color.clampComponent
@@ -1012,14 +1007,12 @@ local function applyFocusedTab(button)
 		return
 	end
 
-	local action = button.action or button.id
-	if action == "tab_experience" or action == "progressionTab_experience" then
-		setActiveTab("experience")
-	elseif action == "tab_cosmetics" or action == "progressionTab_cosmetics" then
-		setActiveTab("cosmetics")
-	elseif action == "tab_stats" or action == "progressionTab_stats" then
-		setActiveTab("stats")
-	end
+        local action = button.action or button.id
+        if action == "tab_cosmetics" or action == "progressionTab_cosmetics" then
+                setActiveTab("cosmetics")
+        elseif action == "tab_stats" or action == "progressionTab_stats" then
+                setActiveTab("stats")
+        end
 end
 
 local function scrollBy(amount)
@@ -1255,19 +1248,17 @@ function ProgressionScreen:update(dt)
 end
 
 local function handleConfirm()
-	local action = buttonList:activateFocused()
-	if action then
-		Audio:playSound("click")
-		if action == "tab_experience" then
-			setActiveTab("experience")
-		elseif action == "tab_cosmetics" then
-			setActiveTab("cosmetics")
-		elseif action == "tab_stats" then
-			setActiveTab("stats")
-		else
-			return action
-		end
-	end
+        local action = buttonList:activateFocused()
+        if action then
+                Audio:playSound("click")
+                if action == "tab_cosmetics" then
+                        setActiveTab("cosmetics")
+                elseif action == "tab_stats" then
+                        setActiveTab("stats")
+                else
+                        return action
+                end
+        end
 end
 
 local function drawSummaryPanel(sw)
@@ -1980,14 +1971,11 @@ function ProgressionScreen:draw()
 	local headerY = UI.getHeaderY(sw, sh)
 	love.graphics.printf(Localization:get("metaprogression.title"), 0, headerY, sw, "center")
 
-	if activeTab == "experience" then
-		drawSummaryPanel(sw)
-		drawTrack(sw, sh)
-	elseif activeTab == "cosmetics" then
-		drawCosmeticsList(sw, sh)
-	else
-		drawStatsList(sw, sh)
-	end
+        if activeTab == "cosmetics" then
+                drawCosmeticsList(sw, sh)
+        else
+                drawStatsList(sw, sh)
+        end
 	buttonList:syncUI()
 
 	UI.refreshCursor()
@@ -2026,27 +2014,25 @@ function ProgressionScreen:mousepressed(x, y, button)
 	end
 end
 
+
 function ProgressionScreen:mousereleased(x, y, button)
-	local action = buttonList:mousereleased(x, y, button)
-	if action then
-		Audio:playSound("click")
-		if action == "tab_experience" then
-			setActiveTab("experience", {focusSource = "mouse", skipFocusHistory = true})
-		elseif action == "tab_cosmetics" then
-			setActiveTab("cosmetics", {focusSource = "mouse", skipFocusHistory = true})
-		elseif action == "tab_stats" then
-			setActiveTab("stats", {focusSource = "mouse", skipFocusHistory = true})
-		else
-			return action
-		end
-		return
-	end
+        local action = buttonList:mousereleased(x, y, button)
+        if action then
+                Audio:playSound("click")
+                if action == "tab_cosmetics" then
+                        setActiveTab("cosmetics", {focusSource = "mouse", skipFocusHistory = true})
+                elseif action == "tab_stats" then
+                        setActiveTab("stats", {focusSource = "mouse", skipFocusHistory = true})
+                else
+                        return action
+                end
+                return
+        end
 
-
-	if activeTab ~= "cosmetics" or button ~= 1 then
-		pressedCosmeticIndex = nil
-		return
-	end
+        if activeTab ~= "cosmetics" or button ~= 1 then
+                pressedCosmeticIndex = nil
+                return
+        end
 
 	local sw = select(1, Screen:get())
 	updateCosmeticsLayout(sw)
