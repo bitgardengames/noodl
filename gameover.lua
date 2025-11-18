@@ -561,8 +561,9 @@ function GameOver:updateLayoutMetrics()
         local wrapLimit = max(0, innerWidth - sectionPadding * 2)
         local messageText = self.deathMessage or Localization:get("gameover.default_message")
 
-        local _, lineCount = fontMessage:getWrap(messageText or "", wrapLimit)
-        local messageHeight = (fontMessage:getHeight() or 0) * (lineCount or 1)
+        local _, wrappedLines = fontMessage:getWrap(messageText or "", wrapLimit)
+        local linesHeight = max(1, #(wrappedLines or {}))
+        local messageHeight = (fontMessage:getHeight() or 0) * linesHeight
         local messagePanelHeight = sectionPadding * 2 + messageHeight
 
         local labelFont = fontProgressLabel or fontProgressSmall
