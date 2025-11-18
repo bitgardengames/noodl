@@ -319,7 +319,7 @@ function FruitEvents.handleConsumption(x, y)
 	FloatingText:add("+" .. tostring(points), x, y, Theme.textColor, 1.0, 40)
 	Score:increase(points)
 	Audio:playSound("fruit")
-	SessionStats:add("applesEaten", 1)
+	SessionStats:add("fruitEaten", 1)
 	if Snake.onFruitCollected then
 		Snake:onFruitCollected()
 	end
@@ -399,7 +399,7 @@ function FruitEvents.handleConsumption(x, y)
 	local state = {
 		snakeScore = Score:get(),
 		snakeApplesEaten = Score:get(),
-		totalApplesEaten = PlayerStats:get("totalApplesEaten") or 0,
+		totalFruitEaten = PlayerStats:get("totalFruitEaten") or 0,
 		totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
 		bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
 	}

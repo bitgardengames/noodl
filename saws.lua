@@ -20,13 +20,13 @@ local slots = {}
 local nextSlotId = 0
 
 local SAW_RADIUS = 24
-local COLLISION_RADIUS_MULT = 0.75 -- keep the visual size but ease up on collision tightness
+local COLLISION_RADIUS_MULT = 0.6 -- keep the visual size but ease up on collision tightness
 local SAW_TEETH = 12
 local HUB_HOLE_RADIUS = 4
 local HUB_HIGHLIGHT_PADDING = 3
 local TRACK_LENGTH = 120 -- how far the saw moves on its track
-local MOVE_SPEED = 56    -- units per second along the track
-local TRAVEL_PADDING = 4 -- how far we stop from the edge of the track
+local MOVE_SPEED = 54    -- units per second along the track
+local TRAVEL_PADDING = 6 -- how far we stop from the edge of the track
 local SPAWN_DURATION = 0.3
 local SQUASH_DURATION = 0.15
 local SINK_OFFSET = 2
@@ -715,7 +715,7 @@ local function computeClampedCollisionRadius(saw, collisionX, collisionY)
 		return radius
 	end
 
-	if saw.dir == "horizontal" then
+	--[[if saw.dir == "horizontal" then
 		local trackMinX = saw.trackMinX
 		local trackMaxX = saw.trackMaxX
 		if trackMinX and trackMaxX and collisionX then
@@ -733,7 +733,7 @@ local function computeClampedCollisionRadius(saw, collisionX, collisionY)
 				radius = max(limit, 0)
 			end
 		end
-	end
+	end]]
 
 	return radius
 end

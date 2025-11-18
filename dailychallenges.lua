@@ -555,30 +555,30 @@ DailyChallenges.challenges = {
 		targetSeconds = 360,
 		getValue = function(self, context)
 			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten", context)
+			local fruit = getStatValue(statsSource, "fruitEaten", context)
 			local timeAlive = getStatValue(statsSource, "timeAlive", context)
-			if apples >= (self.targetApples or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
+			if fruit >= (self.targetApples or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
 				return 1
 			end
 			return 0
 		end,
 		getRunValue = function(self, statsSource)
-			local apples = getStatValue(statsSource, "applesEaten")
+			local fruit = getStatValue(statsSource, "fruitEaten")
 			local timeAlive = getStatValue(statsSource, "timeAlive")
-			if apples >= (self.targetApples or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
+			if fruit >= (self.targetApples or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
 				return 1
 			end
 			return 0
 		end,
 		progressReplacements = function(self, current, goal, context)
 			local statsSource = context and context.sessionStats
-			local apples = getStatValue(statsSource, "applesEaten", context)
+			local fruit = getStatValue(statsSource, "fruitEaten", context)
 			local timeAlive = getStatValue(statsSource, "timeAlive", context)
 
 			return {
 				current = current or 0,
 				goal = goal or 0,
-				apples = apples,
+				fruit = fruit,
 				time = formatSeconds(timeAlive),
 				target_apples = self.targetApples or 0,
 				target_time = formatSeconds(self.targetSeconds or 0),

@@ -26,7 +26,7 @@ Score._pendingApples = 0
 
 local function updateAchievementChecks(self)
 	Achievements:checkAll({
-		totalApplesEaten = (PlayerStats:get("totalApplesEaten") or 0) + (self._pendingApples or 0),
+		totalFruitEaten = (PlayerStats:get("totalFruitEaten") or 0) + (self._pendingApples or 0),
 		}
 	)
 end
@@ -190,16 +190,15 @@ local function finalizeRunResult(self, options)
 
 	self:setHighScore(self.current)
 
-	local runApples = SessionStats:get("applesEaten") or 0
-	local lifetimeApples = PlayerStats:get("totalApplesEaten") or 0
+	local runFruit = SessionStats:get("fruitEaten") or 0
+	local lifetimeFruit = PlayerStats:get("totalFruitEaten") or 0
 	local runTiles = SessionStats:get("tilesTravelled") or 0
 	local runCombos = SessionStats:get("combosTriggered") or 0
-	local runShieldsSaved = SessionStats:get("shieldsSaved") or 0
 	local runTime = SessionStats:get("timeAlive") or 0
 	local fastestFloor = SessionStats:get("fastestFloorClear") or 0
 	local slowestFloor = SessionStats:get("slowestFloorClear") or 0
 
-	PlayerStats:updateMax("mostApplesInRun", runApples)
+	PlayerStats:updateMax("mostFruitInRun", runFruit)
 	if runTime > 0 then
 		PlayerStats:add("totalTimeAlive", runTime)
 		PlayerStats:updateMax("longestRunDuration", runTime)
@@ -212,10 +211,6 @@ local function finalizeRunResult(self, options)
 		PlayerStats:add("totalCombosTriggered", runCombos)
 		PlayerStats:updateMax("mostCombosInRun", runCombos)
 	end
-	if runShieldsSaved > 0 then
-		PlayerStats:add("shieldsSaved", runShieldsSaved)
-		PlayerStats:updateMax("mostShieldsSavedInRun", runShieldsSaved)
-	end
 	if fastestFloor > 0 then
 		PlayerStats:updateMin("bestFloorClearTime", fastestFloor)
 	end
@@ -227,10 +222,10 @@ local function finalizeRunResult(self, options)
 	local result = {
 		score       = self.current,
 		highScore   = self:getHighScore(),
-		apples      = runApples,
-		totalApples = lifetimeApples,
+		apples      = runFruit,
+		totalApples = lifetimeFruit,
 		stats = {
-			apples = runApples
+			apples = runFruit
 		},
 		cause = cause,
 		won = won,
@@ -260,7 +255,7 @@ end
 
 function Score:flushPendingStats()
 	if self._pendingApples and self._pendingApples ~= 0 then
-		PlayerStats:add("totalApplesEaten", self._pendingApples)
+		PlayerStats:add("totalFruitEaten", self._pendingApples)
 		self._pendingApples = 0
 	end
 end

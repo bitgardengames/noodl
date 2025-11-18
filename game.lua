@@ -1050,8 +1050,6 @@ function Game:load(options)
 	self.input = GameInput.new(self, self.transition)
 	self.input:resetAxes()
 
-	Snake:setDeveloperGodMode(false)
-
 	resetFeedbackState(self)
 
 	self.Effects = createEffects()
@@ -1134,9 +1132,6 @@ function Game:leave()
 	self:releaseMouseVisibility()
 
 	Snake:resetModifiers()
-
-	self.developerGodMode = false
-	Snake:setDeveloperGodMode(false)
 
 	UI:setUpgradeIndicators(nil)
 end

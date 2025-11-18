@@ -37,7 +37,6 @@ local descendingHole = nil
 local segmentCount = 1
 local popTimer = 0
 local isDead = false
-local developerGodMode = false
 
 local clippedTrailBuffer = {}
 local clippedTrailProxy = {drawX = 0, drawY = 0}
@@ -64,14 +63,14 @@ local segmentCandidateLookup = {}
 local segmentCandidateCount = 0
 local segmentCandidateGeneration = 0
 
-local SEGMENT_CANDIDATE_GENERATION_RESET = 1000000000
+local SEGMENT_CANDIDATE_GENERATION_RESET = 10000000
 
 local recentlyVacatedCells = {}
 local recentlyVacatedLookup = {}
 local recentlyVacatedCount = 0
 local recentlyVacatedGeneration = 0
 
-local RECENTLY_VACATED_GENERATION_RESET = 1000000000
+local RECENTLY_VACATED_GENERATION_RESET = 10000000
 
 local function getCellLookupKey(col, row)
 	if not (col and row) then
@@ -975,7 +974,7 @@ end
 
 local SHIELD_DAMAGE_FLOATING_TEXT_COLOR = {1, 0.78, 0.68, 1}
 local SHIELD_DAMAGE_FLOATING_TEXT_OPTIONS = {
-	scale = 1.08,
+	scale = 18,
 	popScaleFactor = 1.45,
 	popDuration = 0.24,
 	wobbleMagnitude = 0.2,
@@ -998,7 +997,7 @@ local LOSE_SEGMENTS_DEFAULT_BURST_COLOR = {1, 0.8, 0.4, 1}
 local LOSE_SEGMENTS_SAW_BURST_COLOR = {1, 0.6, 0.3, 1}
 local LOSE_SEGMENTS_BURST_OPTIONS = {
 	count = 0,
-	speed = 120,
+	speed = 1,
 	speedVariance = 46,
 	life = 0.42,
 	size = 4,
@@ -1011,7 +1010,7 @@ local LOSE_SEGMENTS_BURST_OPTIONS = {
 
 local SHIELD_BREAK_PARTICLE_OPTIONS = {
 	count = 16,
-	speed = 170,
+	speed = 1,
 	speedVariance = 90,
 	life = 0.48,
 	size = 5,
@@ -1056,7 +1055,7 @@ local SELF_COLLISION_RADIUS = SEGMENT_SPACING * 0.48
 local SELF_COLLISION_RADIUS_SQ = SELF_COLLISION_RADIUS * SELF_COLLISION_RADIUS
 -- movement baseline + modifiers
 Snake.baseSpeed   = 240 -- pick a sensible default (units you already use)
-Snake.speedMult   = 1.0 -- stackable multiplier (upgrade-friendly)
+Snake.speedMult   = 1 -- stackable multiplier (upgrade-friendly)
 Snake.shields = 0 -- shield protection: number of hits the snake can absorb
 Snake.extraGrowth = 0
 Snake.shieldFlashTimer = 0
@@ -1140,7 +1139,7 @@ function Snake:consumeShield()
 end
 
 function Snake:resetModifiers()
-	self.speedMult    = 1.0
+	self.speedMult    = 1
 	self.shields = 0
 	self.extraGrowth  = 0
 	self.shieldFlashTimer = 0
@@ -1179,7 +1178,7 @@ function Snake:setSwiftFangsStacks(count)
 		state.target = state.baseTarget
 		if count > previous then
 			state.intensity = max(state.intensity or 0, 0.55)
-			state.flash = min(1.0, (state.flash or 0) + 0.7)
+			state.flash = min(1, (state.flash or 0) + 0.7)
 		end
 	elseif state then
 		state.stacks = 0
@@ -1364,8 +1363,7 @@ function Snake:onShieldConsumed(x, y, cause)
 			x = x,
 			y = y,
 			cause = cause or "unknown",
-			}
-		)
+		})
 	end
 end
 
@@ -1395,7 +1393,7 @@ function Snake:consumeStoneSkinSawGrace()
 			local visual = self.stoneSkinVisual
 			visual.charges = self.stoneSkinSawGrace or 0
 			visual.target = min(1, 0.45 + 0.18 * min(visual.charges, 4))
-			visual.flash = max(visual.flash or 0, 1.0)
+			visual.flash = max(visual.flash or 0, 1)
 		end
 
 		return true
@@ -2707,7 +2705,6 @@ function Snake:load(w, h)
 	popTimer = 0
 	moveProgress = 0
 	isDead = false
-	developerGodMode = false
 	self.shieldFlashTimer = 0
 	self.hazardGraceTimer = 0
 	self.damageFlashTimer = 0
@@ -2816,14 +2813,6 @@ function Snake:setDead(state)
 	else
 		rebuildOccupancyFromTrail()
 	end
-end
-
-function Snake:setDeveloperGodMode(state)
-	developerGodMode = not not state
-end
-
-function Snake:isDeveloperGodMode()
-	return developerGodMode
 end
 
 function Snake:getDirection()
@@ -3027,7 +3016,7 @@ function Snake:getHeadCell()
 	return toCell(hx, hy)
 end
 
-local SAFE_ZONE_SEEN_RESET = 1000000000
+local SAFE_ZONE_SEEN_RESET = 10000000
 
 local safeZoneCellsBuffer = {}
 local safeZoneSeen = {}
@@ -3605,7 +3594,7 @@ function Snake:update(dt)
 		local blend = min(1, dt * 6.0)
 		intensity = intensity + (target - intensity) * blend
 		state.intensity = intensity
-		state.active = (target > baseTarget + 0.02) or (ratio > 1.05) or ((state.flash or 0) > 0.05)
+		state.active = (target > baseTarget + 0.02) or (ratio > 15) or ((state.flash or 0) > 0.05)
 
 		if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.02 then
 			self.swiftFangs = nil
@@ -3923,7 +3912,7 @@ function Snake:update(dt)
 			entryHole.time = (entryHole.time or 0) + dt
 
 			local entryOpen = smoothStep(0.0, 0.22, progress)
-			local entryClose = smoothStep(0.68, 1.0, progress)
+			local entryClose = smoothStep(0.68, 1, progress)
 			local entryVisibility = max(0, entryOpen * (1 - entryClose))
 
 			entryHole.open = entryOpen
@@ -3942,7 +3931,7 @@ function Snake:update(dt)
 			exitHole.time = (exitHole.time or 0) + dt
 
 			local exitOpen = smoothStep(0.08, 0.48, progress)
-			local exitSettle = smoothStep(0.82, 1.0, progress)
+			local exitSettle = smoothStep(0.82, 1, progress)
 			local exitVisibility = max(exitOpen, (1 - exitSettle) * 0.45)
 
 			exitHole.open = exitOpen
@@ -4024,8 +4013,7 @@ function Snake:activateDash()
 		Upgrades:notify("dashActivated", {
 			x = hx,
 			y = hy,
-			}
-		)
+		})
 	end
 
 	return dash.active
@@ -4058,8 +4046,7 @@ function Snake:onDashBreakRock(x, y)
 		Upgrades:notify("dashBreakRock", {
 			x = x,
 			y = y,
-			}
-		)
+		})
 	end
 end
 
@@ -4100,8 +4087,7 @@ function Snake:activateTimeDilation()
 		Upgrades:notify("timeDilationActivated", {
 			x = hx,
 			y = hy,
-			}
-		)
+		})
 	end
 
 	return ability.active
@@ -4225,9 +4211,9 @@ function Snake:loseSegments(count, options)
 		end
 	end
 
-	local apples = SessionStats:get("applesEaten") or 0
+	local apples = SessionStats:get("fruitEaten") or 0
 	apples = max(0, apples - trimmed)
-	SessionStats:set("applesEaten", apples)
+	SessionStats:set("fruitEaten", apples)
 
 	if Score and Score.addBonus and Score.get then
 		local currentScore = Score:get() or 0
@@ -4340,7 +4326,7 @@ local function isSawCutPointExposed(saw, sx, sy, px, py)
 		return true
 	end
 
-	local tolerance = 1.0
+	local tolerance = 1
 	local nx, ny
 
 	if saw.dir == "horizontal" then
@@ -4426,8 +4412,7 @@ local function addSeveredTrail(pieceTrail, segmentEstimate)
 		life = SEVERED_TAIL_LIFE,
 		fadeDuration = fadeDuration,
 		segmentCount = max(1, segmentEstimate or #pieceTrail),
-		}
-	)
+	})
 end
 
 local function spawnSawCutParticles(x, y, count)
@@ -4437,7 +4422,7 @@ local function spawnSawCutParticles(x, y, count)
 
 	Particles:spawnBurst(x, y, {
 		count = min(12, 5 + (count or 0)),
-		speed = 120,
+		speed = 1,
 		speedVariance = 60,
 		life = 0.42,
 		size = 4,
@@ -4446,8 +4431,7 @@ local function spawnSawCutParticles(x, y, count)
 		drag = 3.0,
 		gravity = 220,
 		fadeTo = 0,
-		}
-	)
+	})
 end
 
 function Snake:handleSawBodyCut(context)
@@ -4658,14 +4642,14 @@ local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, ex
 				local shouldTest = not useCandidateFilter or (candidateLookup[segment] == candidateGeneration)
 				if shouldTest then
 					local intersects, cutX, cutY, t = segmentRectIntersection(
-						prevX,
-						prevY,
-						cx,
-						cy,
-						expandedX,
-						expandedY,
-						expandedW,
-						expandedH
+					prevX,
+					prevY,
+					cx,
+					cy,
+					expandedX,
+					expandedY,
+					expandedW,
+					expandedH
 					)
 
 					if intersects and t then

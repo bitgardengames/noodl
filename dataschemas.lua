@@ -94,7 +94,7 @@ function DataSchemas.validate(schema, target, context)
 end
 
 DataSchemas.playerStats = {
-	totalApplesEaten = {
+	totalFruitEaten = {
 		type = "number",
 		default = 0,
 		description = "Lifetime apples eaten across all runs.",
@@ -177,7 +177,7 @@ DataSchemas.playerStats = {
 		type = "number",
 		description = "Calendar day value of the most recent daily completion.",
 	},
-	mostApplesInRun = {
+	mostFruitInRun = {
 		type = "number",
 		default = 0,
 		description = "Most apples collected in a single run.",
