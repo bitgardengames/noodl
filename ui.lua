@@ -993,12 +993,13 @@ function UI.unregisterButton(id)
 end
 
 -- Draw button (render only)
-function UI.drawButton(id)
+function UI.drawButton(id, alpha)
 	local btn = UI.buttons[id]
 	if not btn or not btn.bounds then return end
 
 	local b = btn.bounds
 	local s = UI.spacing
+	local alphaMultiplier = alpha or 1
 
 	local mx, my = UI.getCursorPosition()
 	local hoveredByMouse = UI.isHovered(b.x, b.y, b.w, b.h, mx, my)
@@ -1046,7 +1047,7 @@ function UI.drawButton(id)
 	if shadowOffset and shadowOffset ~= 0 then
 		local shadowOffsetX = shadowOffset - 2
 		local shadowOffsetY = shadowOffset - 2
-		setColor(UI.colors.shadow)
+		setColor(UI.colors.shadow, alphaMultiplier)
 		love.graphics.rectangle(
 			"fill",
 			b.x + shadowOffsetX - shadowPadding,
@@ -1067,20 +1068,20 @@ function UI.drawButton(id)
 		fillColor = UI.colors.buttonPress
 	end
 
-	setColor(fillColor)
+	setColor(fillColor, alphaMultiplier)
 	love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
 
 	local highlightStrength = (btn.hoverAnim or 0) * 0.18 + (btn.popProgress or 0) * 0.22
 	if highlightStrength > 0.001 then
 		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
 		love.graphics.setBlendMode("add", "alphamultiply")
-		love.graphics.setColor(1, 1, 1, 0.12 + 0.18 * highlightStrength)
+		love.graphics.setColor(1, 1, 1, (0.12 + 0.18 * highlightStrength) * alphaMultiplier)
 		love.graphics.rectangle("fill", b.x, b.y + yOffset, b.w, b.h, radius, radius)
 		love.graphics.setBlendMode(prevMode, prevAlphaMode)
 	end
 
 	if hasBorder then
-		setColor(UI.colors.border)
+		setColor(UI.colors.border, alphaMultiplier)
 		love.graphics.setLineWidth(borderWidth)
 		drawAlignedBorder("line", b.x, b.y + yOffset, b.w, b.h, radius, borderWidth)
 	end
@@ -1091,7 +1092,7 @@ function UI.drawButton(id)
 			local focusRadius = radius + 4
 			local padding = 3
 			local focusColor = UI.colors.highlight or UI.colors.border
-			setColor(focusColor, 0.8 + 0.4 * focusStrength)
+			setColor(focusColor, (0.8 + 0.4 * focusStrength) * alphaMultiplier)
 			local focusLineWidth = 3
 			love.graphics.setLineWidth(focusLineWidth)
 			drawAlignedBorder("line", b.x - padding, b.y + yOffset - padding, b.w + padding * 2, b.h + padding * 2, focusRadius, focusLineWidth)
@@ -1102,7 +1103,7 @@ function UI.drawButton(id)
 	if glowStrength > 0.01 then
 		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
 		love.graphics.setBlendMode("add", "alphamultiply")
-		love.graphics.setColor(1, 1, 1, 0.16 * glowStrength)
+		love.graphics.setColor(1, 1, 1, 0.16 * glowStrength * alphaMultiplier)
 		love.graphics.setLineWidth(2)
 		drawAlignedBorder("line", b.x + 2, b.y + yOffset + 2, b.w - 4, b.h - 4, radius - 2, 2)
 		love.graphics.setBlendMode(prevMode, prevAlphaMode)
@@ -1120,10 +1121,10 @@ function UI.drawButton(id)
 	local text = btn.text or ""
 	local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
 
-	setColor({0, 0, 0, 0.7})
+	setColor({0, 0, 0, 0.7}, alphaMultiplier)
 	love.graphics.printf(text, b.x + 1, textY + 1, b.w, "center")
 
-	setColor(textColor)
+	setColor(textColor, alphaMultiplier)
 	love.graphics.printf(text, b.x, textY, b.w, "center")
 
 	love.graphics.pop()
