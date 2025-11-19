@@ -47,12 +47,6 @@ local german = {
 					description = "Löse ${goal} Combos in einem Lauf aus.",
 					progress = "Ausgelöste Combos: ${current}/${goal}",
 				},
-				shield_bounce = {
-					title = "Schildwall-Meister",
-					description = "Pralle mit deinem Schild ${goal} Mal in einem Lauf von Wänden ab.",
-					progress = "Wandabpraller: ${current}/${goal}",
-					complete = "Schildwände bezwungen mit ${current} Abprallern!",
-				},
 				stonebreaker_protocol = {
 					title = "Steinbrecher-Protokoll",
 					description = "Zerschmettere ${goal} Felsen mit deinem Schild in einem Lauf.",

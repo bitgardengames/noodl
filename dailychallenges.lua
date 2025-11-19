@@ -452,15 +452,6 @@ DailyChallenges.challenges = {
 		progressKey = "menu.daily.combos.progress",
 	},
 	{
-		id = "shield_wall_master",
-		titleKey = "menu.daily.shield_bounce.title",
-		descriptionKey = "menu.daily.shield_bounce.description",
-		sessionStat = "runShieldWallBounces",
-		goal = 5,
-		progressKey = "menu.daily.shield_bounce.progress",
-		completeKey = "menu.daily.shield_bounce.complete",
-	},
-	{
 		id = "stonebreaker_protocol",
 		titleKey = "menu.daily.stonebreaker_protocol.title",
 		descriptionKey = "menu.daily.stonebreaker_protocol.description",

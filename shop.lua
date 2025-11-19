@@ -1402,13 +1402,13 @@ local badgeShapeDrawers = {
 		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS, 4, size * CORNER_RADIUS, 4, math.pi / 4)
 	end,
 	triangle_up = function(mode, cx, cy, size, style)
-		drawRoundedRegularPolygon(mode, cx, cy + size * 0.02, size * SHAPE_RADIUS * 1.05, 3, size * CORNER_RADIUS * 0.8, 4, 0)
+		drawRoundedRegularPolygon(mode, cx, cy + size * 0.02, size * SHAPE_RADIUS * 1.06, 3, size * CORNER_RADIUS * 0.8, 4, 0)
 	end,
 	triangle_down = function(mode, cx, cy, size, style)
-		drawRoundedRegularPolygon(mode, cx, cy - size * 0.02, size * SHAPE_RADIUS * 1.05, 3, size * CORNER_RADIUS * 0.8, 4, math.pi)
+		drawRoundedRegularPolygon(mode, cx, cy - size * 0.02, size * SHAPE_RADIUS * 1.06, 3, size * CORNER_RADIUS * 0.8, 4, math.pi)
 	end,
 	hexagon = function(mode, cx, cy, size, style)
-		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS * 1.05, 6, size * CORNER_RADIUS * 0.9, 4, 0)
+		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS * 0.98, 6, size * CORNER_RADIUS * 0.9, 4, 0)
 	end,
 }
 

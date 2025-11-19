@@ -47,12 +47,6 @@ local english = {
 					description = "Trigger ${goal} combos in a single run.",
 					progress = "Combos triggered: ${current}/${goal}",
 				},
-				shield_bounce = {
-					title = "Shield Wall Master",
-					description = "Bounce off walls with your shield ${goal} times in one run.",
-					progress = "Wall bounces: ${current}/${goal}",
-					complete = "Shield walls conquered with ${current} bounces!",
-				},
 				stonebreaker_protocol = {
 					title = "Stonebreaker Protocol",
 					description = "Smash ${goal} rocks with your shield in one run.",
