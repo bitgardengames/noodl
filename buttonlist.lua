@@ -115,11 +115,11 @@ function ButtonList:syncUI()
 	end
 end
 
-function ButtonList:draw()
+function ButtonList:draw(alpha)
 	UI.refreshCursor()
 	self:syncUI()
 	for _, button in ipairs(self.buttons) do
-		UI.drawButton(button.id)
+		UI.drawButton(button.id, alpha)
 	end
 end
 
