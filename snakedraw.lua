@@ -34,11 +34,10 @@ local stormBolt = {}
 local stormBoltCapacity = 0
 local stormBoltCenters = {}
 local stormBoltCenterCapacity = 0
-local titanSigilVertices = {0, 0, 0, 0, 0, 0, 0, 0}
 
 local function ensureBufferCapacity(buffer, capacity, needed)
-	if capacity < needed then
-		for i = capacity + 1, needed do
+if capacity < needed then
+for i = capacity + 1, needed do
 			buffer[i] = 0
 		end
 		capacity = needed
@@ -1168,81 +1167,17 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 		end
 	end
 
-	if primed then
-		local headSeg = trail[1]
-		local hx, hy = ptXY(headSeg)
-		if hx and hy then
-			love.graphics.setColor(0.38, 0.74, 1.0, 0.24 + 0.34 * intensity)
-			love.graphics.setLineWidth(2.4)
-			love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.4 + 0.32 * intensity))
-		end
-	end
-
-	love.graphics.pop()
+if primed then
+local headSeg = trail[1]
+local hx, hy = ptXY(headSeg)
+if hx and hy then
+love.graphics.setColor(0.38, 0.74, 1.0, 0.24 + 0.34 * intensity)
+love.graphics.setLineWidth(2.4)
+love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.4 + 0.32 * intensity))
+end
 end
 
-local function drawTitanbloodSigils(trail, SEGMENT_SIZE, data)
-	if not (trail and data) then return end
-	if #trail < 3 then return end
-
-	local intensity = max(0, data.intensity or 0)
-	if intensity <= 0.01 then return end
-
-	local stacks = max(1, data.stacks or 1)
-	local time = data.time or Timer.getTime()
-	local sigilCount = min(#trail - 1, 8 + stacks * 3)
-
-	love.graphics.push("all")
-
-	local segmentVectors = buildSegmentVectors(trail)
-
-	for i = 2, sigilCount + 1 do
-		local prevIndex = i - 1
-		local xPrev, yPrev, xCurr, yCurr, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, prevIndex, i)
-		if xCurr and yCurr and xPrev and yPrev then
-			if not dirX or not dirY or length < 1e-4 then
-				dirX, dirY = 0, 1
-				perpX, perpY = -1, 0
-			elseif not (perpX and perpY) then
-				perpX, perpY = -dirY, dirX
-			end
-			local progress = (i - 2) / max(sigilCount - 1, 1)
-			local fade = 1 - progress * 0.6
-			local sway = sin(time * 2.6 + i * 0.8) * SEGMENT_SIZE * 0.12 * fade
-			local offset = SEGMENT_SIZE * (0.45 + 0.08 * min(stacks, 4))
-			local cx = xCurr + perpX * (offset + sway)
-			local cy = yCurr + perpY * (offset + sway)
-
-			love.graphics.push()
-			love.graphics.translate(cx, cy)
-			love.graphics.rotate(atan2(dirY, dirX))
-
-			local base = SEGMENT_SIZE * (0.28 + 0.08 * min(stacks, 3))
-			love.graphics.setColor(0.32, 0.02, 0.08, (0.16 + 0.24 * intensity) * fade)
-			love.graphics.ellipse("fill", 0, 0, base * 1.2, base * 0.55)
-
-			local scale = base * (1.1 + 0.45 * intensity)
-			local vertices = titanSigilVertices
-			vertices[1] = 0
-			vertices[2] = -scale * 0.6
-			vertices[3] = scale * 0.45
-			vertices[4] = 0
-			vertices[5] = 0
-			vertices[6] = scale * 0.6
-			vertices[7] = -scale * 0.45
-			vertices[8] = 0
-
-			love.graphics.setColor(0.82, 0.14, 0.22, (0.22 + 0.3 * intensity) * fade)
-			love.graphics.polygon("fill", vertices)
-			love.graphics.setColor(1.0, 0.52, 0.4, (0.2 + 0.28 * intensity) * fade)
-			love.graphics.setLineWidth(1.4)
-			love.graphics.polygon("line", vertices)
-
-			love.graphics.pop()
-		end
-	end
-
-	love.graphics.pop()
+love.graphics.pop()
 end
 
 
@@ -1990,20 +1925,15 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		)
 			end
 
-			if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
-			drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst
-		)
-			end
+if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
+drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst
+)
+end
 
-			if upgradeVisuals and upgradeVisuals.titanblood then
-			drawTitanbloodSigils(trail, SEGMENT_SIZE, upgradeVisuals.titanblood
-		)
-			end
-
-			if upgradeVisuals and upgradeVisuals.phoenixEcho then
-			drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho
-		)
-			end
+if upgradeVisuals and upgradeVisuals.phoenixEcho then
+drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho
+)
+end
 			end
 
 			if popTimer and popTimer > 0 and hx and hy then

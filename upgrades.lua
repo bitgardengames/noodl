@@ -2170,42 +2170,23 @@ pool = {
 	)
 		end,
 		}),
-	register({
-		id = "tectonic_resolve",
-		nameKey = "upgrades.tectonic_resolve.name",
-		descKey = "upgrades.tectonic_resolve.description",
-		rarity = "uncommon",
-		tags = {"defense"},
-		onAcquire = function(state
-	)
-		state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.85
-		state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.20
-		end,
-		}),
-	register({
-		id = "titanblood_pact",
-		nameKey = "upgrades.titanblood_pact.name",
-		descKey = "upgrades.titanblood_pact.description",
-		rarity = "epic",
-		tags = {"defense", "risk"},
-		weight = 1,
-		onAcquire = function(state
-	)
-		Snake:addShields(1
-	)
-		Snake:addSpeedMultiplier(1.05
-	)
-		Snake.extraGrowth = (Snake.extraGrowth or 0) + 1
-		state.effects.titanbloodPact = (state.effects.titanbloodPact or 0) + 1
-		Snake:setTitanbloodStacks(state.effects.titanbloodPact
-	)
-		end,
-		}),
-	register({
-		id = "phoenix_echo",
-		nameKey = "upgrades.phoenix_echo.name",
-		descKey = "upgrades.phoenix_echo.description",
-		rarity = "epic",
+register({
+id = "tectonic_resolve",
+nameKey = "upgrades.tectonic_resolve.name",
+descKey = "upgrades.tectonic_resolve.description",
+rarity = "uncommon",
+tags = {"defense"},
+onAcquire = function(state
+)
+state.effects.rockSpawnMult = (state.effects.rockSpawnMult or 1) * 0.85
+state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.20
+end,
+}),
+register({
+id = "phoenix_echo",
+nameKey = "upgrades.phoenix_echo.name",
+descKey = "upgrades.phoenix_echo.description",
+rarity = "epic",
 		tags = {"defense", "risk"},
 		onAcquire = function(state
 	)
@@ -2988,17 +2969,15 @@ function Upgrades:applyPersistentEffects(rebaseline)
 			ability.floorCharges = max(0, min(ability.floorCharges, maxUses))
 		end
 	else
-		Snake.timeDilation = nil
-	end
+Snake.timeDilation = nil
+end
 
 
-	Snake:setAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
+Snake:setAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
 
-	Snake:setTitanbloodStacks(effects.titanbloodPact or 0)
+Snake:setEventHorizonActive(effects.wallPortal and true or false)
 
-	Snake:setEventHorizonActive(effects.wallPortal and true or false)
-
-	Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
+Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
 
 	local counters = state.counters or {}
 	Snake:setSwiftFangsStacks(counters.swiftFangsStacks or 0)
