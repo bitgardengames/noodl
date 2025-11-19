@@ -89,12 +89,6 @@ local german = {
 					progress = "Aktuelles Tempo: ${pace}/${goal} (Felder: ${tiles}, Minuten: ${minutes})",
 					complete = "Stetiger Sprint! Tempo von ${pace} Feldern pro Minute erreicht.",
 				},
-				fruit_frenzy = {
-					title = "Frucht-Frenzy",
-					description = "Verschlinge ${target_apples} Früchte in ${target_time}.",
-					progress = "Früchte: ${apples}/${target_apples}, Zeit: ${time}/${target_time}",
-					complete = "Frenzy erfüllt! ${target_apples} Früchte vor Ablauf der Zeit verputzt.",
-				},
 				momentum_master = {
 					title = "Momentum-Meister",
 					description = "Halte ${goal} Schwungphasen aus ${fruit_chunk} Früchten und ${tile_chunk} Feldern, ohne langsamer zu werden.",

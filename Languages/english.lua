@@ -89,12 +89,6 @@ local english = {
 					progress = "Current pace: ${pace}/${goal} (Tiles: ${tiles}, Minutes: ${minutes})",
 					complete = "Steady sprint! Pace hit ${pace} tiles per minute.",
 				},
-				fruit_frenzy = {
-					title = "Fruit Frenzy",
-					description = "Chomp ${target_apples} fruit within ${target_time}.",
-					progress = "Fruit: ${apples}/${target_apples}, Time: ${time}/${target_time}",
-					complete = "Frenzy fulfilled! Devoured ${target_apples} fruit before time ran out.",
-				},
 				momentum_master = {
 					title = "Momentum Master",
 					description = "Maintain ${goal} momentum surges of ${fruit_chunk} fruit and ${tile_chunk} tiles without slowing down.",

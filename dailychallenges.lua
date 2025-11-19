@@ -536,53 +536,6 @@ DailyChallenges.challenges = {
 			}
 		end,
 	},
-	{
-		id = "fruit_frenzy",
-		titleKey = "menu.daily.fruit_frenzy.title",
-		descriptionKey = "menu.daily.fruit_frenzy.description",
-		goal = 1,
-		progressKey = "menu.daily.fruit_frenzy.progress",
-		completeKey = "menu.daily.fruit_frenzy.complete",
-		targetApples = 45,
-		targetSeconds = 360,
-		getValue = function(self, context)
-			local statsSource = context and context.sessionStats
-			local fruit = getStatValue(statsSource, "fruitEaten", context)
-			local timeAlive = getStatValue(statsSource, "timeAlive", context)
-			if fruit >= (self.targetApples or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
-				return 1
-			end
-			return 0
-		end,
-		getRunValue = function(self, statsSource)
-			local fruit = getStatValue(statsSource, "fruitEaten")
-			local timeAlive = getStatValue(statsSource, "timeAlive")
-			if fruit >= (self.targetApples or 0) and timeAlive > 0 and timeAlive <= (self.targetSeconds or 0) then
-				return 1
-			end
-			return 0
-		end,
-		progressReplacements = function(self, current, goal, context)
-			local statsSource = context and context.sessionStats
-			local fruit = getStatValue(statsSource, "fruitEaten", context)
-			local timeAlive = getStatValue(statsSource, "timeAlive", context)
-
-			return {
-				current = current or 0,
-				goal = goal or 0,
-				fruit = fruit,
-				time = formatSeconds(timeAlive),
-				target_apples = self.targetApples or 0,
-				target_time = formatSeconds(self.targetSeconds or 0),
-			}
-		end,
-		descriptionReplacements = function(self)
-			return {
-				target_apples = self.targetApples or 0,
-				target_time = formatSeconds(self.targetSeconds or 0),
-			}
-		end,
-	},
 }
 
 function DailyChallenges:getChallengeForIndex(index, context)
