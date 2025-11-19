@@ -548,7 +548,7 @@ function GameOver:draw()
 	local titleKey = self.isVictory and "gameover.victory_title" or "gameover.title"
 	local fallbackTitle = self.isVictory and "Noodl's Grand Feast" or "Game Over"
 	local titleText = self.customTitle or getLocalizedOrFallback(titleKey, fallbackTitle)
-	
+
 	local contentProgress = getContentAnimationProgress(self)
 	local contentAlpha = contentProgress
 	local panelOffset = (1 - contentProgress) * ((UI.scaled and UI.scaled(26, 14)) or 18)
@@ -560,7 +560,7 @@ function GameOver:draw()
 	local detailsOffset = (1 - detailsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
 	local highlightEntries = getHighlightStats(self, contentProgress)
 	local detailEntries = getDetailedStats()
-	
+
 	local headerY = UI.getHeaderY(sw, sh)
 	UI.drawLabel(titleText, 0, headerY, sw, "center", {
 		font = fontTitle,
@@ -570,14 +570,14 @@ function GameOver:draw()
 		alpha = contentAlpha,
 		}
 	)
-	
+
 	local panelHeight = self.summaryPanelHeight or 0
 	local sectionPadding = self.sectionPaddingValue or getSectionPadding()
 	local sectionSpacing = self.sectionSpacingValue or getSectionSpacing()
 	local innerSpacing = self.sectionInnerSpacingValue or getSectionInnerSpacing()
 	local innerWidth = max(0, contentWidth - padding * 2)
 	local messageText = self.deathMessage or Localization:get("gameover.default_message")
-	
+
 	love.graphics.push()
 	love.graphics.translate(0, panelOffset)
 

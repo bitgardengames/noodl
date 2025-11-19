@@ -577,16 +577,16 @@ local function getPushCandidates(col, row, originCol, originRow, radius)
 	if not (col and row and originCol and originRow) then
 		return nil
 	end
-	
+
 	radius = radius or TREMOR_BLOOM_RADIUS
-	
+
 	local dx = col - originCol
 	local dy = row - originRow
-	
+
 	if dx == 0 and dy == 0 then
 		return nil
 	end
-	
+
 	if max(abs(dx), abs(dy)) > radius then
 		return nil
 	end
@@ -644,7 +644,7 @@ local function pushNearbyRocks(originCol, originRow, positions, radius)
 	for _, rock in ipairs(rocks) do
 		local col, row = rock.col, rock.row
 		if col and row then
-				local candidates = getPushCandidates(col, row, originCol, originRow, radius)
+			local candidates = getPushCandidates(col, row, originCol, originRow, radius)
 			if candidates then
 				for _, candidate in ipairs(candidates) do
 					local targetCol, targetRow = candidate[1], candidate[2]
@@ -826,7 +826,7 @@ local function pushNearbySaws(originCol, originRow, positions, radius)
 
 		if sx and sy then
 			local col, row = Arena:getTileFromWorld(sx, sy)
-				if col and row then
+			if col and row then
 				local candidates = getPushCandidates(col, row, originCol, originRow, radius)
 				if candidates ~= nil then
 					if nudgeSawAlongTrack(saw, originCol, originRow, positions) then
@@ -1665,16 +1665,18 @@ pool = {
 		end,
 		handlers = {
 		fruitCollected = function(data, state
-		)
-		local stacks = getStacks(state, "tremor_bloom")
+	)
+		local stacks = getStacks(state, "tremor_bloom"
+	)
 		if stacks <= 0 then
 		return
 		end
 
-		local shockwaveRadius = TREMOR_BLOOM_RADIUS + max(0, (stacks or 0) - 1)
+		local shockwaveRadius = TREMOR_BLOOM_RADIUS + max(0, (stacks or 0) - 1
+	)
 
 		local fx, fy = getEventPosition(data
-		)
+	)
 		if fx and fy and Arena and Arena.addFloorRipple then
 		local tileSize = Arena.tileSize or 24
 		Arena:addFloorRipple(fx, fy, {
@@ -1689,7 +1691,8 @@ pool = {
 	)
 		end
 
-		local moved, hazardPositions = tremorBloomPushHazards(data, shockwaveRadius)
+		local moved, hazardPositions = tremorBloomPushHazards(data, shockwaveRadius
+	)
 		if not moved then
 		return
 		end

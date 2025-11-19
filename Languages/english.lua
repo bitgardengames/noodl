@@ -377,7 +377,7 @@ local english = {
 			},
 			tremor_bloom = {
 				name = "Tremor Bloom",
-                                description = "When you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away. Each additional Tremor Bloom stack increases the shockwave radius by one tile.",
+				description = "When you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away.",
 				activation_text = "Shockwave Bloom",
 			},
 			blade_override = { -- ship
