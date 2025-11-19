@@ -1392,7 +1392,7 @@ local CORNER_RADIUS = 0.10 -- keeps smooth, subtle rounding
 
 local badgeShapeDrawers = {
 	circle = function(mode, cx, cy, size)
-		local r = size * SHAPE_RADIUS
+		local r = size * SHAPE_RADIUS * 0.9
 		love.graphics.circle(mode, cx, cy, r, 32)
 	end,
 	square = function(mode, cx, cy, size, style)
@@ -1402,13 +1402,13 @@ local badgeShapeDrawers = {
 		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS, 4, size * CORNER_RADIUS, 4, math.pi / 4)
 	end,
 	triangle_up = function(mode, cx, cy, size, style)
-		drawRoundedRegularPolygon(mode, cx, cy + size * 0.02, size * SHAPE_RADIUS * 1.06, 3, size * CORNER_RADIUS * 0.8, 4, 0)
+		drawRoundedRegularPolygon(mode, cx, cy + size * 0.02, size * SHAPE_RADIUS * 1.08, 3, size * CORNER_RADIUS * 0.8, 4, 0)
 	end,
 	triangle_down = function(mode, cx, cy, size, style)
-		drawRoundedRegularPolygon(mode, cx, cy - size * 0.02, size * SHAPE_RADIUS * 1.06, 3, size * CORNER_RADIUS * 0.8, 4, math.pi)
+		drawRoundedRegularPolygon(mode, cx, cy - size * 0.02, size * SHAPE_RADIUS * 1.08, 3, size * CORNER_RADIUS * 0.8, 4, math.pi)
 	end,
 	hexagon = function(mode, cx, cy, size, style)
-		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS * 0.98, 6, size * CORNER_RADIUS * 0.9, 4, 0)
+		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS * 0.96, 6, size * CORNER_RADIUS * 0.9, 4, 0)
 	end,
 }
 
