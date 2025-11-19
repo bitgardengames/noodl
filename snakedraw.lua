@@ -36,8 +36,8 @@ local stormBoltCenters = {}
 local stormBoltCenterCapacity = 0
 
 local function ensureBufferCapacity(buffer, capacity, needed)
-if capacity < needed then
-for i = capacity + 1, needed do
+	if capacity < needed then
+		for i = capacity + 1, needed do
 			buffer[i] = 0
 		end
 		capacity = needed
@@ -1167,17 +1167,17 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 		end
 	end
 
-if primed then
-local headSeg = trail[1]
-local hx, hy = ptXY(headSeg)
-if hx and hy then
-love.graphics.setColor(0.38, 0.74, 1.0, 0.24 + 0.34 * intensity)
-love.graphics.setLineWidth(2.4)
-love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.4 + 0.32 * intensity))
-end
-end
+	if primed then
+		local headSeg = trail[1]
+		local hx, hy = ptXY(headSeg)
+		if hx and hy then
+			love.graphics.setColor(0.38, 0.74, 1.0, 0.24 + 0.34 * intensity)
+			love.graphics.setLineWidth(2.4)
+			love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.4 + 0.32 * intensity))
+		end
+	end
 
-love.graphics.pop()
+	love.graphics.pop()
 end
 
 
@@ -1925,15 +1925,15 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		)
 			end
 
-if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
-drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst
-)
-end
+			if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
+			drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst
+		)
+			end
 
-if upgradeVisuals and upgradeVisuals.phoenixEcho then
-drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho
-)
-end
+			if upgradeVisuals and upgradeVisuals.phoenixEcho then
+			drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho
+		)
+			end
 			end
 
 			if popTimer and popTimer > 0 and hx and hy then

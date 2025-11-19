@@ -11,35 +11,35 @@ local playerSchema = DataSchemas.playerStats
 PlayerStats.data = {}
 
 local legacyDailyFields = {
-        dailyChallengesCompleted = true,
-        dailyChallengeStreak = true,
-        dailyChallengeBestStreak = true,
-        dailyChallengeLastCompletionDay = true,
+	dailyChallengesCompleted = true,
+	dailyChallengeStreak = true,
+	dailyChallengeBestStreak = true,
+	dailyChallengeLastCompletionDay = true,
 }
 
 local function migrateLegacyDailyData(store)
-        if type(store.data) ~= "table" then
-                return
-        end
+	if type(store.data) ~= "table" then
+		return
+	end
 
-        if DailyProgress and DailyProgress.importLegacyData then
-                DailyProgress:importLegacyData(store.data)
-        end
+	if DailyProgress and DailyProgress.importLegacyData then
+		DailyProgress:importLegacyData(store.data)
+	end
 end
 
 local function purgeLegacyDailyData(store)
-        if type(store.data) ~= "table" then
-                return
-        end
+	if type(store.data) ~= "table" then
+		return
+	end
 
-        for key in pairs(store.data) do
-                local isLegacyKey = legacyDailyFields[key]
-                        or (type(key) == "string" and key:find("^dailyChallenge:"))
+	for key in pairs(store.data) do
+		local isLegacyKey = legacyDailyFields[key]
+		or (type(key) == "string" and key:find("^dailyChallenge:"))
 
-                if isLegacyKey then
-                        store.data[key] = nil
-                end
-        end
+		if isLegacyKey then
+			store.data[key] = nil
+		end
+	end
 end
 
 local function applySchemaDefaults(store)
@@ -55,20 +55,20 @@ local function freshData()
 end
 
 function PlayerStats:load()
-        if love.filesystem.getInfo(saveFile) then
-                local success, chunk = pcall(love.filesystem.load, saveFile)
-                if success and chunk then
-                        local ok, saved = pcall(chunk)
-                        if ok and type(saved) == "table" then
-                                self.data = saved
-                        end
-                end
-        end
+	if love.filesystem.getInfo(saveFile) then
+		local success, chunk = pcall(love.filesystem.load, saveFile)
+		if success and chunk then
+			local ok, saved = pcall(chunk)
+			if ok and type(saved) == "table" then
+				self.data = saved
+			end
+		end
+	end
 
-        migrateLegacyDailyData(self)
-        purgeLegacyDailyData(self)
+	migrateLegacyDailyData(self)
+	purgeLegacyDailyData(self)
 
-        applySchemaDefaults(self)
+	applySchemaDefaults(self)
 end
 
 function PlayerStats:save()

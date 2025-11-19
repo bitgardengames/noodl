@@ -38,13 +38,13 @@ function App:registerStates()
 end
 
 function App:loadSubsystems()
-        Screen:update()
-        Localization:setLanguage(Settings.language)
-        Audio:load()
-        DailyProgress:load()
-        PlayerStats:load()
-        Achievements:load()
-        Score:load()
+	Screen:update()
+	Localization:setLanguage(Settings.language)
+	Audio:load()
+	DailyProgress:load()
+	PlayerStats:load()
+	Achievements:load()
+	Score:load()
 	SnakeCosmetics:load({})
 end
 

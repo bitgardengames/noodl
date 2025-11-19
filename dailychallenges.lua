@@ -293,69 +293,69 @@ local function secondsUntilNextMidnight(date)
 end
 
 local function getDayValue(date)
-        if not date then
-                return nil
-        end
+	if not date then
+		return nil
+	end
 
-        return (date.year or 0) * 512 + (date.yday or 0)
+	return (date.year or 0) * 512 + (date.yday or 0)
 end
 
 local function resolveDayValue(self, date)
-        local resolved = resolveDate(self, date)
-        return getDayValue(resolved), resolved
+	local resolved = resolveDate(self, date)
+	return getDayValue(resolved), resolved
 end
 
 local function getStoredProgress(self, challenge, date, dayValue)
-        if not challenge or not challenge.id then
-                return 0
-        end
+	if not challenge or not challenge.id then
+		return 0
+	end
 
-        dayValue = dayValue or select(1, resolveDayValue(self, date))
-        if not dayValue then
-                return 0
-        end
+	dayValue = dayValue or select(1, resolveDayValue(self, date))
+	if not dayValue then
+		return 0
+	end
 
-        return DailyProgress:getProgress(challenge.id, dayValue) or 0
+	return DailyProgress:getProgress(challenge.id, dayValue) or 0
 end
 
 local function setStoredProgress(self, challenge, date, value, dayValue)
-        if not challenge or not challenge.id then
-                return
-        end
+	if not challenge or not challenge.id then
+		return
+	end
 
-        dayValue = dayValue or select(1, resolveDayValue(self, date))
-        if not dayValue then
-                return
-        end
+	dayValue = dayValue or select(1, resolveDayValue(self, date))
+	if not dayValue then
+		return
+	end
 
-        value = max(0, floor(value or 0))
-        DailyProgress:setProgress(challenge.id, dayValue, value)
+	value = max(0, floor(value or 0))
+	DailyProgress:setProgress(challenge.id, dayValue, value)
 end
 
 local function isStoredComplete(self, challenge, date, dayValue)
-        if not challenge or not challenge.id then
-                return false
-        end
+	if not challenge or not challenge.id then
+		return false
+	end
 
-        dayValue = dayValue or select(1, resolveDayValue(self, date))
-        if not dayValue then
-                return false
-        end
+	dayValue = dayValue or select(1, resolveDayValue(self, date))
+	if not dayValue then
+		return false
+	end
 
-        return DailyProgress:isComplete(challenge.id, dayValue)
+	return DailyProgress:isComplete(challenge.id, dayValue)
 end
 
 local function setStoredComplete(self, challenge, date, complete, dayValue)
-        if not challenge or not challenge.id then
-                return
-        end
+	if not challenge or not challenge.id then
+		return
+	end
 
-        dayValue = dayValue or select(1, resolveDayValue(self, date))
-        if not dayValue then
-                return
-        end
+	dayValue = dayValue or select(1, resolveDayValue(self, date))
+	if not dayValue then
+		return
+	end
 
-        DailyProgress:setComplete(challenge.id, dayValue, complete)
+	DailyProgress:setComplete(challenge.id, dayValue, complete)
 end
 
 local function getChallengeIndex(self, count, date)
@@ -388,17 +388,17 @@ local function evaluateChallenge(self, challenge, context)
 		end
 	else
 		context.statCache = {}
-        end
+	end
 
-        local goal = resolveGoal(challenge, context)
-        local current = resolveCurrent(challenge, context)
-        local dayValue, resolvedDate = resolveDayValue(self, context.date or context.dateOverride)
-        local storedProgress = getStoredProgress(self, challenge, resolvedDate, dayValue)
-        if storedProgress and storedProgress > (current or 0) then
-                current = storedProgress
-        end
+	local goal = resolveGoal(challenge, context)
+	local current = resolveCurrent(challenge, context)
+	local dayValue, resolvedDate = resolveDayValue(self, context.date or context.dateOverride)
+	local storedProgress = getStoredProgress(self, challenge, resolvedDate, dayValue)
+	if storedProgress and storedProgress > (current or 0) then
+		current = storedProgress
+	end
 
-        local storedComplete = isStoredComplete(self, challenge, resolvedDate, dayValue)
+	local storedComplete = isStoredComplete(self, challenge, resolvedDate, dayValue)
 	local ratio = clampRatio(current, goal)
 
 	local descriptionReplacements = resolveDescriptionReplacements(challenge, current, goal, context)
@@ -629,84 +629,86 @@ function DailyChallenges:applyRunResults(statsSource, options)
 		return nil
 	end
 
-        local challenge = self.challenges[index]
-        if not challenge then
-                return nil
-        end
+	local challenge = self.challenges[index]
+	if not challenge then
+		return nil
+	end
 
-        local runValue = callChallengeFunction(challenge, "getRunValue", statsSource, options)
+	local runValue = callChallengeFunction(challenge, "getRunValue", statsSource, options)
 
-        if runValue == nil then
-                if challenge.sessionStat and statsSource then
-                        runValue = getStatValue(statsSource, challenge.sessionStat)
-                elseif challenge.stat then
-                        runValue = PlayerStats:get(challenge.stat) or 0
-                end
-        end
+	if runValue == nil then
+		if challenge.sessionStat and statsSource then
+			runValue = getStatValue(statsSource, challenge.sessionStat)
+		elseif challenge.stat then
+			runValue = PlayerStats:get(challenge.stat) or 0
+		end
+	end
 
-        runValue = max(0, floor(runValue or 0))
+	runValue = max(0, floor(runValue or 0))
 
-        local goal = resolveGoal(challenge)
-        local dayValue = getDayValue(resolvedDate)
-        local storedProgress = getStoredProgress(self, challenge, resolvedDate, dayValue)
-        local best = storedProgress
-        if runValue > best then
-                best = runValue
-                setStoredProgress(self, challenge, resolvedDate, best, dayValue)
-        end
+	local goal = resolveGoal(challenge)
+	local dayValue = getDayValue(resolvedDate)
+	local storedProgress = getStoredProgress(self, challenge, resolvedDate, dayValue)
+	local best = storedProgress
+	if runValue > best then
+		best = runValue
+		setStoredProgress(self, challenge, resolvedDate, best, dayValue)
+	end
 
-        local alreadyCompleted = isStoredComplete(self, challenge, resolvedDate, dayValue)
-        local completedNow = false
-        local streakInfo = nil
+	local alreadyCompleted = isStoredComplete(self, challenge, resolvedDate, dayValue)
+	local completedNow = false
+	local streakInfo = nil
 
-        local streakData = DailyProgress:getStreak()
-        local previousStreak = streakData.current or 0
-        local previousBest = streakData.best or 0
-        local lastCompletionDay = streakData.lastCompletionDay or 0
+	local streakData = DailyProgress:getStreak()
+	local previousStreak = streakData.current or 0
+	local previousBest = streakData.best or 0
+	local lastCompletionDay = streakData.lastCompletionDay or 0
 
-        if goal > 0 and runValue >= goal and not alreadyCompleted then
-                setStoredComplete(self, challenge, resolvedDate, true, dayValue)
-                completedNow = true
+	if goal > 0 and runValue >= goal and not alreadyCompleted then
+		setStoredComplete(self, challenge, resolvedDate, true, dayValue)
+		completedNow = true
 
-                streakInfo = DailyProgress:recordCompletion(dayValue)
+		streakInfo = DailyProgress:recordCompletion(dayValue)
 
-                local achievements = getAchievements()
-                if achievements and achievements.checkAll then
-                        local ok, err = pcall(function()
-                                achievements:checkAll()
-                        end)
-                        if not ok then
-                                print("[DailyChallenges] Failed to update achievements after daily challenge completion:", err)
-                        end
-                end
-        elseif alreadyCompleted then
-                local currentStreak = max(previousStreak, 0)
-                local bestStreak = max(previousBest, currentStreak)
-                streakInfo = {
-                        current = currentStreak,
-                        best = bestStreak,
-                        alreadyCompleted = true,
-                        dayValue = dayValue,
-                }
-        elseif previousStreak > 0 then
-                local currentStreak = max(previousStreak, 0)
-                local bestStreak = max(previousBest, currentStreak)
-                streakInfo = {
-                        current = currentStreak,
-                        best = bestStreak,
-                        needsCompletion = (dayValue ~= nil and lastCompletionDay ~= dayValue),
-                        dayValue = dayValue,
-                }
-        end
+		local achievements = getAchievements()
+		if achievements and achievements.checkAll then
+			local ok, err = pcall(function()
+				achievements:checkAll(
+			)
+				end
+			)
+			if not ok then
+				print("[DailyChallenges] Failed to update achievements after daily challenge completion:", err)
+			end
+		end
+	elseif alreadyCompleted then
+		local currentStreak = max(previousStreak, 0)
+		local bestStreak = max(previousBest, currentStreak)
+		streakInfo = {
+			current = currentStreak,
+			best = bestStreak,
+			alreadyCompleted = true,
+			dayValue = dayValue,
+		}
+	elseif previousStreak > 0 then
+		local currentStreak = max(previousStreak, 0)
+		local bestStreak = max(previousBest, currentStreak)
+		streakInfo = {
+			current = currentStreak,
+			best = bestStreak,
+			needsCompletion = (dayValue ~= nil and lastCompletionDay ~= dayValue),
+			dayValue = dayValue,
+		}
+	end
 
-        return {
-                challengeId = challenge.id,
-                goal = goal,
-                progress = best,
-                completed = alreadyCompleted or completedNow,
-                completedNow = completedNow,
-                streakInfo = streakInfo,
-        }
+	return {
+		challengeId = challenge.id,
+		goal = goal,
+		progress = best,
+		completed = alreadyCompleted or completedNow,
+		completedNow = completedNow,
+		streakInfo = streakInfo,
+	}
 end
 
 return DailyChallenges

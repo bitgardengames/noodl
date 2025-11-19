@@ -380,7 +380,7 @@ local english = {
 				description = "When you collect a fruit, a shockwave ripples outward from that cell, pushing nearby hazards one tile away.",
 				activation_text = "Shockwave Bloom",
 			},
-				blade_override = { -- ship
+			blade_override = { -- ship
 				name = "Blade Override",
 				description = "After each fruit, saws sink beneath their tracks for 1.6s.",
 			},
@@ -416,18 +416,18 @@ local english = {
 				name = "Trade Accord",
 				description = "Each shop slot reduces rock spawn chance by 3%.",
 			},
-abyssal_catalyst = {
-name = "Abyssal Catalyst",
-description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
-},
-tectonic_resolve = {
-name = "Tectonic Resolve",
-description = "Rock spawn chance decreases by 15%. Each fruit has a 20% chance to shatter the nearest rock.",
-},
-phoenix_echo = {
-name = "Phoenix Echo",
-description = "Once per run, a fatal hit rewinds time, reviving you on the same floor.",
-},
+			abyssal_catalyst = {
+				name = "Abyssal Catalyst",
+				description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
+			},
+			tectonic_resolve = {
+				name = "Tectonic Resolve",
+				description = "Rock spawn chance decreases by 15%. Each fruit has a 20% chance to shatter the nearest rock.",
+			},
+			phoenix_echo = {
+				name = "Phoenix Echo",
+				description = "Once per run, a fatal hit rewinds time, reviving you on the same floor.",
+			},
 			thunder_dash = {
 				name = "Thunder Dash",
 				description = "Press Space (or ${dash_face}/${dash_shoulder} on a controller) to dash forward, smashing through rocks while briefly speeding up.",

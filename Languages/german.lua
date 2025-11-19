@@ -416,18 +416,18 @@ local german = {
 					name = "Handelsabkommen",
 					description = "Jeder Shop-Platz reduziert die Fels-Spawnchance um 3%.",
 				},
-abyssal_catalyst = {
-name = "Abyss-Katalysator",
-description = "Erhalte sofort ein Schild und stärkere Combo-Belohnungen, aber Laser laden schneller, feuern schneller und haben kürzere Abklingzeiten.",
-},
-tectonic_resolve = {
-name = "Tektonische Entschlossenheit",
-description = "Die Fels-Spawnchance sinkt um 15%. Jede Frucht hat eine Chance von 20%, den nächstgelegenen Felsen zu zerschmettern.",
-},
-phoenix_echo = {
-name = "Phönix-Echo",
-description = "Einmal pro Lauf wird ein tödlicher Treffer zurückgespult und du wirst auf derselben Ebene wiederbelebt.",
-},
+				abyssal_catalyst = {
+					name = "Abyss-Katalysator",
+					description = "Erhalte sofort ein Schild und stärkere Combo-Belohnungen, aber Laser laden schneller, feuern schneller und haben kürzere Abklingzeiten.",
+				},
+				tectonic_resolve = {
+					name = "Tektonische Entschlossenheit",
+					description = "Die Fels-Spawnchance sinkt um 15%. Jede Frucht hat eine Chance von 20%, den nächstgelegenen Felsen zu zerschmettern.",
+				},
+				phoenix_echo = {
+					name = "Phönix-Echo",
+					description = "Einmal pro Lauf wird ein tödlicher Treffer zurückgespult und du wirst auf derselben Ebene wiederbelebt.",
+				},
 				thunder_dash = {
 					name = "Donnersprint",
 					description = "Drücke Leertaste (oder ${dash_face}/${dash_shoulder} auf einem Controller), um nach vorne zu dashen, Felsen zu zerschmettern und kurz schneller zu werden.",

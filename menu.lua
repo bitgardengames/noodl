@@ -187,11 +187,11 @@ local function getDailyPanelCacheEntry(challenge, panelWidth, padding, bodyFont,
 
 	local localeRevision = Localization:getRevision()
 	local challengeId = tostring(challenge.id or "__no_id")
-        local statusBar = challenge.statusBar
+	local statusBar = challenge.statusBar
 
-        local streak = DailyProgress:getStreak()
-        local currentStreak = max(0, streak and streak.current or 0)
-        local bestStreak = max(currentStreak, streak and streak.best or 0)
+	local streak = DailyProgress:getStreak()
+	local currentStreak = max(0, streak and streak.current or 0)
+	local bestStreak = max(currentStreak, streak and streak.best or 0)
 
 	local statusSignature = buildStatusBarSignature(statusBar)
 	local cacheKey = table.concat({challengeId, tostring(panelWidth), tostring(currentStreak), tostring(bestStreak), statusSignature}, "|")

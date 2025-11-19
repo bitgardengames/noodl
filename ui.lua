@@ -722,35 +722,35 @@ function UI.drawPanel(x, y, w, h, opts)
 	if opts.border ~= false then
 		borderWidth = opts.borderWidth or 2
 	end
-        local shadowPadding = calculateShadowPadding(borderWidth, opts.shadowStrokeWidth)
-        local shadowRadius = radius + shadowPadding
-        if shadowRadius > 0 then
-                local maxShadowRadius = min((w + shadowPadding * 2) / 2, (h + shadowPadding * 2) / 2)
-                if maxShadowRadius > 0 then
-                        shadowRadius = min(shadowRadius, maxShadowRadius)
-                end
-        end
-        local shadowOffset = opts.shadowOffset
-        if shadowOffset == nil then shadowOffset = UI.shadowOffset end
+	local shadowPadding = calculateShadowPadding(borderWidth, opts.shadowStrokeWidth)
+	local shadowRadius = radius + shadowPadding
+	if shadowRadius > 0 then
+		local maxShadowRadius = min((w + shadowPadding * 2) / 2, (h + shadowPadding * 2) / 2)
+		if maxShadowRadius > 0 then
+			shadowRadius = min(shadowRadius, maxShadowRadius)
+		end
+	end
+	local shadowOffset = opts.shadowOffset
+	if shadowOffset == nil then shadowOffset = UI.shadowOffset end
 
-        local alphaMultiplier = opts.alpha or 1
+	local alphaMultiplier = opts.alpha or 1
 
-        if shadowOffset and shadowOffset ~= 0 then
-                setColor(opts.shadowColor or UI.colors.shadow, (opts.shadowAlpha or 1) * alphaMultiplier)
-                love.graphics.rectangle(
-                        "fill",
-                        x + shadowOffset - shadowPadding,
-                        y + shadowOffset - shadowPadding,
-                        w + shadowPadding * 2,
-                        h + shadowPadding * 2,
-                        shadowRadius,
-                        shadowRadius
-                )
-        end
+	if shadowOffset and shadowOffset ~= 0 then
+		setColor(opts.shadowColor or UI.colors.shadow, (opts.shadowAlpha or 1) * alphaMultiplier)
+		love.graphics.rectangle(
+			"fill",
+			x + shadowOffset - shadowPadding,
+			y + shadowOffset - shadowPadding,
+			w + shadowPadding * 2,
+			h + shadowPadding * 2,
+			shadowRadius,
+			shadowRadius
+		)
+	end
 
-        local fillColor = opts.fill or UI.colors.panel or UI.colors.button
-        setColor(fillColor, alphaMultiplier)
-        love.graphics.rectangle("fill", x, y, w, h, radius, radius)
+	local fillColor = opts.fill or UI.colors.panel or UI.colors.button
+	setColor(fillColor, alphaMultiplier)
+	love.graphics.rectangle("fill", x, y, w, h, radius, radius)
 
 	if opts.highlight ~= false then
 		local highlightAlpha = opts.highlightAlpha

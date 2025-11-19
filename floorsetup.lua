@@ -660,7 +660,7 @@ local function buildSpawnPlan(traitContext, safeZone, reservedCells, reservedSaf
 		laserCount = desiredLasers,
 		darts = dartPlan,
 		dartCount = desiredDarts,
-}
+	}
 end
 
 function FloorSetup.prepare(floorNum, floorData)

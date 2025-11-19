@@ -1147,12 +1147,12 @@ function Snake:resetModifiers()
 	self.timeDilation = nil
 	self.adrenaline = nil
 	self.hazardGraceTimer = 0
-self.abyssalCatalyst = nil
-self.phoenixEcho = nil
-self.eventHorizon = nil
-self.stormchaser = nil
-self.temporalAnchor = nil
-self.swiftFangs = nil
+	self.abyssalCatalyst = nil
+	self.phoenixEcho = nil
+	self.eventHorizon = nil
+	self.stormchaser = nil
+	self.temporalAnchor = nil
+	self.swiftFangs = nil
 	self.zephyrCoils = nil
 	self.stoneSkinVisual = nil
 	self.speedVisual = nil
@@ -1330,8 +1330,8 @@ function Snake:setEventHorizonActive(active)
 end
 
 function Snake:onShieldConsumed(x, y, cause)
-if (not x or not y) and self.getHead then
-x, y = self:getHead()
+	if (not x or not y) and self.getHead then
+		x, y = self:getHead()
 	end
 
 	local Upgrades = package.loaded["upgrades"]
@@ -2565,18 +2565,18 @@ local function collectUpgradeVisuals(self)
 		entry.cooldownTimer = dash.cooldownTimer or 0
 	end
 
-local abyssal = self.abyssalCatalyst
-if abyssal and ((abyssal.intensity or 0) > 1e-3 or (abyssal.target or 0) > 0) then
-local entry = acquireEntry("abyssalCatalyst")
-entry.intensity = abyssal.intensity or 0
-entry.stacks = abyssal.stacks or 0
-entry.pulse = abyssal.pulse or abyssal.time or 0
-end
+	local abyssal = self.abyssalCatalyst
+	if abyssal and ((abyssal.intensity or 0) > 1e-3 or (abyssal.target or 0) > 0) then
+		local entry = acquireEntry("abyssalCatalyst")
+		entry.intensity = abyssal.intensity or 0
+		entry.stacks = abyssal.stacks or 0
+		entry.pulse = abyssal.pulse or abyssal.time or 0
+	end
 
-local stormchaser = self.stormchaser
-if stormchaser and ((stormchaser.intensity or 0) > 1e-3 or (stormchaser.target or 0) > 0) then
-local entry = acquireEntry("stormchaser")
-entry.intensity = stormchaser.intensity or 0
+	local stormchaser = self.stormchaser
+	if stormchaser and ((stormchaser.intensity or 0) > 1e-3 or (stormchaser.target or 0) > 0) then
+		local entry = acquireEntry("stormchaser")
+		entry.intensity = stormchaser.intensity or 0
 		entry.primed = stormchaser.primed or false
 		entry.time = stormchaser.time or 0
 	end
@@ -3269,18 +3269,18 @@ function Snake:update(dt)
 		end
 	end
 
-if self.stormchaser then
-local state = self.stormchaser
-state.time = (state.time or 0) + dt
-local intensity = state.intensity or 0
-local target = state.target or 0
-local blend = min(1, dt * (state.primed and 6.5 or 4.2))
-intensity = intensity + (target - intensity) * blend
-state.intensity = intensity
-if not state.primed and target <= 0 and intensity < 0.02 then
-self.stormchaser = nil
-end
-end
+	if self.stormchaser then
+		local state = self.stormchaser
+		state.time = (state.time or 0) + dt
+		local intensity = state.intensity or 0
+		local target = state.target or 0
+		local blend = min(1, dt * (state.primed and 6.5 or 4.2))
+		intensity = intensity + (target - intensity) * blend
+		state.intensity = intensity
+		if not state.primed and target <= 0 and intensity < 0.02 then
+			self.stormchaser = nil
+		end
+	end
 
 	if self.diffractionBarrier then
 		local state = self.diffractionBarrier
