@@ -1112,7 +1112,7 @@ function AchievementsMenu:draw()
 	)
 	love.graphics.pop()
 
-	local clipPadding = 4
+	local clipPadding = 12
 	local clipX = panelX + clipPadding
 	local clipY = panelY + clipPadding
 	local clipW = panelWidth - clipPadding * 2
