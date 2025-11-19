@@ -1194,54 +1194,41 @@ local badgeDefinitions = {
 	default = {
 		label = "General",
 		shape = "circle",
-		fallback = {0.66, 0.72, 0.9, 1},
 		outlineFactor = 0.52,
 		shadowAlpha = 0.65,
 	},
 	economy = {
 		label = "Economy",
 		shape = "circle",
-		colorKey = "goldenPearColor",
-		fallback = {0.95, 0.80, 0.45, 1},
 		outlineFactor = 0.42,
 	},
 	defense = {
 		label = "Defense",
 		shape = "diamond",
-		colorKey = "snakeDefault",
-		fallback = {0.45, 0.85, 0.70, 1},
 		cornerRadiusScale = 0.18,
 		cornerSegments = 4,
 	},
 	mobility = {
 		label = "Mobility",
 		shape = "triangle_up",
-		colorKey = "blueberryColor",
-		fallback = {0.55, 0.65, 0.95, 1},
 		cornerRadiusScale = 0.15,
 		cornerSegments = 3,
 	},
 	risk = {
 		label = "Risk",
 		shape = "triangle_down",
-		colorKey = "warningColor",
-		fallback = {0.92, 0.55, 0.40, 1},
 		cornerRadiusScale = 0.15,
 		cornerSegments = 3,
 	},
 	utility = {
 		label = "Utility",
 		shape = "square",
-		colorKey = "panelBorder",
-		fallback = {0.32, 0.50, 0.54, 1},
 		cornerRadiusScale = 0.2,
 		cornerSegments = 4,
 	},
 	hazard = {
 		label = "Hazard",
 		shape = "hexagon",
-		colorKey = "appleColor",
-		fallback = {0.90, 0.45, 0.55, 1},
 		cornerRadiusScale = 0.12,
 		cornerSegments = 5,
 	},
@@ -1265,26 +1252,11 @@ local function resolveBadgeDefinition(definition)
 
 	local resolved = resolvedBadgeStyles[definition]
 	if not resolved then
-		resolved = {color = {1, 1, 1, 1}}
+		resolved = {color = {0.88, 0.88, 0.90, 1}}
 		resolvedBadgeStyles[definition] = resolved
 	end
 
-	local colorSource
-	if definition.colorKey and Theme[definition.colorKey] then
-		colorSource = Theme[definition.colorKey]
-	elseif definition.color then
-		colorSource = definition.color
-	end
-
-	local fallback = definition.fallback or {1, 1, 1, 1}
-	colorSource = colorSource or fallback
-
-	local color = resolved.color
-	color[1] = colorSource[1] or fallback[1] or 1
-	color[2] = colorSource[2] or fallback[2] or 1
-	color[3] = colorSource[3] or fallback[3] or 1
-	color[4] = colorSource[4] or fallback[4] or 1
-
+	resolved.color = {0.88, 0.88, 0.90, 1}
 	resolved.shape = definition.shape or "circle"
 	resolved.outlineFactor = definition.outlineFactor
 	resolved.outline = definition.outline
