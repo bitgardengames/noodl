@@ -191,6 +191,11 @@ local function getContentAnimationProgress(self)
         return Easing.easeOutCubic(progress)
 end
 
+local function getStaggeredAlpha(progress, delay, duration)
+        local adjusted = Easing.clamp01((progress - (delay or 0)) / (duration or 1))
+        return Easing.easeOutCubic(adjusted)
+end
+
 local function ensureFonts()
         fontTitle = UI.fonts.title or love.graphics.getFont()
         fontScore = UI.fonts.heading or love.graphics.getFont()
@@ -231,23 +236,27 @@ end
 local function getDetailedStats()
         local timeLabel = getLocalizedOrFallback("gameover.stats_time_label", "Time Alive")
         local floorsLabel = getLocalizedOrFallback("gameover.stats_floors_label", "Floors")
-        local tilesLabel = getLocalizedOrFallback("gameover.stats_tiles_label", "Tiles")
         local combosLabel = getLocalizedOrFallback("gameover.stats_combos_label", "Combos")
-        local dragonfruitLabel = getLocalizedOrFallback("gameover.stats_dragonfruit_label", "Dragonfruit")
-        local depthLabel = getLocalizedOrFallback("gameover.stats_depth_label", "Deepest Floor")
         local comboBestLabel = getLocalizedOrFallback("gameover.stats_best_combo_label", "Best Combo")
-        local lifetimeLabel = getLocalizedOrFallback("gameover.stats_total_apples_label", "Lifetime Fruit")
 
         return {
                 {label = timeLabel, value = formatTime(stats.timeAlive)},
                 {label = floorsLabel, value = tostring(stats.floorsCleared or 0)},
-                {label = tilesLabel, value = tostring(stats.tilesTravelled or 0)},
                 {label = combosLabel, value = tostring(stats.combosTriggered or 0)},
                 {label = comboBestLabel, value = tostring(stats.bestComboStreak or 0)},
-                {label = dragonfruitLabel, value = tostring(stats.dragonfruit or 0)},
-                {label = depthLabel, value = tostring(stats.deepestFloor or 0)},
-                {label = lifetimeLabel, value = tostring(stats.totalApples or 0)},
         }
+end
+
+local function getDetailColumns(entryCount)
+        if not entryCount or entryCount <= 0 then
+                return 0
+        end
+
+        if entryCount <= 4 then
+                return 2
+        end
+
+        return 3
 end
 
 local function drawHighlightStats(self, entries, x, y, width, sectionPadding, innerSpacing, alpha)
@@ -293,13 +302,13 @@ local function drawHighlightStats(self, entries, x, y, width, sectionPadding, in
         end
 end
 
-local function drawDetailedStats(entries, x, y, width, sectionPadding, innerSpacing, alpha)
+local function drawDetailedStats(entries, x, y, width, sectionPadding, innerSpacing, alpha, columnCount)
         if not entries or #entries == 0 then
                 return 0
         end
 
         local availableWidth = max(0, width - sectionPadding * 2)
-        local columns = 3
+        local columns = columnCount or getDetailColumns(#entries)
         local columnWidth = availableWidth / columns
         local labelFont = fontProgressLabel or fontProgressSmall
         local valueFont = fontProgressValue or fontSmall
@@ -403,7 +412,8 @@ function GameOver:updateLayoutMetrics()
         local detailLabelHeight = labelFont and labelFont:getHeight() or 0
         local detailValueHeight = detailValueFont and detailValueFont:getHeight() or 0
         local detailRowHeight = detailLabelHeight + innerSpacing + detailValueHeight
-        local detailRows = (detailEntries and #detailEntries or 0) > 0 and ceil(#detailEntries / 3) or 0
+        local detailColumns = getDetailColumns(detailEntries and #detailEntries or 0)
+        local detailRows = (detailEntries and #detailEntries or 0) > 0 and ceil(#detailEntries / max(1, detailColumns)) or 0
         local detailPanelHeight = 0
         if detailRows > 0 then
                 detailPanelHeight = sectionPadding * 2 + detailRows * detailRowHeight + max(0, (detailRows - 1) * innerSpacing)
@@ -424,6 +434,7 @@ function GameOver:updateLayoutMetrics()
         self.messagePanelHeight = messagePanelHeight
         self.scorePanelHeight = scorePanelHeight
         self.detailPanelHeight = detailPanelHeight
+        self.detailColumns = detailColumns
         self.summaryPanelHeight = panelHeight
 
         return changed
@@ -458,16 +469,19 @@ function GameOver:updateButtonLayout()
 end
 
 function GameOver:enter(data)
-	data = data or {}
+        data = data or {}
 
-	UI.clearButtons()
-	ensureFonts()
-	resetAnalogAxis()
+        UI.clearButtons()
+        ensureFonts()
+        resetAnalogAxis()
+
+        for key in pairs(stats) do
+                stats[key] = nil
+        end
 
         stats.score = data.score or 0
         stats.highScore = data.highScore or stats.score or 0
         stats.apples = data.apples or 0
-        stats.totalApples = data.totalApples or 0
         stats.timeAlive = (data.stats and data.stats.timeAlive) or 0
         stats.tilesTravelled = (data.stats and data.stats.tilesTravelled) or 0
         stats.combosTriggered = (data.stats and data.stats.combosTriggered) or 0
@@ -548,6 +562,12 @@ function GameOver:draw()
         local contentProgress = getContentAnimationProgress(self)
         local contentAlpha = contentProgress
         local panelOffset = (1 - contentProgress) * ((UI.scaled and UI.scaled(26, 14)) or 18)
+        local messageAlpha = getStaggeredAlpha(contentProgress, 0, 0.4) * contentAlpha
+        local statsAlpha = getStaggeredAlpha(contentProgress, 0.1, 0.4) * contentAlpha
+        local detailsAlpha = getStaggeredAlpha(contentProgress, 0.2, 0.4) * contentAlpha
+        local messageOffset = (1 - messageAlpha) * ((UI.scaled and UI.scaled(10, 6)) or 8)
+        local statsOffset = (1 - statsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
+        local detailsOffset = (1 - detailsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
         local highlightEntries = getHighlightStats(self)
         local detailEntries = getDetailedStats()
 
@@ -562,20 +582,20 @@ function GameOver:draw()
         )
 
         local messageWidth = max(0, innerWidth - sectionPadding * 2)
-        local messageY = panelY + padding + sectionPadding
+        local messageY = panelY + padding + sectionPadding + messageOffset
         UI.drawLabel(messageText, contentX + padding + sectionPadding, messageY, messageWidth, "center", {
                 font = fontMessage,
-                color = withAlpha(UI.colors.mutedText or UI.colors.text, contentAlpha),
+                color = withAlpha(UI.colors.mutedText or UI.colors.text, messageAlpha),
                 shadow = true,
                 shadowOffset = TEXT_SHADOW_OFFSET,
                 }
         )
 
         local statsY = panelY + padding + (self.messagePanelHeight or 0) + sectionSpacing
-        drawHighlightStats(self, highlightEntries, contentX + padding, statsY, innerWidth, sectionPadding, innerSpacing, contentAlpha)
+        drawHighlightStats(self, highlightEntries, contentX + padding, statsY + statsOffset, innerWidth, sectionPadding, innerSpacing, statsAlpha)
 
         local detailY = statsY + (self.scorePanelHeight or 0) + sectionSpacing
-        drawDetailedStats(detailEntries, contentX + padding, detailY, innerWidth, sectionPadding, innerSpacing, contentAlpha)
+        drawDetailedStats(detailEntries, contentX + padding, detailY + detailsOffset, innerWidth, sectionPadding, innerSpacing, detailsAlpha, self.detailColumns)
 
         love.graphics.pop()
 
