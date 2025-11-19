@@ -193,13 +193,17 @@ local function finalizeRunResult(self, options)
 
 	self:setHighScore(self.current)
 
-	local runFruit = SessionStats:get("fruitEaten") or 0
-	local lifetimeFruit = PlayerStats:get("totalFruitEaten") or 0
-	local runTiles = SessionStats:get("tilesTravelled") or 0
-	local runCombos = SessionStats:get("combosTriggered") or 0
-	local runTime = SessionStats:get("timeAlive") or 0
-	local fastestFloor = SessionStats:get("fastestFloorClear") or 0
-	local slowestFloor = SessionStats:get("slowestFloorClear") or 0
+        local runFruit = SessionStats:get("fruitEaten") or 0
+        local lifetimeFruit = PlayerStats:get("totalFruitEaten") or 0
+        local runTiles = SessionStats:get("tilesTravelled") or 0
+        local runCombos = SessionStats:get("combosTriggered") or 0
+        local runTime = SessionStats:get("timeAlive") or 0
+        local fastestFloor = SessionStats:get("fastestFloorClear") or 0
+        local slowestFloor = SessionStats:get("slowestFloorClear") or 0
+        local floorsCleared = SessionStats:get("floorsCleared") or 0
+        local deepestFloor = SessionStats:get("deepestFloorReached") or 0
+        local bestComboStreak = SessionStats:get("bestComboStreak") or 0
+        local dragonfruitEaten = SessionStats:get("dragonfruitEaten") or 0
 
 	PlayerStats:updateMax("mostFruitInRun", runFruit)
 	if runTime > 0 then
@@ -223,15 +227,24 @@ local function finalizeRunResult(self, options)
 	end
 
 	local result = {
-		score       = self.current,
-		highScore   = self:getHighScore(),
-		apples      = runFruit,
-		totalApples = lifetimeFruit,
-		stats = {
-			apples = runFruit
-		},
-		cause = cause,
-		won = won,
+                score       = self.current,
+                highScore   = self:getHighScore(),
+                apples      = runFruit,
+                totalApples = lifetimeFruit,
+                stats = {
+                        apples = runFruit,
+                        timeAlive = runTime,
+                        tilesTravelled = runTiles,
+                        combosTriggered = runCombos,
+                        floorsCleared = floorsCleared,
+                        deepestFloor = deepestFloor,
+                        fastestFloor = fastestFloor,
+                        slowestFloor = slowestFloor,
+                        bestComboStreak = bestComboStreak,
+                        dragonfruit = dragonfruitEaten,
+                },
+                cause = cause,
+                won = won,
 	}
 
 	if options.endingMessage then
