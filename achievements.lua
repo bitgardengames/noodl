@@ -1,6 +1,7 @@
 local Audio = require("audio")
 local Localization = require("localization")
 local PlayerStats = require("playerstats")
+local DailyProgress = require("dailyprogress")
 local SessionStats = require("sessionstats")
 local floor = math.floor
 local min = math.min
@@ -211,7 +212,8 @@ function Achievements:_ensureInitialized()
 			state.totalFruitEaten = PlayerStats:get("totalFruitEaten") or 0
 			state.totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0
 			state.bestComboStreak = PlayerStats:get("bestComboStreak") or 0
-			state.dailyChallengesCompleted = PlayerStats:get("dailyChallengesCompleted") or 0
+                        local totals = DailyProgress:getTotals()
+                        state.dailyChallengesCompleted = (totals and totals.completed) or 0
 			state.shieldWallBounces = PlayerStats:get("shieldWallBounces") or 0
 			state.shieldRockBreaks = PlayerStats:get("shieldRockBreaks") or 0
 			state.shieldSawParries = PlayerStats:get("shieldSawParries") or 0

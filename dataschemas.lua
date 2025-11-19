@@ -128,11 +128,6 @@ DataSchemas.playerStats = {
 		default = 0,
 		description = "Highest combo streak recorded.",
 	},
-	dailyChallengesCompleted = {
-		type = "number",
-		default = 0,
-		description = "Daily challenges completed.",
-	},
 	shieldWallBounces = {
 		type = "number",
 		default = 0,
@@ -162,20 +157,6 @@ DataSchemas.playerStats = {
 		type = "number",
 		default = 0,
 		description = "Legendary upgrades purchased across all runs.",
-	},
-	dailyChallengeStreak = {
-		type = "number",
-		default = 0,
-		description = "Current daily challenge completion streak.",
-	},
-	dailyChallengeBestStreak = {
-		type = "number",
-		default = 0,
-		description = "Best daily challenge streak achieved.",
-	},
-	dailyChallengeLastCompletionDay = {
-		type = "number",
-		description = "Calendar day value of the most recent daily completion.",
 	},
 	mostFruitInRun = {
 		type = "number",
