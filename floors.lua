@@ -29,11 +29,11 @@ local Floors = {
 		nameKey = "floors.tide_vault.name",
 		flavorKey = "floors.tide_vault.flavor",
 		palette = {
-			bgColor     = {0.09, 0.11, 0.12, 1},
-			arenaBG     = {0.24, 0.38, 0.32, 1},  -- muted verdigris
-			arenaBorder = {0.32, 0.46, 0.38, 1},  -- oxidized frame
-			rock        = {0.66, 0.70, 0.68, 1},  -- cool mineral stone
-			sawColor    = {0.80, 0.84, 0.86, 1},
+			bgColor     = {0.09, 0.11, 0.12, 1}, -- same, unified dark bg
+			arenaBG     = {0.30, 0.27, 0.22, 1},   -- warm mushroom stone (taupe/earth)
+			arenaBorder = {0.40, 0.35, 0.28, 1},   -- deeper ancient stone frame
+			rock        = {0.70, 0.66, 0.60, 1},   -- light warm granite
+			sawColor    = {0.82, 0.86, 0.88, 1},   -- neutral steel
 		},
 	},
 

@@ -1194,13 +1194,10 @@ local badgeDefinitions = {
 	default = {
 		label = "General",
 		shape = "circle",
-		outlineFactor = 0.52,
-		shadowAlpha = 0.65,
 	},
 	economy = {
 		label = "Economy",
 		shape = "circle",
-		outlineFactor = 0.42,
 	},
 	defense = {
 		label = "Defense",
@@ -1261,7 +1258,6 @@ local function resolveBadgeDefinition(definition)
 	resolved.outlineFactor = definition.outlineFactor
 	resolved.outline = definition.outline
 	resolved.shadowOffset = definition.shadowOffset
-	resolved.shadowAlpha = definition.shadowAlpha
 	resolved.shadow = definition.shadow
 	resolved.cornerRadius = definition.cornerRadius
 	resolved.cornerRadiusScale = definition.cornerRadiusScale
@@ -1396,16 +1392,16 @@ local badgeShapeDrawers = {
 		love.graphics.circle(mode, cx, cy, r, 32)
 	end,
 	square = function(mode, cx, cy, size, style)
-		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS, 4, size * CORNER_RADIUS, 4, 0)
+		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS * 1.02, 4, size * CORNER_RADIUS, 4, 0)
 	end,
 	diamond = function(mode, cx, cy, size, style)
 		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS, 4, size * CORNER_RADIUS, 4, math.pi / 4)
 	end,
 	triangle_up = function(mode, cx, cy, size, style)
-		drawRoundedRegularPolygon(mode, cx, cy + size * 0.02, size * SHAPE_RADIUS * 1.08, 3, size * CORNER_RADIUS * 0.8, 4, 0)
+		drawRoundedRegularPolygon(mode, cx, cy + size * 0.02, size * SHAPE_RADIUS * 1.1, 3, size * CORNER_RADIUS * 0.8, 4, 0)
 	end,
 	triangle_down = function(mode, cx, cy, size, style)
-		drawRoundedRegularPolygon(mode, cx, cy - size * 0.02, size * SHAPE_RADIUS * 1.08, 3, size * CORNER_RADIUS * 0.8, 4, math.pi)
+		drawRoundedRegularPolygon(mode, cx, cy - size * 0.02, size * SHAPE_RADIUS * 1.1, 3, size * CORNER_RADIUS * 0.8, 4, math.pi)
 	end,
 	hexagon = function(mode, cx, cy, size, style)
 		drawRoundedRegularPolygon(mode, cx, cy, size * SHAPE_RADIUS * 0.96, 6, size * CORNER_RADIUS * 0.9, 4, 0)
@@ -1427,13 +1423,6 @@ local function drawBadge(setColorFn, style, cx, cy, size)
 	local badgeOpacity = 0.10
 	setColorFn(fill[1], fill[2], fill[3], (fill[4] or 1) * badgeOpacity)
 	drawBadgeShape(shape, "fill", cx, cy, size, style)
-
-	local outlineColor = style.outline or scaleColor(fill, style.outlineFactor or 0.55)
-	local previousWidth = love.graphics.getLineWidth()
-	love.graphics.setLineWidth(style.outlineWidth or 2)
-	setColorFn(outlineColor[1], outlineColor[2], outlineColor[3], (outlineColor[4] or 1) * badgeOpacity)
-	drawBadgeShape(shape, "line", cx, cy, size, style)
-	love.graphics.setLineWidth(previousWidth)
 
 	setColorFn(1, 1, 1, 1)
 end
@@ -1510,11 +1499,6 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		love.graphics.setLineWidth(10)
 		love.graphics.rectangle("line", x - 14, y - 14, w + 28, h + 28, 18, 18)
 		love.graphics.setLineWidth(4)
-	end
-
-	if style.shadowAlpha and style.shadowAlpha > 0 then
-		setColor(0, 0, 0, style.shadowAlpha)
-		love.graphics.rectangle("fill", x + 6, y + 10, w, h, 18, 18)
 	end
 
 	applyColor(setColor, style.base)
