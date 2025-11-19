@@ -715,7 +715,7 @@ local function computeClampedCollisionRadius(saw, collisionX, collisionY)
 		return radius
 	end
 
-return radius
+	return radius
 end
 
 local function updateSawCachedPositions(saw)
