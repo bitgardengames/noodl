@@ -22,6 +22,7 @@ local FloorSetup = {}
 
 local TRACK_LENGTH = 120
 local DEFAULT_SAW_RADIUS = 16
+local SAW_SPACING_RADIUS = 1
 local EMBER_SAW_COLOR = {1.0, 0.47, 0.18, 1}
 local EMBER_SAW_TRAIL_COLOR = {1.0, 0.32, 0.08, 0.2}
 local EMBER_SAW_GLOW_COLOR = {1.0, 0.62, 0.22, 0.44}
@@ -231,6 +232,70 @@ local function buildCellLookup(cells)
 end
 
 local trackThreatCellBuffer = {}
+local sawSpacingCellBuffer = {}
+
+local function markSpacingCell(spacingLookup, col, row)
+        if not spacingLookup then
+                return
+        end
+
+        local cols = Arena.cols or 0
+        local rows = Arena.rows or 0
+        if col < 1 or row < 1 or col > cols or row > rows then
+                return
+        end
+
+        spacingLookup[col .. "," .. row] = true
+end
+
+local function sawSpacingIsClear(spacingLookup, cells)
+        if not spacingLookup then
+                return true
+        end
+
+        local radius = SAW_SPACING_RADIUS or 0
+        if radius <= 0 then
+                return true
+        end
+
+        for i = 1, #cells do
+                local cell = cells[i]
+                local baseCol = cell[1]
+                local baseRow = cell[2]
+                for dx = -radius, radius do
+                        for dy = -radius, radius do
+                                local key = (baseCol + dx) .. "," .. (baseRow + dy)
+                                if spacingLookup[key] then
+                                        return false
+                                end
+                        end
+                end
+        end
+
+        return true
+end
+
+local function reserveSawSpacing(spacingLookup, cells)
+        if not spacingLookup then
+                return
+        end
+
+        local radius = SAW_SPACING_RADIUS or 0
+        if radius <= 0 then
+                return
+        end
+
+        for i = 1, #cells do
+                local cell = cells[i]
+                local baseCol = cell[1]
+                local baseRow = cell[2]
+                for dx = -radius, radius do
+                        for dy = -radius, radius do
+                                markSpacingCell(spacingLookup, baseCol + dx, baseRow + dy)
+                        end
+                end
+        end
+end
 
 local function trackThreatensSpawnBuffer(fx, fy, dir, spawnLookup)
 	if not spawnLookup then
@@ -248,33 +313,43 @@ local function trackThreatensSpawnBuffer(fx, fy, dir, spawnLookup)
 	return false
 end
 
-local function trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup, options)
-	local row = love.math.random(2, Arena.rows - 1)
-	local col = love.math.random(1 + halfTiles, Arena.cols - halfTiles)
-	local fx, fy = Arena:getCenterOfTile(col, row)
+local function trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup, options, spacingLookup)
+        local row = love.math.random(2, Arena.rows - 1)
+        local col = love.math.random(1 + halfTiles, Arena.cols - halfTiles)
+        local fx, fy = Arena:getCenterOfTile(col, row)
 
-	if sawPlacementThreatensSpawn(col, row, "horizontal") then
-		return false
-	end
+        if sawPlacementThreatensSpawn(col, row, "horizontal") then
+                return false
+        end
 
-	if trackThreatensSpawnBuffer(fx, fy, "horizontal", spawnLookup) then
-		return false
-	end
+        if trackThreatensSpawnBuffer(fx, fy, "horizontal", spawnLookup) then
+                return false
+        end
 
-	if SnakeUtils.sawTrackIsFree(fx, fy, "horizontal") then
-		Saws:spawn(fx, fy, bladeRadius, 8, "horizontal", nil, options)
-		SnakeUtils.occupySawTrack(fx, fy, "horizontal")
-		return true
-	end
+        local trackCells = SnakeUtils.getSawTrackCells(fx, fy, "horizontal", sawSpacingCellBuffer)
+        if not trackCells or #trackCells == 0 then
+                return false
+        end
 
-	return false
+        if not sawSpacingIsClear(spacingLookup, trackCells) then
+                return false
+        end
+
+        if SnakeUtils.sawTrackIsFree(fx, fy, "horizontal") then
+                Saws:spawn(fx, fy, bladeRadius, 8, "horizontal", nil, options)
+                SnakeUtils.occupySawTrack(fx, fy, "horizontal")
+                reserveSawSpacing(spacingLookup, trackCells)
+                return true
+        end
+
+        return false
 end
 
-local function trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, options)
-	local side = (love.math.random() < 0.5) and "left" or "right"
-	local col = (side == "left") and 1 or Arena.cols
-	local row = love.math.random(1 + halfTiles, Arena.rows - halfTiles)
-	local fx, fy = Arena:getCenterOfTile(col, row)
+local function trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, options, spacingLookup)
+        local side = (love.math.random() < 0.5) and "left" or "right"
+        local col = (side == "left") and 1 or Arena.cols
+        local row = love.math.random(1 + halfTiles, Arena.rows - halfTiles)
+        local fx, fy = Arena:getCenterOfTile(col, row)
 
 	if sawPlacementThreatensSpawn(col, row, "vertical") then
 		return false
@@ -284,18 +359,29 @@ local function trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, options)
 		return false
 	end
 
-	if SnakeUtils.sawTrackIsFree(fx, fy, "vertical") then
-		Saws:spawn(fx, fy, bladeRadius, 8, "vertical", side, options)
-		SnakeUtils.occupySawTrack(fx, fy, "vertical")
-		return true
-	end
+        local trackCells = SnakeUtils.getSawTrackCells(fx, fy, "vertical", sawSpacingCellBuffer)
+        if not trackCells or #trackCells == 0 then
+                return false
+        end
 
-	return false
+        if not sawSpacingIsClear(spacingLookup, trackCells) then
+                return false
+        end
+
+        if SnakeUtils.sawTrackIsFree(fx, fy, "vertical") then
+                Saws:spawn(fx, fy, bladeRadius, 8, "vertical", side, options)
+                SnakeUtils.occupySawTrack(fx, fy, "vertical")
+                reserveSawSpacing(spacingLookup, trackCells)
+                return true
+        end
+
+        return false
 end
 
 local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
-	local spawnLookup = buildCellLookup(spawnBuffer)
-	options = options or {}
+        local spawnLookup = buildCellLookup(spawnBuffer)
+        local spacingLookup = {}
+        options = options or {}
 	local specialQueue = {}
 	local defaultOptions = options.spawnWithSink and {spawnWithSink = true} or nil
 	local function addSpecial(count, specialOptions)
@@ -351,12 +437,12 @@ local function spawnSaws(numSaws, halfTiles, bladeRadius, spawnBuffer, options)
 		while not placed and attempts < maxAttempts do
 			attempts = attempts + 1
 
-			if dir == "horizontal" then
-				placed = trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup, sawOptions)
-			else
-				placed = trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, sawOptions)
-			end
-		end
+                        if dir == "horizontal" then
+                                placed = trySpawnHorizontalSaw(halfTiles, bladeRadius, spawnLookup, sawOptions, spacingLookup)
+                        else
+                                placed = trySpawnVerticalSaw(halfTiles, bladeRadius, spawnLookup, sawOptions, spacingLookup)
+                        end
+                end
 
 		if placed and activeSpecial then
 			activeSpecial.remaining = max(0, (activeSpecial.remaining or 0) - 1)
