@@ -715,26 +715,6 @@ local function computeClampedCollisionRadius(saw, collisionX, collisionY)
 		return radius
 	end
 
-	--[[if saw.dir == "horizontal" then
-	local trackMinX = saw.trackMinX
-	local trackMaxX = saw.trackMaxX
-	if trackMinX and trackMaxX and collisionX then
-		local limit = min(collisionX - trackMinX, trackMaxX - collisionX)
-		if limit and limit < radius then
-			radius = max(limit, 0)
-		end
-	end
-else
-	local trackMinY = saw.trackMinY
-	local trackMaxY = saw.trackMaxY
-	if trackMinY and trackMaxY and collisionY then
-		local limit = min(collisionY - trackMinY, trackMaxY - collisionY)
-		if limit and limit < radius then
-			radius = max(limit, 0)
-		end
-	end
-end]]
-
 return radius
 end
 

@@ -22,7 +22,7 @@ local FloorSetup = {}
 
 local TRACK_LENGTH = 120
 local DEFAULT_SAW_RADIUS = 16
-local SAW_SPACING_RADIUS = 1
+local SAW_SPACING_RADIUS = 2
 local EMBER_SAW_COLOR = {1.0, 0.47, 0.18, 1}
 local EMBER_SAW_TRAIL_COLOR = {1.0, 0.32, 0.08, 0.2}
 local EMBER_SAW_GLOW_COLOR = {1.0, 0.62, 0.22, 0.44}
