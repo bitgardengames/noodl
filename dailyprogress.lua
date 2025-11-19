@@ -129,72 +129,84 @@ function DailyProgress:save()
 end
 
 function DailyProgress:_getDayEntry(dayValue, create)
+        self:_ensureData()
+
         if type(dayValue) ~= "number" or dayValue <= 0 then
-                        return nil
+                return nil
         end
 
         local days = ensureTable(self.data, "days")
         local entry = days[dayValue]
         if not entry and create then
-                        entry = {}
-                        days[dayValue] = entry
+                entry = {}
+                days[dayValue] = entry
         end
 
         return entry
 end
 
 function DailyProgress:_getChallengeEntry(dayValue, challengeId, create)
+        self:_ensureData()
+
         if not challengeId or dayValue == nil then
-                        return nil
+                return nil
         end
 
         local dayEntry = self:_getDayEntry(dayValue, create)
         if not dayEntry then
-                        return nil
+                return nil
         end
 
         local entry = dayEntry[challengeId]
         if not entry and create then
-                        entry = {progress = 0, complete = false}
-                        dayEntry[challengeId] = entry
+                entry = {progress = 0, complete = false}
+                dayEntry[challengeId] = entry
         end
 
         return entry
 end
 
 function DailyProgress:getProgress(challengeId, dayValue)
+        self:_ensureData()
+
         local entry = self:_getChallengeEntry(dayValue, challengeId, false)
         return (entry and entry.progress) or 0
 end
 
 function DailyProgress:setProgress(challengeId, dayValue, value, saveAfter)
+        self:_ensureData()
+
         local entry = self:_getChallengeEntry(dayValue, challengeId, true)
         if not entry then
-                        return
+                return
         end
 
         entry.progress = max(0, floor(value or 0))
 
         if saveAfter ~= false then
-                        self:save()
+                self:save()
         end
 end
 
 function DailyProgress:isComplete(challengeId, dayValue)
+        self:_ensureData()
+
         local entry = self:_getChallengeEntry(dayValue, challengeId, false)
         return entry and entry.complete or false
 end
 
 function DailyProgress:setComplete(challengeId, dayValue, complete, saveAfter)
+        self:_ensureData()
+
         local entry = self:_getChallengeEntry(dayValue, challengeId, true)
         if not entry then
-                        return
+                return
         end
 
         entry.complete = complete and true or false
 
         if saveAfter ~= false then
-                        self:save()
+                self:save()
         end
 end
 
