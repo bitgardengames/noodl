@@ -211,15 +211,21 @@ local function handleButtonAction(_, action)
         return action
 end
 
-local function getHighlightStats(self)
+local function getHighlightStats(self, animProgress)
         local scoreLabel = getLocalizedOrFallback("gameover.score_label", "Score")
         local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
         local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Fruit")
 
+        local scoreValue = stats.score or 0
+        if self.isNewHighScore and scoreValue > 0 then
+                local eased = Easing.easeOutBack(animProgress or 0)
+                scoreValue = floor(scoreValue * eased + 0.5)
+        end
+
         return {
                 {
                         label = scoreLabel,
-                        value = tostring(stats.score or 0),
+                        value = tostring(scoreValue),
                         highlight = self.isNewHighScore,
                 },
                 {
@@ -568,7 +574,7 @@ function GameOver:draw()
         local messageOffset = (1 - messageAlpha) * ((UI.scaled and UI.scaled(10, 6)) or 8)
         local statsOffset = (1 - statsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
         local detailsOffset = (1 - detailsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
-        local highlightEntries = getHighlightStats(self)
+        local highlightEntries = getHighlightStats(self, contentProgress)
         local detailEntries = getDetailedStats()
 
         love.graphics.push()
@@ -585,7 +591,7 @@ function GameOver:draw()
         local messageY = panelY + padding + sectionPadding + messageOffset
         UI.drawLabel(messageText, contentX + padding + sectionPadding, messageY, messageWidth, "center", {
                 font = fontMessage,
-                color = withAlpha(UI.colors.mutedText or UI.colors.text, messageAlpha),
+                color = withAlpha(UI.colors.text or {1, 1, 1, 1}, messageAlpha),
                 shadow = true,
                 shadowOffset = TEXT_SHADOW_OFFSET,
                 }
