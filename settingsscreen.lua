@@ -998,10 +998,10 @@ function SettingsScreen:draw()
 
 	local panelPaddingX = layout.panelPaddingX or UI.spacing.panelPadding
 	local panelPaddingY = layout.panelPaddingY or UI.spacing.panelPadding
-	local viewportX = panel.x + panelPaddingX
-	local viewportY = panel.y + panelPaddingY
-	local viewportW = panel.w - panelPaddingX * 2
-	local viewportH = max(0, viewportHeight)
+	local viewportX = panel.x + (panelPaddingX / 2)
+	local viewportY = panel.y + (panelPaddingY / 2)
+	local viewportW = panel.w - panelPaddingX
+	local viewportH = max(0, viewportHeight + UI.spacing.panelPadding)
 
 	local prevScissorX, prevScissorY, prevScissorW, prevScissorH = love.graphics.getScissor()
 	local appliedScissor = false
