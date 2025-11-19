@@ -416,22 +416,18 @@ local english = {
 				name = "Trade Accord",
 				description = "Each shop slot reduces rock spawn chance by 3%.",
 			},
-			abyssal_catalyst = {
-				name = "Abyssal Catalyst",
-				description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
-			},
-			tectonic_resolve = {
-				name = "Tectonic Resolve",
-				description = "Rock spawn chance decreases by 15%. Each fruit has a 20% chance to shatter the nearest rock.",
-			},
-			titanblood_pact = {
-				name = "Titanblood Pact",
-				description = "Gain +1 shield, move 5% faster, and gain +1 extra growth per fruit.",
-			},
-			phoenix_echo = {
-				name = "Phoenix Echo",
-				description = "Once per run, a fatal hit rewinds time, reviving you on the same floor.",
-			},
+abyssal_catalyst = {
+name = "Abyssal Catalyst",
+description = "Instantly gain a shield and stronger combo rewards, but lasers charge and fire faster with shorter cooldowns.",
+},
+tectonic_resolve = {
+name = "Tectonic Resolve",
+description = "Rock spawn chance decreases by 15%. Each fruit has a 20% chance to shatter the nearest rock.",
+},
+phoenix_echo = {
+name = "Phoenix Echo",
+description = "Once per run, a fatal hit rewinds time, reviving you on the same floor.",
+},
 			thunder_dash = {
 				name = "Thunder Dash",
 				description = "Press Space (or ${dash_face}/${dash_shoulder} on a controller) to dash forward, smashing through rocks while briefly speeding up.",
