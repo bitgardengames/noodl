@@ -573,19 +573,21 @@ local function addPosition(positions, x, y)
 	end
 end
 
-local function getPushCandidates(col, row, originCol, originRow)
+local function getPushCandidates(col, row, originCol, originRow, radius)
 	if not (col and row and originCol and originRow) then
 		return nil
 	end
-
+	
+	radius = radius or TREMOR_BLOOM_RADIUS
+	
 	local dx = col - originCol
 	local dy = row - originRow
-
+	
 	if dx == 0 and dy == 0 then
 		return nil
 	end
-
-	if max(abs(dx), abs(dy)) > TREMOR_BLOOM_RADIUS then
+	
+	if max(abs(dx), abs(dy)) > radius then
 		return nil
 	end
 
@@ -628,7 +630,7 @@ local function getPushCandidates(col, row, originCol, originRow)
 	return candidates
 end
 
-local function pushNearbyRocks(originCol, originRow, positions)
+local function pushNearbyRocks(originCol, originRow, positions, radius)
 	if not Rocks or not Rocks.getAll or not arenaHasGrid() then
 		return false
 	end
@@ -642,7 +644,7 @@ local function pushNearbyRocks(originCol, originRow, positions)
 	for _, rock in ipairs(rocks) do
 		local col, row = rock.col, rock.row
 		if col and row then
-			local candidates = getPushCandidates(col, row, originCol, originRow)
+				local candidates = getPushCandidates(col, row, originCol, originRow, radius)
 			if candidates then
 				for _, candidate in ipairs(candidates) do
 					local targetCol, targetRow = candidate[1], candidate[2]
@@ -702,7 +704,7 @@ local function computeLaserFacing(dir, col, row)
 	return 1
 end
 
-local function pushNearbyLasers(originCol, originRow, positions)
+local function pushNearbyLasers(originCol, originRow, positions, radius)
 	if not Lasers or not Lasers.iterateEmitters or not arenaHasGrid() then
 		return false
 	end
@@ -806,7 +808,7 @@ local function nudgeSawAlongTrack(saw, originCol, originRow, positions)
 	return true
 end
 
-local function pushNearbySaws(originCol, originRow, positions)
+local function pushNearbySaws(originCol, originRow, positions, radius)
 	if not arenaHasGrid() then
 		return false
 	end
@@ -824,8 +826,8 @@ local function pushNearbySaws(originCol, originRow, positions)
 
 		if sx and sy then
 			local col, row = Arena:getTileFromWorld(sx, sy)
-			if col and row then
-				local candidates = getPushCandidates(col, row, originCol, originRow)
+				if col and row then
+				local candidates = getPushCandidates(col, row, originCol, originRow, radius)
 				if candidates ~= nil then
 					if nudgeSawAlongTrack(saw, originCol, originRow, positions) then
 						moved = true
@@ -838,10 +840,12 @@ local function pushNearbySaws(originCol, originRow, positions)
 	return moved
 end
 
-local function tremorBloomPushHazards(data)
+local function tremorBloomPushHazards(data, radius)
 	if not data or not arenaHasGrid() then
 		return false, nil
 	end
+
+	radius = radius or TREMOR_BLOOM_RADIUS
 
 	local fx, fy = getEventPosition(data)
 	if not (fx and fy) then
@@ -856,15 +860,15 @@ local function tremorBloomPushHazards(data)
 	local positions = {}
 	local moved = false
 
-	if pushNearbyRocks(originCol, originRow, positions) then
+	if pushNearbyRocks(originCol, originRow, positions, radius) then
 		moved = true
 	end
 
-	if pushNearbyLasers(originCol, originRow, positions) then
+	if pushNearbyLasers(originCol, originRow, positions, radius) then
 		moved = true
 	end
 
-	if pushNearbySaws(originCol, originRow, positions) then
+	if pushNearbySaws(originCol, originRow, positions, radius) then
 		moved = true
 	end
 
@@ -1661,17 +1665,20 @@ pool = {
 		end,
 		handlers = {
 		fruitCollected = function(data, state
-	)
-		if getStacks(state, "tremor_bloom") <= 0 then
+		)
+		local stacks = getStacks(state, "tremor_bloom")
+		if stacks <= 0 then
 		return
 		end
 
+		local shockwaveRadius = TREMOR_BLOOM_RADIUS + max(0, (stacks or 0) - 1)
+
 		local fx, fy = getEventPosition(data
-	)
+		)
 		if fx and fy and Arena and Arena.addFloorRipple then
 		local tileSize = Arena.tileSize or 24
 		Arena:addFloorRipple(fx, fy, {
-		radiusTiles = TREMOR_BLOOM_RADIUS + 0.65,
+		radiusTiles = shockwaveRadius + 0.65,
 		duration = 0.58,
 		thickness = tileSize * 0.6,
 		lightenAmount = 0.45,
@@ -1682,8 +1689,7 @@ pool = {
 	)
 		end
 
-		local moved, hazardPositions = tremorBloomPushHazards(data
-	)
+		local moved, hazardPositions = tremorBloomPushHazards(data, shockwaveRadius)
 		if not moved then
 		return
 		end
