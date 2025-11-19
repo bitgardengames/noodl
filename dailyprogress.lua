@@ -1,7 +1,9 @@
 local floor = math.floor
 local max = math.max
 
-local DailyProgress = {}
+local DailyProgress = {
+        _loaded = false,
+}
 
 local saveFile = "saveddaily.lua"
 
@@ -109,6 +111,7 @@ function DailyProgress:_ensureData()
 end
 
 function DailyProgress:load()
+        self._loaded = true
         if love.filesystem.getInfo(saveFile) then
                 local success, chunk = pcall(love.filesystem.load, saveFile)
                 if success and chunk then
@@ -122,6 +125,14 @@ function DailyProgress:load()
         self:_ensureData()
 end
 
+function DailyProgress:_ensureLoaded()
+        if self._loaded then
+                return
+        end
+
+        self:load()
+end
+
 function DailyProgress:save()
         self:_ensureData()
         local content = "return " .. serialize(self.data, 0) .. "\n"
@@ -129,6 +140,7 @@ function DailyProgress:save()
 end
 
 function DailyProgress:_getDayEntry(dayValue, create)
+        self:_ensureLoaded()
         self:_ensureData()
 
         if type(dayValue) ~= "number" or dayValue <= 0 then
@@ -146,6 +158,7 @@ function DailyProgress:_getDayEntry(dayValue, create)
 end
 
 function DailyProgress:_getChallengeEntry(dayValue, challengeId, create)
+        self:_ensureLoaded()
         self:_ensureData()
 
         if not challengeId or dayValue == nil then
@@ -167,6 +180,7 @@ function DailyProgress:_getChallengeEntry(dayValue, challengeId, create)
 end
 
 function DailyProgress:getProgress(challengeId, dayValue)
+        self:_ensureLoaded()
         self:_ensureData()
 
         local entry = self:_getChallengeEntry(dayValue, challengeId, false)
@@ -174,6 +188,7 @@ function DailyProgress:getProgress(challengeId, dayValue)
 end
 
 function DailyProgress:setProgress(challengeId, dayValue, value, saveAfter)
+        self:_ensureLoaded()
         self:_ensureData()
 
         local entry = self:_getChallengeEntry(dayValue, challengeId, true)
@@ -189,6 +204,7 @@ function DailyProgress:setProgress(challengeId, dayValue, value, saveAfter)
 end
 
 function DailyProgress:isComplete(challengeId, dayValue)
+        self:_ensureLoaded()
         self:_ensureData()
 
         local entry = self:_getChallengeEntry(dayValue, challengeId, false)
@@ -196,6 +212,7 @@ function DailyProgress:isComplete(challengeId, dayValue)
 end
 
 function DailyProgress:setComplete(challengeId, dayValue, complete, saveAfter)
+        self:_ensureLoaded()
         self:_ensureData()
 
         local entry = self:_getChallengeEntry(dayValue, challengeId, true)
@@ -211,16 +228,19 @@ function DailyProgress:setComplete(challengeId, dayValue, complete, saveAfter)
 end
 
 function DailyProgress:getStreak()
+        self:_ensureLoaded()
         self:_ensureData()
         return self.data.streak
 end
 
 function DailyProgress:getTotals()
+        self:_ensureLoaded()
         self:_ensureData()
         return self.data.totals
 end
 
 function DailyProgress:recordCompletion(dayValue, saveAfter)
+        self:_ensureLoaded()
         self:_ensureData()
 
         local streak = self.data.streak
