@@ -63,6 +63,7 @@ local options = {
 local buttons = {}
 local hoveredIndex = nil
 local sliderDragging = nil
+local scrollbarDrag = { active = false, grabOffset = 0 }
 local focusedIndex = 1
 local focusSource = nil
 local lastNonMouseFocusIndex = nil
@@ -292,8 +293,8 @@ local function refreshLayout(self)
 end
 
 local function clampScroll(offset)
-	if offset < minScrollOffset then
-		return minScrollOffset
+        if offset < minScrollOffset then
+                return minScrollOffset
 	elseif offset > 0 then
 		return 0
 	end
@@ -376,9 +377,11 @@ function SettingsScreen:isOptionVisible(btn)
 end
 
 function SettingsScreen:ensureFocusVisible()
-	if not focusedIndex then return end
-	local panel = layout.panel
-	if not panel or viewportHeight <= 0 then return end
+        if focusSource == "mouse" then return end
+
+        if not focusedIndex then return end
+        local panel = layout.panel
+        if not panel or viewportHeight <= 0 then return end
 
 	self:updateButtonPositions()
 
@@ -737,14 +740,32 @@ function SettingsScreen:leave()
 end
 
 function SettingsScreen:update(dt)
-	local mx, my = UI.refreshCursor()
-	hoveredIndex = nil
+        local mx, my = UI.refreshCursor()
+        hoveredIndex = nil
 
-	self:updateButtonPositions()
+        self:updateButtonPositions()
 
-	for i, btn in ipairs(buttons) do
-		local opt = btn.option
-		local visible = self:isOptionVisible(btn)
+        if scrollbarDrag.active then
+                local scrollbar = layout.scrollbar
+                local thumbHeight = scrollbar and scrollbar.thumbHeight or 0
+                local trackHeight = scrollbar and scrollbar.height or 0
+                local trackY = scrollbar and scrollbar.y or 0
+                if not scrollbar or thumbHeight <= 0 or not love.mouse.isDown(1) then
+                        scrollbarDrag.active = false
+                        scrollbarDrag.grabOffset = 0
+                else
+                        local travel = max(0, trackHeight - thumbHeight)
+                        local clampedThumbY = min(max(my - scrollbarDrag.grabOffset, trackY), trackY + travel)
+                        local progress = travel > 0 and (clampedThumbY - trackY) / travel or 0
+                        local scrollRange = contentHeight - viewportHeight
+                        self:setScroll(-scrollRange * progress)
+                        scrollbar.thumbY = clampedThumbY
+                end
+        end
+
+        for i, btn in ipairs(buttons) do
+                local opt = btn.option
+                local visible = self:isOptionVisible(btn)
 		local hovered = false
 		local canHover = btn.focusable ~= false
 		if visible and canHover then
@@ -1385,8 +1406,42 @@ function SettingsScreen:activateFocused()
 end
 
 function SettingsScreen:mousepressed(x, y, button)
-	self:updateButtonPositions()
-	local id = UI:mousepressed(x, y, button)
+        self:updateButtonPositions()
+
+        if button == 1 then
+                local scrollbar = layout.scrollbar
+                if scrollbar and scrollbar.thumbHeight and scrollbar.thumbHeight > 0 then
+                        local trackX = scrollbar.x or 0
+                        local trackY = scrollbar.y or 0
+                        local trackWidth = scrollbar.width or 0
+                        local trackHeight = scrollbar.height or 0
+                        local thumbY = scrollbar.thumbY or 0
+                        local thumbHeight = scrollbar.thumbHeight or 0
+
+                        if x >= trackX and x <= trackX + trackWidth and y >= trackY and y <= trackY + trackHeight then
+                                local thumbBottom = thumbY + thumbHeight
+                                local travel = max(0, trackHeight - thumbHeight)
+                                scrollbarDrag.active = true
+
+                                if y >= thumbY and y <= thumbBottom then
+                                        scrollbarDrag.grabOffset = y - thumbY
+                                elseif travel > 0 then
+                                        local targetThumbY = min(max(y - thumbHeight * 0.5, trackY), trackY + travel)
+                                        scrollbarDrag.grabOffset = y - targetThumbY
+                                        local progress = (targetThumbY - trackY) / travel
+                                        local scrollRange = contentHeight - viewportHeight
+                                        self:setScroll(-scrollRange * progress)
+                                        scrollbar.thumbY = targetThumbY
+                                else
+                                        scrollbarDrag.grabOffset = 0
+                                end
+
+                                return
+                        end
+                end
+        end
+
+        local id = UI:mousepressed(x, y, button)
 
 	for i, btn in ipairs(buttons) do
 		local opt = btn.option
@@ -1450,8 +1505,13 @@ function SettingsScreen:mousepressed(x, y, button)
 end
 
 function SettingsScreen:mousereleased(x, y, button)
-	UI:mousereleased(x, y, button)
-	sliderDragging = nil
+        UI:mousereleased(x, y, button)
+        sliderDragging = nil
+
+        if button == 1 and scrollbarDrag.active then
+                scrollbarDrag.active = false
+                scrollbarDrag.grabOffset = 0
+        end
 end
 
 function SettingsScreen:keypressed(key)
