@@ -1076,16 +1076,9 @@ function AchievementsMenu:draw()
 	love.graphics.pop()
 
 	local totals = Achievements:getTotals()
-	local unlockedLabel = Localization:get("achievements.summary.unlocked", {
-		unlocked = totals.unlocked,
-		total = totals.total,
-		}
-	)
+	local unlockedLabel = Localization:get("achievements.summary.unlocked", {unlocked = totals.unlocked, total = totals.total})
 	local completionPercent = toPercent(totals.completion)
-	local completionLabel = Localization:get("achievements.summary.completion", {
-		percent = completionPercent,
-		}
-	)
+	local completionLabel = Localization:get("achievements.summary.completion", {percent = completionPercent})
 	local achieveFont = UI.fonts.achieve
 
 	love.graphics.setFont(achieveFont)
@@ -1119,12 +1112,13 @@ function AchievementsMenu:draw()
 	)
 	love.graphics.pop()
 
-	local clipX = panelX + panelPaddingX
-	local clipY = panelY + panelPaddingY
-	local clipW = panelWidth - panelPaddingX * 2
-	local clipH = panelHeight - panelPaddingY * 2
-	local scissorInset = 12
-	love.graphics.setScissor(clipX - scissorInset, clipY, clipW + scissorInset * 2, clipH)
+	local clipPadding = 4
+	local clipX = panelX + clipPadding
+	local clipY = panelY + clipPadding
+	local clipW = panelWidth - clipPadding * 2
+	local clipH = panelHeight - clipPadding * 2
+
+	love.graphics.setScissor(clipX, clipY, clipW, clipH)
 
 	love.graphics.push()
 	love.graphics.translate(0, scrollOffset)
