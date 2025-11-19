@@ -1120,7 +1120,6 @@ function SettingsScreen:draw()
 
 		::continue::
 	end
-
 	if appliedScissor then
 		if prevScissorX then
 			love.graphics.setScissor(prevScissorX, prevScissorY, prevScissorW, prevScissorH)
@@ -1148,7 +1147,7 @@ function SettingsScreen:draw()
 		local scrollbarGap = layout.scrollbarGap or max(ACHIEVEMENT_MIN_SCROLLBAR_INSET, panelPaddingX * 0.5)
 		local trackX = (layout.scrollbar and layout.scrollbar.x) or (panel.x + panel.w + scrollbarGap)
 		local trackY = layout.viewportTop or (panel.y + panelPaddingY)
-		local trackHeight = layout.viewportHeight or max(0, panel.h - panelPaddingY * 2)
+		local trackHeight = layout.panelHeight - layout.panelPaddingY
 
 		local scrollRange = contentHeight - viewportHeight
 		local scrollProgress = scrollRange > 0 and (-scrollOffset / scrollRange) or 0
