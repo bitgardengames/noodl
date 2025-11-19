@@ -400,7 +400,7 @@ function SettingsScreen:ensureFocusVisible()
 end
 
 local function getBaseColor()
-	return (UI.colors and UI.colors.background) or Theme.bgColor
+	return Theme.menuBackgroundColor
 end
 
 function SettingsScreen:getMenuBackgroundOptions()

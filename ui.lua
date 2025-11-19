@@ -77,17 +77,17 @@ UI.upgradeIndicators = {
 local fontDefinitions = {
 	title = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 72, min = 28},
 	display = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 64, min = 24},
-	subtitle = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 32, min = 18},
-	heading = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 28, min = 16},
-	button = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 24, min = 14},
-	body = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 16, min = 12},
-	prompt = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12},
-	caption = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 14, min = 10},
-	small = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 12, min = 9},
+	subtitle = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 32, min = 18},
+	heading = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 28, min = 16},
+	button = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 24, min = 14},
+	body = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 16, min = 12},
+	prompt = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 20, min = 12},
+	caption = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 14, min = 10},
+	small = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 12, min = 9},
 	timer = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 42, min = 24},
 	timerSmall = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 20, min = 12},
 	achieve = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 18, min = 12},
-	badge = {path = "Assets/Fonts/Comfortaa-SemiBold.ttf", size = 20, min = 12},
+	badge = {path = "Assets/Fonts/Comfortaa-Bold.ttf", size = 20, min = 12},
 }
 
 local baseSpacing = {
