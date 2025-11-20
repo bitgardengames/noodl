@@ -2211,7 +2211,7 @@ function Snake:setHeadPosition(x, y)
 
 	head.drawX = x
 	head.drawY = y
-	syncSegmentSpatialEntry(1)
+	syncSnakeHeadSegments(trail, 0, newHeadSegmentsMax)
 	local count = trail and #trail or 0
 	if count > 0 then
 		recalcSegmentLengthsRange(1, min(count, 2))
