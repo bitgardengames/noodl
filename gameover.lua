@@ -19,8 +19,8 @@ local buttonDefs = {}
 local ANALOG_DEADZONE = 0.3
 local TEXT_SHADOW_OFFSET = 2
 local TITLE_SHADOW_OFFSET = 3
-local CONTENT_ANIM_DURATION = 0.65
-local BUTTON_ANIM_DURATION = 0.5
+local CONTENT_ANIM_DURATION = 0.75
+local BUTTON_ANIM_DURATION = 0.6
 
 local function getLocalizedOrFallback(key, fallback)
 	if not key then
