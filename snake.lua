@@ -27,7 +27,6 @@ local max = math.max
 local EMPTY_TABLE = {}
 local spawnGluttonsWakeRock
 local crystallizeGluttonsWakeSegments
-local removeSnakeBodySpatialEntry
 
 local screenW, screenH
 local direction = {x = 1, y = 0}
@@ -42,7 +41,6 @@ local clippedTrailBuffer = {}
 local clippedTrailProxy = {drawX = 0, drawY = 0}
 local severedPieces = {}
 local portalAnimation = nil
-local cellKeyStride = 0
 
 local segmentPool = {}
 local segmentPoolCount = 0
@@ -54,82 +52,98 @@ local segmentSnapshotPoolCount = 0
 local newHeadSegments = {}
 local newHeadSegmentsMax = 0
 
-local headCellBuffer = {}
-local snakeBodyOccupancy = {}
-local snakeBodySpatialIndex = {}
-local snakeBodySpatialIndexAvailable = false
-local segmentCandidateBuffer = {}
-local segmentCandidateLookup = {}
-local segmentCandidateCount = 0
-local segmentCandidateGeneration = 0
+local CellTracker = {
+        cellKeyStride = 0,
+        headCellBuffer = {},
+        snakeBodyOccupancy = {},
+        snakeBodySpatialIndex = {},
+        snakeBodySpatialIndexAvailable = false,
+        segmentCandidates = {
+                buffer = {},
+                lookup = {},
+                count = 0,
+                generation = 0,
+                generationReset = 10000000,
+        },
+        recentlyVacated = {
+                cells = {},
+                lookup = {},
+                count = 0,
+                generation = 0,
+                generationReset = 10000000,
+        },
+        cachedMetrics = {
+                tileSize = 1,
+                invTileSize = 1,
+                offsetX = 0,
+                offsetY = 0,
+                arenaCols = 0,
+                arenaRows = 0,
+        },
+        snakeOccupiedCells = {},
+        snakeOccupiedFirst = 1,
+        snakeOccupiedLast = 0,
+        occupancyCols = 0,
+        occupancyRows = 0,
+        headOccupancyCol = nil,
+        headOccupancyRow = nil,
+}
 
-local SEGMENT_CANDIDATE_GENERATION_RESET = 10000000
+function CellTracker.getCellLookupKey(col, row)
+        if not (col and row) then
+                return nil
+        end
 
-local recentlyVacatedCells = {}
-local recentlyVacatedLookup = {}
-local recentlyVacatedCount = 0
-local recentlyVacatedGeneration = 0
+        local stride = CellTracker.cellKeyStride
+        if stride <= 0 then
+                stride = (Arena and Arena.rows or 0) + 16
+                if stride <= 0 then
+                        stride = 64
+                end
+                CellTracker.cellKeyStride = stride
+        end
 
-local RECENTLY_VACATED_GENERATION_RESET = 10000000
-
-local cachedTileSize = 1
-local cachedInvTileSize = 1
-local cachedOffsetX, cachedOffsetY = 0, 0
-local cachedArenaCols, cachedArenaRows = 0, 0
-
-local function getCellLookupKey(col, row)
-	if not (col and row) then
-		return nil
-	end
-
-	local stride = cellKeyStride
-	if stride <= 0 then
-		stride = (Arena and Arena.rows or 0) + 16
-		if stride <= 0 then
-			stride = 64
-		end
-		cellKeyStride = stride
-	end
-
-	return col * stride + row
+        return col * stride + row
 end
 
 local trailLength = 0
 
-local function clearRecentlyVacatedCells()
-	recentlyVacatedCount = 0
-	recentlyVacatedGeneration = recentlyVacatedGeneration + 1
-	if recentlyVacatedGeneration >= RECENTLY_VACATED_GENERATION_RESET then
-		recentlyVacatedGeneration = 1
-		recentlyVacatedLookup = {}
-	end
+function CellTracker.clearRecentlyVacatedCells()
+        local recentlyVacated = CellTracker.recentlyVacated
+        recentlyVacated.count = 0
+        recentlyVacated.generation = recentlyVacated.generation + 1
+        if recentlyVacated.generation >= recentlyVacated.generationReset then
+                recentlyVacated.generation = 1
+                recentlyVacated.lookup = {}
+        end
 end
 
-local function markRecentlyVacatedCell(col, row)
-	if not (col and row) then
-		return
-	end
+function CellTracker.markRecentlyVacatedCell(col, row)
+        if not (col and row) then
+                return
+        end
 
-	if recentlyVacatedGeneration == 0 then
-		recentlyVacatedGeneration = 1
-	end
+        local recentlyVacated = CellTracker.recentlyVacated
+        if recentlyVacated.generation == 0 then
+                recentlyVacated.generation = 1
+        end
 
-	local index = recentlyVacatedCount + 1
-	local cell = recentlyVacatedCells[index]
-	if cell then
-		cell[1] = col
-		cell[2] = row
-	else
-		cell = {col, row}
-		recentlyVacatedCells[index] = cell
-	end
+        local index = recentlyVacated.count + 1
+        local cell = recentlyVacated.cells[index]
+        if cell then
+                cell[1] = col
+                cell[2] = row
+        else
+                cell = {col, row}
+                recentlyVacated.cells[index] = cell
+        end
 
-	local key = getCellLookupKey(col, row)
-	if key then
-		recentlyVacatedLookup[key] = recentlyVacatedGeneration
-	end
+        local key = CellTracker.getCellLookupKey(col, row)
+        if key then
+                recentlyVacated.lookup[key] = recentlyVacated.generation
+        end
 
-	recentlyVacatedCount = index
+        recentlyVacated.count = index
 end
 
 function Snake:needsStencil()
@@ -145,199 +159,193 @@ function Snake:needsStencil()
 	return false
 end
 
-local function wasRecentlyVacated(col, row)
-	if recentlyVacatedGeneration == 0 or not (col and row) then
-		return false
-	end
+function CellTracker.wasRecentlyVacated(col, row)
+        local recentlyVacated = CellTracker.recentlyVacated
+        if recentlyVacated.generation == 0 or not (col and row) then
+                return false
+        end
 
-	local key = getCellLookupKey(col, row)
-	if not key then
-		return false
-	end
+        local key = CellTracker.getCellLookupKey(col, row)
+        if not key then
+                return false
+        end
 
-	return recentlyVacatedLookup[key] == recentlyVacatedGeneration
+        return recentlyVacated.lookup[key] == recentlyVacated.generation
 end
 
 local TILE_COORD_EPSILON = 1e-9
 
-local function wipeTable(t)
-	if not t then
-		return
-	end
+function CellTracker.wipeTable(t)
+        if not t then
+                return
+        end
 
-	for k in pairs(t) do
-		t[k] = nil
-	end
+        for k in pairs(t) do
+                t[k] = nil
+        end
 end
 
-local function clearSnakeBodySpatialIndex()
-	for _, column in pairs(snakeBodySpatialIndex) do
-		wipeTable(column)
-	end
+function CellTracker.clearSnakeBodySpatialIndex()
+        for _, column in pairs(CellTracker.snakeBodySpatialIndex) do
+            CellTracker.wipeTable(column)
+        end
 
-	snakeBodySpatialIndexAvailable = false
+        CellTracker.snakeBodySpatialIndexAvailable = false
 end
 
-local function clearSnakeBodyOccupancy()
-	for _, column in pairs(snakeBodyOccupancy) do
-		wipeTable(column)
-	end
-	clearRecentlyVacatedCells()
-	clearSnakeBodySpatialIndex()
-end
-local snakeOccupiedCells = {}
-local snakeOccupiedFirst = 1
-local snakeOccupiedLast = 0
-local occupancyCols = 0
-local occupancyRows = 0
-local headOccupancyCol = nil
-local headOccupancyRow = nil
-
-local function resetTrackedSnakeCells()
-	if snakeOccupiedFirst > snakeOccupiedLast then
-		snakeOccupiedFirst = 1
-		snakeOccupiedLast = 0
-		return
-	end
-
-	for i = snakeOccupiedFirst, snakeOccupiedLast do
-		local cell = snakeOccupiedCells[i]
-		if cell then
-			cell[1] = nil
-			cell[2] = nil
-			snakeOccupiedCells[i] = nil
-		end
-	end
-
-	snakeOccupiedFirst = 1
-	snakeOccupiedLast = 0
+function CellTracker.clearSnakeBodyOccupancy()
+        for _, column in pairs(CellTracker.snakeBodyOccupancy) do
+                CellTracker.wipeTable(column)
+        end
+        CellTracker.clearRecentlyVacatedCells()
+        CellTracker.clearSnakeBodySpatialIndex()
 end
 
-local function clearSnakeOccupiedCells()
-	if snakeOccupiedFirst > snakeOccupiedLast then
-		return
-	end
+function CellTracker.resetTrackedSnakeCells()
+        if CellTracker.snakeOccupiedFirst > CellTracker.snakeOccupiedLast then
+                CellTracker.snakeOccupiedFirst = 1
+                CellTracker.snakeOccupiedLast = 0
+                return
+        end
 
-	for i = snakeOccupiedFirst, snakeOccupiedLast do
-		local cell = snakeOccupiedCells[i]
-		if cell then
-			local col, row = cell[1], cell[2]
-			if col and row then
-				SnakeUtils.setOccupied(col, row, false)
-			end
-			cell[1] = nil
-			cell[2] = nil
-			snakeOccupiedCells[i] = nil
-		end
-	end
+        for i = CellTracker.snakeOccupiedFirst, CellTracker.snakeOccupiedLast do
+                local cell = CellTracker.snakeOccupiedCells[i]
+                if cell then
+                        cell[1] = nil
+                        cell[2] = nil
+                        CellTracker.snakeOccupiedCells[i] = nil
+                end
+        end
 
-	snakeOccupiedFirst = 1
-	snakeOccupiedLast = 0
+        CellTracker.snakeOccupiedFirst = 1
+        CellTracker.snakeOccupiedLast = 0
 end
 
-local function recordSnakeOccupiedCell(col, row)
-	if not (col and row) then
-		return
-	end
+function CellTracker.clearSnakeOccupiedCells()
+        if CellTracker.snakeOccupiedFirst > CellTracker.snakeOccupiedLast then
+                return
+        end
 
-	local index = snakeOccupiedLast + 1
-	local wasEmpty = snakeOccupiedFirst > snakeOccupiedLast
-	local cell = snakeOccupiedCells[index]
-	if cell then
-		cell[1] = col
-		cell[2] = row
-	else
-		cell = {col, row}
-		snakeOccupiedCells[index] = cell
-	end
+        for i = CellTracker.snakeOccupiedFirst, CellTracker.snakeOccupiedLast do
+                local cell = CellTracker.snakeOccupiedCells[i]
+                if cell then
+                        local col, row = cell[1], cell[2]
+                        if col and row then
+                                SnakeUtils.setOccupied(col, row, false)
+                        end
+                        cell[1] = nil
+                        cell[2] = nil
+                        CellTracker.snakeOccupiedCells[i] = nil
+                end
+        end
 
-	snakeOccupiedLast = index
-	if wasEmpty then
-		snakeOccupiedFirst = index
-	end
-
-	SnakeUtils.setOccupied(col, row, true)
+        CellTracker.snakeOccupiedFirst = 1
+        CellTracker.snakeOccupiedLast = 0
 end
 
-local function getSnakeTailCell()
-	if snakeOccupiedFirst > snakeOccupiedLast then
-		return nil, nil
-	end
+function CellTracker.recordSnakeOccupiedCell(col, row)
+        if not (col and row) then
+                return
+        end
 
-	local cell = snakeOccupiedCells[snakeOccupiedFirst]
-	if not cell then
-		return nil, nil
-	end
+        local index = CellTracker.snakeOccupiedLast + 1
+        local wasEmpty = CellTracker.snakeOccupiedFirst > CellTracker.snakeOccupiedLast
+        local cell = CellTracker.snakeOccupiedCells[index]
+        if cell then
+                cell[1] = col
+                cell[2] = row
+        else
+                cell = {col, row}
+                CellTracker.snakeOccupiedCells[index] = cell
+        end
 
-	return cell[1], cell[2]
+        CellTracker.snakeOccupiedLast = index
+        if wasEmpty then
+                CellTracker.snakeOccupiedFirst = index
+        end
+
+        SnakeUtils.setOccupied(col, row, true)
 end
 
-local function popSnakeTailCell()
-	if snakeOccupiedFirst > snakeOccupiedLast then
-		return nil, nil
-	end
+function CellTracker.getSnakeTailCell()
+        if CellTracker.snakeOccupiedFirst > CellTracker.snakeOccupiedLast then
+                return nil, nil
+        end
 
-	local cell = snakeOccupiedCells[snakeOccupiedFirst]
-	local col, row = nil, nil
-	if cell then
-		col, row = cell[1], cell[2]
-		cell[1] = nil
-		cell[2] = nil
-	end
+        local cell = CellTracker.snakeOccupiedCells[CellTracker.snakeOccupiedFirst]
+        if not cell then
+                return nil, nil
+        end
 
-	snakeOccupiedFirst = snakeOccupiedFirst + 1
-	if snakeOccupiedFirst > snakeOccupiedLast then
-		snakeOccupiedFirst = 1
-		snakeOccupiedLast = 0
-	end
-
-	return col, row
+        return cell[1], cell[2]
 end
 
-local function getSnakeHeadCell()
-	if snakeOccupiedFirst > snakeOccupiedLast then
-		return nil, nil
-	end
+function CellTracker.popSnakeTailCell()
+        if CellTracker.snakeOccupiedFirst > CellTracker.snakeOccupiedLast then
+                return nil, nil
+        end
 
-	local cell = snakeOccupiedCells[snakeOccupiedLast]
-	if not cell then
-		return nil, nil
-	end
+        local cell = CellTracker.snakeOccupiedCells[CellTracker.snakeOccupiedFirst]
+        local col, row = nil, nil
+        if cell then
+                col, row = cell[1], cell[2]
+                cell[1] = nil
+                cell[2] = nil
+        end
 
-	return cell[1], cell[2]
+        CellTracker.snakeOccupiedFirst = CellTracker.snakeOccupiedFirst + 1
+        if CellTracker.snakeOccupiedFirst > CellTracker.snakeOccupiedLast then
+                CellTracker.snakeOccupiedFirst = 1
+                CellTracker.snakeOccupiedLast = 0
+        end
+
+        return col, row
 end
 
-local function resetSnakeOccupancyGrid()
+function CellTracker.getSnakeHeadCell()
+        if CellTracker.snakeOccupiedFirst > CellTracker.snakeOccupiedLast then
+                return nil, nil
+        end
+
+        local cell = CellTracker.snakeOccupiedCells[CellTracker.snakeOccupiedLast]
+        if not cell then
+                return nil, nil
+        end
+
+        return cell[1], cell[2]
+end
+
+function CellTracker.resetSnakeOccupancyGrid()
         if SnakeUtils and SnakeUtils.initOccupancy then
                 SnakeUtils.initOccupancy()
         end
 
-        resetTrackedSnakeCells()
-        clearSnakeBodyOccupancy()
+        CellTracker.resetTrackedSnakeCells()
+        CellTracker.clearSnakeBodyOccupancy()
 
-        occupancyCols = (Arena and Arena.cols) or 0
-        occupancyRows = (Arena and Arena.rows) or 0
+        CellTracker.occupancyCols = (Arena and Arena.cols) or 0
+        CellTracker.occupancyRows = (Arena and Arena.rows) or 0
 
-        refreshArenaMetrics()
+        CellTracker.refreshArenaMetrics()
 
-        headOccupancyCol = nil
-        headOccupancyRow = nil
+        CellTracker.headOccupancyCol = nil
+        CellTracker.headOccupancyRow = nil
 end
 
-local function ensureOccupancyGrid()
+function CellTracker.ensureOccupancyGrid()
 	local cols = (Arena and Arena.cols) or 0
 	local rows = (Arena and Arena.rows) or 0
 	if cols <= 0 or rows <= 0 then
 		return false
 	end
 
-        if cols ~= occupancyCols or rows ~= occupancyRows then
-                resetSnakeOccupancyGrid()
+        if cols ~= CellTracker.occupancyCols or rows ~= CellTracker.occupancyRows then
+                CellTracker.resetSnakeOccupancyGrid()
         elseif not SnakeUtils or not SnakeUtils.occupied or not SnakeUtils.occupied[cols] then
-                resetSnakeOccupancyGrid()
+                CellTracker.resetSnakeOccupancyGrid()
         end
 
-        refreshArenaMetrics()
+        CellTracker.refreshArenaMetrics()
 
         return true
 end
@@ -359,9 +367,9 @@ local function releaseSegment(segment)
 	end
 
 	local col, row = segment.cellCol, segment.cellRow
-	if col and row then
-		removeSnakeBodySpatialEntry(col, row, segment)
-	end
+        if col and row then
+                CellTracker.removeSnakeBodySpatialEntry(col, row, segment)
+        end
 
 	segment.drawX = nil
 	segment.drawY = nil
@@ -537,170 +545,170 @@ local function clearSeveredPieces()
 	end
 end
 
-local function addSnakeBodyOccupancy(col, row)
-	if not (col and row) then
-		return
-	end
+function CellTracker.addSnakeBodyOccupancy(col, row)
+        if not (col and row) then
+                return
+        end
 
-	local column = snakeBodyOccupancy[col]
-	if not column then
-		column = {}
-		snakeBodyOccupancy[col] = column
-	end
+        local column = CellTracker.snakeBodyOccupancy[col]
+        if not column then
+                column = {}
+                CellTracker.snakeBodyOccupancy[col] = column
+        end
 
-	column[row] = (column[row] or 0) + 1
+        column[row] = (column[row] or 0) + 1
 end
 
-local function removeSnakeBodyOccupancy(col, row)
-	if not (col and row) then
-		return
-	end
+function CellTracker.removeSnakeBodyOccupancy(col, row)
+        if not (col and row) then
+                return
+        end
 
-	local column = snakeBodyOccupancy[col]
-	if not column then
-		return
-	end
+        local column = CellTracker.snakeBodyOccupancy[col]
+        if not column then
+                return
+        end
 
-	local count = (column[row] or 0) - 1
-	if count <= 0 then
-		column[row] = nil
-		if not next(column) then
-			snakeBodyOccupancy[col] = nil
-		end
-	else
-		column[row] = count
-	end
+        local count = (column[row] or 0) - 1
+        if count <= 0 then
+                column[row] = nil
+                if not next(column) then
+                        CellTracker.snakeBodyOccupancy[col] = nil
+                end
+        else
+                column[row] = count
+        end
 end
 
 local toCell
 
-local function isCellOccupiedBySnakeBody(col, row)
-	if not (col and row) then
-		return false
-	end
+function CellTracker.isCellOccupiedBySnakeBody(col, row)
+        if not (col and row) then
+                return false
+        end
 
-	local column = snakeBodyOccupancy[col]
-	if not column then
-		return false
-	end
+        local column = CellTracker.snakeBodyOccupancy[col]
+        if not column then
+                return false
+        end
 
-	return (column[row] or 0) > 0
+        return (column[row] or 0) > 0
 end
 
-local function addSnakeBodySpatialEntry(col, row, segment)
-	if not (col and row and segment) then
-		return
-	end
+function CellTracker.addSnakeBodySpatialEntry(col, row, segment)
+        if not (col and row and segment) then
+                return
+        end
 
-	local column = snakeBodySpatialIndex[col]
-	if not column then
-		column = {}
-		snakeBodySpatialIndex[col] = column
-	end
+        local column = CellTracker.snakeBodySpatialIndex[col]
+        if not column then
+                column = {}
+                CellTracker.snakeBodySpatialIndex[col] = column
+        end
 
-	local bucket = column[row]
-	if not bucket then
-		bucket = {}
-		column[row] = bucket
-	end
+        local bucket = column[row]
+        if not bucket then
+                bucket = {}
+                column[row] = bucket
+        end
 
-	bucket[#bucket + 1] = segment
-	snakeBodySpatialIndexAvailable = true
+        bucket[#bucket + 1] = segment
+        CellTracker.snakeBodySpatialIndexAvailable = true
 end
 
-local function hasSnakeBodySpatialEntry(col, row, segment)
-	if not (col and row and segment) then
-		return false
-	end
+function CellTracker.hasSnakeBodySpatialEntry(col, row, segment)
+        if not (col and row and segment) then
+                return false
+        end
 
-	local column = snakeBodySpatialIndex[col]
-	if not column then
-		return false
-	end
+        local column = CellTracker.snakeBodySpatialIndex[col]
+        if not column then
+                return false
+        end
 
-	local bucket = column[row]
-	if not bucket then
-		return false
-	end
+        local bucket = column[row]
+        if not bucket then
+                return false
+        end
 
-	for i = 1, #bucket do
-		if bucket[i] == segment then
-			return true
-		end
-	end
+        for i = 1, #bucket do
+                if bucket[i] == segment then
+                        return true
+                end
+        end
 
-	return false
+        return false
 end
 
-function removeSnakeBodySpatialEntry(col, row, segment)
-	if not (col and row and segment) then
-		return
-	end
+function CellTracker.removeSnakeBodySpatialEntry(col, row, segment)
+        if not (col and row and segment) then
+                return
+        end
 
-	local column = snakeBodySpatialIndex[col]
-	if not column then
-		return
-	end
+        local column = CellTracker.snakeBodySpatialIndex[col]
+        if not column then
+                return
+        end
 
-	local bucket = column[row]
-	if not bucket then
-		return
-	end
+        local bucket = column[row]
+        if not bucket then
+                return
+        end
 
-	for i = #bucket, 1, -1 do
-		if bucket[i] == segment then
-			bucket[i] = bucket[#bucket]
-			bucket[#bucket] = nil
-			break
-		end
-	end
+        for i = #bucket, 1, -1 do
+                if bucket[i] == segment then
+                        bucket[i] = bucket[#bucket]
+                        bucket[#bucket] = nil
+                        break
+                end
+        end
 
-	if not bucket[1] then
-		column[row] = nil
-		if not next(column) then
-			snakeBodySpatialIndex[col] = nil
-		end
-	end
+        if not bucket[1] then
+                column[row] = nil
+                if not next(column) then
+                        CellTracker.snakeBodySpatialIndex[col] = nil
+                end
+        end
 
-	if snakeBodySpatialIndexAvailable and not next(snakeBodySpatialIndex) then
-		snakeBodySpatialIndexAvailable = false
-	end
+        if CellTracker.snakeBodySpatialIndexAvailable and not next(CellTracker.snakeBodySpatialIndex) then
+                CellTracker.snakeBodySpatialIndexAvailable = false
+        end
 end
 
-local function rebuildSnakeBodySpatialIndex()
-	clearSnakeBodySpatialIndex()
+function CellTracker.rebuildSnakeBodySpatialIndex()
+        CellTracker.clearSnakeBodySpatialIndex()
 
-	if not (trail and trail[1]) then
-		return
-	end
+        if not (trail and trail[1]) then
+                return
+        end
 
-	for i = 1, #trail do
-		local segment = trail[i]
-		local sx = segment and (segment.drawX or segment.x)
-		local sy = segment and (segment.drawY or segment.y)
-		local col, row = nil, nil
-		if sx and sy then
-			col, row = toCell(sx, sy)
-		end
+        for i = 1, #trail do
+                local segment = trail[i]
+                local sx = segment and (segment.drawX or segment.x)
+                local sy = segment and (segment.drawY or segment.y)
+                local col, row = nil, nil
+                if sx and sy then
+                        col, row = toCell(sx, sy)
+                end
 
-		if segment then
-			segment.cellCol = col
-			segment.cellRow = row
-		end
+                if segment then
+                        segment.cellCol = col
+                        segment.cellRow = row
+                end
 
-		if i >= 2 and col and row then
-			addSnakeBodySpatialEntry(col, row, segment)
-		end
-	end
+                if i >= 2 and col and row then
+                        CellTracker.addSnakeBodySpatialEntry(col, row, segment)
+                end
+        end
 
-	if not next(snakeBodySpatialIndex) then
-		snakeBodySpatialIndexAvailable = false
-	else
-		snakeBodySpatialIndexAvailable = true
-	end
+        if not next(CellTracker.snakeBodySpatialIndex) then
+                CellTracker.snakeBodySpatialIndexAvailable = false
+        else
+                CellTracker.snakeBodySpatialIndexAvailable = true
+        end
 end
 
-local function syncSegmentSpatialEntry(segmentIndex)
+function CellTracker.syncSegmentSpatialEntry(segmentIndex)
 	if not (trail and segmentIndex) then
 		return false
 	end
@@ -720,9 +728,9 @@ local function syncSegmentSpatialEntry(segmentIndex)
 
 	local prevCol, prevRow = segment.cellCol, segment.cellRow
 
-	if prevCol and prevRow and (prevCol ~= col or prevRow ~= row) then
-		removeSnakeBodySpatialEntry(prevCol, prevRow, segment)
-	end
+        if prevCol and prevRow and (prevCol ~= col or prevRow ~= row) then
+                CellTracker.removeSnakeBodySpatialEntry(prevCol, prevRow, segment)
+        end
 
 	segment.cellCol = col
 	segment.cellRow = row
@@ -732,18 +740,18 @@ local function syncSegmentSpatialEntry(segmentIndex)
 			return false
 		end
 
-		if not hasSnakeBodySpatialEntry(col, row, segment) then
-			addSnakeBodySpatialEntry(col, row, segment)
-		end
-	elseif col and row then
-		-- ensure head does not pollute the spatial index
-		removeSnakeBodySpatialEntry(col, row, segment)
-	end
+                if not CellTracker.hasSnakeBodySpatialEntry(col, row, segment) then
+                        CellTracker.addSnakeBodySpatialEntry(col, row, segment)
+                end
+        elseif col and row then
+                -- ensure head does not pollute the spatial index
+                CellTracker.removeSnakeBodySpatialEntry(col, row, segment)
+        end
 
 	return true
 end
 
-local function syncSegmentSpatialRange(startIndex, finishIndex)
+function CellTracker.syncSegmentSpatialRange(startIndex, finishIndex)
 	if not (trail and startIndex and finishIndex) then
 		return true
 	end
@@ -755,24 +763,24 @@ local function syncSegmentSpatialRange(startIndex, finishIndex)
 	startIndex = max(1, startIndex)
 	finishIndex = min(#trail, finishIndex)
 
-	for i = startIndex, finishIndex do
-		if not syncSegmentSpatialEntry(i) then
-			return false
-		end
-	end
+        for i = startIndex, finishIndex do
+                if not CellTracker.syncSegmentSpatialEntry(i) then
+                        return false
+                end
+        end
 
-	return true
+        return true
 end
 
-local function syncSnakeHeadSegments(headCellCount)
-	if not trail or #trail == 0 then
-		return true
-	end
+function CellTracker.syncSnakeHeadSegments(headCellCount)
+        if not trail or #trail == 0 then
+                return true
+        end
 
-	local headSynced = syncSegmentSpatialEntry(1)
-	if not headSynced then
-		return false
-	end
+        local headSynced = CellTracker.syncSegmentSpatialEntry(1)
+        if not headSynced then
+                return false
+        end
 
 	local syncCount = headCellCount or 0
 	local extraSegments = newHeadSegmentsMax or 0
@@ -784,21 +792,21 @@ local function syncSnakeHeadSegments(headCellCount)
 		return true
 	end
 
-	local limit = 1 + syncCount
-	return syncSegmentSpatialRange(2, limit)
+        local limit = 1 + syncCount
+        return CellTracker.syncSegmentSpatialRange(2, limit)
 end
 
-local function syncSnakeTailSegment()
-	if not trail then
-		return true
-	end
+function CellTracker.syncSnakeTailSegment()
+        if not trail then
+                return true
+        end
 
-	local length = #trail
-	if length <= 1 then
-		return true
-	end
+        local length = #trail
+        if length <= 1 then
+                return true
+        end
 
-	return syncSegmentSpatialEntry(length)
+        return CellTracker.syncSegmentSpatialEntry(length)
 end
 
 local function clampTileBounds(minCol, maxCol, minRow, maxRow)
@@ -836,7 +844,7 @@ local function clampTileBounds(minCol, maxCol, minRow, maxRow)
         return minCol, maxCol, minRow, maxRow
 end
 
-local function refreshArenaMetrics()
+function CellTracker.refreshArenaMetrics()
         local cols = (Arena and Arena.cols) or 0
         local rows = (Arena and Arena.rows) or 0
         local tileSize = (Arena and Arena.tileSize) or SEGMENT_SPACING or 1
@@ -847,41 +855,43 @@ local function refreshArenaMetrics()
         local offsetX = (Arena and Arena.x) or 0
         local offsetY = (Arena and Arena.y) or 0
 
-        if cols ~= cachedArenaCols or rows ~= cachedArenaRows or tileSize ~= cachedTileSize or offsetX ~= cachedOffsetX or offsetY ~= cachedOffsetY then
-                cachedArenaCols = cols
-                cachedArenaRows = rows
-                cachedTileSize = tileSize
-                cachedInvTileSize = 1 / tileSize
-                cachedOffsetX = offsetX
-                cachedOffsetY = offsetY
+        local metrics = CellTracker.cachedMetrics
+        if cols ~= metrics.arenaCols or rows ~= metrics.arenaRows or tileSize ~= metrics.tileSize or offsetX ~= metrics.offsetX or offsetY ~= metrics.offsetY then
+                metrics.arenaCols = cols
+                metrics.arenaRows = rows
+                metrics.tileSize = tileSize
+                metrics.invTileSize = 1 / tileSize
+                metrics.offsetX = offsetX
+                metrics.offsetY = offsetY
                 return true
         end
 
         return false
 end
 
-local function computeTileBoundsForRect(x, y, w, h)
+function CellTracker.computeTileBoundsForRect(x, y, w, h)
         if not (x and y and w and h) then
                 return nil, nil, nil, nil
         end
 
-        refreshArenaMetrics()
+        CellTracker.refreshArenaMetrics()
 
-        local tileSize = cachedTileSize
+        local metrics = CellTracker.cachedMetrics
+        local tileSize = metrics.tileSize
         if tileSize == 0 then
                 tileSize = 1
         end
 
-        local offsetX = cachedOffsetX
-        local offsetY = cachedOffsetY
+        local offsetX = metrics.offsetX
+        local offsetY = metrics.offsetY
 
-	local minX = min(x, x + w)
-	local maxX = max(x, x + w)
-	local minY = min(y, y + h)
-	local maxY = max(y, y + h)
+        local minX = min(x, x + w)
+        local maxX = max(x, x + w)
+        local minY = min(y, y + h)
+        local maxY = max(y, y + h)
 
-	local epsilon = TILE_COORD_EPSILON or 1e-9
-        local invTileSize = cachedInvTileSize
+        local epsilon = TILE_COORD_EPSILON or 1e-9
+        local invTileSize = metrics.invTileSize
         if not invTileSize or invTileSize == 0 then
                 invTileSize = 1 / tileSize
         end
@@ -891,36 +901,39 @@ local function computeTileBoundsForRect(x, y, w, h)
         local minRow = floor(((minY - offsetY) * invTileSize) + epsilon) + 1
         local maxRow = floor(((maxY - offsetY) * invTileSize) - epsilon) + 1
 
-	return clampTileBounds(minCol, maxCol, minRow, maxRow)
+        return clampTileBounds(minCol, maxCol, minRow, maxRow)
 end
 
-local function resetSegmentCandidateBuffers()
-	segmentCandidateCount = 0
-	segmentCandidateGeneration = segmentCandidateGeneration + 1
-	if segmentCandidateGeneration >= SEGMENT_CANDIDATE_GENERATION_RESET then
-		segmentCandidateGeneration = 1
-		segmentCandidateLookup = {}
-	end
+function CellTracker.resetSegmentCandidateBuffers()
+        local candidates = CellTracker.segmentCandidates
+        candidates.count = 0
+        candidates.generation = candidates.generation + 1
+        if candidates.generation >= candidates.generationReset then
+                candidates.generation = 1
+                candidates.lookup = {}
+        end
 end
 
-local function collectSnakeSegmentCandidatesForRect(x, y, w, h)
-	if not snakeBodySpatialIndexAvailable then
-		return nil, 0, nil, segmentCandidateGeneration
-	end
+function CellTracker.collectSnakeSegmentCandidatesForRect(x, y, w, h)
+        if not CellTracker.snakeBodySpatialIndexAvailable then
+                return nil, 0, nil, CellTracker.segmentCandidates.generation
+        end
 
-	resetSegmentCandidateBuffers()
+        CellTracker.resetSegmentCandidateBuffers()
 
-	local minCol, maxCol, minRow, maxRow = computeTileBoundsForRect(x, y, w, h)
-	if not (minCol and maxCol and minRow and maxRow) then
-		segmentCandidateBuffer[segmentCandidateCount + 1] = nil
-		return segmentCandidateBuffer, segmentCandidateCount, segmentCandidateLookup, segmentCandidateGeneration
-	end
+        local minCol, maxCol, minRow, maxRow = CellTracker.computeTileBoundsForRect(x, y, w, h)
+        if not (minCol and maxCol and minRow and maxRow) then
+                local candidates = CellTracker.segmentCandidates
+                candidates.buffer[candidates.count + 1] = nil
+                return candidates.buffer, candidates.count, candidates.lookup, candidates.generation
+        end
 
-	local generation = segmentCandidateGeneration
-	local spatialIndex = snakeBodySpatialIndex
-	local lookup = segmentCandidateLookup
-	local buffer = segmentCandidateBuffer
-	local count = segmentCandidateCount
+        local candidates = CellTracker.segmentCandidates
+        local generation = candidates.generation
+        local spatialIndex = CellTracker.snakeBodySpatialIndex
+        local lookup = candidates.lookup
+        local buffer = candidates.buffer
+        local count = candidates.count
 
 	for col = minCol, maxCol do
 		local column = spatialIndex[col]
@@ -941,19 +954,19 @@ local function collectSnakeSegmentCandidatesForRect(x, y, w, h)
 		end
 	end
 
-	segmentCandidateCount = count
-	buffer[count + 1] = nil
+        candidates.count = count
+        buffer[count + 1] = nil
 
-	return buffer, count, lookup, generation
+        return buffer, count, lookup, generation
 end
 
-local function collectSnakeSegmentCandidatesForCircle(cx, cy, radius)
-	if not radius or radius <= 0 then
-		return collectSnakeSegmentCandidatesForRect(cx, cy, 0, 0)
-	end
+function CellTracker.collectSnakeSegmentCandidatesForCircle(cx, cy, radius)
+        if not radius or radius <= 0 then
+                return CellTracker.collectSnakeSegmentCandidatesForRect(cx, cy, 0, 0)
+        end
 
-	local diameter = radius * 2
-	return collectSnakeSegmentCandidatesForRect(cx - radius, cy - radius, diameter, diameter)
+        local diameter = radius * 2
+        return CellTracker.collectSnakeSegmentCandidatesForRect(cx - radius, cy - radius, diameter, diameter)
 end
 
 local stencilCircleX, stencilCircleY, stencilCircleRadius = 0, 0, 0
@@ -1534,31 +1547,33 @@ toCell = function(x, y)
                 return Arena:getTileFromWorld(x, y)
         end
 
-        refreshArenaMetrics()
+        CellTracker.refreshArenaMetrics()
 
-        local tileSize = cachedTileSize
+        local metrics = CellTracker.cachedMetrics
+        local tileSize = metrics.tileSize
         if tileSize == 0 then
                 tileSize = 1
         end
 
-        local invTileSize = cachedInvTileSize
+        local invTileSize = metrics.invTileSize
         if not invTileSize or invTileSize == 0 then
                 invTileSize = 1 / tileSize
         end
 
-        local offsetX = cachedOffsetX
-        local offsetY = cachedOffsetY
+        local offsetX = metrics.offsetX
+        local offsetY = metrics.offsetY
         local normalizedCol = ((x - offsetX) * invTileSize) + TILE_COORD_EPSILON
         local normalizedRow = ((y - offsetY) * invTileSize) + TILE_COORD_EPSILON
         local col = floor(normalizedCol) + 1
         local row = floor(normalizedRow) + 1
 
         if Arena then
-                local cols = cachedArenaCols
+                local metrics = CellTracker.cachedMetrics
+                local cols = metrics.arenaCols
                 if cols <= 0 then
                         cols = Arena.cols or col
                 end
-                local rows = cachedArenaRows
+                local rows = metrics.arenaRows
                 if rows <= 0 then
                         rows = Arena.rows or row
                 end
@@ -1570,24 +1585,24 @@ toCell = function(x, y)
 end
 
 local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
-	if not ensureOccupancyGrid() then
-		resetTrackedSnakeCells()
-		clearSnakeBodyOccupancy()
-		headOccupancyCol = nil
-		headOccupancyRow = nil
-		clearSnakeBodySpatialIndex()
-		return
-	end
+        if not CellTracker.ensureOccupancyGrid() then
+                CellTracker.resetTrackedSnakeCells()
+                CellTracker.clearSnakeBodyOccupancy()
+                CellTracker.headOccupancyCol = nil
+                CellTracker.headOccupancyRow = nil
+                CellTracker.clearSnakeBodySpatialIndex()
+                return
+        end
 
-	clearSnakeOccupiedCells()
-	clearSnakeBodyOccupancy()
+        CellTracker.clearSnakeOccupiedCells()
+        CellTracker.clearSnakeBodyOccupancy()
 
 	if not trail then
-		headOccupancyCol = nil
-		headOccupancyRow = nil
-		clearSnakeBodySpatialIndex()
-		return
-	end
+                CellTracker.headOccupancyCol = nil
+                CellTracker.headOccupancyRow = nil
+                CellTracker.clearSnakeBodySpatialIndex()
+                return
+        end
 
 	local assignedHeadCol, assignedHeadRow = nil, nil
 
@@ -1605,51 +1620,51 @@ local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
 						assignedHeadCol, assignedHeadRow = col, row
 					end
 
-					recordSnakeOccupiedCell(col, row)
+                                        CellTracker.recordSnakeOccupiedCell(col, row)
 
-					if i ~= 1 then
-						addSnakeBodyOccupancy(col, row)
-					end
+                                        if i ~= 1 then
+                                                CellTracker.addSnakeBodyOccupancy(col, row)
+                                        end
 				end
 			end
 		end
 	end
 
-	rebuildSnakeBodySpatialIndex()
+        CellTracker.rebuildSnakeBodySpatialIndex()
 
-	if assignedHeadCol and assignedHeadRow then
-		headOccupancyCol = assignedHeadCol
-		headOccupancyRow = assignedHeadRow
-	else
-		headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-	end
+        if assignedHeadCol and assignedHeadRow then
+                CellTracker.headOccupancyCol = assignedHeadCol
+                CellTracker.headOccupancyRow = assignedHeadRow
+        else
+                CellTracker.headOccupancyCol, CellTracker.headOccupancyRow = CellTracker.getSnakeHeadCell()
+        end
 end
 
 local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, overrideRow, tailMoved, tailAfterCol, tailAfterRow)
-	clearRecentlyVacatedCells()
+        CellTracker.clearRecentlyVacatedCells()
 
-	if not ensureOccupancyGrid() then
-		resetTrackedSnakeCells()
-		clearSnakeBodyOccupancy()
-		headOccupancyCol = nil
-		headOccupancyRow = nil
-		clearSnakeBodySpatialIndex()
-		return
-	end
+        if not CellTracker.ensureOccupancyGrid() then
+                CellTracker.resetTrackedSnakeCells()
+                CellTracker.clearSnakeBodyOccupancy()
+                CellTracker.headOccupancyCol = nil
+                CellTracker.headOccupancyRow = nil
+                CellTracker.clearSnakeBodySpatialIndex()
+                return
+        end
 
-	if not trail or #trail == 0 then
-		clearSnakeOccupiedCells()
-		clearSnakeBodyOccupancy()
-		headOccupancyCol = nil
-		headOccupancyRow = nil
-		clearSnakeBodySpatialIndex()
-		return
-	end
+        if not trail or #trail == 0 then
+                CellTracker.clearSnakeOccupiedCells()
+                CellTracker.clearSnakeBodyOccupancy()
+                CellTracker.headOccupancyCol = nil
+                CellTracker.headOccupancyRow = nil
+                CellTracker.clearSnakeBodySpatialIndex()
+                return
+        end
 
-	if snakeOccupiedFirst > snakeOccupiedLast then
-		rebuildOccupancyFromTrail(overrideCol, overrideRow)
-		return
-	end
+        if CellTracker.snakeOccupiedFirst > CellTracker.snakeOccupiedLast then
+                rebuildOccupancyFromTrail(overrideCol, overrideRow)
+                return
+        end
 
 	local processedHead = false
 
@@ -1657,35 +1672,35 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
 		local cell = headCells[i]
 		local headCol = cell and cell[1]
 		local headRow = cell and cell[2]
-		if headCol and headRow then
-			if headOccupancyCol ~= headCol or headOccupancyRow ~= headRow then
-				processedHead = true
-				local prevHeadCol, prevHeadRow = headOccupancyCol, headOccupancyRow
-				recordSnakeOccupiedCell(headCol, headRow)
-				if prevHeadCol and prevHeadRow then
-					addSnakeBodyOccupancy(prevHeadCol, prevHeadRow)
-				end
-				headOccupancyCol = headCol
-				headOccupancyRow = headRow
-			end
-		end
-	end
+                if headCol and headRow then
+                        if CellTracker.headOccupancyCol ~= headCol or CellTracker.headOccupancyRow ~= headRow then
+                                processedHead = true
+                                local prevHeadCol, prevHeadRow = CellTracker.headOccupancyCol, CellTracker.headOccupancyRow
+                                CellTracker.recordSnakeOccupiedCell(headCol, headRow)
+                                if prevHeadCol and prevHeadRow then
+                                        CellTracker.addSnakeBodyOccupancy(prevHeadCol, prevHeadRow)
+                                end
+                                CellTracker.headOccupancyCol = headCol
+                                CellTracker.headOccupancyRow = headRow
+                        end
+                end
+        end
 
-	if not processedHead then
-		if overrideCol and overrideRow then
-			if headOccupancyCol ~= overrideCol or headOccupancyRow ~= overrideRow then
-				rebuildOccupancyFromTrail(overrideCol, overrideRow)
-				return
-			end
-		else
-			headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-		end
-	end
+        if not processedHead then
+                if overrideCol and overrideRow then
+                        if CellTracker.headOccupancyCol ~= overrideCol or CellTracker.headOccupancyRow ~= overrideRow then
+                                rebuildOccupancyFromTrail(overrideCol, overrideRow)
+                                return
+                        end
+                else
+                        CellTracker.headOccupancyCol, CellTracker.headOccupancyRow = CellTracker.getSnakeHeadCell()
+                end
+        end
 
-	if not syncSnakeHeadSegments(headCellCount) then
-		rebuildSnakeBodySpatialIndex()
-		return
-	end
+        if not CellTracker.syncSnakeHeadSegments(headCellCount) then
+                CellTracker.rebuildSnakeBodySpatialIndex()
+                return
+        end
 
 	if not tailMoved then
 		return
@@ -1693,41 +1708,41 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
 
 	if not tailAfterCol or not tailAfterRow then
 		while true do
-			local col, row = popSnakeTailCell()
-			if not (col and row) then
-				break
-			end
-			markRecentlyVacatedCell(col, row)
-			SnakeUtils.setOccupied(col, row, false)
-			removeSnakeBodyOccupancy(col, row)
-		end
+                        local col, row = CellTracker.popSnakeTailCell()
+                        if not (col and row) then
+                                break
+                        end
+                        CellTracker.markRecentlyVacatedCell(col, row)
+                        SnakeUtils.setOccupied(col, row, false)
+                        CellTracker.removeSnakeBodyOccupancy(col, row)
+                end
 
-		headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-		rebuildSnakeBodySpatialIndex()
-		return
-	end
+                CellTracker.headOccupancyCol, CellTracker.headOccupancyRow = CellTracker.getSnakeHeadCell()
+                CellTracker.rebuildSnakeBodySpatialIndex()
+                return
+        end
 
 	local iterations = 0
 	while true do
-		local tailCol, tailRow = getSnakeTailCell()
-		if not (tailCol and tailRow) then
-			rebuildOccupancyFromTrail(overrideCol, overrideRow)
-			return
-		end
+                local tailCol, tailRow = CellTracker.getSnakeTailCell()
+                if not (tailCol and tailRow) then
+                        rebuildOccupancyFromTrail(overrideCol, overrideRow)
+                        return
+                end
 
 		if tailCol == tailAfterCol and tailRow == tailAfterRow then
 			break
 		end
 
-		local removedCol, removedRow = popSnakeTailCell()
-		if not (removedCol and removedRow) then
-			rebuildOccupancyFromTrail(overrideCol, overrideRow)
-			return
-		end
+                local removedCol, removedRow = CellTracker.popSnakeTailCell()
+                if not (removedCol and removedRow) then
+                        rebuildOccupancyFromTrail(overrideCol, overrideRow)
+                        return
+                end
 
-		markRecentlyVacatedCell(removedCol, removedRow)
-		SnakeUtils.setOccupied(removedCol, removedRow, false)
-		removeSnakeBodyOccupancy(removedCol, removedRow)
+                CellTracker.markRecentlyVacatedCell(removedCol, removedRow)
+                SnakeUtils.setOccupied(removedCol, removedRow, false)
+                CellTracker.removeSnakeBodyOccupancy(removedCol, removedRow)
 
 		iterations = iterations + 1
 		if iterations > 1024 then
@@ -1736,10 +1751,10 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
 		end
 	end
 
-	headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-	if not syncSnakeTailSegment() then
-		rebuildSnakeBodySpatialIndex()
-	end
+        CellTracker.headOccupancyCol, CellTracker.headOccupancyRow = CellTracker.getSnakeHeadCell()
+        if not CellTracker.syncSnakeTailSegment() then
+                CellTracker.rebuildSnakeBodySpatialIndex()
+        end
 end
 
 local function findCircleIntersection(px, py, qx, qy, cx, cy, radius)
@@ -2740,12 +2755,12 @@ function Snake:load(w, h)
 	severedPieces = {}
 	clearPortalAnimation(portalAnimation)
 	portalAnimation = nil
-	local stride = (Arena and Arena.rows or 0) + 16
-	if stride <= 0 then
-		stride = 64
-	end
-	cellKeyStride = stride
-	rebuildOccupancyFromTrail()
+        local stride = (Arena and Arena.rows or 0) + 16
+        if stride <= 0 then
+                stride = 64
+        end
+        CellTracker.cellKeyStride = stride
+        rebuildOccupancyFromTrail()
 end
 
 local function getUpgradesModule()
@@ -2830,12 +2845,12 @@ end
 
 function Snake:setDead(state)
 	isDead = not not state
-	if isDead then
-		resetSnakeOccupancyGrid()
-		clearSnakeBodyOccupancy()
-	else
-		rebuildOccupancyFromTrail()
-	end
+        if isDead then
+                CellTracker.resetSnakeOccupancyGrid()
+                CellTracker.clearSnakeBodyOccupancy()
+        else
+                rebuildOccupancyFromTrail()
+        end
 end
 
 function Snake:getDirection()
@@ -2858,7 +2873,7 @@ function Snake:setHeadPosition(x, y)
 
 	head.drawX = x
 	head.drawY = y
-	syncSegmentSpatialEntry(1)
+        CellTracker.syncSegmentSpatialEntry(1)
 	local count = trail and #trail or 0
 	if count > 0 then
 		recalcSegmentLengthsRange(1, min(count, 2))
@@ -3052,14 +3067,14 @@ local function clearExcessSafeCells(cells, count)
 end
 
 local function addSafeCellUnique(cells, seen, gen, count, col, row)
-	local stride = cellKeyStride
-	if stride <= 0 then
-		stride = (Arena and Arena.rows or 0) + 16
-		if stride <= 0 then
-			stride = 64
-		end
-		cellKeyStride = stride
-	end
+        local stride = CellTracker.cellKeyStride
+        if stride <= 0 then
+                stride = (Arena and Arena.rows or 0) + 16
+                if stride <= 0 then
+                        stride = 64
+                end
+                CellTracker.cellKeyStride = stride
+        end
 
 	local key = col * stride + row
 	if seen[key] ~= gen then
@@ -3850,8 +3865,8 @@ function Snake:update(dt)
 					end
 				end
 
-				if not tailVacated and isCellOccupiedBySnakeBody(headCol, headRow) then
-					if wasRecentlyVacated(headCol, headRow) then
+                          if not tailVacated and CellTracker.isCellOccupiedBySnakeBody(headCol, headRow) then
+                                  if CellTracker.wasRecentlyVacated(headCol, headRow) then
 						segmentStartX, segmentStartY = targetX, targetY
 						goto continue
 					end
@@ -4633,7 +4648,7 @@ local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, ex
 	end
 
 	if not candidateLookup then
-		candidateIndices, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
+		candidateIndices, candidateCount, candidateLookup, candidateGeneration = CellTracker.collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
 	end
 
 	local useCandidateFilter = candidateLookup ~= nil
@@ -4707,7 +4722,7 @@ local function evaluateTrailCircleCut(context, saw, centerX, centerY, combinedRa
 	end
 
 	if not candidateLookup then
-		candidateIndices, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForCircle(centerX, centerY, radius)
+		candidateIndices, candidateCount, candidateLookup, candidateGeneration = CellTracker.collectSnakeSegmentCandidatesForCircle(centerX, centerY, radius)
 	end
 
 	local useCandidateFilter = candidateLookup ~= nil
@@ -4813,7 +4828,7 @@ function Snake:checkLaserBodyCollision()
 					local expandedW = rw + bodyRadius * 2
 					local expandedH = rh + bodyRadius * 2
 
-					local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
+					local candidates, candidateCount, candidateLookup, candidateGeneration = CellTracker.collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
 					local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateCount, candidateLookup, candidateGeneration)
 					if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
 						-- Leave the laser scorch effect but skip the usual hazard flash
@@ -4879,7 +4894,7 @@ function Snake:checkDartBodyCollision()
 					local expandedW = rw + bodyRadius * 2
 					local expandedH = rh + bodyRadius * 2
 
-					local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
+					local candidates, candidateCount, candidateLookup, candidateGeneration = CellTracker.collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
 					local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateCount, candidateLookup, candidateGeneration)
 					if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
 						-- Avoid triggering the dart emitter flash when only the tail is clipped.
@@ -4938,7 +4953,7 @@ function Snake:checkSawBodyCollision()
 				local sawRadius = (saw.collisionRadius or saw.radius or 0)
 				local combined = sawRadius + bodyRadius
 				if combined > 0 then
-					local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForCircle(sx, sy, combined)
+					local candidates, candidateCount, candidateLookup, candidateGeneration = CellTracker.collectSnakeSegmentCandidatesForCircle(sx, sy, combined)
 					local cutEvent = evaluateTrailCircleCut(context, saw, sx, sy, combined * combined, candidates, candidateCount, candidateLookup, candidateGeneration)
 					if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
 						resetCollisionContext(context)
