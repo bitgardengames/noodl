@@ -100,10 +100,10 @@ local baseSpacing = {
 	shadowOffset = SHADOW_OFFSET,
 	sectionSpacing = 28,
 	sectionHeaderSpacing = 16,
-	sliderHeight = 68,
-	sliderTrackHeight = 10,
-	sliderHandleRadius = 12,
-	sliderPadding = 22,
+        sliderHeight = 56,
+        sliderTrackHeight = 10,
+        sliderHandleRadius = 12,
+        sliderPadding = 18,
 }
 
 local spacingMinimums = {
@@ -116,10 +116,10 @@ local spacingMinimums = {
 	shadowOffset = SHADOW_OFFSET,
 	sectionSpacing = 18,
 	sectionHeaderSpacing = 10,
-	sliderHeight = 48,
-	sliderTrackHeight = 4,
-	sliderHandleRadius = 10,
-	sliderPadding = 14,
+        sliderHeight = 44,
+        sliderTrackHeight = 4,
+        sliderHandleRadius = 10,
+        sliderPadding = 12,
 }
 
 local baseUpgradeLayout = {
@@ -906,8 +906,8 @@ function UI.drawSlider(id, x, y, w, value, opts)
         local trackY = y + h - padding - trackHeight
         local trackRadius = trackHeight / 2
 
-        local trackFill = opts.trackColor or darkenColor(baseFill, 0.35)
-        local progressFill = opts.progressColor or lightenColor(baseFill, 0.25)
+        local trackFill = opts.trackColor or UI.colors.buttonPress or darkenColor(baseFill, 0.2)
+        local progressFill = opts.progressColor or UI.colors.buttonHover or lightenColor(baseFill, 0.12)
 
         setColor(trackFill, opts.trackAlpha or 1)
         love.graphics.rectangle("fill", trackX, trackY, trackW, trackHeight, trackRadius, trackRadius)
@@ -920,7 +920,7 @@ function UI.drawSlider(id, x, y, w, value, opts)
         local handleX = trackX + trackW * sliderValue
         local handleY = trackY + trackHeight / 2
 
-        local handleFill = opts.handleColor or lightenColor(baseFill, hovered and 0.3 or 0.15)
+        local handleFill = opts.handleColor or lightenColor(baseFill, hovered and 0.18 or 0.1)
         local handleOutline = opts.handleOutlineColor or UI.colors.border or UI.colors.panelBorder
         local prevLineWidth = love.graphics.getLineWidth()
 
