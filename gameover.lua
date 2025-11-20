@@ -187,13 +187,19 @@ local function getButtonAnimationOffset(self)
 end
 
 local function getContentAnimationProgress(self)
-	local progress = Easing.clamp01((self.contentAnim or 0) / CONTENT_ANIM_DURATION)
-	return Easing.easeOutCubic(progress)
+        local progress = Easing.clamp01((self.contentAnim or 0) / CONTENT_ANIM_DURATION)
+        return Easing.easeOutCubic(progress)
 end
 
 local function getStaggeredAlpha(progress, delay, duration)
-	local adjusted = Easing.clamp01((progress - (delay or 0)) / (duration or 1))
-	return Easing.easeOutCubic(adjusted)
+        local adjusted = Easing.clamp01((progress - (delay or 0)) / (duration or 1))
+        return Easing.easeOutCubic(adjusted)
+end
+
+local function getSequentialProgress(progress, index, delay, duration)
+        local start = (index - 1) * (delay or 0.1)
+        local adjusted = Easing.clamp01((progress - start) / (duration or 0.4))
+        return Easing.easeOutCubic(adjusted)
 end
 
 local function ensureFonts()
@@ -212,31 +218,40 @@ local function handleButtonAction(_, action)
 end
 
 local function getHighlightStats(self, animProgress)
-	local scoreLabel = getLocalizedOrFallback("gameover.score_label", "Score")
-	local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
-	local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Fruit")
+        local scoreLabel = getLocalizedOrFallback("gameover.score_label", "Score")
+        local bestLabel = getLocalizedOrFallback("gameover.stats_best_label", "Best")
+        local applesLabel = getLocalizedOrFallback("gameover.stats_apples_label", "Fruit")
 
-	local scoreValue = stats.score or 0
-	if self.isNewHighScore and scoreValue > 0 then
-		local eased = Easing.easeOutBack(animProgress or 0)
-		scoreValue = floor(scoreValue * eased + 0.5)
-	end
+        local targets = {
+                stats.score or 0,
+                stats.highScore or 0,
+                stats.apples or 0,
+        }
 
-	return {
-		{
-			label = scoreLabel,
-			value = tostring(scoreValue),
-			highlight = self.isNewHighScore,
-		},
-		{
-			label = bestLabel,
-			value = tostring(stats.highScore or 0),
-		},
-		{
-			label = applesLabel,
-			value = tostring(stats.apples or 0),
-		},
-	}
+        local entries = {
+                {
+                        label = scoreLabel,
+                        highlight = self.isNewHighScore,
+                },
+                {
+                        label = bestLabel,
+                },
+                {
+                        label = applesLabel,
+                },
+        }
+
+        for index, entry in ipairs(entries) do
+                local sequentialProgress = getSequentialProgress(animProgress or 0, index, 0.12, 0.45)
+                local easedTarget = targets[index] or 0
+                if entry.highlight and easedTarget > 0 then
+                        easedTarget = easedTarget * Easing.easeOutBack(animProgress or 0)
+                end
+                local value = floor(easedTarget * sequentialProgress + 0.5)
+                entry.value = tostring(value)
+        end
+
+        return entries
 end
 
 local function getDetailedStats()
@@ -278,34 +293,36 @@ local function drawHighlightStats(self, entries, x, y, width, sectionPadding, in
 	local labelY = y + sectionPadding
 	local valueY = labelY + labelFont:getHeight() + innerSpacing
 
-	local mutedColor = withAlpha(UI.colors.mutedText or UI.colors.text, alpha)
-	local baseValueColor = withAlpha(UI.colors.text or {1, 1, 1, 1}, alpha)
-	local highlightColor = Theme.progressColor or UI.colors.highlight or baseValueColor
+        local mutedColor = UI.colors.mutedText or UI.colors.text
+        local baseValueColor = UI.colors.text or {1, 1, 1, 1}
+        local highlightColor = Theme.progressColor or UI.colors.highlight or baseValueColor
 
 	for index, entry in ipairs(entries) do
 		local entryX = x + sectionPadding + (index - 1) * columnWidth
-		UI.drawLabel(entry.label or "", entryX, labelY, columnWidth, "center", {
-			font = labelFont,
-			color = mutedColor,
-			shadow = true,
-			shadowOffset = TEXT_SHADOW_OFFSET,
-			}
-		)
+                UI.drawLabel(entry.label or "", entryX, labelY, columnWidth, "center", {
+                        font = labelFont,
+                        color = mutedColor,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
+                        alpha = alpha,
+                        }
+                )
 
-		local valueText = entry.value or "0"
-		local color = baseValueColor
-		if entry.highlight then
-			color = withAlpha(highlightColor, alpha)
-		end
+                local valueText = entry.value or "0"
+                local color = baseValueColor
+                if entry.highlight then
+                        color = highlightColor
+                end
 
-		UI.drawLabel(valueText, entryX, valueY, columnWidth, "center", {
-			font = valueFont,
-			color = color,
-			shadow = true,
-			shadowOffset = TEXT_SHADOW_OFFSET,
-			}
-		)
-	end
+                UI.drawLabel(valueText, entryX, valueY, columnWidth, "center", {
+                        font = valueFont,
+                        color = color,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
+                        alpha = alpha,
+                        }
+                )
+        end
 end
 
 local function drawDetailedStats(entries, x, y, width, sectionPadding, innerSpacing, alpha, columnCount)
@@ -320,8 +337,8 @@ local function drawDetailedStats(entries, x, y, width, sectionPadding, innerSpac
 	local valueFont = fontProgressValue or fontSmall
 	local rowHeight = (labelFont:getHeight() or 0) + innerSpacing + (valueFont:getHeight() or 0)
 	local rows = ceil(#entries / columns)
-	local mutedColor = withAlpha(UI.colors.mutedText or UI.colors.text, alpha)
-	local valueColor = withAlpha(UI.colors.text or {1, 1, 1, 1}, alpha)
+        local mutedColor = UI.colors.mutedText or UI.colors.text
+        local valueColor = UI.colors.text or {1, 1, 1, 1}
 
 	for index, entry in ipairs(entries) do
 		local column = (index - 1) % columns
@@ -329,25 +346,27 @@ local function drawDetailedStats(entries, x, y, width, sectionPadding, innerSpac
 		local entryX = x + sectionPadding + column * columnWidth
 		local entryY = y + sectionPadding + row * (rowHeight + innerSpacing)
 
-		UI.drawLabel(entry.label or "", entryX, entryY, columnWidth, "center", {
-			font = labelFont,
-			color = mutedColor,
-			shadow = true,
-			shadowOffset = TEXT_SHADOW_OFFSET,
-			}
-		)
+                UI.drawLabel(entry.label or "", entryX, entryY, columnWidth, "center", {
+                        font = labelFont,
+                        color = mutedColor,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
+                        alpha = alpha,
+                        }
+                )
 
 		local valueText = entry.value or "0"
-		UI.drawLabel(valueText, entryX, entryY + labelFont:getHeight() + innerSpacing, columnWidth, "center", {
-			font = valueFont,
-			color = valueColor,
-			shadow = true,
-			shadowOffset = TEXT_SHADOW_OFFSET,
-			}
-		)
-	end
+                UI.drawLabel(valueText, entryX, entryY + labelFont:getHeight() + innerSpacing, columnWidth, "center", {
+                        font = valueFont,
+                        color = valueColor,
+                        shadow = true,
+                        shadowOffset = TEXT_SHADOW_OFFSET,
+                        alpha = alpha,
+                        }
+                )
+        end
 
-	return sectionPadding * 2 + rows * rowHeight + max(0, (rows - 1) * innerSpacing)
+        return sectionPadding * 2 + rows * rowHeight + max(0, (rows - 1) * innerSpacing)
 end
 
 function GameOver:computeAnchors(sw, sh, totalButtonHeight, buttonSpacing)
@@ -588,15 +607,16 @@ function GameOver:draw()
 		}
 	)
 
-	local messageWidth = max(0, innerWidth - sectionPadding * 2)
-	local messageY = panelY + padding + sectionPadding + messageOffset
-	UI.drawLabel(messageText, contentX + padding + sectionPadding, messageY, messageWidth, "center", {
-		font = fontMessage,
-		color = withAlpha(UI.colors.text or {1, 1, 1, 1}, messageAlpha),
-		shadow = true,
-		shadowOffset = TEXT_SHADOW_OFFSET,
-		}
-	)
+        local messageWidth = max(0, innerWidth - sectionPadding * 2)
+        local messageY = panelY + padding + sectionPadding + messageOffset
+        UI.drawLabel(messageText, contentX + padding + sectionPadding, messageY, messageWidth, "center", {
+                font = fontMessage,
+                color = UI.colors.text or {1, 1, 1, 1},
+                shadow = true,
+                shadowOffset = TEXT_SHADOW_OFFSET,
+                alpha = messageAlpha,
+                }
+        )
 
 	local statsY = panelY + padding + (self.messagePanelHeight or 0) + sectionSpacing
 	drawHighlightStats(self, highlightEntries, contentX + padding, statsY + statsOffset, innerWidth, sectionPadding, innerSpacing, statsAlpha)
