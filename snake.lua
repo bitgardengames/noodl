@@ -29,6 +29,16 @@ local EMPTY_TABLE = {}
 local spawnGluttonsWakeRock
 local crystallizeGluttonsWakeSegments
 
+local function wipeTable(t)
+        if not t then
+                return
+        end
+
+        for key in pairs(t) do
+                t[key] = nil
+        end
+end
+
 local screenW, screenH
 local direction = {x = 1, y = 0}
 local pendingDir = {x = 1, y = 0}
