@@ -900,33 +900,51 @@ function UI.drawSlider(id, x, y, w, value, opts)
 		UI.drawLabel(label, x + padding, y + padding, w - padding * 2, opts.labelAlign or "left", labelOptions)
 	end
 
-	local sliderValue = clamp01(value or 0)
-	local trackX = x + padding
-	local trackW = w - padding * 2
-	local trackY = y + h - padding - trackHeight
+        local sliderValue = clamp01(value or 0)
+        local trackX = x + padding
+        local trackW = w - padding * 2
+        local trackY = y + h - padding - trackHeight
+        local trackRadius = trackHeight / 2
 
-	setColor(UI.colors.panel, 0.7)
-	love.graphics.rectangle("fill", trackX, trackY, trackW, trackHeight, trackHeight / 2, trackHeight / 2)
+        local trackFill = opts.trackColor or darkenColor(baseFill, 0.35)
+        local progressFill = opts.progressColor or lightenColor(baseFill, 0.25)
 
-	if sliderValue > 0 then
-		setColor(opts.progressColor or UI.colors.progress)
-		love.graphics.rectangle("fill", trackX, trackY, trackW * sliderValue, trackHeight, trackHeight / 2, trackHeight / 2)
-	end
+        setColor(trackFill, opts.trackAlpha or 1)
+        love.graphics.rectangle("fill", trackX, trackY, trackW, trackHeight, trackRadius, trackRadius)
 
-	local handleX = trackX + trackW * sliderValue
-	local handleY = trackY + trackHeight / 2
+        if sliderValue > 0 then
+                setColor(progressFill)
+                love.graphics.rectangle("fill", trackX, trackY, trackW * sliderValue, trackHeight, trackRadius, trackRadius)
+        end
 
-	local handleFill = opts.handleColor or UI.colors.text
-	local handleOutline = opts.handleOutlineColor or UI.colors.border or UI.colors.panelBorder
-	local prevLineWidth = love.graphics.getLineWidth()
+        local handleX = trackX + trackW * sliderValue
+        local handleY = trackY + trackHeight / 2
 
-	setColor(handleFill)
-	love.graphics.circle("fill", handleX, handleY, handleRadius)
+        local handleFill = opts.handleColor or lightenColor(baseFill, hovered and 0.3 or 0.15)
+        local handleOutline = opts.handleOutlineColor or UI.colors.border or UI.colors.panelBorder
+        local prevLineWidth = love.graphics.getLineWidth()
 
-	love.graphics.setLineWidth(3)
-	setColor(handleOutline)
-	love.graphics.circle("line", handleX, handleY, handleRadius)
-	love.graphics.setLineWidth(prevLineWidth or 1)
+        if UI.colors.shadow then
+                setColor(UI.colors.shadow, 0.8)
+                love.graphics.circle("fill", handleX, handleY + 1.5, handleRadius + 1.5)
+        end
+
+        setColor(handleFill)
+        love.graphics.circle("fill", handleX, handleY, handleRadius)
+
+        local highlightStrength = hovered and 0.18 or 0.1
+        if highlightStrength > 0 then
+                local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+                love.graphics.setBlendMode("add", "alphamultiply")
+                love.graphics.setColor(1, 1, 1, highlightStrength)
+                love.graphics.circle("fill", handleX, handleY, handleRadius)
+                love.graphics.setBlendMode(prevMode, prevAlphaMode)
+        end
+
+        love.graphics.setLineWidth(3)
+        setColor(handleOutline)
+        love.graphics.circle("line", handleX, handleY, handleRadius)
+        love.graphics.setLineWidth(prevLineWidth or 1)
 
 	if opts.showValue ~= false then
 		local valueFont = UI.fonts[opts.valueFont or "small"]
