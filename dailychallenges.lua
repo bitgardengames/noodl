@@ -488,6 +488,7 @@ DailyChallenges.challenges = {
 		id = "floor_speedrunner",
 		titleKey = "menu.daily.floor_speedrunner.title",
 		descriptionKey = "menu.daily.floor_speedrunner.description",
+		sessionStat = "fastestFloorClear",
 		goal = 1,
 		progressKey = "menu.daily.floor_speedrunner.progress",
 		completeKey = "menu.daily.floor_speedrunner.complete",
