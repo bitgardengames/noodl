@@ -761,153 +761,163 @@ function Arena:_updateArenaOverlayBounds(ax, ay, aw, ah)
 end
 
 function Arena:_updateFloorRipples(dt)
-	if not (dt and dt > 0) then
-		return
-	end
+        if not (dt and dt > 0) then
+                return
+        end
 
-	local ripples = self._floorRipples
-	if not ripples or #ripples == 0 then
-		return
-	end
+        local ripples = self._floorRipples
+        if not ripples or #ripples == 0 then
+                return
+        end
 
-	for index = #ripples, 1, -1 do
-		local ripple = ripples[index]
-		local duration = ripple.duration or 0.0001
-		if duration <= 0 then
-			duration = 0.0001
-		end
+        local writeIndex = 1
+        for readIndex = 1, #ripples do
+                local ripple = ripples[readIndex]
+                local duration = ripple.duration or 0.0001
+                if duration <= 0 then
+                        duration = 0.0001
+                        ripple.duration = duration
+                        ripple.invDuration = 1 / duration
+                elseif not ripple.invDuration then
+                        ripple.invDuration = 1 / duration
+                end
 
-		ripple.time = (ripple.time or 0) + dt
-		if ripple.time >= duration then
-			table.remove(ripples, index)
-		end
-	end
+                ripple.time = (ripple.time or 0) + dt
+                if ripple.time < duration then
+                        ripples[writeIndex] = ripple
+                        writeIndex = writeIndex + 1
+                end
+        end
 
-	if #ripples == 0 then
-		self._floorRipples = nil
-	end
+        for index = writeIndex, #ripples do
+                ripples[index] = nil
+        end
+
+        if writeIndex == 1 then
+                self._floorRipples = nil
+        end
 end
 
 function Arena:_drawFloorRipples()
-	local ripples = self._floorRipples
-	if not ripples or #ripples == 0 then
-		return
-	end
+        local ripples = self._floorRipples
+        if not ripples or #ripples == 0 then
+                return
+        end
 
-	love.graphics.push("all")
-	love.graphics.setBlendMode("alpha")
+        love.graphics.push("all")
+        love.graphics.setBlendMode("alpha")
 
-	for i = 1, #ripples do
-		local ripple = ripples[i]
-		local duration = ripple.duration or 0.0001
-		if duration <= 0 then
-			duration = 0.0001
-		end
+        for i = 1, #ripples do
+                local ripple = ripples[i]
+                local progress = clamp01((ripple.time or 0) * (ripple.invDuration or (1 / max(ripple.duration or 0.0001, 0.0001))))
+                local eased = easeOutQuad(progress)
 
-		local progress = clamp01((ripple.time or 0) / duration)
-		local eased = easeOutQuad(progress)
+                local radius = ripple.startRadius + (ripple.endRadius - ripple.startRadius) * eased
+                if radius > 0 then
+                        local fade = (1 - progress)
+                        local ringColor = ripple.color
+                        local thickness = ripple.thickness or 6
+                        local width = clamp(thickness * (0.9 - progress * 0.5), 1.5, thickness)
 
-		local startRadius = ripple.startRadius or 0
-		local endRadius = ripple.endRadius or startRadius
-		local radius = startRadius + (endRadius - startRadius) * eased
-		if radius > 0 then
-			local fade = (1 - progress)
-			local ringColor = ripple.color
-			local thickness = ripple.thickness or 6
-			local width = clamp(thickness * (0.9 - progress * 0.5), 1.5, thickness)
+                        if ripple.fillColor then
+                                local fillAlpha = (ripple.fillColor[4] or 0) * (fade ^ (ripple.fillFadePower or 1.5))
+                                if fillAlpha > 0 then
+                                        local fillRadius = radius * (ripple.fillScale or 0.82)
+                                        if fillRadius > 0 then
+                                                love.graphics.setColor(ripple.fillColor[1], ripple.fillColor[2], ripple.fillColor[3], fillAlpha)
+                                                love.graphics.circle("fill", ripple.x or 0, ripple.y or 0, fillRadius, ripple.segments or 48)
+                                        end
+                                end
+                        end
 
-			if ripple.fillColor then
-				local fillAlpha = (ripple.fillColor[4] or 0) * (fade ^ (ripple.fillFadePower or 1.5))
-				if fillAlpha > 0 then
-					local fillRadius = radius * (ripple.fillScale or 0.82)
-					if fillRadius > 0 then
-						love.graphics.setColor(ripple.fillColor[1], ripple.fillColor[2], ripple.fillColor[3], fillAlpha)
-						love.graphics.circle("fill", ripple.x or 0, ripple.y or 0, fillRadius, ripple.segments or 48)
-					end
-				end
-			end
+                        if ringColor and (ringColor[4] or 0) > 0 then
+                                local alpha = (ringColor[4] or 0) * (fade ^ (ripple.fadePower or 1.35))
+                                if alpha > 0 then
+                                        love.graphics.setLineWidth(width)
+                                        love.graphics.setColor(ringColor[1], ringColor[2], ringColor[3], alpha)
+                                        love.graphics.circle("line", ripple.x or 0, ripple.y or 0, radius, ripple.segments or 64)
+                                end
+                        end
+                end
+        end
 
-			if ringColor and (ringColor[4] or 0) > 0 then
-				local alpha = (ringColor[4] or 0) * (fade ^ (ripple.fadePower or 1.35))
-				if alpha > 0 then
-					love.graphics.setLineWidth(width)
-					love.graphics.setColor(ringColor[1], ringColor[2], ringColor[3], alpha)
-					love.graphics.circle("line", ripple.x or 0, ripple.y or 0, radius, ripple.segments or 64)
-				end
-			end
-		end
-	end
-
-	love.graphics.setLineWidth(1)
-	love.graphics.pop()
+        love.graphics.setLineWidth(1)
+        love.graphics.pop()
 end
 
 function Arena:addFloorRipple(x, y, options)
-	if not (x and y) then
-		return
-	end
+        if not (x and y) then
+                return
+        end
 
 	local tileSize = self.tileSize or 24
 	options = options or {}
 
-	local ripples = self._floorRipples
-	if not ripples then
-		ripples = {}
-		self._floorRipples = ripples
-	end
+        local ripples = self._floorRipples
+        if not ripples then
+                ripples = {}
+                self._floorRipples = ripples
+        end
 
-	local startRadius
-	if options.startRadius then
-		startRadius = options.startRadius
-	elseif options.startRadiusTiles then
-		startRadius = options.startRadiusTiles * tileSize
-	else
-		startRadius = tileSize * 0.45
-	end
+        local startRadius
+        if options.startRadius then
+                startRadius = options.startRadius
+        elseif options.startRadiusTiles then
+                startRadius = options.startRadiusTiles * tileSize
+        else
+                startRadius = tileSize * 0.45
+        end
 
-	local endRadius
-	if options.endRadius then
-		endRadius = options.endRadius
-	else
-		local radiusTiles = options.radiusTiles or options.endRadiusTiles or 2.4
-		endRadius = radiusTiles * tileSize
-	end
+        local endRadius
+        if options.endRadius then
+                endRadius = options.endRadius
+        else
+                local radiusTiles = options.radiusTiles or options.endRadiusTiles or 2.4
+                endRadius = radiusTiles * tileSize
+        end
 
-	if endRadius < startRadius then
-		endRadius = startRadius
-	end
+        if endRadius < startRadius then
+                endRadius = startRadius
+        end
 
-	local duration = options.duration or 0.6
-	if duration <= 0 then
-		duration = 0.6
-	end
+        local duration = options.duration or 0.6
+        if duration <= 0 then
+                duration = 0.6
+        end
 
-	local thickness = options.thickness or tileSize * 0.65
-	local lightenAmount = clamp01(options.lightenAmount or 0.4)
-	local baseColor = copyColor(Theme.arenaBG or {0.18, 0.18, 0.22, 1})
-	local ringAlpha = clamp01(options.alpha or 0.34)
-	local fillAlpha = clamp01(options.fillAlpha or ringAlpha * 0.4)
-	local ringColor = lightenTowards(baseColor, lightenAmount, ringAlpha)
-	local fillColor = nil
-	if fillAlpha > 0 then
-		fillColor = lightenTowards(baseColor, clamp01(lightenAmount * 0.6), fillAlpha)
-	end
+        local invDuration = 1 / duration
+        local thickness = options.thickness or tileSize * 0.65
+        local lightenAmount = clamp01(options.lightenAmount or 0.4)
+        local baseColor = copyColor(Theme.arenaBG or {0.18, 0.18, 0.22, 1})
+        local ringAlpha = clamp01(options.alpha or 0.34)
+        local fillAlpha = clamp01(options.fillAlpha or ringAlpha * 0.4)
+        local ringColor = lightenTowards(baseColor, lightenAmount, ringAlpha)
+        local fillColor = nil
+        if fillAlpha > 0 then
+                fillColor = lightenTowards(baseColor, clamp01(lightenAmount * 0.6), fillAlpha)
+        end
 
-	ripples[#ripples + 1] = {
-		x = x,
-		y = y,
-		time = 0,
-		duration = duration,
-		startRadius = startRadius,
-		endRadius = endRadius,
-		thickness = thickness,
-		color = ringColor,
-		fillColor = fillColor,
-		fadePower = options.fadePower or 1.35,
-		fillFadePower = options.fillFadePower or 1.6,
-		fillScale = options.fillScale or 0.78,
-		segments = options.segments or 64,
-	}
+        local fadePower = options.fadePower or 1.35
+        local fillFadePower = options.fillFadePower or 1.6
+        local fillScale = options.fillScale or 0.78
+        local segments = options.segments or 64
+
+        ripples[#ripples + 1] = {
+                x = x,
+                y = y,
+                time = 0,
+                duration = duration,
+                invDuration = invDuration,
+                startRadius = startRadius,
+                endRadius = endRadius,
+                thickness = thickness,
+                color = ringColor,
+                fillColor = fillColor,
+                fadePower = fadePower,
+                fillFadePower = fillFadePower,
+                fillScale = fillScale,
+                segments = segments,
+        }
 end
 
 function Arena:_drawArenaInlay()
