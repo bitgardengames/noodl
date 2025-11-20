@@ -72,6 +72,11 @@ local recentlyVacatedGeneration = 0
 
 local RECENTLY_VACATED_GENERATION_RESET = 10000000
 
+local cachedTileSize = 1
+local cachedInvTileSize = 1
+local cachedOffsetX, cachedOffsetY = 0, 0
+local cachedArenaCols, cachedArenaRows = 0, 0
+
 local function getCellLookupKey(col, row)
 	if not (col and row) then
 		return nil
@@ -303,18 +308,20 @@ local function getSnakeHeadCell()
 end
 
 local function resetSnakeOccupancyGrid()
-	if SnakeUtils and SnakeUtils.initOccupancy then
-		SnakeUtils.initOccupancy()
-	end
+        if SnakeUtils and SnakeUtils.initOccupancy then
+                SnakeUtils.initOccupancy()
+        end
 
-	resetTrackedSnakeCells()
-	clearSnakeBodyOccupancy()
+        resetTrackedSnakeCells()
+        clearSnakeBodyOccupancy()
 
-	occupancyCols = (Arena and Arena.cols) or 0
-	occupancyRows = (Arena and Arena.rows) or 0
+        occupancyCols = (Arena and Arena.cols) or 0
+        occupancyRows = (Arena and Arena.rows) or 0
 
-	headOccupancyCol = nil
-	headOccupancyRow = nil
+        refreshArenaMetrics()
+
+        headOccupancyCol = nil
+        headOccupancyRow = nil
 end
 
 local function ensureOccupancyGrid()
@@ -324,13 +331,15 @@ local function ensureOccupancyGrid()
 		return false
 	end
 
-	if cols ~= occupancyCols or rows ~= occupancyRows then
-		resetSnakeOccupancyGrid()
-	elseif not SnakeUtils or not SnakeUtils.occupied or not SnakeUtils.occupied[cols] then
-		resetSnakeOccupancyGrid()
-	end
+        if cols ~= occupancyCols or rows ~= occupancyRows then
+                resetSnakeOccupancyGrid()
+        elseif not SnakeUtils or not SnakeUtils.occupied or not SnakeUtils.occupied[cols] then
+                resetSnakeOccupancyGrid()
+        end
 
-	return true
+        refreshArenaMetrics()
+
+        return true
 end
 
 local function acquireSegment()
@@ -793,9 +802,9 @@ local function syncSnakeTailSegment()
 end
 
 local function clampTileBounds(minCol, maxCol, minRow, maxRow)
-	if Arena then
-		local cols = Arena.cols or maxCol
-		local rows = Arena.rows or maxRow
+        if Arena then
+                local cols = Arena.cols or maxCol
+                local rows = Arena.rows or maxRow
 
 		if cols and cols > 0 then
 			if minCol < 1 then
@@ -824,21 +833,47 @@ local function clampTileBounds(minCol, maxCol, minRow, maxRow)
 		maxRow = minRow
 	end
 
-	return minCol, maxCol, minRow, maxRow
+        return minCol, maxCol, minRow, maxRow
+end
+
+local function refreshArenaMetrics()
+        local cols = (Arena and Arena.cols) or 0
+        local rows = (Arena and Arena.rows) or 0
+        local tileSize = (Arena and Arena.tileSize) or SEGMENT_SPACING or 1
+        if tileSize == 0 then
+                tileSize = 1
+        end
+
+        local offsetX = (Arena and Arena.x) or 0
+        local offsetY = (Arena and Arena.y) or 0
+
+        if cols ~= cachedArenaCols or rows ~= cachedArenaRows or tileSize ~= cachedTileSize or offsetX ~= cachedOffsetX or offsetY ~= cachedOffsetY then
+                cachedArenaCols = cols
+                cachedArenaRows = rows
+                cachedTileSize = tileSize
+                cachedInvTileSize = 1 / tileSize
+                cachedOffsetX = offsetX
+                cachedOffsetY = offsetY
+                return true
+        end
+
+        return false
 end
 
 local function computeTileBoundsForRect(x, y, w, h)
-	if not (x and y and w and h) then
-		return nil, nil, nil, nil
-	end
+        if not (x and y and w and h) then
+                return nil, nil, nil, nil
+        end
 
-	local tileSize = (Arena and Arena.tileSize) or SEGMENT_SPACING or 1
-	if tileSize == 0 then
-		tileSize = 1
-	end
+        refreshArenaMetrics()
 
-	local offsetX = (Arena and Arena.x) or 0
-	local offsetY = (Arena and Arena.y) or 0
+        local tileSize = cachedTileSize
+        if tileSize == 0 then
+                tileSize = 1
+        end
+
+        local offsetX = cachedOffsetX
+        local offsetY = cachedOffsetY
 
 	local minX = min(x, x + w)
 	local maxX = max(x, x + w)
@@ -846,10 +881,15 @@ local function computeTileBoundsForRect(x, y, w, h)
 	local maxY = max(y, y + h)
 
 	local epsilon = TILE_COORD_EPSILON or 1e-9
-	local minCol = floor(((minX - offsetX) / tileSize) + epsilon) + 1
-	local maxCol = floor(((maxX - offsetX) / tileSize) - epsilon) + 1
-	local minRow = floor(((minY - offsetY) / tileSize) + epsilon) + 1
-	local maxRow = floor(((maxY - offsetY) / tileSize) - epsilon) + 1
+        local invTileSize = cachedInvTileSize
+        if not invTileSize or invTileSize == 0 then
+                invTileSize = 1 / tileSize
+        end
+
+        local minCol = floor(((minX - offsetX) * invTileSize) + epsilon) + 1
+        local maxCol = floor(((maxX - offsetX) * invTileSize) - epsilon) + 1
+        local minRow = floor(((minY - offsetY) * invTileSize) + epsilon) + 1
+        local maxRow = floor(((maxY - offsetY) * invTileSize) - epsilon) + 1
 
 	return clampTileBounds(minCol, maxCol, minRow, maxRow)
 end
@@ -1486,32 +1526,45 @@ end
 -- and then use `speed` for position updates. This gives upgrades an immediate effect.
 
 toCell = function(x, y)
-	if not (x and y) then
-		return nil, nil
-	end
+        if not (x and y) then
+                return nil, nil
+        end
 
-	if Arena and Arena.getTileFromWorld then
-		return Arena:getTileFromWorld(x, y)
-	end
+        if Arena and Arena.getTileFromWorld then
+                return Arena:getTileFromWorld(x, y)
+        end
 
-	local tileSize = Arena and Arena.tileSize or SEGMENT_SPACING or 1
-	if tileSize == 0 then
-		tileSize = 1
-	end
+        refreshArenaMetrics()
 
-	local offsetX = (Arena and Arena.x) or 0
-	local offsetY = (Arena and Arena.y) or 0
-	local normalizedCol = ((x - offsetX) / tileSize) + TILE_COORD_EPSILON
-	local normalizedRow = ((y - offsetY) / tileSize) + TILE_COORD_EPSILON
-	local col = floor(normalizedCol) + 1
-	local row = floor(normalizedRow) + 1
+        local tileSize = cachedTileSize
+        if tileSize == 0 then
+                tileSize = 1
+        end
 
-	if Arena then
-		local cols = Arena.cols or col
-		local rows = Arena.rows or row
-		col = max(1, min(cols, col))
-		row = max(1, min(rows, row))
-	end
+        local invTileSize = cachedInvTileSize
+        if not invTileSize or invTileSize == 0 then
+                invTileSize = 1 / tileSize
+        end
+
+        local offsetX = cachedOffsetX
+        local offsetY = cachedOffsetY
+        local normalizedCol = ((x - offsetX) * invTileSize) + TILE_COORD_EPSILON
+        local normalizedRow = ((y - offsetY) * invTileSize) + TILE_COORD_EPSILON
+        local col = floor(normalizedCol) + 1
+        local row = floor(normalizedRow) + 1
+
+        if Arena then
+                local cols = cachedArenaCols
+                if cols <= 0 then
+                        cols = Arena.cols or col
+                end
+                local rows = cachedArenaRows
+                if rows <= 0 then
+                        rows = Arena.rows or row
+                end
+                col = max(1, min(cols, col))
+                row = max(1, min(rows, row))
+        end
 
 	return col, row
 end
