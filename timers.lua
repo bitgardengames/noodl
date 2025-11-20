@@ -1,6 +1,8 @@
 local Timer = {}
 Timer.__index = Timer
 
+local EMPTY_OPTIONS = {}
+
 local function sanitizeDuration(duration)
 	if duration == nil then
 		return 0
@@ -12,7 +14,7 @@ local function sanitizeDuration(duration)
 end
 
 function Timer.new(duration, options)
-	options = options or {}
+        options = options or EMPTY_OPTIONS
 
 	local instance = {
 		duration = sanitizeDuration(duration or 0),
