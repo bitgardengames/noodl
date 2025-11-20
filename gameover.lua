@@ -19,8 +19,9 @@ local buttonDefs = {}
 local ANALOG_DEADZONE = 0.3
 local TEXT_SHADOW_OFFSET = 2
 local TITLE_SHADOW_OFFSET = 3
-local CONTENT_ANIM_DURATION = 0.75
+local CONTENT_ANIM_DURATION = 1
 local BUTTON_ANIM_DURATION = 0.6
+local TEXT_STAGGER_DURATION = 0.5
 
 local function getLocalizedOrFallback(key, fallback)
 	if not key then
@@ -571,9 +572,9 @@ function GameOver:draw()
 	local contentProgress = getContentAnimationProgress(self)
 	local contentAlpha = contentProgress
 	local panelOffset = (1 - contentProgress) * ((UI.scaled and UI.scaled(26, 14)) or 18)
-	local messageAlpha = getStaggeredAlpha(contentProgress, 0, 0.4) * contentAlpha
-	local statsAlpha = getStaggeredAlpha(contentProgress, 0.1, 0.4) * contentAlpha
-	local detailsAlpha = getStaggeredAlpha(contentProgress, 0.2, 0.4) * contentAlpha
+        local messageAlpha = getStaggeredAlpha(contentProgress, 0, TEXT_STAGGER_DURATION) * contentAlpha
+        local statsAlpha = getStaggeredAlpha(contentProgress, 0.1, TEXT_STAGGER_DURATION) * contentAlpha
+        local detailsAlpha = getStaggeredAlpha(contentProgress, 0.2, TEXT_STAGGER_DURATION) * contentAlpha
 	local messageOffset = (1 - messageAlpha) * ((UI.scaled and UI.scaled(10, 6)) or 8)
 	local statsOffset = (1 - statsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
 	local detailsOffset = (1 - detailsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
