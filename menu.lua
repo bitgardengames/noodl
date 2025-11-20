@@ -453,17 +453,20 @@ local function shouldCelebrateDailyChallenge()
 end
 
 function Menu:enter()
-	t = 0
-	UI.clearButtons()
+        t = 0
+        UI.clearButtons()
 
-	Audio:playMusic("menu")
-	Screen:update()
-	Face:set("happy", 10)
+        Audio:playMusic("menu")
+        Screen:update()
+        Face:set("happy", 10)
 
-	dailyChallenge = DailyChallenges:getDailyChallenge()
-	dailyChallengeAnim = 0
-	resetDailyBarCelebration()
-	resetAnalogAxis()
+        DailyProgress:load()
+        dailyPanelCache = {}
+
+        dailyChallenge = DailyChallenges:getDailyChallenge()
+        dailyChallengeAnim = 0
+        resetDailyBarCelebration()
+        resetAnalogAxis()
 
 	MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 
