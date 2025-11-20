@@ -61,8 +61,8 @@ function MenuLogo:draw(sw, sh, layoutInfo, opts)
 
         local LOGO_VERTICAL_LIFT = self.LOGO_VERTICAL_LIFT
         local menuLayout = layoutInfo.menuLayout or UI.getMenuLayout(sw, sh)
-        local baseCellSize = UI.spacing.baseCellSize
-        local baseSpacing = UI.spacing.baseSpacing
+        local baseCellSize = UI.spacing.baseCellSize or 32
+        local baseSpacing = UI.spacing.baseSpacing or 24
         local sawScale = (menuLayout.logoScale or 0.9) * min(1, sw / 1280)
         local sawRadius = 32
 

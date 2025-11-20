@@ -468,7 +468,11 @@ local function buildFonts(scale)
 	end
 end
 
-UI.spacing = { shadowOffset = SHADOW_OFFSET }
+UI.spacing = {
+        shadowOffset = SHADOW_OFFSET,
+        baseCellSize = 32,
+        baseSpacing = 24,
+}
 UI.layout = UI.layout or {}
 UI.layout.menu = UI.layout.menu or {}
 UI.layoutScale = nil
