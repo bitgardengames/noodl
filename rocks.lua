@@ -31,11 +31,11 @@ local lookupHasEntries = false
 local revision = 0
 
 local function recordRockBreak()
-        SessionStats:add("runShieldRockBreaks", 1)
+	SessionStats:add("runShieldRockBreaks", 1)
 end
 
 function Rocks:recordRockBreak()
-        recordRockBreak()
+	recordRockBreak()
 end
 
 local function bumpRevision()
@@ -441,16 +441,16 @@ function Rocks:shatterNearest(x, y, count)
 
 		if not bestIndex then break end
 
-                local shattered = removeRockAt(bestIndex, true)
-                if shattered then
-                        bumpRevision()
-                        Audio:playSound("rock_shatter")
+		local shattered = removeRockAt(bestIndex, true)
+		if shattered then
+			bumpRevision()
+			Audio:playSound("rock_shatter")
 
-                        recordRockBreak()
+			recordRockBreak()
 
-                        local Upgrades = getUpgradesModule()
-                        if Upgrades and Upgrades.notify then
-                                local fx = shattered.x or x
+			local Upgrades = getUpgradesModule()
+			if Upgrades and Upgrades.notify then
+				local fx = shattered.x or x
 				local fy = shattered.y or y
 				Upgrades:notify("rockShattered", {
 					x = fx,

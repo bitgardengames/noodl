@@ -79,12 +79,12 @@ function Audio:applyVolumes()
 end
 
 function Audio:playSound(name, pitch)
-        if not Settings.muteSFX and self.sounds[name] then
-                self.sounds[name]:stop()
-                self.sounds[name]:setVolume(Settings.sfxVolume)
-                self.sounds[name]:setPitch(pitch or 1)
-                self.sounds[name]:play()
-        end
+	if not Settings.muteSFX and self.sounds[name] then
+		self.sounds[name]:stop()
+		self.sounds[name]:setVolume(Settings.sfxVolume)
+		self.sounds[name]:setPitch(pitch or 1)
+		self.sounds[name]:play()
+	end
 end
 
 function Audio:playMusic(trackName)
