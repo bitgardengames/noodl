@@ -3626,8 +3626,8 @@ function Snake:update(dt)
 		end
 	end
 
-	local newX, newY
-	local headCells = headCellBuffer
+        local newX, newY
+        local headCells = CellTracker.headCellBuffer
 	local headCellCount = 0
 
 	-- advance cell clock, maybe snap & commit queued direction
