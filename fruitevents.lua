@@ -63,7 +63,7 @@ Achievements:registerStateProvider(function()
 	bestComboStreak = max(comboState.best or 0, comboState.count or 0),
 	}
 	end
-)
+	)
 
 local function getUpgradeEffect(name)
 	if Upgrades and Upgrades.getEffect then
@@ -82,10 +82,11 @@ local function updateComboWindow()
 		return
 	end
 
-	comboState.baseWindow = getBaseWindow()
-	comboState.window = max(0.75, comboState.baseWindow)
+comboState.baseWindow = getBaseWindow()
+comboState.window = max(0.75, comboState.baseWindow)
+		comboState.duration = comboState.duration or comboState.window
 	comboState.timer = max(0, comboState.timer or 0)
-	comboState.windowDirty = false
+comboState.windowDirty = false
 end
 
 if Upgrades and Upgrades.addEventHandler then
@@ -111,7 +112,7 @@ local function syncComboToUI()
 	UI:setCombo(
 		comboState.count or 0,
 		comboState.timer or 0,
-		comboState.window or DEFAULT_COMBO_WINDOW
+		comboState.duration or comboState.window or DEFAULT_COMBO_WINDOW
 	)
 end
 
@@ -124,7 +125,7 @@ local function applyComboReward(fruitType, x, y, comboCount, wasComboActive)
 
 	local baseWindow = comboState.window or DEFAULT_COMBO_WINDOW
 	local extension = (fruitType and fruitType.comboExtension) or 0
-	local previousTimer = comboState.timer or 0
+	local totalWindow = baseWindow + extension
 
 	comboState.count = comboCount
 	comboState.best = max(comboState.best or 0, comboCount)
@@ -135,11 +136,8 @@ local function applyComboReward(fruitType, x, y, comboCount, wasComboActive)
 		SessionStats:add("combosTriggered", 1)
 	end
 
-	if wasComboActive and previousTimer > 0 then
-		comboState.timer = previousTimer + extension
-	else
-		comboState.timer = baseWindow + extension
-	end
+	comboState.duration = totalWindow
+	comboState.timer = totalWindow
 
 	syncComboToUI()
 
@@ -239,11 +237,12 @@ local function applyRunRewards(fruitType, x, y)
 end
 
 function FruitEvents.reset()
-	comboState.count = 0
-	comboState.timer = 0
-	comboState.baseOverride = DEFAULT_COMBO_WINDOW
-	comboState.baseWindow = DEFAULT_COMBO_WINDOW
-	comboState.window = DEFAULT_COMBO_WINDOW
+comboState.count = 0
+comboState.timer = 0
+comboState.duration = DEFAULT_COMBO_WINDOW
+comboState.baseOverride = DEFAULT_COMBO_WINDOW
+comboState.baseWindow = DEFAULT_COMBO_WINDOW
+comboState.window = DEFAULT_COMBO_WINDOW
 	comboState.best = 0
 	markComboWindowDirty()
 	if comboState.windowDirty then
@@ -276,14 +275,15 @@ function FruitEvents.getComboCount()
 end
 
 function FruitEvents.boostComboTimer(amount)
-	if not amount or amount <= 0 then return end
-	if comboState.windowDirty then
-		updateComboWindow()
-	end
-	comboState.timer = min(comboState.window or DEFAULT_COMBO_WINDOW, (comboState.timer or 0) + amount)
-	if comboState.windowDirty then
-		updateComboWindow()
-	end
+if not amount or amount <= 0 then return end
+if comboState.windowDirty then
+updateComboWindow()
+end
+local limit = comboState.duration or comboState.window or DEFAULT_COMBO_WINDOW
+comboState.timer = min(limit, (comboState.timer or 0) + amount)
+if comboState.windowDirty then
+updateComboWindow()
+end
 	syncComboToUI()
 end
 
