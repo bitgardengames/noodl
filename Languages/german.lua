@@ -32,7 +32,7 @@ local german = {
                         daily_panel_start = "Schließe die heutige Herausforderung ab, um eine Serie zu starten!",
                         daily_panel_reset_tooltip = "Tagesherausforderungen werden in ${time} zurückgesetzt.",
                         daily_panel_reset_tooltip_soon = "Tagesherausforderungen werden bald zurückgesetzt!",
-                        export_logo_dev = "Logo exportieren (Dev)",
+                        developer_art = "Entwickler-Art",
                         export_logo_dev_title = "Menülogo exportieren",
                         export_logo_dev_prompt = "Wähle eine Exportgröße für das Logo (PNG mit Transparenz).",
                         export_logo_dev_success = "Logo gespeichert als %s",
@@ -103,9 +103,14 @@ local german = {
 				},
 			},
 		},
-		shop = {
-			title = "Wähle eine Upgrade-Karte",
-		},
+                developer_art = {
+                        title = "Entwickler-Art",
+                        subtitle = "Sieh dir das Menülogo an und exportiere ein transparentes PNG.",
+                        export_png = "PNG exportieren",
+                },
+                shop = {
+                        title = "Wähle eine Upgrade-Karte",
+                },
 		settings = {
 			title = "Einstellungen",
 			section_display = "Anzeige",
