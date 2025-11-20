@@ -9,13 +9,12 @@ local english = {
 			unknown = "???",
 			yes = "Yes",
 			no = "No",
-                        ["and"] = "and",
-                        cancel = "Cancel",
-                        day_unit_singular = "day",
-                        day_unit_plural = "days",
-                },
-                menu = {
-                        start_game = "Start Game",
+			["and"] = "and",
+			day_unit_singular = "day",
+			day_unit_plural = "days",
+		},
+		menu = {
+			start_game = "Start Game",
 			settings = "Settings",
 			achievements = "Achievements",
 			progress = "Progress",
@@ -30,16 +29,11 @@ local english = {
 			daily_panel_keep_alive = "Complete today’s challenge to keep your streak alive!",
 			daily_panel_complete_message = "Streak saved! See you tomorrow.",
 			daily_panel_start = "Complete today's challenge to begin a streak!",
-                        daily_panel_reset_tooltip = "Daily challenges reset in ${time}.",
-                        daily_panel_reset_tooltip_soon = "Daily challenges reset soon!",
-                        developer_art = "Developer Art",
-                        export_logo_dev_title = "Export menu logo",
-                        export_logo_dev_prompt = "Choose a logo export size (PNG with transparency).",
-                        export_logo_dev_success = "Saved logo to %s",
-                        export_logo_dev_failed = "Failed to export logo: %s",
-                        daily = {
-                                combo = {
-                                        title = "Combo Crunch",
+			daily_panel_reset_tooltip = "Daily challenges reset in ${time}.",
+			daily_panel_reset_tooltip_soon = "Daily challenges reset soon!",
+			daily = {
+				combo = {
+					title = "Combo Crunch",
 					description = "Reach a ${goal}-fruit combo in one run.",
 					progress = "Best streak: ${best}/${goal}",
 					complete = "Combo goal smashed! Best streak: ${best}.",
@@ -103,14 +97,9 @@ local english = {
 				},
 			},
 		},
-                developer_art = {
-                        title = "Developer art",
-                        subtitle = "Preview the menu logo and export a transparent PNG.",
-                        export_png = "Export PNG",
-                },
-                shop = {
-                        title = "Pick an Upgrade Card",
-                },
+		shop = {
+			title = "Pick an Upgrade Card",
+		},
 		settings = {
 			title = "Settings",
 			section_display = "Display",
