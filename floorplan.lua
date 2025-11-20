@@ -12,6 +12,7 @@ local MAX_LASER_COUNT = 5
 local LASER_GROWTH_SPAN = 8
 local LASER_GROWTH_EXPONENT = 1.35
 local EXTRA_FLOOR_FRUIT_STEP = 2
+local BASELINE_PLAN
 
 local function computeLaserProgression(baseLaser, extraFloors, maxLasers)
 	baseLaser = baseLaser or 0
@@ -60,9 +61,9 @@ local function chance(p)
 	return love.math.random() < p
 end
 
-local BASELINE_PLAN
-
 function generateFloorPlan()
+	local Lasers = love.math.random(0, 1)
+
 	return {
 		[1] = {
 			fruitGoal = 12,
@@ -89,7 +90,7 @@ function generateFloorPlan()
 			rocks = 8 + (chance(0.5) and 1 or 0),
 			saws = 3,
 			laserCount = 0,
-			dartCount = love.math.random(0, 1),
+			dartCount = 1,
 			rockSpawnChance = 0.29,
 			sawSpeedMult = 1.18,
 			sawSpinMult = 1.08,
@@ -99,7 +100,7 @@ function generateFloorPlan()
 			rocks = 9 + (chance(0.5) and 1 or 0),
 			saws = 3,
 			laserCount = 0,
-			dartCount = love.math.random(0, 1),
+			dartCount = 1,
 			rockSpawnChance = 0.31,
 			sawSpeedMult = 1.26,
 			sawSpinMult = 1.14,
@@ -107,9 +108,9 @@ function generateFloorPlan()
 		[5] = {
 			fruitGoal = 24,
 			rocks = 10 + (chance(0.5) and 1 or 0),
-			saws = 4,
-			laserCount = love.math.random(0, 1),
-			dartCount = love.math.random(0, 1),
+			saws = 3,
+			laserCount = Lasers,
+			dartCount = (Lasers == 0) and 1 or 0,
 			rockSpawnChance = 0.34,
 			sawSpeedMult = 1.34,
 			sawSpinMult = 1.22,
@@ -118,8 +119,8 @@ function generateFloorPlan()
 			fruitGoal = 27,
 			rocks = 11 + (chance(0.5) and 1 or 0),
 			saws = 4,
-			laserCount = love.math.random(0, 1),
-			dartCount = love.math.random(0, 1),
+			laserCount = 1,
+			dartCount = 0,
 			rockSpawnChance = 0.37,
 			sawSpeedMult = 1.42,
 			sawSpinMult = 1.28,
@@ -127,9 +128,9 @@ function generateFloorPlan()
 		[7] = {
 			fruitGoal = 30,
 			rocks = 12 + (chance(0.5) and 1 or 0),
-			saws = 5,
-			laserCount = love.math.random(0, 1),
-			dartCount = love.math.random(0, 2),
+			saws = 4,
+			laserCount = (chance(0.2) and 2 or 1),
+			dartCount = 0,
 			rockSpawnChance = 0.4,
 			sawSpeedMult = 1.48,
 			sawSpinMult = 1.34,
@@ -137,9 +138,9 @@ function generateFloorPlan()
 		[8] = {
 			fruitGoal = 33,
 			rocks = 13 + (chance(0.5) and 1 or 0),
-			saws = 5,
-			laserCount = love.math.random(0, 1),
-			dartCount = love.math.random(0, 2),
+			saws = 4,
+			laserCount = 2,
+			dartCount = 0,
 			rockSpawnChance = 0.43,
 			sawSpeedMult = 1.56,
 			sawSpinMult = 1.42,
