@@ -441,7 +441,7 @@ DailyChallenges.challenges = {
 		titleKey = "menu.daily.pathfinder.title",
 		descriptionKey = "menu.daily.pathfinder.description",
 		sessionStat = "floorsCleared",
-		goal = 5,
+		goal = 6,
 	},
 	{
 		id = "combo_conductor",
@@ -456,7 +456,7 @@ DailyChallenges.challenges = {
 		titleKey = "menu.daily.stonebreaker_protocol.title",
 		descriptionKey = "menu.daily.stonebreaker_protocol.description",
 		sessionStat = "runShieldRockBreaks",
-		goal = 4,
+		goal = 2,
 		progressKey = "menu.daily.stonebreaker_protocol.progress",
 		completeKey = "menu.daily.stonebreaker_protocol.complete",
 	},
@@ -491,7 +491,7 @@ DailyChallenges.challenges = {
 		goal = 1,
 		progressKey = "menu.daily.floor_speedrunner.progress",
 		completeKey = "menu.daily.floor_speedrunner.complete",
-		targetSeconds = 45,
+		targetSeconds = 30,
 		getValue = function(self, context)
 			local statsSource = context and context.sessionStats
 			local fastest = getStatValue(statsSource, "fastestFloorClear", context)
