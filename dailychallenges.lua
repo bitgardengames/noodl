@@ -46,8 +46,13 @@ end
 
 local DailyChallenges = {}
 
+DailyChallenges._sessionDate = nil
+
 local defaultDateProvider = function()
-	return os.date("*t")
+    if not DailyChallenges._sessionDate then
+        DailyChallenges._sessionDate = os.date("*t")
+    end
+    return DailyChallenges._sessionDate
 end
 
 local function defaultProgressReplacements(current, goal)
@@ -255,7 +260,6 @@ local function resolveDate(self, override)
 	return provider()
 end
 
-
 local function secondsUntilNextMidnight(date)
 	if not date then
 		return nil
@@ -394,7 +398,7 @@ local function evaluateChallenge(self, challenge, context)
 	local current = resolveCurrent(challenge, context)
 	local dayValue, resolvedDate = resolveDayValue(self, context.date or context.dateOverride)
 	local storedProgress = getStoredProgress(self, challenge, resolvedDate, dayValue)
-	if storedProgress and storedProgress > (current or 0) then
+	if storedProgress and storedProgress >= 0 then
 		current = storedProgress
 	end
 
