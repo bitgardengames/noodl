@@ -6,6 +6,7 @@ local Audio = require("audio")
 local RenderLayers = require("renderlayers")
 local Easing = require("easing")
 local Timer = require("timer")
+local SessionStats = require("sessionstats")
 
 local max = math.max
 local min = math.min
@@ -28,6 +29,14 @@ local current = {}
 local rockLookup = {}
 local lookupHasEntries = false
 local revision = 0
+
+local function recordRockBreak()
+        SessionStats:add("runShieldRockBreaks", 1)
+end
+
+function Rocks:recordRockBreak()
+        recordRockBreak()
+end
 
 local function bumpRevision()
 	revision = revision + 1
@@ -432,14 +441,16 @@ function Rocks:shatterNearest(x, y, count)
 
 		if not bestIndex then break end
 
-		local shattered = removeRockAt(bestIndex, true)
-		if shattered then
-			bumpRevision()
-			Audio:playSound("rock_shatter")
+                local shattered = removeRockAt(bestIndex, true)
+                if shattered then
+                        bumpRevision()
+                        Audio:playSound("rock_shatter")
 
-			local Upgrades = getUpgradesModule()
-			if Upgrades and Upgrades.notify then
-				local fx = shattered.x or x
+                        recordRockBreak()
+
+                        local Upgrades = getUpgradesModule()
+                        if Upgrades and Upgrades.notify then
+                                local fx = shattered.x or x
 				local fy = shattered.y or y
 				Upgrades:notify("rockShattered", {
 					x = fx,

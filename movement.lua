@@ -627,11 +627,14 @@ local function handleRockCollision(headX, headY, headCol, headRow, rockRevision)
 			local centerX = rockLeft + rockWidth / 2
 			local centerY = rockTop + rockHeight / 2
 
-			if Snake.isDashActive and Snake:isDashActive() then
-				Rocks:destroy(rock)
-				Particles:spawnBurst(centerX, centerY, ROCK_DASH_BURST_OPTIONS)
-				Audio:playSound("shield_rock")
-				if Snake.onDashBreakRock then
+                        if Snake.isDashActive and Snake:isDashActive() then
+                                Rocks:destroy(rock)
+                                if Rocks.recordRockBreak then
+                                        Rocks:recordRockBreak()
+                                end
+                                Particles:spawnBurst(centerX, centerY, ROCK_DASH_BURST_OPTIONS)
+                                Audio:playSound("shield_rock")
+                                if Snake.onDashBreakRock then
 					Snake:onDashBreakRock(centerX, centerY)
 				end
 			else
