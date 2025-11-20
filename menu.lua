@@ -416,34 +416,62 @@ local function updateDailyBarCelebration(dt, shouldCelebrate)
 	end
 end
 
-local function prepareStartAction(action)
-        if type(action) ~= "string" then
-                return action
-        end
+local function drawMenuLogo(sw, sh, layoutInfo, options)
+        local info = layoutInfo or computeButtonLayout(sw, sh, menuButtonCount > 0 and menuButtonCount or #buttons)
+        local menuLayout = info and info.menuLayout or UI.getMenuLayout(sw, sh)
+        local opts = options or {}
 
-        if action == "exportLogo" then
-                local filename, err = exportMenuLogo()
+        local baseCellSize = 20
+        local baseSpacing = 10
+        local wordScale = 2
+        local sawScale = 2
+        local sawRadius = titleSaw.radius or 24
 
-                if filename then
-                        local message = string.format(Localization:get("menu.export_logo_dev_success") or "Saved logo to %s", filename)
-                        if love.window and love.window.showMessageBox then
-                                love.window.showMessageBox(Localization:get("menu.export_logo_dev_title") or "Export logo", message, "info")
-                        else
-                                print(message)
-                        end
-                elseif err ~= "cancelled" then
-                        local message = string.format(Localization:get("menu.export_logo_dev_failed") or "Failed to export logo: %s", tostring(err))
-                        if love.window and love.window.showMessageBox then
-                                love.window.showMessageBox(Localization:get("menu.export_logo_dev_title") or "Export logo", message, "error")
-                        else
-                                print(message)
-                        end
+        local cellSize = baseCellSize * wordScale
+        local word = Localization:get("menu.title_word")
+        local spacing = baseSpacing * wordScale
+        local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+        local ox = (sw - wordWidth) / 2
+
+        local baseOy = menuLayout.titleY or (sh * 0.2)
+        local buttonTop = (info and info.startY) or (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
+        local desiredSpacing = (UI.spacing.buttonSpacing or 0) + (UI.spacing.buttonHeight or 0) * 0.25 + cellSize * 0.5
+        local wordHeightForSpacing = cellSize * 2
+        local targetBottom = buttonTop - desiredSpacing
+        local currentBottom = baseOy + wordHeightForSpacing
+        local additionalOffset = max(0, targetBottom - currentBottom)
+        local oy = max(0, baseOy + additionalOffset - LOGO_VERTICAL_LIFT)
+
+        if titleSaw and sawScale and sawRadius then
+                local desiredTrackLengthWorld = wordWidth + cellSize
+                local shortenedTrackLengthWorld = max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 126)
+                local adjustedTrackLengthWorld = shortenedTrackLengthWorld + 4
+                local targetTrackLengthBase = adjustedTrackLengthWorld / sawScale
+                if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
+                        titleSaw.trackLength = targetTrackLengthBase
                 end
 
-                return nil
+                local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
+                local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
+                local slotThicknessWorld = slotThicknessBase * sawScale
+
+                local targetLeft = ox - 15
+                local targetBottom = oy - 41
+
+                local sawX = targetLeft + trackLengthWorld / 2 - 4
+                local sawY = targetBottom - slotThicknessWorld / 2
+
+                titleSaw:draw(sawX, sawY, sawScale)
         end
 
-        return action
+        local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
+        local head = trail and trail[#trail]
+
+        if head and opts.drawFace ~= false then
+                Face:draw(head.x, head.y, wordScale)
+        end
+
+        return head, wordScale
 end
 
 local function selectLogoExportSize()
@@ -497,6 +525,36 @@ local function exportMenuLogo(size)
         end
 
         return filename
+end
+
+local function prepareStartAction(action)
+        if type(action) ~= "string" then
+                return action
+        end
+
+        if action == "exportLogo" then
+                local filename, err = exportMenuLogo()
+
+                if filename then
+                        local message = string.format(Localization:get("menu.export_logo_dev_success") or "Saved logo to %s", filename)
+                        if love.window and love.window.showMessageBox then
+                                love.window.showMessageBox(Localization:get("menu.export_logo_dev_title") or "Export logo", message, "info")
+                        else
+                                print(message)
+                        end
+                elseif err ~= "cancelled" then
+                        local message = string.format(Localization:get("menu.export_logo_dev_failed") or "Failed to export logo: %s", tostring(err))
+                        if love.window and love.window.showMessageBox then
+                                love.window.showMessageBox(Localization:get("menu.export_logo_dev_title") or "Export logo", message, "error")
+                        else
+                                print(message)
+                        end
+                end
+
+                return nil
+        end
+
+        return action
 end
 
 local function handleAnalogAxis(axis, value)
@@ -653,64 +711,6 @@ function Menu:update(dt)
 	end
 
         Face:update(dt)
-end
-
-local function drawMenuLogo(sw, sh, layoutInfo, options)
-        local info = layoutInfo or computeButtonLayout(sw, sh, menuButtonCount > 0 and menuButtonCount or #buttons)
-        local menuLayout = info and info.menuLayout or UI.getMenuLayout(sw, sh)
-        local opts = options or {}
-
-        local baseCellSize = 20
-        local baseSpacing = 10
-        local wordScale = 2
-        local sawScale = 2
-        local sawRadius = titleSaw.radius or 24
-
-        local cellSize = baseCellSize * wordScale
-        local word = Localization:get("menu.title_word")
-        local spacing = baseSpacing * wordScale
-        local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
-        local ox = (sw - wordWidth) / 2
-
-        local baseOy = menuLayout.titleY or (sh * 0.2)
-        local buttonTop = (info and info.startY) or (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
-        local desiredSpacing = (UI.spacing.buttonSpacing or 0) + (UI.spacing.buttonHeight or 0) * 0.25 + cellSize * 0.5
-        local wordHeightForSpacing = cellSize * 2
-        local targetBottom = buttonTop - desiredSpacing
-        local currentBottom = baseOy + wordHeightForSpacing
-        local additionalOffset = max(0, targetBottom - currentBottom)
-        local oy = max(0, baseOy + additionalOffset - LOGO_VERTICAL_LIFT)
-
-        if titleSaw and sawScale and sawRadius then
-                local desiredTrackLengthWorld = wordWidth + cellSize
-                local shortenedTrackLengthWorld = max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 126)
-                local adjustedTrackLengthWorld = shortenedTrackLengthWorld + 4
-                local targetTrackLengthBase = adjustedTrackLengthWorld / sawScale
-                if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
-                        titleSaw.trackLength = targetTrackLengthBase
-                end
-
-                local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
-                local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
-                local slotThicknessWorld = slotThicknessBase * sawScale
-
-                local targetLeft = ox - 15
-                local targetBottom = oy - 41
-
-                local sawX = targetLeft + trackLengthWorld / 2 - 4
-                local sawY = targetBottom - slotThicknessWorld / 2
-
-                titleSaw:draw(sawX, sawY, sawScale)
-        end
-
-        local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
-        local head = trail and trail[#trail]
-
-        if head and opts.drawFace ~= false then
-                Face:draw(head.x, head.y, wordScale)
-        end
-
-        return head, wordScale
 end
 
 function Menu:draw()
