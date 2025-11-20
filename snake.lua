@@ -2526,14 +2526,14 @@ local function drawDescendingIntoHole(hole)
 end
 
 local function collectUpgradeVisuals(self)
-	local visuals = self._upgradeVisualBuffer
-	-- The returned table is reused every frame; treat it as read-only outside this function.
-	if visuals then
-		wipeTable(visuals)
-	else
-		visuals = {}
-		self._upgradeVisualBuffer = visuals
-	end
+        local visuals = self._upgradeVisualBuffer
+        -- The returned table is reused every frame; treat it as read-only outside this function.
+        if visuals then
+                CellTracker.wipeTable(visuals)
+        else
+                visuals = {}
+                self._upgradeVisualBuffer = visuals
+        end
 
 	local pool = self._upgradeVisualPool
 	if not pool then
@@ -2544,13 +2544,13 @@ local function collectUpgradeVisuals(self)
 	local hasAny = false
 
 	local function acquireEntry(key)
-		local entry = pool[key]
-		if not entry then
-			entry = {}
-			pool[key] = entry
-		else
-			wipeTable(entry)
-		end
+                local entry = pool[key]
+                if not entry then
+                        entry = {}
+                        pool[key] = entry
+                else
+                        CellTracker.wipeTable(entry)
+                end
 
 		visuals[key] = entry
 		hasAny = true
