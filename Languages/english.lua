@@ -49,13 +49,13 @@ local english = {
 				},
 				stonebreaker_protocol = {
 					title = "Stonebreaker Protocol",
-					description = "Smash ${goal} rocks with your shield in one run.",
+					description = "Destroy ${goal} rocks in one run.",
 					progress = "Rocks shattered: ${current}/${goal}",
 					complete = "Pulverized ${current} rocks!",
 				},
 				saw_parry = {
 					title = "Saw Parry Ace",
-					description = "Deflect ${goal} saws with your shield in one run.",
+					description = "Destroy ${goal} saw with your shield in one run.",
 					progress = "Saws parried: ${current}/${goal}",
 					complete = "Saws sent flying: ${current}!",
 				},

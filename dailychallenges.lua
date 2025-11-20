@@ -456,7 +456,7 @@ DailyChallenges.challenges = {
 		titleKey = "menu.daily.stonebreaker_protocol.title",
 		descriptionKey = "menu.daily.stonebreaker_protocol.description",
 		sessionStat = "runShieldRockBreaks",
-		goal = 2,
+		goal = 4,
 		progressKey = "menu.daily.stonebreaker_protocol.progress",
 		completeKey = "menu.daily.stonebreaker_protocol.complete",
 	},
@@ -465,7 +465,7 @@ DailyChallenges.challenges = {
 		titleKey = "menu.daily.saw_parry.title",
 		descriptionKey = "menu.daily.saw_parry.description",
 		sessionStat = "runShieldSawParries",
-		goal = 2,
+		goal = 1,
 		progressKey = "menu.daily.saw_parry.progress",
 		completeKey = "menu.daily.saw_parry.complete",
 	},
@@ -491,7 +491,7 @@ DailyChallenges.challenges = {
 		goal = 1,
 		progressKey = "menu.daily.floor_speedrunner.progress",
 		completeKey = "menu.daily.floor_speedrunner.complete",
-		targetSeconds = 30,
+		targetSeconds = 25, -- This should be dynamic based on floor, they have different fruit requirements and hazards to deal with
 		getValue = function(self, context)
 			local statsSource = context and context.sessionStats
 			local fastest = getStatValue(statsSource, "fastestFloorClear", context)
