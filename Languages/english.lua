@@ -32,7 +32,7 @@ local english = {
 			daily_panel_start = "Complete today's challenge to begin a streak!",
                         daily_panel_reset_tooltip = "Daily challenges reset in ${time}.",
                         daily_panel_reset_tooltip_soon = "Daily challenges reset soon!",
-                        export_logo_dev = "Export Logo (Dev)",
+                        developer_art = "Developer Art",
                         export_logo_dev_title = "Export menu logo",
                         export_logo_dev_prompt = "Choose a logo export size (PNG with transparency).",
                         export_logo_dev_success = "Saved logo to %s",
@@ -103,9 +103,14 @@ local english = {
 				},
 			},
 		},
-		shop = {
-			title = "Pick an Upgrade Card",
-		},
+                developer_art = {
+                        title = "Developer art",
+                        subtitle = "Preview the menu logo and export a transparent PNG.",
+                        export_png = "Export PNG",
+                },
+                shop = {
+                        title = "Pick an Upgrade Card",
+                },
 		settings = {
 			title = "Settings",
 			section_display = "Display",
