@@ -44,7 +44,7 @@ local EDGE_PROXIMITY_FACTOR = 0.765
 local BUTTON_STACK_OFFSET = 80
 local BUTTON_VERTICAL_SHIFT = 40
 local BUTTON_EXTRA_SPACING = 2
-local LOGO_VERTICAL_LIFT = 40
+local LOGO_VERTICAL_LIFT = 60
 local dailyPanelCache = {}
 
 local dailyBarCelebration = {
