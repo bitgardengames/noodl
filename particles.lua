@@ -9,6 +9,7 @@ local PARTICLE_SPRITE_SIZE = 16
 local particleSprite
 local particleSpriteRadius = PARTICLE_SPRITE_SIZE * 0.5
 local particleBatch
+local EMPTY_OPTIONS = {}
 
 local function ensureParticleSprite()
 	if particleSprite then
@@ -123,7 +124,7 @@ local function releaseParticle(self, index)
 end
 
 function Particles:spawnBurst(x, y, options)
-	options = options or {}
+        options = options or EMPTY_OPTIONS
 
 	local count = max(0, options.count or 6)
 	local speed = options.speed or 60
@@ -321,7 +322,7 @@ function Particles:spawnBlood(x, y, options)
 		return
 	end
 
-	options = options or {}
+        options = options or EMPTY_OPTIONS
 
 	local dirX, dirY = normalizeDirection(options.dirX or 0, options.dirY or -1)
 	local baseAngle = atan2(dirY, dirX)

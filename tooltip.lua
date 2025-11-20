@@ -6,7 +6,7 @@ local max = math.max
 local min = math.min
 
 local Tooltip = {
-	active = false,
+        active = false,
 	alpha = 0,
 	delayTimer = 0,
 	currentId = nil,
@@ -33,10 +33,11 @@ local Tooltip = {
 	cachedBoxWidth = nil,
 	cachedBoxHeight = nil,
 	cachedPaddingX = nil,
-	cachedPaddingY = nil,
+        cachedPaddingY = nil,
 }
 
 local EMPTY_TABLE = {}
+local EMPTY_OPTIONS = {}
 local DEFAULT_TOOLTIP_PANEL_COLOR = {0.08, 0.08, 0.12, 0.94}
 local DEFAULT_TOOLTIP_BORDER_COLOR = {1, 1, 1, 0.16}
 local DEFAULT_TOOLTIP_SHADOW_COLOR = {0, 0, 0, 0.4}
@@ -105,7 +106,7 @@ function Tooltip:update(dt, mx, my)
 end
 
 function Tooltip:show(text, options)
-	options = options or {}
+        options = options or EMPTY_OPTIONS
 
 	local wasVisible = self:isVisible()
 	local id = options.id or text
