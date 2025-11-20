@@ -138,7 +138,7 @@ function MenuLogo:renderLogoToCanvas(exportSize, buttonCount, menuLayout)
                 return nil, "Graphics unavailable"
         end
 
-        local canvas = love.graphics.newCanvas(exportSize, exportSize, {format = "rgba8", stencil = true})
+        local canvas = love.graphics.newCanvas(exportSize, exportSize, {format = "rgba8"})
         love.graphics.push("all")
         love.graphics.setCanvas(canvas)
         love.graphics.clear(0, 0, 0, 0)

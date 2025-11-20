@@ -50,7 +50,7 @@ local function ensurePreviewCanvas()
                 return previewCanvas
         end
 
-        previewCanvas = love.graphics.newCanvas(previewSize, previewSize, {format = "rgba8", stencil = true})
+        previewCanvas = love.graphics.newCanvas(previewSize, previewSize, {format = "rgba8"})
         return previewCanvas
 end
 
