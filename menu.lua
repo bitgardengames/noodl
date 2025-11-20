@@ -45,6 +45,9 @@ local BUTTON_STACK_OFFSET = 80
 local BUTTON_VERTICAL_SHIFT = 40
 local BUTTON_EXTRA_SPACING = 2
 local LOGO_VERTICAL_LIFT = 40
+local LOGO_EXPORT_SIZES = {512, 1024, 2048}
+local DEFAULT_LOGO_EXPORT_NAME = "logo_export"
+local menuButtonCount = 0
 local dailyPanelCache = {}
 
 local dailyBarCelebration = {
@@ -64,17 +67,49 @@ function Menu:getMenuBackgroundOptions()
 end
 
 local function drawBackground(sw, sh)
-	if not MenuScene.shouldDrawBackground() then
-		return
-	end
+        if not MenuScene.shouldDrawBackground() then
+                return
+        end
 
-	MenuScene.drawBackground(sw, sh, Menu:getMenuBackgroundOptions())
+        MenuScene.drawBackground(sw, sh, Menu:getMenuBackgroundOptions())
+end
+
+local function computeButtonLayout(sw, sh, labelCount, menuLayout)
+        local layout = menuLayout or UI.getMenuLayout(sw, sh)
+        local centerX = sw / 2
+        local effectiveSpacing = (UI.spacing.buttonSpacing or 0) + BUTTON_EXTRA_SPACING
+        local totalButtonHeight = labelCount * UI.spacing.buttonHeight + max(0, labelCount - 1) * effectiveSpacing
+        local stackBase = (layout.bodyTop or layout.stackTop or (sh * 0.2))
+        local footerGuard = layout.footerSpacing or UI.spacing.sectionSpacing or 24
+        local lowerBound = (layout.bottomY or (sh - (layout.marginBottom or sh * 0.12))) - footerGuard
+        local availableHeight = max(0, lowerBound - stackBase)
+        local startY = stackBase + max(0, (availableHeight - totalButtonHeight) * 0.5) + BUTTON_STACK_OFFSET + BUTTON_VERTICAL_SHIFT
+        local minStart = stackBase + BUTTON_STACK_OFFSET + BUTTON_VERTICAL_SHIFT
+        local maxStart = lowerBound - totalButtonHeight
+
+        if maxStart < minStart then
+                startY = maxStart
+        else
+                if startY > maxStart then
+                        startY = maxStart
+                end
+                if startY < minStart then
+                        startY = minStart
+                end
+        end
+
+        return {
+                menuLayout = layout,
+                centerX = centerX,
+                startY = startY,
+                effectiveSpacing = effectiveSpacing,
+        }
 end
 
 local function getDayUnit(count)
-	if count == 1 then
-		return Localization:get("common.day_unit_singular")
-	end
+        if count == 1 then
+                return Localization:get("common.day_unit_singular")
+        end
 
 	return Localization:get("common.day_unit_plural")
 end
@@ -382,11 +417,86 @@ local function updateDailyBarCelebration(dt, shouldCelebrate)
 end
 
 local function prepareStartAction(action)
-	if type(action) ~= "string" then
-		return action
-	end
+        if type(action) ~= "string" then
+                return action
+        end
 
-	return action
+        if action == "exportLogo" then
+                local filename, err = exportMenuLogo()
+
+                if filename then
+                        local message = string.format(Localization:get("menu.export_logo_dev_success") or "Saved logo to %s", filename)
+                        if love.window and love.window.showMessageBox then
+                                love.window.showMessageBox(Localization:get("menu.export_logo_dev_title") or "Export logo", message, "info")
+                        else
+                                print(message)
+                        end
+                elseif err ~= "cancelled" then
+                        local message = string.format(Localization:get("menu.export_logo_dev_failed") or "Failed to export logo: %s", tostring(err))
+                        if love.window and love.window.showMessageBox then
+                                love.window.showMessageBox(Localization:get("menu.export_logo_dev_title") or "Export logo", message, "error")
+                        else
+                                print(message)
+                        end
+                end
+
+                return nil
+        end
+
+        return action
+end
+
+local function selectLogoExportSize()
+        if not love.window or not love.window.showMessageBox then
+                return LOGO_EXPORT_SIZES[1]
+        end
+
+        local buttons = {}
+        for _, size in ipairs(LOGO_EXPORT_SIZES) do
+                buttons[#buttons + 1] = string.format("%dx%d", size, size)
+        end
+        buttons[#buttons + 1] = Localization:get("common.cancel") or "Cancel"
+
+        local choice = love.window.showMessageBox(Localization:get("menu.export_logo_dev_title") or "Export logo", Localization:get("menu.export_logo_dev_prompt") or "Choose logo export size.", buttons, "info", true)
+        if not choice or choice < 1 or choice > #LOGO_EXPORT_SIZES then
+                return nil
+        end
+
+        return LOGO_EXPORT_SIZES[choice]
+end
+
+local function exportMenuLogo(size)
+        if not (love.graphics and love.graphics.newCanvas) then
+                return nil, "Graphics unavailable"
+        end
+
+        local exportSize = size or selectLogoExportSize()
+        if not exportSize then
+                return nil, "cancelled"
+        end
+
+        local canvas = love.graphics.newCanvas(exportSize, exportSize, {format = "rgba8"})
+        love.graphics.push("all")
+        love.graphics.setCanvas(canvas)
+        love.graphics.clear(0, 0, 0, 0)
+        love.graphics.origin()
+
+        drawMenuLogo(exportSize, exportSize, computeButtonLayout(exportSize, exportSize, menuButtonCount), {drawFace = true})
+
+        love.graphics.pop()
+
+        local imageData = canvas:newImageData()
+        local timestamp = os.date("%Y-%m-%d_%H-%M-%S")
+        local filename = string.format("%s_%dx%d_%s.png", DEFAULT_LOGO_EXPORT_NAME, exportSize, exportSize, timestamp)
+        local ok, encodeErr = pcall(function()
+                return imageData:encode("png", filename)
+        end)
+
+        if not ok then
+                return nil, tostring(encodeErr)
+        end
+
+        return filename
 end
 
 local function handleAnalogAxis(axis, value)
@@ -465,45 +575,28 @@ function Menu:enter()
 	resetDailyBarCelebration()
 	resetAnalogAxis()
 
-	MenuScene.prepareBackground(self:getMenuBackgroundOptions())
+        MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 
-	local sw, sh = Screen:get()
-	local centerX = sw / 2
-	local menuLayout = UI.getMenuLayout(sw, sh)
+        local sw, sh = Screen:get()
+        local menuLayout = UI.getMenuLayout(sw, sh)
 
-	local labels = {
-		{key = "menu.start_game",   action = "game"},
-		{key = "menu.achievements", action = "achievementsmenu"},
-		{key = "menu.settings",     action = "settings"},
-		{key = "menu.quit",         action = "quit"},
-	}
+        local labels = {
+                {key = "menu.start_game",   action = "game"},
+                {key = "menu.achievements", action = "achievementsmenu"},
+                {key = "menu.settings",     action = "settings"},
+                {key = "menu.export_logo_dev", action = "exportLogo"},
+                {key = "menu.quit",         action = "quit"},
+        }
 
-	local effectiveSpacing = (UI.spacing.buttonSpacing or 0) + BUTTON_EXTRA_SPACING
-	local totalButtonHeight = #labels * UI.spacing.buttonHeight + max(0, #labels - 1) * effectiveSpacing
-	local stackBase = (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
-	local footerGuard = menuLayout.footerSpacing or UI.spacing.sectionSpacing or 24
-	local lowerBound = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or sh * 0.12))) - footerGuard
-	local availableHeight = max(0, lowerBound - stackBase)
-	local startY = stackBase + max(0, (availableHeight - totalButtonHeight) * 0.5) + BUTTON_STACK_OFFSET + BUTTON_VERTICAL_SHIFT
-	local minStart = stackBase + BUTTON_STACK_OFFSET + BUTTON_VERTICAL_SHIFT
-	local maxStart = lowerBound - totalButtonHeight
+        menuButtonCount = #labels
+        local layoutInfo = computeButtonLayout(sw, sh, menuButtonCount, menuLayout)
+        local startY = layoutInfo.startY
 
-	if maxStart < minStart then
-		startY = maxStart
-	else
-		if startY > maxStart then
-			startY = maxStart
-		end
-		if startY < minStart then
-			startY = minStart
-		end
-	end
+        local defs = {}
 
-	local defs = {}
-
-	for i, entry in ipairs(labels) do
-		local x = centerX - UI.spacing.buttonWidth / 2
-		local y = startY + (i - 1) * (UI.spacing.buttonHeight + effectiveSpacing)
+        for i, entry in ipairs(labels) do
+                local x = layoutInfo.centerX - UI.spacing.buttonWidth / 2
+                local y = startY + (i - 1) * (UI.spacing.buttonHeight + layoutInfo.effectiveSpacing)
 
 		defs[#defs + 1] = {
 			id = "menuButton" .. i,
@@ -525,7 +618,7 @@ function Menu:enter()
 end
 
 function Menu:update(dt)
-	t = t + dt
+        t = t + dt
 
 	local mx, my = UI.refreshCursor()
 	buttonList:updateHover(mx, my)
@@ -559,68 +652,81 @@ function Menu:update(dt)
 		titleSaw:update(dt)
 	end
 
-	Face:update(dt)
+        Face:update(dt)
+end
+
+local function drawMenuLogo(sw, sh, layoutInfo, options)
+        local info = layoutInfo or computeButtonLayout(sw, sh, menuButtonCount > 0 and menuButtonCount or #buttons)
+        local menuLayout = info and info.menuLayout or UI.getMenuLayout(sw, sh)
+        local opts = options or {}
+
+        local baseCellSize = 20
+        local baseSpacing = 10
+        local wordScale = 2
+        local sawScale = 2
+        local sawRadius = titleSaw.radius or 24
+
+        local cellSize = baseCellSize * wordScale
+        local word = Localization:get("menu.title_word")
+        local spacing = baseSpacing * wordScale
+        local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
+        local ox = (sw - wordWidth) / 2
+
+        local baseOy = menuLayout.titleY or (sh * 0.2)
+        local buttonTop = (info and info.startY) or (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
+        local desiredSpacing = (UI.spacing.buttonSpacing or 0) + (UI.spacing.buttonHeight or 0) * 0.25 + cellSize * 0.5
+        local wordHeightForSpacing = cellSize * 2
+        local targetBottom = buttonTop - desiredSpacing
+        local currentBottom = baseOy + wordHeightForSpacing
+        local additionalOffset = max(0, targetBottom - currentBottom)
+        local oy = max(0, baseOy + additionalOffset - LOGO_VERTICAL_LIFT)
+
+        if titleSaw and sawScale and sawRadius then
+                local desiredTrackLengthWorld = wordWidth + cellSize
+                local shortenedTrackLengthWorld = max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 126)
+                local adjustedTrackLengthWorld = shortenedTrackLengthWorld + 4
+                local targetTrackLengthBase = adjustedTrackLengthWorld / sawScale
+                if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
+                        titleSaw.trackLength = targetTrackLengthBase
+                end
+
+                local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
+                local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
+                local slotThicknessWorld = slotThicknessBase * sawScale
+
+                local targetLeft = ox - 15
+                local targetBottom = oy - 41
+
+                local sawX = targetLeft + trackLengthWorld / 2 - 4
+                local sawY = targetBottom - slotThicknessWorld / 2
+
+                titleSaw:draw(sawX, sawY, sawScale)
+        end
+
+        local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
+        local head = trail and trail[#trail]
+
+        if head and opts.drawFace ~= false then
+                Face:draw(head.x, head.y, wordScale)
+        end
+
+        return head, wordScale
 end
 
 function Menu:draw()
-	local sw, sh = Screen:get()
-	local menuLayout = UI.getMenuLayout(sw, sh)
+        local sw, sh = Screen:get()
+        local menuLayout = UI.getMenuLayout(sw, sh)
 
 	RenderLayers:begin(sw, sh)
 
-	drawBackground(sw, sh)
+        drawBackground(sw, sh)
+        local faceHead, faceScale = drawMenuLogo(sw, sh, computeButtonLayout(sw, sh, menuButtonCount, menuLayout), {drawFace = false})
 
-	local baseCellSize = 20
-	local baseSpacing = 10
-	local wordScale = 2
-	local sawScale = 2
-	local sawRadius = titleSaw.radius or 24
+        RenderLayers:present()
 
-	local cellSize = baseCellSize * wordScale
-	local word = Localization:get("menu.title_word")
-	local spacing = baseSpacing * wordScale
-	local wordWidth = (#word * (3 * cellSize + spacing)) - spacing - (cellSize * 3)
-	local ox = (sw - wordWidth) / 2
-
-	local baseOy = menuLayout.titleY or (sh * 0.2)
-	local buttonTop = buttons[1] and buttons[1].y or (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
-	local desiredSpacing = (UI.spacing.buttonSpacing or 0) + (UI.spacing.buttonHeight or 0) * 0.25 + cellSize * 0.5
-	local wordHeightForSpacing = cellSize * 2
-	local targetBottom = buttonTop - desiredSpacing
-	local currentBottom = baseOy + wordHeightForSpacing
-	local additionalOffset = max(0, targetBottom - currentBottom)
-	local oy = max(0, baseOy + additionalOffset - LOGO_VERTICAL_LIFT)
-
-	if titleSaw and sawScale and sawRadius then
-		local desiredTrackLengthWorld = wordWidth + cellSize
-		local shortenedTrackLengthWorld = max(2 * sawRadius * sawScale, desiredTrackLengthWorld - 126)
-		local adjustedTrackLengthWorld = shortenedTrackLengthWorld + 4
-		local targetTrackLengthBase = adjustedTrackLengthWorld / sawScale
-		if not titleSaw.trackLength or math.abs(titleSaw.trackLength - targetTrackLengthBase) > 0.001 then
-			titleSaw.trackLength = targetTrackLengthBase
-		end
-
-		local trackLengthWorld = (titleSaw.trackLength or targetTrackLengthBase) * sawScale
-		local slotThicknessBase = titleSaw.getSlotThickness and titleSaw:getSlotThickness() or 10
-		local slotThicknessWorld = slotThicknessBase * sawScale
-
-		local targetLeft = ox - 15
-		local targetBottom = oy - 41
-
-		local sawX = targetLeft + trackLengthWorld / 2 - 4
-		local sawY = targetBottom - slotThicknessWorld / 2
-
-		titleSaw:draw(sawX, sawY, sawScale)
-	end
-
-	local trail = DrawWord.draw(word, ox, oy, cellSize, spacing)
-
-	RenderLayers:present()
-
-	if trail and #trail > 0 then
-		local head = trail[#trail]
-		Face:draw(head.x, head.y, wordScale)
-	end
+        if faceHead and faceScale then
+                Face:draw(faceHead.x, faceHead.y, faceScale)
+        end
 
 	UI.refreshCursor()
 
