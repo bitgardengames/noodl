@@ -48,6 +48,7 @@ local sqrt = math.sqrt
 local EMPTY_TABLE = {}
 
 local Game = {}
+Game.worldTimeScale = 1
 
 local clamp01 = Easing.clamp01
 local easeOutExpo = Easing.easeOutExpo
@@ -747,10 +748,10 @@ local function getMouseInterface()
 end
 
 local function getMouseVisibility(mouse)
-	if mouse and mouse.isVisible then
-		local ok, visible = pcall(mouse.isVisible)
-		if ok and visible ~= nil then
-			return visible and true or false
+        if mouse and mouse.isVisible then
+                local ok, visible = pcall(mouse.isVisible)
+                if ok and visible ~= nil then
+                        return visible and true or false
 		end
 	end
 
@@ -801,9 +802,9 @@ local function resolveHitStopScale(self)
 end
 
 local function resolveMouseVisibilityTarget(self)
-	if not getMouseInterface() then
-		return nil
-	end
+        if not getMouseInterface() then
+                return nil
+        end
 
 	local transition = self.transition
 	local inShop = transition and transition:isShopActive()
@@ -816,6 +817,19 @@ local function resolveMouseVisibilityTarget(self)
 	end
 
 	return nil
+end
+
+local function updateWorldTimeScale()
+        local scale = 1
+
+        if Snake and Snake.getTimeScale then
+                local snakeScale = Snake:getTimeScale()
+                if snakeScale and snakeScale > 0 then
+                        scale = snakeScale
+                end
+        end
+
+        Game.worldTimeScale = scale
 end
 
 function Game:releaseMouseVisibility()
@@ -912,21 +926,18 @@ function Game:confirmTransitionIntro()
 end
 
 local function getScaledDeltaTime(self, dt)
-	if not dt then
-		return dt
-	end
+        if not dt then
+                return dt
+        end
 
-	local scale = 1
-	if Snake and Snake.getTimeScale then
-		local snakeScale = Snake:getTimeScale()
-		if snakeScale and snakeScale > 0 then
-			scale = snakeScale
-		end
-	end
+        local scale = Game.worldTimeScale or 1
+        if scale <= 0 then
+                scale = 1
+        end
 
-	scale = scale * resolveHitStopScale(self)
+        scale = scale * resolveHitStopScale(self)
 
-	return dt * scale
+        return dt * scale
 end
 
 local function updateRunTimers(self, dt)
@@ -989,10 +1000,10 @@ local function drawShadowedText(font, text, x, y, width, align, alpha)
 end
 
 local STATE_UPDATERS = {
-	descending = function(self, dt)
-		self:updateDescending(dt)
-		return true
-	end,
+        descending = function(self, dt, worldDt)
+                self:updateDescending(dt, worldDt)
+                return true
+        end,
 }
 
 local function drawAdrenalineGlow(self)
@@ -1295,13 +1306,13 @@ function Game:startFadeIn(duration)
 	self.transition:startFadeIn(duration)
 end
 
-function Game:updateDescending(dt)
-	Snake:update(dt)
+function Game:updateDescending(dt, worldDt)
+        Snake:update(dt)
 
-	-- Keep saw blades animating while the snake descends into the exit hole
-	if Saws and Saws.update then
-		Saws:update(dt)
-	end
+        -- Keep saw blades animating while the snake descends into the exit hole
+        if Saws and Saws.update then
+                Saws:update(worldDt or dt)
+        end
 
 	local tailX, tailY, tail = Snake:getTail()
 	if not tail then
@@ -1718,58 +1729,60 @@ function Game:drawDescending()
 end
 
 function Game:update(dt)
-	self:updateMouseVisibility()
+        self:updateMouseVisibility()
 
-	local scaledDt = getScaledDeltaTime(self, dt)
-	updateFeedbackState(self, scaledDt)
-	updateHitStopState(self, dt)
+        updateWorldTimeScale()
 
-	if self.Effects and self.Effects.update then
-		self.Effects:update(scaledDt)
-	end
+        local worldDt = getScaledDeltaTime(self, dt)
+        updateFeedbackState(self, worldDt)
+        updateHitStopState(self, dt)
 
-	if handlePauseMenu(self, dt) then
-		return
-	end
+        if self.Effects and self.Effects.update then
+                self.Effects:update(worldDt)
+        end
 
-	if self.state == "victory" then
-		local delay = self.victoryDelay or 0
-		self.victoryTimer = (self.victoryTimer or 0) + scaledDt
+        if handlePauseMenu(self, worldDt) then
+                return
+        end
 
-		if self.victoryTimer >= delay then
-			local summary = self.victoryResult or Score:handleRunClear()
-			return {state = "gameover", data = summary}
-		end
+        if self.state == "victory" then
+                local delay = self.victoryDelay or 0
+                self.victoryTimer = (self.victoryTimer or 0) + worldDt
 
-		return
-	end
+                if self.victoryTimer >= delay then
+                        local summary = self.victoryResult or Score:handleRunClear()
+                        return {state = "gameover", data = summary}
+                end
 
-	updateRunTimers(self, scaledDt)
+                return
+        end
 
-	updateGlobalSystems(scaledDt)
+        updateRunTimers(self, worldDt)
 
-	local transition = self.transition
-	local transitionBlocking = false
-	if transition and transition:isActive() then
-		transition:update(scaledDt)
-		transitionBlocking = transition.isGameplayBlocked and transition:isGameplayBlocked()
-	end
+        updateGlobalSystems(worldDt)
 
-	if transitionBlocking then
-		self:updateTransitionVisuals(scaledDt)
-		return
-	end
+        local transition = self.transition
+        local transitionBlocking = false
+        if transition and transition:isActive() then
+                transition:update(worldDt)
+                transitionBlocking = transition.isGameplayBlocked and transition:isGameplayBlocked()
+        end
 
-	local stateHandler = STATE_UPDATERS[self.state]
-	if stateHandler and stateHandler(self, scaledDt) then
-		return
-	end
+        if transitionBlocking then
+                self:updateTransitionVisuals(worldDt)
+                return
+        end
 
-	if self.state == "playing" then
-		self:updateGameplay(scaledDt)
-	end
+        local stateHandler = STATE_UPDATERS[self.state]
+        if stateHandler and stateHandler(self, dt, worldDt) then
+                return
+        end
 
-	self:updateEntities(scaledDt)
+        if self.state == "playing" then
+                self:updateGameplay(dt)
+        end
+
+        self:updateEntities(worldDt)
 
 	local refreshInterval = self.hudIndicatorRefreshInterval or (1 / 30)
 	local activeRefreshInterval = self.hudIndicatorActiveRefreshInterval or refreshInterval
@@ -1785,7 +1798,7 @@ function Game:update(dt)
 		refreshInterval = min(refreshInterval, activeRefreshInterval)
 	end
 
-	self.hudIndicatorRefreshTimer = (self.hudIndicatorRefreshTimer or 0) + scaledDt
+        self.hudIndicatorRefreshTimer = (self.hudIndicatorRefreshTimer or 0) + worldDt
 
 	local shouldRefresh = Upgrades.hudIndicatorsDirty or false
 	if self.hudIndicatorRefreshTimer >= refreshInterval then
@@ -1805,10 +1818,10 @@ function Game:update(dt)
 		end
 	end
 
-	local result = self:handleDeath(scaledDt)
-	if result then
-		return result
-	end
+        local result = self:handleDeath(worldDt)
+        if result then
+                return result
+        end
 end
 
 function Game:setupFloor(floorNum)
