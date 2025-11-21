@@ -194,8 +194,8 @@ function MenuScene.shouldDrawBackground()
 end
 
 local function resolveSlideProgress(progress)
-progress = Easing.clamp01(progress or 0)
-return Easing.easeInOutCubic(progress)
+        progress = Easing.clamp01(progress or 0)
+        return Easing.easeInOutSine(progress)
 end
 
 function MenuScene.getIncomingOffset(progress, width)
