@@ -25,6 +25,18 @@ local layerOptions = {}
 local canvasWidth = 0
 local canvasHeight = 0
 
+local function clearArray(t)
+        for i = #t, 1, -1 do
+                t[i] = nil
+        end
+end
+
+local function clearMap(t)
+        for key in pairs(t) do
+                t[key] = nil
+        end
+end
+
 local function sanitizeLayerSamples(samples)
 	if samples == nil then
 		return nil
@@ -126,15 +138,16 @@ local function clearQueuedDrawEntries(draws)
 end
 
 local function resetLayerState()
-	for _, draws in pairs(queuedDraws) do
-		clearQueuedDrawEntries(draws)
-	end
-	layerOrder = {}
-	layerPresent = {}
+        for _, draws in pairs(queuedDraws) do
+                clearQueuedDrawEntries(draws)
+        end
 
-	for name in pairs(layerClearedThisFrame) do
-		layerClearedThisFrame[name] = false
-	end
+        clearArray(layerOrder)
+        clearMap(layerPresent)
+
+        for name in pairs(layerClearedThisFrame) do
+                layerClearedThisFrame[name] = false
+        end
 
 	for name in pairs(layerUsedThisFrame) do
 		layerUsedThisFrame[name] = false
