@@ -42,6 +42,9 @@ end
 
 local highlightCache = setmetatable({}, { __mode = "k" })
 local highlightDefault = {1, 1, 1, 1}
+local BORDER_OUTLINE_COLOR = {0, 0, 0, 1}
+local BORDER_SHADOW_COLOR = {0, 0, 0, 0.25}
+local BORDER_DEFAULT_FILL = {1, 1, 1, 1}
 
 local function updateHighlightColor(out, color)
 	local r = min(1, color[1] * 1.2 + 0.08)
@@ -1058,12 +1061,12 @@ function Arena:drawBorder()
 
 		love.graphics.setLineStyle("smooth")
 
-		local outline = outlineColor or {0, 0, 0, 1}
+                local outline = outlineColor or BORDER_OUTLINE_COLOR
 		love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
 		love.graphics.setLineWidth(thickness + outlineSize)
 		love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
 
-		local fill = fillColor or borderColor or {1, 1, 1, 1}
+                local fill = fillColor or borderColor or BORDER_DEFAULT_FILL
 		love.graphics.setColor(fill[1], fill[2], fill[3], fill[4] or 1)
 		love.graphics.setLineWidth(thickness)
 		love.graphics.rectangle("line", bx, by, bw, bh, radius, radius)
@@ -1078,7 +1081,7 @@ function Arena:drawBorder()
 			love.graphics.push("all")
 			love.graphics.setCanvas(borderCanvas)
 			love.graphics.clear(0, 0, 0, 0)
-			drawBorderShape({0, 0, 0, 1}, borderColor)
+                        drawBorderShape(BORDER_OUTLINE_COLOR, borderColor)
 			love.graphics.pop()
 
 			if #previousCanvas > 0 then
@@ -1157,33 +1160,26 @@ function Arena:drawBorder()
 
 	local geometry = self._borderGeometry
 
-	RenderLayers:withLayer("shadows", function()
-		if borderCanvas then
-		love.graphics.setColor(0, 0, 0, 0.25
-	)
-		love.graphics.draw(borderCanvas, shadowOffset, shadowOffset
-	)
-		else
-		love.graphics.push("all"
-	)
-		love.graphics.translate(shadowOffset, shadowOffset
-	)
-		drawBorderShape({0, 0, 0, 0.25}, {0, 0, 0, 0.25}
-	)
-		love.graphics.pop(
-	)
-		end
-		end
-	)
+        RenderLayers:withLayer("shadows", function()
+                if borderCanvas then
+                        love.graphics.setColor(BORDER_SHADOW_COLOR[1], BORDER_SHADOW_COLOR[2], BORDER_SHADOW_COLOR[3], BORDER_SHADOW_COLOR[4])
+                        love.graphics.draw(borderCanvas, shadowOffset, shadowOffset)
+                else
+                        love.graphics.push("all")
+                        love.graphics.translate(shadowOffset, shadowOffset)
+                        drawBorderShape(BORDER_SHADOW_COLOR, BORDER_SHADOW_COLOR)
+                        love.graphics.pop()
+                end
+        end)
 
-	if borderCanvas then
-		love.graphics.setColor(1, 1, 1, 1)
-		love.graphics.draw(borderCanvas, 0, 0)
-	else
-		love.graphics.push("all")
-		drawBorderShape({0, 0, 0, 1}, borderColor)
-		love.graphics.pop()
-	end
+        if borderCanvas then
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(borderCanvas, 0, 0)
+        else
+                love.graphics.push("all")
+                drawBorderShape(BORDER_OUTLINE_COLOR, borderColor)
+                love.graphics.pop()
+        end
 
 	if not geometry then
 		love.graphics.setColor(1, 1, 1, 1)
