@@ -1749,35 +1749,27 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			entryPalette = fadePalette(palette, 0.55)
 		end
 
-		RenderLayers:withLayer("shadows", function()
-			love.graphics.push(
-		)
-			love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET
-		)
-			if exitTrail and #exitTrail > 0 then
-			drawTrailSegmentToCanvas(exitTrail, half, options, shadowPalette, exitCoords
-		)
-			end
-			if entryTrail and #entryTrail > 0 then
-			drawTrailSegmentToCanvas(entryTrail, half, options, shadowPalette, entryCoords
-		)
-			end
-			love.graphics.pop(
-		)
-			end
-		)
+                RenderLayers:withLayer("main", function()
+                        love.graphics.push("all")
 
-		RenderLayers:withLayer("main", function()
-			if exitTrail and #exitTrail > 0 then
-			drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords
-		)
-			end
-			if entryTrail and #entryTrail > 0 and entryPalette then
-			drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords
-		)
-			end
-			end
-		)
+                        love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+                        if exitTrail and #exitTrail > 0 then
+                                drawTrailSegmentToCanvas(exitTrail, half, options, shadowPalette, exitCoords)
+                        end
+                        if entryTrail and #entryTrail > 0 then
+                                drawTrailSegmentToCanvas(entryTrail, half, options, shadowPalette, entryCoords)
+                        end
+
+                        love.graphics.origin()
+                        if exitTrail and #exitTrail > 0 then
+                                drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords)
+                        end
+                        if entryTrail and #entryTrail > 0 and entryPalette then
+                                drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
+                        end
+
+                        love.graphics.pop()
+                end)
 
 		if exitHole then
 			drawPortalHole(exitHole, true)
@@ -1834,24 +1826,18 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 	else
 		local coords = buildCoords(trail)
 
-		RenderLayers:withLayer("shadows", function()
-			love.graphics.push(
-		)
-			love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET
-		)
-			drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords
-		)
-			love.graphics.pop(
-		)
-			end
-		)
+                RenderLayers:withLayer("main", function()
+                        love.graphics.push("all")
 
-		RenderLayers:withLayer("main", function()
-			drawTrailSegmentToCanvas(trail, half, options, palette, coords
-		)
-			end
-		)
-	end
+                        love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+                        drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
+
+                        love.graphics.origin()
+                        drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+
+                        love.graphics.pop()
+                end)
+        end
 
 	local shouldDrawOverlay = (hx and hy and drawFace ~= false) or (popTimer and popTimer > 0 and hx and hy)
 	if shouldDrawOverlay then
