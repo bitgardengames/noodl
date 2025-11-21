@@ -19,9 +19,11 @@ local buttonDefs = {}
 local ANALOG_DEADZONE = 0.3
 local TEXT_SHADOW_OFFSET = 2
 local TITLE_SHADOW_OFFSET = 3
-local CONTENT_ANIM_DURATION = 1
+local PANEL_FADE_DURATION = 1
+local TEXT_ANIM_DURATION = 0.4
+local CONTENT_ANIM_DURATION = PANEL_FADE_DURATION + TEXT_ANIM_DURATION
 local BUTTON_ANIM_DURATION = 0.6
-local TEXT_STAGGER_DURATION = 4
+local TEXT_STAGGER_DURATION = TEXT_ANIM_DURATION
 
 local function getLocalizedOrFallback(key, fallback)
 	if not key then
@@ -187,8 +189,13 @@ local function getButtonAnimationOffset(self)
 	return (1 - eased) * distance
 end
 
-local function getContentAnimationProgress(self)
-        local progress = Easing.clamp01((self.contentAnim or 0) / CONTENT_ANIM_DURATION)
+local function getPanelAnimationProgress(self)
+        local progress = Easing.clamp01((self.contentAnim or 0) / PANEL_FADE_DURATION)
+        return Easing.easeOutCubic(progress)
+end
+
+local function getTextAnimationProgress(self)
+        local progress = Easing.clamp01(((self.contentAnim or 0) - PANEL_FADE_DURATION) / TEXT_ANIM_DURATION)
         return Easing.easeOutCubic(progress)
 end
 
@@ -569,17 +576,18 @@ function GameOver:draw()
 	local fallbackTitle = self.isVictory and "Noodl's Grand Feast" or "Game Over"
 	local titleText = self.customTitle or getLocalizedOrFallback(titleKey, fallbackTitle)
 
-	local contentProgress = getContentAnimationProgress(self)
-	local contentAlpha = contentProgress
-	local panelOffset = (1 - contentProgress) * ((UI.scaled and UI.scaled(26, 14)) or 18)
-        local messageAlpha = getStaggeredAlpha(contentProgress, 0, TEXT_STAGGER_DURATION) * contentAlpha
-        local statsAlpha = getStaggeredAlpha(contentProgress, 0.1, TEXT_STAGGER_DURATION) * contentAlpha
-        local detailsAlpha = getStaggeredAlpha(contentProgress, 0.2, TEXT_STAGGER_DURATION) * contentAlpha
-	local messageOffset = (1 - messageAlpha) * ((UI.scaled and UI.scaled(10, 6)) or 8)
-	local statsOffset = (1 - statsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
-	local detailsOffset = (1 - detailsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
-	local highlightEntries = getHighlightStats(self, contentProgress)
-	local detailEntries = getDetailedStats()
+        local panelProgress = getPanelAnimationProgress(self)
+        local textProgress = getTextAnimationProgress(self)
+        local contentAlpha = textProgress
+        local panelOffset = (1 - panelProgress) * ((UI.scaled and UI.scaled(26, 14)) or 18)
+        local messageAlpha = getStaggeredAlpha(textProgress, 0, TEXT_STAGGER_DURATION) * contentAlpha
+        local statsAlpha = getStaggeredAlpha(textProgress, 0.1, TEXT_STAGGER_DURATION) * contentAlpha
+        local detailsAlpha = getStaggeredAlpha(textProgress, 0.2, TEXT_STAGGER_DURATION) * contentAlpha
+        local messageOffset = (1 - messageAlpha) * ((UI.scaled and UI.scaled(10, 6)) or 8)
+        local statsOffset = (1 - statsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
+        local detailsOffset = (1 - detailsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
+        local highlightEntries = getHighlightStats(self, textProgress)
+        local detailEntries = getDetailedStats()
 
 	local headerY = UI.getHeaderY(sw, sh)
 	UI.drawLabel(titleText, 0, headerY, sw, "center", {
@@ -604,9 +612,9 @@ function GameOver:draw()
 	UI.drawPanel(contentX, panelY, contentWidth, panelHeight, {
 		radius = UI.spacing and UI.spacing.panelRadius,
 		shadowColor = UI.colors.shadow,
-		alpha = statsAlpha,
-		}
-	)
+                alpha = panelProgress,
+                }
+        )
 
         local messageWidth = max(0, innerWidth - sectionPadding * 2)
         local messageY = panelY + padding + sectionPadding + messageOffset
