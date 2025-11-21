@@ -11,6 +11,7 @@ local floor = math.floor
 local max = math.max
 local min = math.min
 local pi = math.pi
+local cos = math.cos
 local sin = math.sin
 
 local EXIT_SAFE_ATTEMPTS = 180
@@ -1116,7 +1117,7 @@ function Arena:drawBorder()
 				if not (skipFirst and i == 0) then
 					local t = i / segments
 					local angle = startAngle + (endAngle - startAngle) * t
-					points[#points + 1] = cx + math.cos(angle) * arcRadius - highlightShift
+                                      points[#points + 1] = cx + cos(angle) * arcRadius - highlightShift
 					points[#points + 1] = cy + sin(angle) * arcRadius - highlightShift
 				end
 			end
