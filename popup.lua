@@ -1,7 +1,7 @@
 local Screen = require("screen")
 local Theme = require("theme")
 local UI = require("ui")
-local Timer = require("timers")
+local Timer = require("timer")
 
 local min = math.min
 
