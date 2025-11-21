@@ -38,7 +38,10 @@ function Screen:update(dt, instant)
 	local actualWidth, actualHeight = love.graphics.getDimensions()
 
 	if UI and UI.refreshLayout then
-		UI.refreshLayout(actualWidth, actualHeight)
+		if actualWidth ~= self._lastLayoutWidth or actualHeight ~= self._lastLayoutHeight then
+			UI.refreshLayout(actualWidth, actualHeight)
+			self._lastLayoutWidth, self._lastLayoutHeight = actualWidth, actualHeight
+		end
 	end
 
 	if shouldSnapImmediately(self, dt, instant) then
