@@ -19,11 +19,12 @@ local buttonDefs = {}
 local ANALOG_DEADZONE = 0.3
 local TEXT_SHADOW_OFFSET = 2
 local TITLE_SHADOW_OFFSET = 3
-local PANEL_FADE_DURATION = 1
-local TEXT_ANIM_DURATION = 0.4
-local CONTENT_ANIM_DURATION = PANEL_FADE_DURATION + TEXT_ANIM_DURATION
+local PANEL_FADE_DURATION = 0.45
+local TEXT_FADE_DURATION = 0.35
+local VALUE_ANIM_DURATION = 0.6
+local CONTENT_ANIM_DURATION = PANEL_FADE_DURATION + TEXT_FADE_DURATION + VALUE_ANIM_DURATION
 local BUTTON_ANIM_DURATION = 0.6
-local TEXT_STAGGER_DURATION = TEXT_ANIM_DURATION
+local TEXT_STAGGER_DURATION = TEXT_FADE_DURATION
 
 local function getLocalizedOrFallback(key, fallback)
 	if not key then
@@ -194,8 +195,13 @@ local function getPanelAnimationProgress(self)
         return Easing.easeOutCubic(progress)
 end
 
-local function getTextAnimationProgress(self)
-        local progress = Easing.clamp01(((self.contentAnim or 0) - PANEL_FADE_DURATION) / TEXT_ANIM_DURATION)
+local function getTextFadeProgress(self)
+        local progress = Easing.clamp01(((self.contentAnim or 0) - PANEL_FADE_DURATION) / TEXT_FADE_DURATION)
+        return Easing.easeOutCubic(progress)
+end
+
+local function getValueAnimationProgress(self)
+        local progress = Easing.clamp01(((self.contentAnim or 0) - PANEL_FADE_DURATION - TEXT_FADE_DURATION) / VALUE_ANIM_DURATION)
         return Easing.easeOutCubic(progress)
 end
 
@@ -577,7 +583,8 @@ function GameOver:draw()
 	local titleText = self.customTitle or getLocalizedOrFallback(titleKey, fallbackTitle)
 
         local panelProgress = getPanelAnimationProgress(self)
-        local textProgress = getTextAnimationProgress(self)
+        local textProgress = getTextFadeProgress(self)
+        local valueProgress = getValueAnimationProgress(self)
         local contentAlpha = textProgress
         local panelOffset = (1 - panelProgress) * ((UI.scaled and UI.scaled(26, 14)) or 18)
         local messageAlpha = getStaggeredAlpha(textProgress, 0, TEXT_STAGGER_DURATION) * contentAlpha
@@ -586,7 +593,7 @@ function GameOver:draw()
         local messageOffset = (1 - messageAlpha) * ((UI.scaled and UI.scaled(10, 6)) or 8)
         local statsOffset = (1 - statsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
         local detailsOffset = (1 - detailsAlpha) * ((UI.scaled and UI.scaled(8, 4)) or 6)
-        local highlightEntries = getHighlightStats(self, textProgress)
+        local highlightEntries = getHighlightStats(self, valueProgress)
         local detailEntries = getDetailedStats()
 
 	local headerY = UI.getHeaderY(sw, sh)
