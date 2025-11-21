@@ -511,7 +511,6 @@ function Darts:spawn(x, y, dir, options)
 	}
 
         emitter.col, emitter.row = col, row
-        SnakeUtils.setOccupied(emitter.col, emitter.row, true)
 
 	emitter.baseDartSpeed = emitter.dartSpeed
 

@@ -48,6 +48,7 @@ local BASE_GLOW_RADIUS = 18
 local IMPACT_RING_SPEED = 1.85
 local IMPACT_RING_RANGE = 16
 local IMPACT_FLARE_RADIUS = 12
+local MUZZLE_LINE_WIDTH = 2
 
 local function getTime()
 	return Timer.getTime()
@@ -627,11 +628,9 @@ function Lasers:spawn(x, y, dir, options)
 
 	applyPaletteOverride(beam)
 
-	SnakeUtils.setOccupied(col, row, true)
-
-	computeBeamTarget(beam)
-	emitters[#emitters + 1] = beam
-	return beam
+        computeBeamTarget(beam)
+        emitters[#emitters + 1] = beam
+        return beam
 end
 
 -- Returns a shallow copy of the active laser emitters.
@@ -1206,15 +1205,45 @@ local function drawEmitterBase(beam)
 			love.graphics.circle("line", cx, cy, ringRadius * 0.8)
 		end
 	end
-	if beam.dir == "horizontal" then
-		local dir = beam.facing or 1
-		local front = cx + dir * (tileSize * 0.32)
-		love.graphics.rectangle("fill", front - slitThickness * 0.5, cy - slitLength * 0.5, slitThickness, slitLength, 3, 3)
-	else
-		local dir = beam.facing or 1
-		local front = cy + dir * (tileSize * 0.32)
-		love.graphics.rectangle("fill", cx - slitLength * 0.5, front - slitThickness * 0.5, slitLength, slitThickness, 3, 3)
-	end
+        if beam.dir == "horizontal" then
+                local dir = beam.facing or 1
+                local front = cx + dir * (tileSize * 0.32)
+                local muzzleRadius = max(2, tileSize * 0.08)
+                local haloRadius = muzzleRadius + 2
+                local muzzleX = front
+                local muzzleY = cy
+
+                love.graphics.setLineWidth(MUZZLE_LINE_WIDTH)
+                love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.35 + flash * 0.3 + telegraph * 0.3)
+                love.graphics.circle("line", muzzleX, muzzleY, haloRadius)
+
+                love.graphics.setColor(0, 0, 0, clamp(0.72 + telegraph * 0.18 + flash * 0.12, 0, 1))
+                love.graphics.circle("fill", muzzleX, muzzleY, muzzleRadius)
+
+                love.graphics.setColor(0, 0, 0, 0.9 + flash * 0.1)
+                love.graphics.circle("line", muzzleX, muzzleY, muzzleRadius)
+
+                love.graphics.rectangle("fill", front - slitThickness * 0.5, cy - slitLength * 0.5, slitThickness, slitLength, 3, 3)
+        else
+                local dir = beam.facing or 1
+                local front = cy + dir * (tileSize * 0.32)
+                local muzzleRadius = max(2, tileSize * 0.08)
+                local haloRadius = muzzleRadius + 2
+                local muzzleX = cx
+                local muzzleY = front
+
+                love.graphics.setLineWidth(MUZZLE_LINE_WIDTH)
+                love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.35 + flash * 0.3 + telegraph * 0.3)
+                love.graphics.circle("line", muzzleX, muzzleY, haloRadius)
+
+                love.graphics.setColor(0, 0, 0, clamp(0.72 + telegraph * 0.18 + flash * 0.12, 0, 1))
+                love.graphics.circle("fill", muzzleX, muzzleY, muzzleRadius)
+
+                love.graphics.setColor(0, 0, 0, 0.9 + flash * 0.1)
+                love.graphics.circle("line", muzzleX, muzzleY, muzzleRadius)
+
+                love.graphics.rectangle("fill", cx - slitLength * 0.5, front - slitThickness * 0.5, slitLength, slitThickness, 3, 3)
+        end
 end
 
 function Lasers:draw()
