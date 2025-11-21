@@ -13,7 +13,10 @@ local min = math.min
 local pi = math.pi
 local insert = table.insert
 local sin = math.sin
+local cos = math.cos
+local sqrt = math.sqrt
 local abs = math.abs
+local lg = love.graphics
 
 local rockRng = love.math.newRandomGenerator()
 local nearbyScratch = {}
@@ -79,8 +82,8 @@ local function generateRockShape(size, seed)
 		local angle = step * i
 		-- slight wobble so it’s lumpy, but no sharp spikes
 		local r = baseRadius * (0.9 + rockRng:random() * 0.2)
-		insert(points, math.cos(angle) * r)
-		insert(points, math.sin(angle) * r)
+                insert(points, cos(angle) * r)
+                insert(points, sin(angle) * r)
 	end
 
 	return points
@@ -180,7 +183,7 @@ local function buildRockHighlight(points)
 			local y = highlight[i + 1]
 			local dx = x - cx
 			local dy = y - cy
-			local len = math.sqrt(dx * dx + dy * dy)
+                        local len = sqrt(dx * dx + dy * dy)
 
 			if len > 0 then
 				local scale = max(0, (len - inset) / len)
@@ -605,65 +608,49 @@ function Rocks:update(dt)
 end
 
 local function withRockTransform(rock, fn)
-	love.graphics.push()
+        lg.push()
 
-	local drawX = rock.renderX or rock.x
-	local drawY = rock.renderY or rock.y
-	local offsetY = (rock.offsetY or 0) + (rock.tremorSlideOffset or 0)
+        local drawX = rock.renderX or rock.x
+        local drawY = rock.renderY or rock.y
+        local offsetY = (rock.offsetY or 0) + (rock.tremorSlideOffset or 0)
 
-	love.graphics.translate(drawX, drawY + offsetY)
-	love.graphics.scale(rock.scaleX, rock.scaleY)
-	fn()
-	love.graphics.pop()
+        lg.translate(drawX, drawY + offsetY)
+        lg.scale(rock.scaleX, rock.scaleY)
+        fn()
+        lg.pop()
 end
 
 local function drawRockShadow(rock)
-	withRockTransform(rock, function()
-		love.graphics.setColor(0, 0, 0, 0.4
-	)
-		love.graphics.push(
-	)
-		love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET
-	)
-		love.graphics.scale(1.1, 1.1
-	)
-		love.graphics.polygon("fill", rock.shape
-	)
-		love.graphics.pop(
-	)
-		end
-	)
+        withRockTransform(rock, function()
+                lg.setColor(0, 0, 0, 0.4)
+                lg.push()
+                lg.translate(SHADOW_OFFSET, SHADOW_OFFSET)
+                lg.scale(1.1, 1.1)
+                lg.polygon("fill", rock.shape)
+                lg.pop()
+        end)
 end
 
 local function drawRockBody(rock)
-	withRockTransform(rock, function()
-		local baseColor = Theme.rock
-		if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
-		baseColor = HIT_FLASH_COLOR
-		end
+        withRockTransform(rock, function()
+                local baseColor = Theme.rock
+                if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
+                        baseColor = HIT_FLASH_COLOR
+                end
 
-		love.graphics.setColor(baseColor
-	)
-		love.graphics.polygon("fill", rock.shape
-	)
+                lg.setColor(baseColor)
+                lg.polygon("fill", rock.shape)
 
-		if rock.highlightShape then
-		local highlight = getHighlightColor(baseColor
-	)
-		love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlight[4]
-	)
-		love.graphics.polygon("fill", rock.highlightShape
-	)
-		end
+                if rock.highlightShape then
+                        local highlight = getHighlightColor(baseColor)
+                        lg.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
+                        lg.polygon("fill", rock.highlightShape)
+                end
 
-		love.graphics.setColor(0, 0, 0, 1
-	)
-		love.graphics.setLineWidth(3
-	)
-		love.graphics.polygon("line", rock.shape
-	)
-		end
-	)
+                lg.setColor(0, 0, 0, 1)
+                lg.setLineWidth(3)
+                lg.polygon("line", rock.shape)
+        end)
 end
 
 function Rocks:draw()
