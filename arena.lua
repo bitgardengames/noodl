@@ -157,23 +157,10 @@ local VARIANT_TINTS = {
 	fungal = {0.34, 0.28, 0.5, 1},
 }
 
-local function hashString(value)
-	if not value or value == "" then
-		return 0
-	end
-
-	local hash = 0
-	for i = 1, #value do
-		hash = (hash * 131 + string.byte(value, i)) % 2147483647
-	end
-
-	return hash
-end
-
 local function hashColor(color)
-	if not color then
-		return 0
-	end
+        if not color then
+                return 0
+        end
 
 	local hash = 0
 	for i = 1, 4 do

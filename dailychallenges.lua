@@ -7,21 +7,17 @@ local max = math.max
 local min = math.min
 
 local function formatSeconds(seconds, floorFirst)
-	seconds = seconds or 0
-	if floorFirst then
-		seconds = floor(seconds)
-	end
+        seconds = seconds or 0
+        if floorFirst then
+                seconds = floor(seconds)
+        end
 
 	seconds = max(0, seconds)
 
 	local minutes = floor(seconds / 60)
 	local secs = floor(seconds % 60)
 
-	return string.format("%d:%02d", minutes, secs)
-end
-
-local function formatSecondsFloor(seconds)
-	return formatSeconds(seconds, true)
+        return string.format("%d:%02d", minutes, secs)
 end
 
 local AchievementsModule
