@@ -48,7 +48,6 @@ local BASE_GLOW_RADIUS = 18
 local IMPACT_RING_SPEED = 1.85
 local IMPACT_RING_RANGE = 16
 local IMPACT_FLARE_RADIUS = 12
-local MUZZLE_LINE_WIDTH = 2
 
 local function getTime()
 	return Timer.getTime()
@@ -272,35 +271,19 @@ local function releaseOccupancy(beam)
 end
 
 local function getFacingFromPosition(dir, col, row)
-        if dir == "vertical" then
-                local midpoint = floor((Arena.rows or 1) / 2)
-                if row and row > midpoint then
-                        return -1
-                end
-        else
-                local midpoint = floor((Arena.cols or 1) / 2)
-                if col and col > midpoint then
-                        return -1
-                end
-        end
+	if dir == "vertical" then
+		local midpoint = floor((Arena.rows or 1) / 2)
+		if row and row > midpoint then
+			return -1
+		end
+	else
+		local midpoint = floor((Arena.cols or 1) / 2)
+		if col and col > midpoint then
+			return -1
+		end
+	end
 
-        return 1
-end
-
-local function getWallPosition(dir, col, row, facing)
-        local centerX, centerY = Arena:getCenterOfTile(col, row)
-        local arenaX = Arena.x or 0
-        local arenaY = Arena.y or 0
-        local arenaW = Arena.width or 0
-        local arenaH = Arena.height or 0
-
-        if dir == "horizontal" then
-                centerX = facing < 0 and (arenaX + arenaW) or arenaX
-        else
-                centerY = facing < 0 and (arenaY + arenaH) or arenaY
-        end
-
-        return centerX, centerY
+	return 1
 end
 
 local function applyDurationModifiers(base, mult, flat, minimum)
@@ -585,25 +568,23 @@ function Lasers:spawn(x, y, dir, options)
 	dir = dir or "horizontal"
 	options = options or {}
 
-        local col, row = Arena:getTileFromWorld(x, y)
-        local facing = options.facing
-        if facing == nil then
-                facing = getFacingFromPosition(dir, col, row)
-        end
+	local col, row = Arena:getTileFromWorld(x, y)
+	local facing = options.facing
+	if facing == nil then
+		facing = getFacingFromPosition(dir, col, row)
+	end
 
-        facing = (facing >= 0) and 1 or -1
+	facing = (facing >= 0) and 1 or -1
 
-        local wallX, wallY = getWallPosition(dir, col, row, facing)
+	local initialPalette = options.firePalette and clonePalette(options.firePalette) or getFirePalette(options.fireColor)
 
-        local initialPalette = options.firePalette and clonePalette(options.firePalette) or getFirePalette(options.fireColor)
-
-        local beam = {
-                x = wallX,
-                y = wallY,
-                col = col,
-                row = row,
-                dir = dir,
-                facing = facing,
+	local beam = {
+		x = x,
+		y = y,
+		col = col,
+		row = row,
+		dir = dir,
+		facing = facing,
 		beamThickness = options.beamThickness or DEFAULT_BEAM_THICKNESS,
 		firePalette = clonePalette(initialPalette) or getFirePalette(options.fireColor),
 		state = "cooldown",
@@ -628,9 +609,11 @@ function Lasers:spawn(x, y, dir, options)
 
 	applyPaletteOverride(beam)
 
-        computeBeamTarget(beam)
-        emitters[#emitters + 1] = beam
-        return beam
+	SnakeUtils.setOccupied(col, row, true)
+
+	computeBeamTarget(beam)
+	emitters[#emitters + 1] = beam
+	return beam
 end
 
 -- Returns a shallow copy of the active laser emitters.
@@ -1160,37 +1143,54 @@ local function drawImpactEffect(beam)
 end
 
 local function drawEmitterBase(beam)
-        local _, accentColor = getEmitterColors()
-        local tileSize = Arena.tileSize or 24
-        local cx = beam.renderX or beam.x or 0
-        local cy = beam.renderY or beam.y or 0
-        local flash = clamp(beam.flashTimer or 0, 0, 1)
-        local telegraph = clamp(beam.telegraphStrength or 0, 0, 1)
-        local baseGlow = clamp(beam.baseGlow or 0, 0, 1)
-        local highlightBoost = (beam.state == "firing") and 0.28 or 0
-        highlightBoost = highlightBoost + telegraph * 0.4
+	local baseColor, accentColor = getEmitterColors()
+	local tileSize = Arena.tileSize or 24
+	local half = tileSize * 0.5
+	local cx = beam.renderX or beam.x or 0
+	local cy = beam.renderY or beam.y or 0
+	local bx = cx - half
+	local by = cy - half
+	local flash = clamp(beam.flashTimer or 0, 0, 1)
+	local telegraph = clamp(beam.telegraphStrength or 0, 0, 1)
+	local baseGlow = clamp(beam.baseGlow or 0, 0, 1)
+	local highlightBoost = (beam.state == "firing") and 0.28 or 0
+	highlightBoost = highlightBoost + telegraph * 0.4
 
-        local t = getTime()
-        local pulseStrength = telegraph > 0 and (telegraph * (0.6 + telegraph * 0.4)) or 0
-        local pulse = 0
-        if pulseStrength > 0 then
-                pulse = (0.18 + 0.25 * sin(t * 5.5 + cx * 0.03 + cy * 0.03)) * pulseStrength
-        end
-        local showPrimeRing = (telegraph > 0) or (beam.state == "firing")
-        if showPrimeRing then
-                local glowAlpha = 0.16 + baseGlow * 0.6 + flash * 0.35 + highlightBoost * 0.35 + pulse * 0.4
-                love.graphics.setColor(1, 0.32, 0.25, min(0.85, glowAlpha))
-                local glowRadius = BASE_GLOW_RADIUS + tileSize * 0.1 + baseGlow * (tileSize * 0.22)
-                love.graphics.circle("fill", cx, cy, glowRadius)
-        end
+	local t = getTime()
+	local pulseStrength = telegraph > 0 and (telegraph * (0.6 + telegraph * 0.4)) or 0
+	local pulse = 0
+	if pulseStrength > 0 then
+		pulse = (0.18 + 0.25 * sin(t * 5.5 + cx * 0.03 + cy * 0.03)) * pulseStrength
+	end
+	local showPrimeRing = (telegraph > 0) or (beam.state == "firing")
+	if showPrimeRing then
+		local glowAlpha = 0.16 + baseGlow * 0.6 + flash * 0.35 + highlightBoost * 0.35 + pulse * 0.4
+		love.graphics.setColor(1, 0.32, 0.25, min(0.85, glowAlpha))
+		local glowRadius = BASE_GLOW_RADIUS + tileSize * 0.1 + baseGlow * (tileSize * 0.22)
+		love.graphics.circle("fill", cx, cy, glowRadius)
+	end
 
-        local slitLength = tileSize * 0.55
-        local slitThickness = max(3, tileSize * 0.18)
-        if showPrimeRing then
-                local spin = (t * 2.5 + (beam.randomOffset or 0)) % (pi * 2)
-                local ringRadius = tileSize * 0.45 + sin(t * 3.5 + (beam.randomOffset or 0)) * (tileSize * 0.05)
-                love.graphics.setLineWidth(2)
-                love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.28 + flash * 0.4 + highlightBoost * 0.35 + telegraph * 0.25)
+	love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], (baseColor[4] or 1) + flash * 0.1)
+	love.graphics.rectangle("fill", bx, by, tileSize, tileSize, 6, 6)
+
+	love.graphics.setColor(0, 0, 0, 0.45 + flash * 0.25 + telegraph * 0.15)
+	love.graphics.rectangle("line", bx, by, tileSize, tileSize, 6, 6)
+
+	local accentAlpha = (accentColor[4] or 0.8) + flash * 0.2 + highlightBoost
+	love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], min(1, accentAlpha))
+	love.graphics.rectangle("line", bx + 2, by + 2, tileSize - 4, tileSize - 4, 4, 4)
+
+	love.graphics.setColor(1, 1, 1, 0.16 + highlightBoost * 0.45 + flash * 0.2 + telegraph * 0.25)
+	local highlightWidth = min(tileSize * 0.45, tileSize - 6)
+	love.graphics.rectangle("fill", bx + 3, by + 3, highlightWidth, tileSize * 0.2, 3, 3)
+
+	local slitLength = tileSize * 0.55
+	local slitThickness = max(3, tileSize * 0.18)
+	if showPrimeRing then
+		local spin = (t * 2.5 + (beam.randomOffset or 0)) % (pi * 2)
+		local ringRadius = tileSize * 0.45 + sin(t * 3.5 + (beam.randomOffset or 0)) * (tileSize * 0.05)
+		love.graphics.setLineWidth(2)
+		love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.28 + flash * 0.4 + highlightBoost * 0.35 + telegraph * 0.25)
 		for i = 0, 2 do
 			local angle = spin + i * (pi * 2 / 3)
 			love.graphics.arc("line", "open", cx, cy, ringRadius, angle - 0.35, angle + 0.35, 16)
@@ -1205,45 +1205,15 @@ local function drawEmitterBase(beam)
 			love.graphics.circle("line", cx, cy, ringRadius * 0.8)
 		end
 	end
-        if beam.dir == "horizontal" then
-                local dir = beam.facing or 1
-                local front = cx + dir * (tileSize * 0.32)
-                local muzzleRadius = max(2, tileSize * 0.08)
-                local haloRadius = muzzleRadius + 2
-                local muzzleX = front
-                local muzzleY = cy
-
-                love.graphics.setLineWidth(MUZZLE_LINE_WIDTH)
-                love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.35 + flash * 0.3 + telegraph * 0.3)
-                love.graphics.circle("line", muzzleX, muzzleY, haloRadius)
-
-                love.graphics.setColor(0, 0, 0, clamp(0.72 + telegraph * 0.18 + flash * 0.12, 0, 1))
-                love.graphics.circle("fill", muzzleX, muzzleY, muzzleRadius)
-
-                love.graphics.setColor(0, 0, 0, 0.9 + flash * 0.1)
-                love.graphics.circle("line", muzzleX, muzzleY, muzzleRadius)
-
-                love.graphics.rectangle("fill", front - slitThickness * 0.5, cy - slitLength * 0.5, slitThickness, slitLength, 3, 3)
-        else
-                local dir = beam.facing or 1
-                local front = cy + dir * (tileSize * 0.32)
-                local muzzleRadius = max(2, tileSize * 0.08)
-                local haloRadius = muzzleRadius + 2
-                local muzzleX = cx
-                local muzzleY = front
-
-                love.graphics.setLineWidth(MUZZLE_LINE_WIDTH)
-                love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.35 + flash * 0.3 + telegraph * 0.3)
-                love.graphics.circle("line", muzzleX, muzzleY, haloRadius)
-
-                love.graphics.setColor(0, 0, 0, clamp(0.72 + telegraph * 0.18 + flash * 0.12, 0, 1))
-                love.graphics.circle("fill", muzzleX, muzzleY, muzzleRadius)
-
-                love.graphics.setColor(0, 0, 0, 0.9 + flash * 0.1)
-                love.graphics.circle("line", muzzleX, muzzleY, muzzleRadius)
-
-                love.graphics.rectangle("fill", cx - slitLength * 0.5, front - slitThickness * 0.5, slitLength, slitThickness, 3, 3)
-        end
+	if beam.dir == "horizontal" then
+		local dir = beam.facing or 1
+		local front = cx + dir * (tileSize * 0.32)
+		love.graphics.rectangle("fill", front - slitThickness * 0.5, cy - slitLength * 0.5, slitThickness, slitLength, 3, 3)
+	else
+		local dir = beam.facing or 1
+		local front = cy + dir * (tileSize * 0.32)
+		love.graphics.rectangle("fill", cx - slitLength * 0.5, front - slitThickness * 0.5, slitLength, slitThickness, 3, 3)
+	end
 end
 
 function Lasers:draw()

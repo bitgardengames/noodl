@@ -81,29 +81,13 @@ local function clamp01(value)
 end
 
 local function releaseOccupancy(emitter)
-        if not emitter then
-                return
-        end
+	if not emitter then
+		return
+	end
 
 	if emitter.col and emitter.row then
-                SnakeUtils.setOccupied(emitter.col, emitter.row, false)
-        end
-end
-
-local function getWallPosition(dir, col, row, facing)
-        local centerX, centerY = Arena:getCenterOfTile(col, row)
-        local arenaX = Arena.x or 0
-        local arenaY = Arena.y or 0
-        local arenaW = Arena.width or 0
-        local arenaH = Arena.height or 0
-
-        if dir == "horizontal" then
-            centerX = facing < 0 and (arenaX + arenaW) or arenaX
-        else
-            centerY = facing < 0 and (arenaY + arenaH) or arenaY
-        end
-
-        return centerX, centerY
+		SnakeUtils.setOccupied(emitter.col, emitter.row, false)
+	end
 end
 
 local function scaleColor(color, factor, alphaFactor, target)
@@ -482,35 +466,31 @@ function Darts:reset()
 end
 
 function Darts:spawn(x, y, dir, options)
-        if not (x and y and dir) then
-                return nil
-        end
+	if not (x and y and dir) then
+		return nil
+	end
 
-        local initialCooldownBonus = resolveInitialCooldownBonus(options)
+	local initialCooldownBonus = resolveInitialCooldownBonus(options)
 
-        local col, row = Arena:getTileFromWorld(x, y)
-        local facing = options and options.facing or 1
-        facing = (facing >= 0) and 1 or -1
-        local wallX, wallY = getWallPosition(dir, col, row, facing)
-
-        local emitter = {
-                x = wallX,
-                y = wallY,
-                dir = dir,
-                facing = facing,
-                telegraphDuration = max(0.2, options and options.telegraphDuration or DEFAULT_TELEGRAPH_DURATION),
-                dartSpeed = options and options.dartSpeed or DEFAULT_DART_SPEED,
-                dartLength = options and options.dartLength or DEFAULT_DART_LENGTH,
-                dartThickness = options and options.dartThickness or DEFAULT_DART_THICKNESS,
-                baseFireDuration = options and options.fireDuration or nil,
-                fireCooldownMin = options and options.fireCooldownMin or DEFAULT_COOLDOWN_MIN,
-                fireCooldownMax = options and options.fireCooldownMax or DEFAULT_COOLDOWN_MAX,
+	local emitter = {
+		x = x,
+		y = y,
+		dir = dir,
+		facing = options and options.facing or 1,
+		telegraphDuration = max(0.2, options and options.telegraphDuration or DEFAULT_TELEGRAPH_DURATION),
+		dartSpeed = options and options.dartSpeed or DEFAULT_DART_SPEED,
+		dartLength = options and options.dartLength or DEFAULT_DART_LENGTH,
+		dartThickness = options and options.dartThickness or DEFAULT_DART_THICKNESS,
+		baseFireDuration = options and options.fireDuration or nil,
+		fireCooldownMin = options and options.fireCooldownMin or DEFAULT_COOLDOWN_MIN,
+		fireCooldownMax = options and options.fireCooldownMax or DEFAULT_COOLDOWN_MAX,
 		flashTimer = 0,
 		telegraphStrength = 0,
 		randomOffset = love.math.random() * 1000,
 	}
 
-        emitter.col, emitter.row = col, row
+	emitter.col, emitter.row = Arena:getTileFromWorld(x, y)
+	SnakeUtils.setOccupied(emitter.col, emitter.row, true)
 
 	emitter.baseDartSpeed = emitter.dartSpeed
 
@@ -729,19 +709,59 @@ function Darts:update(dt)
 end
 
 local function drawEmitter(emitter)
-        local _, accentColor = getEmitterColors()
-        local tileSize = (Arena.tileSize or BASE_EMITTER_SIZE)
-        local centerX = emitter.x or 0
-        local centerY = emitter.y or 0
+	local bodyColor, accentColor, telegraphColor = getEmitterColors()
+	local tileSize = (Arena.tileSize or BASE_EMITTER_SIZE)
+	local half = tileSize * 0.5
+	local centerX = emitter.x or 0
+	local centerY = emitter.y or 0
+	local baseX = centerX - half
+	local baseY = centerY - half
 
-        love.graphics.push("all")
+	love.graphics.push("all")
 
-        local flash    = clamp01(emitter.flashTimer or 0)
-        local strength = clamp01(emitter.telegraphStrength or 0)
+	local flash    = clamp01(emitter.flashTimer or 0)
+	local strength = clamp01(emitter.telegraphStrength or 0)
 
-        -- MUZZLE POSITIONING (pixel perfect)
-        local facing = emitter.facing or 1
-        local muzzleX, muzzleY = centerX, centerY
+	-- DROP SHADOW
+	love.graphics.setColor(0, 0, 0, SHADOW_ALPHA)
+	love.graphics.rectangle(
+		"fill",
+		baseX + SHADOW_OFS,
+		baseY + SHADOW_OFS,
+		tileSize,
+		tileSize,
+		RADIUS,
+		RADIUS
+	)
+
+	-- MAIN HOUSING
+	local housingAlpha = clamp01((bodyColor[4] or 1) + flash * 0.1)
+	love.graphics.setColor(bodyColor)
+	love.graphics.rectangle("fill", baseX, baseY, tileSize, tileSize, RADIUS, RADIUS)
+
+	-- INSET
+        local insetPad = 2
+        local insetColor = scaleColor(bodyColor, 0.78 + strength * 0.12, 1, insetColorScratch)
+
+	love.graphics.setColor(insetColor)
+	love.graphics.rectangle(
+		"fill",
+		baseX + insetPad,
+		baseY + insetPad,
+		tileSize - insetPad * 2,
+		tileSize - insetPad * 2,
+		RADIUS - 1,
+		RADIUS - 1
+	)
+
+	-- OUTER BLACK OUTLINE
+	love.graphics.setColor(0, 0, 0, clamp01(0.9 + flash * 0.1 + strength * 0.1))
+	love.graphics.setLineWidth(OUT)
+	love.graphics.rectangle("line", baseX, baseY, tileSize, tileSize, RADIUS, RADIUS)
+
+	-- MUZZLE POSITIONING (pixel perfect)
+	local facing = emitter.facing or 1
+	local muzzleX, muzzleY = centerX, centerY
 
 	if emitter.dir == "horizontal" then
 		muzzleX = centerX + facing * MUZZLE_INSET
@@ -751,20 +771,35 @@ local function drawEmitter(emitter)
 
 	-- HALO RING
 	local haloRadius = MUZZLE_RADIUS + 2
-        love.graphics.setColor(accentColor)
-        love.graphics.setLineWidth(HALO_LINE)
-        love.graphics.circle("line", muzzleX, muzzleY, haloRadius, 24)
+	love.graphics.setColor(accentColor)
+	love.graphics.setLineWidth(HALO_LINE)
+	love.graphics.circle("line", muzzleX, muzzleY, haloRadius, 24)
 
 	-- MUZZLE BLACK FILL
-        love.graphics.setColor(0, 0, 0, clamp01(0.72 + strength * 0.15 + flash * 0.1))
-        love.graphics.circle("fill", muzzleX, muzzleY, MUZZLE_RADIUS, 24)
+	love.graphics.setColor(0, 0, 0, clamp01(0.72 + strength * 0.15 + flash * 0.1))
+	love.graphics.circle("fill", muzzleX, muzzleY, MUZZLE_RADIUS, 24)
 
-        -- MUZZLE OUTLINE
-        love.graphics.setColor(0, 0, 0, 0.9 + flash * 0.1)
-        love.graphics.setLineWidth(OUT)
-        love.graphics.circle("line", muzzleX, muzzleY, MUZZLE_RADIUS, 24)
+	-- MUZZLE OUTLINE
+	love.graphics.setColor(0, 0, 0, 0.9 + flash * 0.1)
+	love.graphics.setLineWidth(OUT)
+	love.graphics.circle("line", muzzleX, muzzleY, MUZZLE_RADIUS, 24)
 
-        love.graphics.pop()
+	-- FLASH FRAME
+	if flash > 0 then
+		love.graphics.setColor(1, 1, 1, 0.3 * flash)
+		love.graphics.setLineWidth(1)
+		love.graphics.rectangle(
+			"line",
+			baseX - 4,
+			baseY - 4,
+			tileSize + 8,
+			tileSize + 8,
+			8,
+			8
+		)
+	end
+
+	love.graphics.pop()
 end
 
 local function drawTelegraphPath(emitter)
