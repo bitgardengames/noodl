@@ -675,15 +675,11 @@ local function handleRockCollision(headX, headY, headCol, headRow, rockRevision)
 	end
 end
 
-local function handleSawCollision(headX, headY, hazardGraceActive)
-	if hazardGraceActive then
-		return
-	end
-
-	local sawHit = Saws:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
-	if not sawHit then
-		return
-	end
+local function handleSawCollision(headX, headY)
+        local sawHit = Saws:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+        if not sawHit then
+                return
+        end
 
 	local shielded = Snake:consumeShield()
 	local survivedSaw = shielded
@@ -749,19 +745,11 @@ local function handleSawCollision(headX, headY, hazardGraceActive)
 	return
 end
 
-local function handleLaserCollision(headX, headY, hazardGraceActive)
-	if not Lasers or not Lasers.checkCollision then
-		return
-	end
-
-	if hazardGraceActive then
-		return
-	end
-
-	local laserHit = Lasers:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
-	if not laserHit then
-		return
-	end
+local function handleLaserCollision(headX, headY)
+        local laserHit = Lasers:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+        if not laserHit then
+                return
+        end
 
 	local shielded = Snake:consumeShield()
 	local survived = shielded
@@ -815,20 +803,16 @@ local function handleLaserCollision(headX, headY, hazardGraceActive)
 		recordShieldEvent("laser")
 	end
 
-	return
+        return
 end
 
-local function handleDartCollision(headX, headY, hazardGraceActive)
-	if not Darts or not Darts.checkCollision then
-		return
-	end
+local function handleDartCollision(headX, headY)
+        if not Darts or not Darts.checkCollision then
+                return
+        end
 
-	if hazardGraceActive then
-		return
-	end
-
-	local dartHit = Darts:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
-	if not dartHit then
+        local dartHit = Darts:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+        if not dartHit then
 		return
 	end
 
@@ -967,26 +951,26 @@ function Movement:update(dt)
 			return state, stateCause, stateContext
 		end
 
-		if not hazardGraceActive and laserEmitterCount > 0 then
-			local laserState, laserCause, laserContext = handleLaserCollision(headX, headY, hazardGraceActive)
-			if laserState and not developerGodMode then
-				return laserState, laserCause, laserContext
-			end
-		end
+                if not hazardGraceActive and laserEmitterCount > 0 then
+                        local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
+                        if laserState and not developerGodMode then
+                                return laserState, laserCause, laserContext
+                        end
+                end
 
-		if not hazardGraceActive and dartEmitterCount > 0 then
-			local dartState, dartCause, dartContext = handleDartCollision(headX, headY, hazardGraceActive)
-			if dartState and not developerGodMode then
-				return dartState, dartCause, dartContext
-			end
-		end
+                if not hazardGraceActive and dartEmitterCount > 0 then
+                        local dartState, dartCause, dartContext = handleDartCollision(headX, headY)
+                        if dartState and not developerGodMode then
+                                return dartState, dartCause, dartContext
+                        end
+                end
 
-		if not hazardGraceActive and sawCount > 0 then
-			local sawState, sawCause, sawContext = handleSawCollision(headX, headY, hazardGraceActive)
-			if sawState and not developerGodMode then
-				return sawState, sawCause, sawContext
-			end
-		end
+                if not hazardGraceActive and sawCount > 0 then
+                        local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
+                        if sawState and not developerGodMode then
+                                return sawState, sawCause, sawContext
+                        end
+                end
 
 		if Snake.checkLaserBodyCollision and not hazardGraceActive and laserEmitterCount > 0 then
 			Snake:checkLaserBodyCollision()

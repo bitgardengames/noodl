@@ -328,20 +328,54 @@ local function buildCoords(trail)
 	return coords
 end
 
-local function drawFruitBulges(trail, head, radius)
-	if not trail or radius <= 0 then return end
+local fruitMarkerCoords = {}
+local fruitMarkerCount = 0
 
-	for i = 1, #trail do
-		local seg = trail[i]
-		if seg and seg.fruitMarker then
-			local x = seg.fruitMarkerX or seg.drawX or seg.x
-			local y = seg.fruitMarkerY or seg.drawY or seg.y
+local function collectFruitMarkers(trail)
+        local count = 0
 
-			if x and y then
-				love.graphics.circle("fill", x, y, radius)
-			end
-		end
-	end
+        if trail then
+                for i = 1, #trail do
+                        local seg = trail[i]
+                        if seg and seg.fruitMarker then
+                                local x = seg.fruitMarkerX or seg.drawX or seg.x
+                                local y = seg.fruitMarkerY or seg.drawY or seg.y
+
+                                if x and y then
+                                        count = count + 1
+                                        local idx = count * 2 - 1
+                                        fruitMarkerCoords[idx] = x
+                                        fruitMarkerCoords[idx + 1] = y
+                                end
+                        end
+                end
+        end
+
+        local used = count * 2
+        local previousUsed = fruitMarkerCount * 2
+        if used < previousUsed then
+                for i = used + 1, previousUsed do
+                        fruitMarkerCoords[i] = nil
+                end
+        end
+
+        fruitMarkerCount = count
+
+        return fruitMarkerCoords, fruitMarkerCount
+end
+
+local function drawFruitBulges(markerCoords, markerCount, radius)
+        if not markerCoords or radius <= 0 or markerCount <= 0 then return end
+
+        for i = 1, markerCount do
+                local idx = (i - 1) * 2
+                local x = markerCoords[idx + 1]
+                local y = markerCoords[idx + 2]
+
+                if x and y then
+                        love.graphics.circle("fill", x, y, radius)
+                end
+        end
 end
 
 local function drawCornerCaps(path, radius)
@@ -430,8 +464,8 @@ local function drawSnakeStroke(path, radius, options)
 end
 
 local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
-	local paletteBody = palette and palette.body
-	local paletteOutline = palette and palette.outline
+        local paletteBody = palette and palette.body
+        local paletteOutline = palette and palette.outline
 
 	local bodyColor = paletteBody or SnakeCosmetics:getBodyColor()
 	local outlineColor = paletteOutline or SnakeCosmetics:getOutlineColor()
@@ -479,23 +513,25 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 		love.graphics.setLineJoin("bevel")
 	end
 
-	if palette and palette.singlePass then
-		local fillR, fillG, fillB, fillA = bodyR, bodyG, bodyB, bodyA
-		if outlineA and outlineA > fillA then
-			fillR, fillG, fillB, fillA = outlineR, outlineG, outlineB, outlineA
-		end
-		love.graphics.setColor(fillR, fillG, fillB, fillA)
-		drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
-		drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
-	else
-		love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-		drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
-		drawFruitBulges(trail, head, bulgeRadius + OUTLINE_SIZE)
+        local fruitMarkers, fruitMarkerCount = collectFruitMarkers(trail)
 
-		love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-		drawSnakeStroke(bodyCoords, half, options)
-		drawFruitBulges(trail, head, bulgeRadius)
-	end
+        if palette and palette.singlePass then
+                local fillR, fillG, fillB, fillA = bodyR, bodyG, bodyB, bodyA
+                if outlineA and outlineA > fillA then
+                        fillR, fillG, fillB, fillA = outlineR, outlineG, outlineB, outlineA
+                end
+                love.graphics.setColor(fillR, fillG, fillB, fillA)
+                drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
+                drawFruitBulges(fruitMarkers, fruitMarkerCount, bulgeRadius + OUTLINE_SIZE)
+        else
+                love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+                drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
+                drawFruitBulges(fruitMarkers, fruitMarkerCount, bulgeRadius + OUTLINE_SIZE)
+
+                love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+                drawSnakeStroke(bodyCoords, half, options)
+                drawFruitBulges(fruitMarkers, fruitMarkerCount, bulgeRadius)
+        end
 
 	love.graphics.pop()
 
