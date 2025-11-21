@@ -52,6 +52,26 @@ local DART_BODY_COLOR = {0.70, 0.68, 0.60, 1.0}
 local DART_TIP_COLOR = {0.82, 0.86, 0.90, 1.0}
 local DART_TAIL_COLOR = {0.42, 0.68, 0.64, 1.0}
 
+local scaleColorScratch = {0, 0, 0, 0}
+local impactColorScratch = {0, 0, 0, 0}
+local insetColorScratch = {0, 0, 0, 0}
+
+local impactBurstOptions = {
+        count = 0,
+        speed = 118,
+        speedVariance = 58,
+        life = 0.3,
+        size = 2.6,
+        color = impactColorScratch,
+        spread = pi * 2,
+        angleJitter = pi * 0.9,
+        drag = 3.8,
+        gravity = 150,
+        scaleMin = 0.5,
+        scaleVariance = 0.42,
+        fadeTo = 0.07,
+}
+
 local function clamp01(value)
 	if value <= 0 then
 		return 0
@@ -72,13 +92,14 @@ local function releaseOccupancy(emitter)
 	end
 end
 
-local function scaleColor(color, factor, alphaFactor)
-	local scale = factor or 1
-	return Color.scale(color, scale, {
-		default = Color.white,
-		alphaFactor = alphaFactor or scale,
-		}
-	)
+local function scaleColor(color, factor, alphaFactor, target)
+        local scale = factor or 1
+        return Color.scale(color, scale, {
+                default = Color.white,
+                alphaFactor = alphaFactor or scale,
+                target = target,
+                }
+        )
 end
 
 local function lerp(a, b, t)
@@ -279,18 +300,18 @@ local function recordImpact(emitter, x, y, impactType)
 end
 
 local function getImpactColor(impactType)
-	if impactType == "rock" then
-		local rockColor = Theme.rock or {0.45, 0.40, 0.36, 1}
-		local color = scaleColor(rockColor, 1.25, 1)
-		color[4] = 1
-		return color
-	end
+        if impactType == "rock" then
+                local rockColor = Theme.rock or {0.45, 0.40, 0.36, 1}
+                local color = scaleColor(rockColor, 1.25, 1, impactColorScratch)
+                color[4] = 1
+                return color
+        end
 
-	local _, _, _, _, tipColor = getEmitterColors()
-	local factor = (impactType == "snake") and 1.12 or 0.96
-	local color = scaleColor(tipColor, factor, 1)
-	color[4] = 1
-	return color
+        local _, _, _, _, tipColor = getEmitterColors()
+        local factor = (impactType == "snake") and 1.12 or 0.96
+        local color = scaleColor(tipColor, factor, 1, impactColorScratch)
+        color[4] = 1
+        return color
 end
 
 local function triggerImpactBurst(emitter, impactType, x, y)
@@ -302,28 +323,18 @@ local function triggerImpactBurst(emitter, impactType, x, y)
 		return
 	end
 
-	local color = getImpactColor(impactType)
+        local color = getImpactColor(impactType)
 
-	if impactType == "rock" and Rocks and Rocks.triggerHitFlash and emitter and emitter.targetRock then
-		Rocks:triggerHitFlash(emitter.targetRock)
-	end
+        if impactType == "rock" and Rocks and Rocks.triggerHitFlash and emitter and emitter.targetRock then
+                Rocks:triggerHitFlash(emitter.targetRock)
+        end
 
-	Particles:spawnBurst(x, y, {
-		count = random(7, 11),
-		speed = 118,
-		speedVariance = 58,
-		life = 0.3,
-		size = 2.6,
-		color = color,
-		spread = pi * 2,
-		angleJitter = pi * 0.9,
-		drag = 3.8,
-		gravity = (impactType == "rock") and 200 or 150,
-		scaleMin = 0.5,
-		scaleVariance = 0.42,
-		fadeTo = (impactType == "rock") and 0.03 or 0.07,
-		}
-	)
+        impactBurstOptions.count = random(7, 11)
+        impactBurstOptions.color = color
+        impactBurstOptions.gravity = (impactType == "rock") and 200 or 150
+        impactBurstOptions.fadeTo = (impactType == "rock") and 0.03 or 0.07
+
+        Particles:spawnBurst(x, y, impactBurstOptions)
 end
 
 local function randomCooldownDuration(emitter)
@@ -775,8 +786,8 @@ local function drawEmitter(emitter)
 	love.graphics.rectangle("fill", baseX, baseY, tileSize, tileSize, RADIUS, RADIUS)
 
 	-- INSET
-	local insetPad = 2
-	local insetColor = scaleColor(bodyColor, 0.78 + strength * 0.12, 1)
+        local insetPad = 2
+        local insetColor = scaleColor(bodyColor, 0.78 + strength * 0.12, 1, insetColorScratch)
 
 	love.graphics.setColor(insetColor)
 	love.graphics.rectangle(

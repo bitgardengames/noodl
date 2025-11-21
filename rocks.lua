@@ -73,8 +73,11 @@ local function generateRockShape(size, seed)
 	return points
 end
 
-local function copyColor(color)
-	return Color.copy(color, {default = Color.white})
+local function copyColor(color, out)
+        return Color.copy(color, {
+                default = Color.white,
+                target = out,
+        })
 end
 
 local highlightCache = setmetatable({}, { __mode = "k" })
@@ -266,57 +269,65 @@ local function releaseOccupancy(rock)
 end
 
 function Rocks:reset()
-	for _, rock in ipairs(current) do
-		releaseOccupancy(rock)
-	end
-	current = {}
-	rockLookup = {}
-	lookupHasEntries = false
-	self.spawnChance = 0.25
-	self.shatterOnFruit = 0
-	self.shatterProgress = 0
-	bumpRevision()
+        for _, rock in ipairs(current) do
+                releaseOccupancy(rock)
+        end
+        current = {}
+        rockLookup = {}
+        lookupHasEntries = false
+        self.spawnChance = 0.25
+        self.shatterOnFruit = 0
+        self.shatterProgress = 0
+        bumpRevision()
 end
 
+local rockShatterPrimaryColor = {0, 0, 0, 1}
+local rockShatterHighlightColor = {0, 0, 0, 1}
+
+local rockShatterPrimaryOptions = {
+        count = 0,
+        speed = 72,
+        speedVariance = 58,
+        life = 0.45,
+        size = 3.8,
+        color = rockShatterPrimaryColor,
+        spread = pi * 2,
+        angleJitter = pi * 0.9,
+        drag = 3.1,
+        gravity = 240,
+        scaleMin = 0.54,
+        scaleVariance = 0.72,
+        fadeTo = 0.06,
+}
+
+local rockShatterHighlightOptions = {
+        count = 0,
+        speed = 112,
+        speedVariance = 60,
+        life = 0.32,
+        size = 2.4,
+        color = rockShatterHighlightColor,
+        spread = pi * 2,
+        angleJitter = pi,
+        drag = 1.5,
+        gravity = 190,
+        scaleMin = 0.38,
+        scaleVariance = 0.3,
+        fadeTo = 0,
+}
+
 local function spawnShatterFX(x, y)
-	local rockColor = Theme.rock or {0.85, 0.75, 0.6, 1}
-	local primary = copyColor(rockColor)
-	primary[4] = 1
-	local highlight = getHighlightColor(rockColor)
+        local rockColor = Theme.rock or {0.85, 0.75, 0.6, 1}
+        copyColor(rockColor, rockShatterPrimaryColor)
+        rockShatterPrimaryColor[4] = 1
+        local highlight = getHighlightColor(rockColor)
 
-	Particles:spawnBurst(x, y, {
-		count = love.math.random(8, 12),
-		speed = 72,
-		speedVariance = 58,
-		life = 0.45,
-		size = 3.8,
-		color = primary,
-		spread = pi * 2,
-		angleJitter = pi * 0.9,
-		drag = 3.1,
-		gravity = 240,
-		scaleMin = 0.54,
-		scaleVariance = 0.72,
-		fadeTo = 0.06,
-		}
-	)
+        rockShatterPrimaryOptions.count = love.math.random(8, 12)
+        Particles:spawnBurst(x, y, rockShatterPrimaryOptions)
 
-	Particles:spawnBurst(x, y, {
-		count = love.math.random(3, 5),
-		speed = 112,
-		speedVariance = 60,
-		life = 0.32,
-		size = 2.4,
-		color = highlight,
-		spread = pi * 2,
-		angleJitter = pi,
-		drag = 1.5,
-		gravity = 190,
-		scaleMin = 0.38,
-		scaleVariance = 0.3,
-		fadeTo = 0,
-		}
-	)
+        copyColor(highlight, rockShatterHighlightColor)
+        rockShatterHighlightOptions.count = love.math.random(3, 5)
+        Particles:spawnBurst(x, y, rockShatterHighlightOptions)
 end
 
 local function removeRockAt(index, spawnFX)
