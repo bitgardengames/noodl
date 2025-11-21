@@ -30,6 +30,19 @@ local rockLookup = {}
 local lookupHasEntries = false
 local revision = 0
 
+local function swapRemove(list, index)
+        local lastIndex = #list
+        local removed = list[index]
+
+        if index ~= lastIndex then
+                list[index] = list[lastIndex]
+        end
+
+        list[lastIndex] = nil
+
+        return removed
+end
+
 local function recordRockBreak()
 	SessionStats:add("runShieldRockBreaks", 1)
 end
@@ -331,10 +344,10 @@ local function spawnShatterFX(x, y)
 end
 
 local function removeRockAt(index, spawnFX)
-	if not index then return nil end
+        if not index then return nil end
 
-	local rock = table.remove(current, index)
-	if not rock then return nil end
+        local rock = swapRemove(current, index)
+        if not rock then return nil end
 
 	releaseOccupancy(rock)
 
