@@ -1224,11 +1224,12 @@ function Lasers:draw()
 	love.graphics.push("all")
 	love.graphics.setLineWidth(2)
 
-	for _, beam in ipairs(emitters) do
-		drawBurnMark(beam)
-		drawBeam(beam)
-		drawImpactEffect(beam)
-		drawEmitterBase(beam)
+	for index = 1, #emitters do
+		local emitter = emitters[index]
+		drawBurnMark(emitter)
+		drawBeam(emitter)
+		drawImpactEffect(emitter)
+		drawEmitterBase(emitter)
 	end
 
 	love.graphics.pop()
