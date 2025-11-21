@@ -1,35 +1,44 @@
 local Settings = require("settings")
 
+local lg = love.graphics
+local random = love.math.random
+local cos = math.cos
+local sin = math.sin
+local TWO_PI = math.pi * 2
+local SIZE_DECAY = 0.97
+local VELOCITY_DECAY = 0.95
+local SHAKE_DURATION = 0.4
+
 local Death = {
-	particles = {},
-	shakeTime = 0,
-	shakeIntensity = 0,
+        particles = {},
+        shakeTime = 0,
+        shakeIntensity = 0,
 	flashTime = 0,
 	flashDuration = 0.3,
 	flashMaxAlpha = 0.45
 }
 
 function Death:spawnFromSnake(trail, SEGMENT_SIZE)
-	for i = 1, #trail do
-		local p = trail[i]
-		if p.drawX and p.drawY then
-			local angle = love.math.random() * math.pi * 2
-			local speed = love.math.random(60, 180)
-			table.insert(self.particles, {
-				x = p.drawX,
-				y = p.drawY,
-				dx = math.cos(angle) * speed,
-				dy = math.sin(angle) * speed,
-				life = 1.0,
-				size = SEGMENT_SIZE * 0.75
-				}
-			)
-		end
-	end
+        for i = 1, #trail do
+                local p = trail[i]
+                if p.drawX and p.drawY then
+                        local angle = random() * TWO_PI
+                        local speed = random(60, 180)
+                        table.insert(self.particles, {
+                                x = p.drawX,
+                                y = p.drawY,
+                                dx = cos(angle) * speed,
+                                dy = sin(angle) * speed,
+                                life = 1.0,
+                                size = SEGMENT_SIZE * 0.75
+                                }
+                        )
+                end
+        end
 
-	-- add screen shake on death spawn
-	self.shakeTime = 0.4        -- duration in seconds
-	self.shakeIntensity = 8     -- pixels of max shake
+        -- add screen shake on death spawn
+        self.shakeTime = SHAKE_DURATION      -- duration in seconds
+        self.shakeIntensity = 8     -- pixels of max shake
 
 	-- trigger a quick red flash overlay
 	self.flashTime = self.flashDuration
@@ -42,12 +51,12 @@ function Death:update(dt)
 
 	for readIndex = 1, #particles do
 		local part = particles[readIndex]
-		part.x = part.x + part.dx * dt
-		part.y = part.y + part.dy * dt
-		part.life = part.life - dt
-		part.size = part.size * 0.97
-		part.dx = part.dx * 0.95
-		part.dy = part.dy * 0.95
+                part.x = part.x + part.dx * dt
+                part.y = part.y + part.dy * dt
+                part.life = part.life - dt
+                part.size = part.size * SIZE_DECAY
+                part.dx = part.dx * VELOCITY_DECAY
+                part.dy = part.dy * VELOCITY_DECAY
 
 		if part.life > 0 then
 			if writeIndex ~= readIndex then
@@ -62,10 +71,10 @@ function Death:update(dt)
 	end
 
 	-- update shake
-	if self.shakeTime > 0 then
-		self.shakeTime = self.shakeTime - dt
-		if self.shakeTime < 0 then self.shakeTime = 0 end
-	end
+        if self.shakeTime > 0 then
+                self.shakeTime = self.shakeTime - dt
+                if self.shakeTime < 0 then self.shakeTime = 0 end
+        end
 
 	-- update flash timer
 	if self.flashTime > 0 then
@@ -76,36 +85,36 @@ end
 
 -- call this before drawing game elements
 function Death:applyShake()
-	if Settings.screenShake == false then
-		return
-	end
+        if Settings.screenShake == false then
+                return
+        end
 
-	if self.shakeTime > 0 then
-		local intensity = self.shakeIntensity * (self.shakeTime / 0.4) -- fade out
-		local dx = love.math.random(-intensity, intensity)
-		local dy = love.math.random(-intensity, intensity)
-		love.graphics.translate(dx, dy)
-	end
+        if self.shakeTime > 0 then
+                local intensity = self.shakeIntensity * (self.shakeTime / SHAKE_DURATION) -- fade out
+                local dx = random(-intensity, intensity)
+                local dy = random(-intensity, intensity)
+                lg.translate(dx, dy)
+        end
 end
 
 function Death:draw()
-	for i = 1, #self.particles do
-		local part = self.particles[i]
-		local alpha = part.life
-		love.graphics.setColor(60/255, 185/255, 168/255, alpha)
-		love.graphics.circle("fill", part.x, part.y, part.size * 0.5)
-	end
-	love.graphics.setColor(1, 1, 1, 1) -- reset
+        for i = 1, #self.particles do
+                local part = self.particles[i]
+                local alpha = part.life
+                lg.setColor(60/255, 185/255, 168/255, alpha)
+                lg.circle("fill", part.x, part.y, part.size * 0.5)
+        end
+        lg.setColor(1, 1, 1, 1) -- reset
 end
 
 function Death:drawFlash(width, height)
-	if self.flashTime <= 0 then return end
+        if self.flashTime <= 0 then return end
 
-	local t = self.flashTime / self.flashDuration
-	local alpha = (t * t) * self.flashMaxAlpha
-	love.graphics.setColor(1, 0.25, 0.2, alpha)
-	love.graphics.rectangle("fill", 0, 0, width, height)
-	love.graphics.setColor(1, 1, 1, 1)
+        local t = self.flashTime / self.flashDuration
+        local alpha = (t * t) * self.flashMaxAlpha
+        lg.setColor(1, 0.25, 0.2, alpha)
+        lg.rectangle("fill", 0, 0, width, height)
+        lg.setColor(1, 1, 1, 1)
 end
 
 function Death:isFinished()
