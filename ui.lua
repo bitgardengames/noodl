@@ -309,17 +309,19 @@ local function drawAlignedBorder(mode, x, y, w, h, radius, borderWidth)
 end
 
 local function setColor(color, alphaMultiplier)
-	if not color then
-		love.graphics.setColor(1, 1, 1, alphaMultiplier or 1)
-		return
-	end
+        if not color then
+                love.graphics.setColor(1, 1, 1, alphaMultiplier or 1)
+                return
+        end
 
 	local r = color[1] or 1
 	local g = color[2] or 1
-	local b = color[3] or 1
-	local a = color[4] or 1
-	love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
+        local b = color[3] or 1
+        local a = color[4] or 1
+        love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
 end
+
+local BUTTON_TEXT_SHADOW_COLOR = {0, 0, 0, 0.7}
 
 function UI.refreshCursor(x, y)
 	if x ~= nil and y ~= nil then
@@ -1139,8 +1141,8 @@ function UI.drawButton(id, alpha)
 	local text = btn.text or ""
 	local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
 
-	setColor({0, 0, 0, 0.7}, alphaMultiplier)
-	love.graphics.printf(text, b.x + 1, textY + 1, b.w, "center")
+        setColor(BUTTON_TEXT_SHADOW_COLOR, alphaMultiplier)
+        love.graphics.printf(text, b.x + 1, textY + 1, b.w, "center")
 
 	setColor(textColor, alphaMultiplier)
 	love.graphics.printf(text, b.x, textY, b.w, "center")
