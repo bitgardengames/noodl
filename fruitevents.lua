@@ -23,6 +23,19 @@ local min = math.min
 local FruitEvents = {}
 
 local DEFAULT_COMBO_WINDOW = 2.25
+local COMBO_BURST_COLOR = {1, 0.82, 0.3, 1}
+
+local comboBurstOptions = {
+        count = 0,
+        speed = 0,
+        life = 0.6,
+        size = 4,
+        color = COMBO_BURST_COLOR,
+        spread = math.pi * 2,
+        gravity = 30,
+        drag = 2.5,
+        fadeTo = 0,
+}
 
 local function getComboMultiplier(comboCount)
 	comboCount = comboCount or 0
@@ -154,10 +167,9 @@ local function applyComboReward(fruitType, x, y, comboCount, wasComboActive)
 		return
 	end
 
-	local burstColor = {1, 0.82, 0.3, 1}
-	local baseBonus = min((comboCount - 1) * 2, 10)
-	local multiplier = Score.getComboBonusMultiplier and Score:getComboBonusMultiplier() or 1
-	local scaledCombo = floor(baseBonus * multiplier + 0.5)
+        local baseBonus = min((comboCount - 1) * 2, 10)
+        local multiplier = Score.getComboBonusMultiplier and Score:getComboBonusMultiplier() or 1
+        local scaledCombo = floor(baseBonus * multiplier + 0.5)
 
 	local extraBonus = 0
 	if Upgrades and Upgrades.getComboBonus then
@@ -173,18 +185,10 @@ local function applyComboReward(fruitType, x, y, comboCount, wasComboActive)
 		FloatingText:add(summary, x, y - 74, {1, 0.95, 0.6, 1}, 1.3, 48)
 	end
 
-	Particles:spawnBurst(x, y, {
-		count = love.math.random(10, 14) + comboCount,
-		speed = 90 + comboCount * 12,
-		life = 0.6,
-		size = 4,
-		color = burstColor,
-		spread = math.pi * 2,
-		gravity = 30,
-		drag = 2.5,
-		fadeTo = 0
-		}
-	)
+        comboBurstOptions.count = love.math.random(10, 14) + comboCount
+        comboBurstOptions.speed = 90 + comboCount * 12
+
+        Particles:spawnBurst(x, y, comboBurstOptions)
 end
 
 local function addFloatingText(label, x, y, color, duration, size)
