@@ -399,13 +399,12 @@ local function getSegmentPosition(fraction)
 		index = 1
 	end
 
-	local segment = segments[index]
-	if segment then
-		local x = segment.drawX or segment.x
-		local y = segment.drawY or segment.y
-		if x and y then
-			return x, y
-		end
+        local segment = segments[index]
+        if segment then
+                local x, y = SnakeUtils.getSegmentPosition(segment)
+                if x and y then
+                        return x, y
+                end
 	end
 
 	return Snake:getHead()

@@ -1,4 +1,5 @@
 local Settings = require("settings")
+local SnakeUtils = require("snakeutils")
 
 local lg = love.graphics
 local random = love.math.random
@@ -21,12 +22,13 @@ local Death = {
 function Death:spawnFromSnake(trail, SEGMENT_SIZE)
         for i = 1, #trail do
                 local p = trail[i]
-                if p.drawX and p.drawY then
+                local x, y = SnakeUtils.getSegmentPosition(p)
+                if x and y then
                         local angle = random() * TWO_PI
                         local speed = random(60, 180)
                         table.insert(self.particles, {
-                                x = p.drawX,
-                                y = p.drawY,
+                                x = x,
+                                y = y,
                                 dx = cos(angle) * speed,
                                 dy = sin(angle) * speed,
                                 life = 1.0,
