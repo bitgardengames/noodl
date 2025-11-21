@@ -20,6 +20,9 @@ local sqrt = math.sqrt
 
 local Movement = {}
 
+local ZERO_DIR = {x = 0, y = 0}
+local EMPTY_CANDIDATE_LIST = {}
+
 local MAX_SNAKE_TIME_STEP = 1 / 60
 
 local function isDeveloperGodMode()
@@ -252,7 +255,7 @@ local function rerouteAlongWall(headX, headY, left, right, top, bottom)
 	local hitTop = (headY or clampedY) <= top
 	local hitBottom = (headY or clampedY) >= bottom
 
-	local dir = Snake:getDirection() or {x = 0, y = 0}
+        local dir = Snake:getDirection() or ZERO_DIR
 	local newDirX, newDirY = dir.x or 0, dir.y or 0
 
 	local fallbackVerticalDir = computeFallbackAxisDirection(dir.y, clampedY, centerY)
@@ -540,7 +543,7 @@ local function handleWallCollision(headX, headY)
 		local clampedY = reroutedY or safeY
 		headX, headY = relocateHead(headX, headY, clampedX, clampedY)
 		clampedX, clampedY = headX, headY
-		local dir = Snake.getDirection and Snake:getDirection() or {x = 0, y = 0}
+                local dir = Snake.getDirection and Snake:getDirection() or ZERO_DIR
 
 		return clampedX, clampedY, "wall", {
 			pushX = 0,
@@ -615,7 +618,7 @@ local function handleRockCollision(headX, headY, headCol, headRow, rockRevision)
 		end
 	end
 
-	for _, rock in ipairs(candidates or {}) do
+        for _, rock in ipairs(candidates or EMPTY_CANDIDATE_LIST) do
 		local rockCenterX = rock and (rock.renderX or rock.x) or 0
 		local rockCenterY = rock and (rock.renderY or rock.y) or 0
 		local rockWidth = max(0, (rock and rock.w or SEGMENT_SIZE) - ROCK_COLLISION_INSET * 2)
