@@ -146,12 +146,13 @@ local function buildSpawnBuffer(baseSafeZone)
 end
 
 local function prepareOccupancy()
-	SnakeUtils.initOccupancy()
+        SnakeUtils.initOccupancy()
 
-	for _, segment in ipairs(Snake:getSegments()) do
-		local col, row = Arena:getTileFromWorld(segment.drawX, segment.drawY)
-		SnakeUtils.setOccupied(col, row, true)
-	end
+        for _, segment in ipairs(Snake:getSegments()) do
+                local x, y = SnakeUtils.getSegmentPosition(segment)
+                local col, row = Arena:getTileFromWorld(x, y)
+                SnakeUtils.setOccupied(col, row, true)
+        end
 
 	local safeZone = Snake:getSafeZone(3)
 	local rockSafeZone = Snake:getSafeZone(5)

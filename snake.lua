@@ -59,6 +59,11 @@ local segmentPoolCount = 0
 local segmentSnapshot = {}
 local segmentSnapshotPool = {}
 local segmentSnapshotPoolCount = 0
+local SEGMENT_SNAPSHOT_DRAW_X = 1
+local SEGMENT_SNAPSHOT_DRAW_Y = 2
+local SEGMENT_SNAPSHOT_DIR_X = 3
+local SEGMENT_SNAPSHOT_DIR_Y = 4
+-- Snapshot entries are packed arrays: {drawX, drawY, dirX, dirY}.
 
 local newHeadSegments = {}
 local newHeadSegmentsMax = 0
@@ -4456,24 +4461,24 @@ function Snake:getSegments()
 			snapshot[i] = entry
 		end
 
-		entry.drawX = seg.drawX
-		entry.drawY = seg.drawY
-		entry.dirX = seg.dirX
-		entry.dirY = seg.dirY
-	end
+                entry[SEGMENT_SNAPSHOT_DRAW_X] = seg.drawX
+                entry[SEGMENT_SNAPSHOT_DRAW_Y] = seg.drawY
+                entry[SEGMENT_SNAPSHOT_DIR_X] = seg.dirX
+                entry[SEGMENT_SNAPSHOT_DIR_Y] = seg.dirY
+        end
 
-	for i = count + 1, previousCount do
-		local entry = snapshot[i]
-		if entry then
-			entry.drawX = nil
-			entry.drawY = nil
-			entry.dirX = nil
-			entry.dirY = nil
-			segmentSnapshotPoolCount = segmentSnapshotPoolCount + 1
-			segmentSnapshotPool[segmentSnapshotPoolCount] = entry
-			snapshot[i] = nil
-		end
-	end
+        for i = count + 1, previousCount do
+                local entry = snapshot[i]
+                if entry then
+                        entry[SEGMENT_SNAPSHOT_DRAW_X] = nil
+                        entry[SEGMENT_SNAPSHOT_DRAW_Y] = nil
+                        entry[SEGMENT_SNAPSHOT_DIR_X] = nil
+                        entry[SEGMENT_SNAPSHOT_DIR_Y] = nil
+                        segmentSnapshotPoolCount = segmentSnapshotPoolCount + 1
+                        segmentSnapshotPool[segmentSnapshotPoolCount] = entry
+                        snapshot[i] = nil
+                end
+        end
 
 	return snapshot
 end

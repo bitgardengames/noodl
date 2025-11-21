@@ -1365,17 +1365,18 @@ function Arena:spawnExit()
 			end
 		elseif snakeSafeZone and isTileInSafeZone(snakeSafeZone, col, row) then
 			return false
-		end
+                end
 
-		if snakeSegments then
-			for _, seg in ipairs(snakeSegments) do
-				local dx = abs((seg.drawX or 0) - cx)
-				local dy = abs((seg.drawY or 0) - cy)
-				if dx < halfThreshold and dy < halfThreshold then
-					return false
-				end
-			end
-		end
+                if snakeSegments then
+                        for _, seg in ipairs(snakeSegments) do
+                                local sx, sy = SnakeUtils.getSegmentPosition(seg)
+                                local dx = abs((sx or 0) - cx)
+                                local dy = abs((sy or 0) - cy)
+                                if dx < halfThreshold and dy < halfThreshold then
+                                        return false
+                                end
+                        end
+                end
 
 		if headX and headY then
 			if distanceSquared(cx, cy, headX, headY) < minHeadDistanceSq then
