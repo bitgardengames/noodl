@@ -323,16 +323,21 @@ function RenderLayers:getActiveLayerMSAASamples(layerName)
 end
 
 function RenderLayers:present(offsetX, offsetY)
-	processQueuedDraws()
+        processQueuedDraws()
 
-	love.graphics.push("all")
-	love.graphics.setCanvas()
-	love.graphics.origin()
-	love.graphics.setColor(1, 1, 1, 1)
+        local transformOffsetX, transformOffsetY = offsetX, offsetY
+        if transformOffsetX == nil and transformOffsetY == nil then
+                transformOffsetX, transformOffsetY = love.graphics.transformPoint(0, 0)
+        end
 
-	drawLayers(offsetX or 0, offsetY or 0)
+        love.graphics.push("all")
+        love.graphics.setCanvas()
+        love.graphics.origin()
+        love.graphics.setColor(1, 1, 1, 1)
 
-	love.graphics.pop()
+        drawLayers(transformOffsetX or 0, transformOffsetY or 0)
+
+        love.graphics.pop()
 end
 
 return RenderLayers
