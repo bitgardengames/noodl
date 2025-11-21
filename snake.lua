@@ -234,15 +234,11 @@ local function recalcSegmentLengthsRange(startIndex, endIndex)
 	end
 end
 
-local function recalcSegmentLengthsFrom(startIndex)
-	recalcSegmentLengthsRange(startIndex, #trail)
-end
-
 local function syncTrailLength()
-	if not trail or #trail == 0 then
-		trailLength = 0
-		return trailLength
-	end
+        if not trail or #trail == 0 then
+                trailLength = 0
+                return trailLength
+        end
 
 	ensureHeadLength()
 	for i = 2, #trail do

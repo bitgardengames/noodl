@@ -103,46 +103,14 @@ local function scaleColor(color, factor, alphaFactor, target)
 end
 
 local function lerp(a, b, t)
-	return a + (b - a) * t
-end
-
-local rimLightScratch = {0, 0, 0, 0}
-local occlusionScratch = {0, 0, 0, 0}
-local tipGlowScratch = {0, 0, 0, 0}
-local highlightFallback = {1, 1, 1, 1}
-
-local function getRimLightColor(color)
-	color = color or highlightFallback
-	rimLightScratch[1] = min(1, (color[1] or 0) * 1.2 + 0.08)
-	rimLightScratch[2] = min(1, (color[2] or 0) * 1.2 + 0.08)
-	rimLightScratch[3] = min(1, (color[3] or 0) * 1.2 + 0.08)
-	rimLightScratch[4] = (color[4] or 1) * 0.65
-	return rimLightScratch
-end
-
-local function getOcclusionColor(color)
-	color = color or highlightFallback
-	occlusionScratch[1] = clamp01((color[1] or 0) * 0.45 + 0.02)
-	occlusionScratch[2] = clamp01((color[2] or 0) * 0.45 + 0.02)
-	occlusionScratch[3] = clamp01((color[3] or 0) * 0.45 + 0.02)
-	occlusionScratch[4] = (color[4] or 1) * 0.7
-	return occlusionScratch
-end
-
-local function getTipGlowColor(color)
-	color = color or highlightFallback
-	tipGlowScratch[1] = min(1, (color[1] or 0) * 1.1 + 0.12)
-	tipGlowScratch[2] = min(1, (color[2] or 0) * 1.1 + 0.12)
-	tipGlowScratch[3] = min(1, (color[3] or 0) * 1.1 + 0.12)
-	tipGlowScratch[4] = (color[4] or 1) * 0.6
-	return tipGlowScratch
+        return a + (b - a) * t
 end
 
 local function getEmitterColors()
-	local body = Theme.dartBaseColor or BASE_EMITTER_COLOR
-	local accent = Theme.dartAccentColor or BASE_ACCENT_COLOR
-	local telegraph = Theme.dartTelegraphColor or TELEGRAPH_COLOR
-	local dartBody = Theme.dartBodyColor or DART_BODY_COLOR
+        local body = Theme.dartBaseColor or BASE_EMITTER_COLOR
+        local accent = Theme.dartAccentColor or BASE_ACCENT_COLOR
+        local telegraph = Theme.dartTelegraphColor or TELEGRAPH_COLOR
+        local dartBody = Theme.dartBodyColor or DART_BODY_COLOR
 	local dartTip = Theme.dartTipColor or DART_TIP_COLOR
 	local dartTail = Theme.dartTailColor or DART_TAIL_COLOR
 	return body, accent, telegraph, dartBody, dartTip, dartTail
