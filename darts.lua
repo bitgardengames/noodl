@@ -22,8 +22,6 @@ Darts.speedMult = 1.0
 local emitters = {}
 local stallTimer = 0
 
-local DARTS_ENABLED = true
-
 local DEFAULT_INITIAL_COOLDOWN_BONUS = 1.5 -- Extra grace period after spawning before the first telegraph.
 
 local DEFAULT_TELEGRAPH_DURATION = 1.0
@@ -468,10 +466,6 @@ function Darts:reset()
 end
 
 function Darts:spawn(x, y, dir, options)
-	if not DARTS_ENABLED then
-		return nil
-	end
-
 	if not (x and y and dir) then
 		return nil
 	end
@@ -632,10 +626,6 @@ local function baseBounds(emitter)
 end
 
 function Darts:checkCollision(x, y, w, h)
-	if not DARTS_ENABLED then
-		return nil
-	end
-
 	if not (x and y and w and h) then
 		return nil
 	end
@@ -698,10 +688,6 @@ function Darts:onSnakeImpact(emitter, hitX, hitY)
 end
 
 function Darts:update(dt)
-	if not DARTS_ENABLED then
-		return
-	end
-
 	dt = dt or 0
 
 	local stall = stallTimer or 0
@@ -772,19 +758,6 @@ local function drawEmitter(emitter)
 	love.graphics.setColor(0, 0, 0, clamp01(0.9 + flash * 0.1 + strength * 0.1))
 	love.graphics.setLineWidth(OUT)
 	love.graphics.rectangle("line", baseX, baseY, tileSize, tileSize, RADIUS, RADIUS)
-
-	-- ACCENT OUTLINE
-	love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], clamp01((accentColor[4] or 0.8) + flash * 0.25 + strength * 0.3))
-	love.graphics.setLineWidth(1)
-	love.graphics.rectangle(
-		"line",
-		baseX + insetPad,
-		baseY + insetPad,
-		tileSize - insetPad * 2,
-		tileSize - insetPad * 2,
-		RADIUS - 1,
-		RADIUS - 1
-	)
 
 	-- MUZZLE POSITIONING (pixel perfect)
 	local facing = emitter.facing or 1
@@ -1083,10 +1056,6 @@ local function drawDart(emitter)
 end
 
 function Darts:draw()
-	if not DARTS_ENABLED then
-		return
-	end
-
 	for index = 1, #emitters do
 		local emitter = emitters[index]
 		drawEmitter(emitter)

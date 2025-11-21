@@ -16,8 +16,6 @@ local sin = math.sin
 
 local Lasers = {}
 
-local LASERS_ENABLED = true
-
 local emitters = {}
 local stallTimer = 0
 local cachedRockLookup = nil
@@ -555,10 +553,6 @@ function Lasers:reset()
 	cachedRevision = nil
 
 	Lasers.invalidateThemeCache()
-
-	if not LASERS_ENABLED then
-		return
-	end
 end
 
 function Lasers.invalidateThemeCache()
@@ -571,10 +565,6 @@ function Lasers.invalidateThemeCache()
 end
 
 function Lasers:spawn(x, y, dir, options)
-	if not LASERS_ENABLED then
-		return
-	end
-
 	dir = dir or "horizontal"
 	options = options or {}
 
@@ -759,10 +749,6 @@ local function updateEmitterSlide(beam, dt)
 end
 
 function Lasers:update(dt)
-	if not LASERS_ENABLED then
-		return
-	end
-
 	if dt <= 0 then
 		return
 	end
@@ -874,10 +860,6 @@ function Lasers:update(dt)
 end
 
 function Lasers:onShieldedHit(beam, hitX, hitY)
-	if not LASERS_ENABLED then
-		return
-	end
-
 	if not beam then
 		return
 	end
@@ -923,20 +905,12 @@ local function baseBounds(beam)
 end
 
 function Lasers:applyTimingModifiers()
-	if not LASERS_ENABLED then
-		return
-	end
-
 	for _, beam in ipairs(emitters) do
 		recalcBeamTiming(beam, false)
 	end
 end
 
 function Lasers:checkCollision(x, y, w, h)
-	if not LASERS_ENABLED then
-		return nil
-	end
-
 	if not (x and y and w and h) then
 		return nil
 	end
@@ -1243,10 +1217,6 @@ local function drawEmitterBase(beam)
 end
 
 function Lasers:draw()
-	if not LASERS_ENABLED then
-		return
-	end
-
 	if #emitters == 0 then
 		return
 	end
@@ -1256,17 +1226,8 @@ function Lasers:draw()
 
 	for _, beam in ipairs(emitters) do
 		drawBurnMark(beam)
-	end
-
-	for _, beam in ipairs(emitters) do
 		drawBeam(beam)
-	end
-
-	for _, beam in ipairs(emitters) do
 		drawImpactEffect(beam)
-	end
-
-	for _, beam in ipairs(emitters) do
 		drawEmitterBase(beam)
 	end
 
