@@ -116,10 +116,23 @@ local sawHighlightBurstOptions = {
         fadeTo = 0.02,
 }
 
+local function swapRemove(list, index)
+        local lastIndex = #list
+        local removed = list[index]
+
+        if index ~= lastIndex then
+                list[index] = list[lastIndex]
+        end
+
+        list[lastIndex] = nil
+
+        return removed
+end
+
 local function invalidateSawCache(saw)
-	if not saw then
-		return
-	end
+        if not saw then
+                return
+        end
 
 	saw.centerX = nil
 	saw.centerY = nil
@@ -837,16 +850,16 @@ local function removeSaw(target)
                         sawHighlightBurstColor[4] = highlight[4] or 1
                         Particles:spawnBurst(burstX, burstY, sawHighlightBurstOptions)
 
-			emitDebugEvent("burst", saw, {
-				x = burstX,
-				y = burstY,
-				}
-			)
+                        emitDebugEvent("burst", saw, {
+                                x = burstX,
+                                y = burstY,
+                                }
+                        )
 
-			table.remove(current, index)
-			break
-		end
-	end
+                        swapRemove(current, index)
+                        break
+                end
+        end
 end
 
 -- Easing similar to Rocks
