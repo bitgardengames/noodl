@@ -61,7 +61,7 @@ local english = {
 				},
 				depth_delver = {
 					title = "Depth Delver",
-					description = "Reach floor ${goal} in a single run.",
+					description = "Reach floor ${goal}.",
 					progress = "Deepest floor: ${current}/${goal}",
 					complete = "Depth conquered! Reached floor ${current}.",
 				},

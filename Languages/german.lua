@@ -61,7 +61,7 @@ local german = {
 				},
 				depth_delver = {
 					title = "Tiefengänger",
-					description = "Erreiche Ebene ${goal} in einem Lauf.",
+					description = "Erreiche Ebene ${goal}.",
 					progress = "Tiefste Ebene: ${current}/${goal}",
 					complete = "Tiefe erobert! Ebene ${current} erreicht.",
 				},

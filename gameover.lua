@@ -21,7 +21,7 @@ local TEXT_SHADOW_OFFSET = 2
 local TITLE_SHADOW_OFFSET = 3
 local CONTENT_ANIM_DURATION = 1
 local BUTTON_ANIM_DURATION = 0.6
-local TEXT_STAGGER_DURATION = 0.5
+local TEXT_STAGGER_DURATION = 4
 
 local function getLocalizedOrFallback(key, fallback)
 	if not key then
