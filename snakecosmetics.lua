@@ -17,8 +17,8 @@ local function compareSkinDefinitions(a, b)
 end
 
 local SKIN_DEFINITIONS = {
-        {
-                id = "classic_emerald",
+	{
+		id = "classic_emerald",
 		name = "Classic Expedition",
 		description = "Standard expedition scales issued to every new handler.",
 		colors = {
@@ -32,9 +32,9 @@ local SKIN_DEFINITIONS = {
 }
 
 local function buildDefaultState()
-        return {
-                selectedSkin = DEFAULT_SKIN_ID,
-        }
+	return {
+		selectedSkin = DEFAULT_SKIN_ID,
+	}
 end
 
 local DEFAULT_STATE = buildDefaultState()
@@ -155,68 +155,68 @@ function SnakeCosmetics:_ensureLoaded()
 
 	self.state = copyTable(DEFAULT_STATE)
 
-        if love.filesystem.getInfo(SAVE_FILE) then
-                local ok, chunk = pcall(love.filesystem.load, SAVE_FILE)
-                if ok and chunk then
-                        local success, data = pcall(chunk)
-                        if success and type(data) == "table" then
-                                self.state = mergeTables(copyTable(DEFAULT_STATE), data)
-                        end
-                end
-        end
+	if love.filesystem.getInfo(SAVE_FILE) then
+		local ok, chunk = pcall(love.filesystem.load, SAVE_FILE)
+		if ok and chunk then
+			local success, data = pcall(chunk)
+			if success and type(data) == "table" then
+				self.state = mergeTables(copyTable(DEFAULT_STATE), data)
+			end
+		end
+	end
 
-        self:_validateSelection()
+	self:_validateSelection()
 
-        self._loaded = true
+	self._loaded = true
 end
 
 function SnakeCosmetics:_validateSelection()
-        if not self.state then
-                return
-        end
+	if not self.state then
+		return
+	end
 
-        local selected = self.state.selectedSkin or DEFAULT_SKIN_ID
-        if self._skinsById[selected] then
-                self.state.selectedSkin = selected
-                return
-        end
+	local selected = self.state.selectedSkin or DEFAULT_SKIN_ID
+	if self._skinsById[selected] then
+		self.state.selectedSkin = selected
+		return
+	end
 
-        self.state.selectedSkin = DEFAULT_SKIN_ID
+	self.state.selectedSkin = DEFAULT_SKIN_ID
 end
 
 function SnakeCosmetics:_save()
-        if not self._loaded then
-                return
-        end
+	if not self._loaded then
+		return
+	end
 
-        local snapshot = {
-                selectedSkin = self.state.selectedSkin,
-        }
+	local snapshot = {
+		selectedSkin = self.state.selectedSkin,
+	}
 
 	local serialized = "return " .. serialize(snapshot, 0) .. "\n"
 	love.filesystem.write(SAVE_FILE, serialized)
 end
 
 function SnakeCosmetics:load(context)
-        self:_ensureLoaded()
+	self:_ensureLoaded()
 end
 
 function SnakeCosmetics:getSkins()
-        self:_ensureLoaded()
+	self:_ensureLoaded()
 
-        local list = {}
-        for _, skin in ipairs(self._orderedSkins or {}) do
-                local entry = copyTable(skin)
-                entry.unlocked = true
-                entry.selected = (self.state.selectedSkin == skin.id)
-                list[#list + 1] = entry
-        end
-        return list
+	local list = {}
+	for _, skin in ipairs(self._orderedSkins or {}) do
+		local entry = copyTable(skin)
+		entry.unlocked = true
+		entry.selected = (self.state.selectedSkin == skin.id)
+		list[#list + 1] = entry
+	end
+	return list
 end
 
 function SnakeCosmetics:getActiveSkinId()
-        self:_ensureLoaded()
-        return self.state.selectedSkin or DEFAULT_SKIN_ID
+	self:_ensureLoaded()
+	return self.state.selectedSkin or DEFAULT_SKIN_ID
 end
 
 function SnakeCosmetics:getActiveSkin()
@@ -226,15 +226,15 @@ function SnakeCosmetics:getActiveSkin()
 end
 
 function SnakeCosmetics:setActiveSkin(id)
-        self:_ensureLoaded()
+	self:_ensureLoaded()
 
-        if not id or not self._skinsById[id] then
-                return false
-        end
+	if not id or not self._skinsById[id] then
+		return false
+	end
 
-        if self.state.selectedSkin == id then
-                return false
-        end
+	if self.state.selectedSkin == id then
+		return false
+	end
 
 	self.state.selectedSkin = id
 	self:_save()

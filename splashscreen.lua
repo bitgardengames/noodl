@@ -10,12 +10,12 @@ local FADE_IN_DURATION = 0.2
 local FADE_OUT_DURATION = 0.25
 local DEFAULT_FADE_DURATION = 1.25
 local LOGO_FADE_IN_DURATION = 0.6
-local LOGO_ANIMATION_DELAY = 0.25
+local LOGO_ANIMATION_DELAY = 0.45
 
 local SplashScreen = {
-        transitionDurationIn = 0.25,
-        transitionDurationOut = 0.25,
-        displayDuration = 2,
+	transitionDurationIn = 0.25,
+	transitionDurationOut = 0.25,
+	displayDuration = 2,
 	backgroundColor = {0.04, 0.04, 0.05, 1},
 }
 
@@ -35,27 +35,26 @@ local function loadImage(path)
 end
 
 local function ensureLogo()
-        if logoImage then
-                return logoImage
-        end
+	if logoImage then
+		return logoImage
+	end
 
-        logoImage = loadImage("Assets/BitGarden.png")
+	logoImage = loadImage("Assets/BitGarden.png")
 
-        return logoImage
+	return logoImage
 end
 
 function SplashScreen:enter()
-        self.timer = 0
-        self.logoAudioPlayed = false
-        ensureLogo()
-
-        Audio:playSound("intro")
-        self.logoAudioPlayed = true
+	self.timer = 0
+	self.logoAudioPlayed = false
+	ensureLogo()
+	Audio:playSound("intro")
+	self.logoAudioPlayed = true
 end
 
 function SplashScreen:leave()
-        self.timer = 0
-        self.logoAudioPlayed = false
+	self.timer = 0
+	self.logoAudioPlayed = false
 end
 
 local function drawBackground(color, width, height)
@@ -69,62 +68,62 @@ local function drawBackground(color, width, height)
 end
 
 local function getLogoAlpha(timer)
-        if not timer then
-                return 0
-        end
+	if not timer then
+		return 0
+	end
 
-        local adjustedTimer = timer - LOGO_ANIMATION_DELAY
-        if adjustedTimer <= 0 then
-                return 0
-        end
+	local adjustedTimer = timer - LOGO_ANIMATION_DELAY
+	if adjustedTimer <= 0 then
+		return 0
+	end
 
-        local progress = min(adjustedTimer / LOGO_FADE_IN_DURATION, 1)
+	local progress = min(adjustedTimer / LOGO_FADE_IN_DURATION, 1)
 
-        return Easing.easeOutCubic(progress)
+	return Easing.easeOutCubic(progress)
 end
 
 local function drawLogo(image, width, height, timer)
-        if not image then
-                return
-        end
+	if not image then
+		return
+	end
 
-        local imgWidth, imgHeight = image:getDimensions()
+	local imgWidth, imgHeight = image:getDimensions()
 	if not imgWidth or not imgHeight or imgWidth == 0 or imgHeight == 0 then
 		return
 	end
 
-        local maxWidth = width * 0.5
-        local maxHeight = height * 0.5
-        local baseScale = min(maxWidth / imgWidth, maxHeight / imgHeight, 1)
-        if baseScale <= 0 then
-                baseScale = 1
-        end
+	local maxWidth = width * 0.5
+	local maxHeight = height * 0.5
+	local baseScale = min(maxWidth / imgWidth, maxHeight / imgHeight, 1)
+	if baseScale <= 0 then
+		baseScale = 1
+	end
 
-        local finalScale = baseScale
+	local finalScale = baseScale
 
-        local centerX = width * 0.5
-        local centerY = height * 0.5 - 20
+	local centerX = width * 0.5
+	local centerY = height * 0.5 - 20
 
-        if centerY < 0 then
-                centerY = 0
-        end
+	if centerY < 0 then
+		centerY = 0
+	end
 
-        local alpha = getLogoAlpha(timer)
+	local alpha = getLogoAlpha(timer)
 
-        lg.setColor(1, 1, 1, alpha)
-        lg.draw(image, centerX, centerY, 0, finalScale, finalScale, imgWidth * 0.5, imgHeight * 0.5)
+	lg.setColor(1, 1, 1, alpha)
+	lg.draw(image, centerX, centerY, 0, finalScale, finalScale, imgWidth * 0.5, imgHeight * 0.5)
 end
 
 function SplashScreen:update(dt)
-        if not self.timer then
-                self.timer = 0
-        end
+	if not self.timer then
+		self.timer = 0
+	end
 
-        self.timer = self.timer + (dt or 0)
+	self.timer = self.timer + (dt or 0)
 
-        if self.timer >= self.displayDuration then
-                return "menu"
-        end
+	if self.timer >= self.displayDuration then
+		return "menu"
+	end
 end
 
 local function drawFadeOverlay(timer, duration, width, height)
@@ -163,7 +162,7 @@ function SplashScreen:draw()
 	end
 
 	drawBackground(self.backgroundColor, sw, sh)
-        drawLogo(logoImage, sw, sh, self.timer or 0)
+	drawLogo(logoImage, sw, sh, self.timer or 0)
 	drawFadeOverlay(self.timer, self.displayDuration, sw, sh)
 
 	lg.setColor(1, 1, 1, 1)

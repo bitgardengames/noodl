@@ -24,13 +24,13 @@ local SOUND_DEFINITIONS = {
 	shop_purchase = "Assets/Sounds/paper.wav",
 	goal_reached = "Assets/Sounds/harp strum 5.wav",
 	wall_portal = "Assets/Sounds/Glyph Activation Light 01.wav",
-        shield_wall = "Assets/Sounds/Activate Glyph Forcefield.wav",
-        shield_rock = "Assets/Sounds/Rotate Stone 03.wav",
-        shield_saw = "Assets/Sounds/Arcane Wind Chime Gust.wav",
-        rock_shatter = "Assets/Sounds/materialStone.mp3",
-        laser_fire = "Assets/Sounds/LASRBeam_Plasma Loop_01.wav",
-        dart_fire = "Assets/Sounds/Whoosh Short Light 03.wav",
-        intro = "Assets/Sounds/intro.mp3",
+	shield_wall = "Assets/Sounds/Activate Glyph Forcefield.wav",
+	shield_rock = "Assets/Sounds/Rotate Stone 03.wav",
+	shield_saw = "Assets/Sounds/Arcane Wind Chime Gust.wav",
+	rock_shatter = "Assets/Sounds/materialStone.mp3",
+	laser_fire = "Assets/Sounds/LASRBeam_Plasma Loop_01.wav",
+	dart_fire = "Assets/Sounds/Whoosh Short Light 03.wav",
+	intro = "Assets/Sounds/intro.mp3",
 }
 
 --MP3 files will often NOT loop seamlessly. You will notice a very short gap when the song loops. This is due to the nature of the MP3 file format and is often difficult to overcome. I highly recommend using these songs as OGG files.

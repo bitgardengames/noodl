@@ -37,19 +37,19 @@ local function clearMap(t)
 end
 
 local function ensureCanvas(name, width, height)
-        local canvas, replaced = SharedCanvas.ensureCanvas(canvases[name], width, height)
-        if canvas ~= canvases[name] then
-                canvases[name] = canvas
-                replaced = true
-        end
+	local canvas, replaced = SharedCanvas.ensureCanvas(canvases[name], width, height)
+	if canvas ~= canvases[name] then
+		canvases[name] = canvas
+		replaced = true
+	end
 
-        return canvas, replaced
+	return canvas, replaced
 end
 
 local function ensureLayerTables(name)
-        if not layerPresent[name] then
-                layerPresent[name] = true
-                layerOrder[#layerOrder + 1] = name
+	if not layerPresent[name] then
+		layerPresent[name] = true
+		layerOrder[#layerOrder + 1] = name
 	end
 
 	if layerClearedThisFrame[name] == nil then
