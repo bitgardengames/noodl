@@ -1700,6 +1700,37 @@ function UI:setUpgradeIndicators(indicators)
 	container._removeCount = 0
 end
 
+
+local function lerp(a, b, t)
+	return a + (b - a) * t
+end
+
+local function lerpColor(a, b, t)
+	return {
+		lerp(a[1], b[1], t),
+		lerp(a[2], b[2], t),
+		lerp(a[3], b[3], t),
+		lerp(a[4] or 1, b[4] or 1, t),
+	}
+end
+
+local comboBarColors = {
+	{0.05, 0.85, 0.3, 0.95},
+	{0.95, 0.85, 0.0, 0.95},
+	{1.0, 0.55, 0.0, 0.95},
+	{0.95, 0.2, 0.15, 0.95},
+}
+
+local function getComboBarColor(value)
+	if value <= 0.33 then
+		return lerpColor(comboBarColors[1], comboBarColors[2], clamp01(value / 0.33))
+	elseif value <= 0.66 then
+		return lerpColor(comboBarColors[2], comboBarColors[3], clamp01((value - 0.33) / 0.33))
+	else
+		return lerpColor(comboBarColors[3], comboBarColors[4], clamp01((value - 0.66) / 0.34))
+	end
+end
+
 local function drawComboIndicator(self)
 	local combo = self.combo
 	local comboActive = combo and combo.count >= 2 and (combo.duration or 0) > 0
@@ -1781,36 +1812,6 @@ local function drawComboIndicator(self)
 	if comboActive then
 		love.graphics.setColor(0, 0, 0, 0.25)
 		love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth, barHeight, 6, 6)
-
-		local function lerp(a, b, t)
-			return a + (b - a) * t
-		end
-
-		local function lerpColor(a, b, t)
-			return {
-				lerp(a[1], b[1], t),
-				lerp(a[2], b[2], t),
-				lerp(a[3], b[3], t),
-				lerp(a[4] or 1, b[4] or 1, t),
-			}
-		end
-
-		local function getComboBarColor(value)
-			local colors = {
-				{0.05, 0.85, 0.3, 0.95},
-				{0.95, 0.85, 0.0, 0.95},
-				{1.0, 0.55, 0.0, 0.95},
-				{0.95, 0.2, 0.15, 0.95},
-			}
-
-			if value <= 0.33 then
-				return lerpColor(colors[1], colors[2], clamp01(value / 0.33))
-			elseif value <= 0.66 then
-				return lerpColor(colors[2], colors[3], clamp01((value - 0.33) / 0.33))
-			else
-				return lerpColor(colors[3], colors[4], clamp01((value - 0.66) / 0.34))
-			end
-		end
 
 		local barColor = getComboBarColor(progress)
 
