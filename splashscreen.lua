@@ -48,8 +48,6 @@ function SplashScreen:enter()
 	self.timer = 0
 	self.logoAudioPlayed = false
 	ensureLogo()
-	Audio:playSound("intro")
-	self.logoAudioPlayed = true
 end
 
 function SplashScreen:leave()
@@ -120,6 +118,11 @@ function SplashScreen:update(dt)
 	end
 
 	self.timer = self.timer + (dt or 0)
+
+	if not self.logoAudioPlayed and self.timer >= LOGO_ANIMATION_DELAY then
+		Audio:playSound("intro")
+		self.logoAudioPlayed = true
+	end
 
 	if self.timer >= self.displayDuration then
 		return "menu"
