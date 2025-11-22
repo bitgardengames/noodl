@@ -40,10 +40,13 @@ UI.goalReachedAnim = 0
 UI.goalCelebrated = false
 
 UI.combo = {
-	count = 0,
-	timer = 0,
-	duration = 0,
-	pop = 0,
+        count = 0,
+        timer = 0,
+        duration = 0,
+        pop = 0,
+        shakeTimer = 0,
+        shakeDuration = 0.35,
+        shakeMagnitude = 0,
 }
 
 UI.shields = {
@@ -1438,9 +1441,13 @@ function UI:update(dt)
 		end
 	end
 
-	if self.combo.pop > 0 then
-		self.combo.pop = max(0, self.combo.pop - dt * 3)
-	end
+        if self.combo.pop > 0 then
+                self.combo.pop = max(0, self.combo.pop - dt * 3)
+        end
+
+        if self.combo.shakeTimer and self.combo.shakeTimer > 0 then
+                self.combo.shakeTimer = max(0, self.combo.shakeTimer - dt)
+        end
 
 	local shields = self.shields
 	if shields then
@@ -1561,16 +1568,20 @@ function UI:setCombo(count, timer, duration)
 		combo.duration = 0
 	end
 
-	if combo.count >= 2 then
-		if combo.count > previous then
-			combo.pop = 1.0
-		end
+        if combo.count >= 2 then
+                if combo.count > previous then
+                        combo.pop = 1.0 + min(combo.count, 10) * 0.03
+                        combo.shakeTimer = combo.shakeDuration
+                        combo.shakeMagnitude = 6 + min(combo.count, 10) * 0.6
+                end
 
-	else
-		if previous >= 2 then
-			combo.pop = 0
-		end
-	end
+        else
+                if previous >= 2 then
+                        combo.pop = 0
+                        combo.shakeTimer = 0
+                        combo.shakeMagnitude = 0
+                end
+        end
 end
 
 
@@ -1704,47 +1715,76 @@ local function drawComboIndicator(self)
 	progress = duration > 0 and timer / duration or 0
 
 	local screenW = love.graphics.getWidth()
-	local titleText = "Combo"
-	titleText = "Combo x" .. combo.count
+        local titleText = "Combo"
+        titleText = "Combo x" .. combo.count
 
-	local width = max(240, UI.fonts.button:getWidth(titleText) + 120)
-	local height = 68
-	local x = (screenW - width) / 2
-	local y = 16
+        local width = max(240, UI.fonts.button:getWidth(titleText) + 120)
+        local height = 68
+        local x = (screenW - width) / 2
+        local y = 16
 
-	local scale = 1 + 0.08 * sin((1 - progress) * pi * 2) + (combo.pop or 0) * 0.25
+        local intensity = min(max(combo.count - 1, 0), 10) / 10
+        local accent = {
+                1 - 0.32 * intensity,
+                0.78 + 0.17 * intensity,
+                0.3 + 0.65 * intensity,
+        }
 
-	love.graphics.push()
-	love.graphics.translate(x + width / 2, y + height / 2)
-	love.graphics.scale(scale, scale)
-	love.graphics.translate(-(x + width / 2), -(y + height / 2))
+        local scale = 1 + 0.08 * sin((1 - progress) * pi * 2) + (combo.pop or 0) * 0.25 + intensity * 0.05
 
-	love.graphics.setColor(0, 0, 0, 0.4)
-	love.graphics.rectangle("fill", x + 4, y + 6, width, height, 18, 18)
+        local shakeTimer = combo.shakeTimer or 0
+        local shakeDuration = combo.shakeDuration or 1
+        local shakeMagnitude = combo.shakeMagnitude or 0
+        local shakeProgress = shakeDuration > 0 and min(shakeTimer / shakeDuration, 1) or 0
+        local shakeX = 0
+        local shakeY = 0
 
-	love.graphics.setColor(Theme.panelColor[1], Theme.panelColor[2], Theme.panelColor[3], 0.95)
-	love.graphics.rectangle("fill", x, y, width, height, 18, 18)
+        if shakeTimer > 0 and shakeMagnitude > 0 then
+                shakeX = (love.math.random() * 2 - 1) * shakeMagnitude * shakeProgress
+                shakeY = (love.math.random() * 2 - 1) * shakeMagnitude * shakeProgress
+        end
 
-	love.graphics.setColor(UI.colors.border)
-	love.graphics.setLineWidth(3)
-	love.graphics.rectangle("line", x, y, width, height, 18, 18)
+        love.graphics.push()
+        love.graphics.translate(x + width / 2 + shakeX, y + height / 2 + shakeY)
+        love.graphics.scale(scale, scale)
+        love.graphics.translate(-(x + width / 2), -(y + height / 2))
 
-	UI.setFont("button")
-	love.graphics.setColor(Theme.textColor)
+        love.graphics.setColor(0, 0, 0, 0.4)
+        love.graphics.rectangle("fill", x + 4, y + 6, width, height, 18, 18)
+
+        love.graphics.setColor(
+                Theme.panelColor[1] + (accent[1] - Theme.panelColor[1]) * 0.25 * intensity,
+                Theme.panelColor[2] + (accent[2] - Theme.panelColor[2]) * 0.25 * intensity,
+                Theme.panelColor[3] + (accent[3] - Theme.panelColor[3]) * 0.25 * intensity,
+                0.95
+        )
+        love.graphics.rectangle("fill", x, y, width, height, 18, 18)
+
+        love.graphics.setColor(
+                UI.colors.border[1] + (accent[1] - UI.colors.border[1]) * 0.4 * intensity,
+                UI.colors.border[2] + (accent[2] - UI.colors.border[2]) * 0.4 * intensity,
+                UI.colors.border[3] + (accent[3] - UI.colors.border[3]) * 0.4 * intensity,
+                UI.colors.border[4]
+        )
+        love.graphics.setLineWidth(3)
+        love.graphics.rectangle("line", x, y, width, height, 18, 18)
+
+        UI.setFont("button")
+        love.graphics.setColor(Theme.textColor)
 	love.graphics.printf(titleText, x, y + 8, width, "center")
 
 	local barPadding = 18
 	local barHeight = 10
 	local barWidth = width - barPadding * 2
-	local comboBarY = y + height - barPadding - barHeight
+        local comboBarY = y + height - barPadding - barHeight
 
-	if comboActive then
-		love.graphics.setColor(0, 0, 0, 0.25)
-		love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth, barHeight, 6, 6)
+        if comboActive then
+                love.graphics.setColor(0, 0, 0, 0.25)
+                love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth, barHeight, 6, 6)
 
-		love.graphics.setColor(1, 0.78, 0.3, 0.85)
-		love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth * progress, barHeight, 6, 6)
-	end
+                love.graphics.setColor(accent[1], accent[2], accent[3], 0.95)
+                love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth * progress, barHeight, 6, 6)
+        end
 
 	love.graphics.pop()
 end
