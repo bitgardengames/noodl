@@ -2064,55 +2064,55 @@ pool = {
 	)
 		end
 
-                local grantedCard = {upgrade = chosenUpgrade}
-                Upgrades:acquire(grantedCard, context
-        )
+		local grantedCard = {upgrade = chosenUpgrade}
+		Upgrades:acquire(grantedCard, context
+	)
 
-                local decorated = decorateCard and decorateCard(chosenUpgrade
-        )
+		local decorated = decorateCard and decorateCard(chosenUpgrade
+	)
 
-                if card then
-                card.pendingUpgrade = chosenUpgrade
-                end
+		if card then
+		card.pendingUpgrade = chosenUpgrade
+		end
 
-                local revealInfo = {
-                rarity = chosenUpgrade.rarity,
-                revealDelay = 1.15,
-                revealApproachDuration = 0.55,
-                revealHoldDuration = 0.18,
-                revealShakeDuration = 0.5,
-                revealFlashInDuration = 0.22,
-                revealFlashHoldDuration = 0.14,
-                revealFlashOutDuration = 0.48,
-                revealShakeMagnitude = 9,
-                revealShakeFrequency = 26,
-                revealApplyThreshold = 0.6,
-                revealPostPauseDuration = 0.65,
-                revealAnimation = "wildcard",
-                upgrade = chosenUpgrade,
-                restockShop = decorated and decorated.restockShop or chosenUpgrade.restockShop,
-                }
+		local revealInfo = {
+		rarity = chosenUpgrade.rarity,
+		revealDelay = 1.15,
+		revealApproachDuration = 0.55,
+		revealHoldDuration = 0.18,
+		revealShakeDuration = 0.5,
+		revealFlashInDuration = 0.22,
+		revealFlashHoldDuration = 0.14,
+		revealFlashOutDuration = 0.48,
+		revealShakeMagnitude = 9,
+		revealShakeFrequency = 26,
+		revealApplyThreshold = 0.6,
+		revealPostPauseDuration = 0.65,
+		revealAnimation = "wildcard",
+		upgrade = chosenUpgrade,
+		restockShop = decorated and decorated.restockShop or chosenUpgrade.restockShop,
+		}
 
-                if decorated then
-                revealInfo.rarityColor = decorated.rarityColor
-                revealInfo.rarityLabel = decorated.rarityLabel
-                end
+		if decorated then
+		revealInfo.rarityColor = decorated.rarityColor
+		revealInfo.rarityLabel = decorated.rarityLabel
+		end
 
-                if chosenUpgrade.nameKey then
-                revealInfo.nameKey = chosenUpgrade.nameKey
-                elseif decorated then
-                revealInfo.name = decorated.name
-                end
+		if chosenUpgrade.nameKey then
+		revealInfo.nameKey = chosenUpgrade.nameKey
+		elseif decorated then
+		revealInfo.name = decorated.name
+		end
 
-                if chosenUpgrade.descKey then
-                revealInfo.descKey = chosenUpgrade.descKey
-                revealInfo.descReplacements = getUpgradeDescriptionReplacements(chosenUpgrade.id
-        )
-                elseif decorated then
-                revealInfo.desc = decorated.desc
-                end
+		if chosenUpgrade.descKey then
+		revealInfo.descKey = chosenUpgrade.descKey
+		revealInfo.descReplacements = getUpgradeDescriptionReplacements(chosenUpgrade.id
+	)
+		elseif decorated then
+		revealInfo.desc = decorated.desc
+		end
 
-                revealInfo.upgradeId = chosenUpgrade.id
+		revealInfo.upgradeId = chosenUpgrade.id
 
 		return revealInfo
 		end,

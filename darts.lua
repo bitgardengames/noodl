@@ -266,36 +266,32 @@ local function recordImpact(emitter, x, y, impactType)
 end
 
 local function getImpactColor(impactType)
-        if impactType == "rock" then
-                local rockColor = Theme.rock or {0.45, 0.40, 0.36, 1}
-                local color = scaleColor(rockColor, 1.25, 1, impactColorScratch)
-                color[4] = 1
-                return color
-        end
+	if impactType == "rock" then
+		local rockColor = Theme.rock or {0.45, 0.40, 0.36, 1}
+		local color = scaleColor(rockColor, 1.25, 1, impactColorScratch)
+		color[4] = 1
+		return color
+	end
 
 	local _, _, _, _, tipColor = getEmitterColors()
 	local factor = (impactType == "snake") and 1.12 or 0.96
 	local color = scaleColor(tipColor, factor, 1, impactColorScratch)
-        color[4] = 1
-        return color
+	color[4] = 1
+	return color
 end
 
 local function playImpactSound(impactType)
-        if not (Audio and Audio.playSound) then
-                return
-        end
+	if not (Audio and Audio.playSound) then
+		return
+	end
 
-        if impactType == "rock" then
-                Audio:playSound("dart_hit_rock")
-        elseif impactType == "wall" then
-                Audio:playSound("dart_hit_wall")
-        end
+	Audio:playSound("dart_hit")
 end
 
 local function triggerImpactBurst(emitter, impactType, x, y)
-        if not (Particles and Particles.spawnBurst) then
-                return
-        end
+	if not (Particles and Particles.spawnBurst) then
+		return
+	end
 
 	if not (x and y) then
 		return
@@ -309,11 +305,11 @@ local function triggerImpactBurst(emitter, impactType, x, y)
 
 	impactBurstOptions.count = random(7, 11)
 	impactBurstOptions.color = color
-        impactBurstOptions.gravity = (impactType == "rock") and 200 or 150
-        impactBurstOptions.fadeTo = (impactType == "rock") and 0.03 or 0.07
+	impactBurstOptions.gravity = (impactType == "rock") and 200 or 150
+	impactBurstOptions.fadeTo = (impactType == "rock") and 0.03 or 0.07
 
-        Particles:spawnBurst(x, y, impactBurstOptions)
-        playImpactSound(impactType)
+	Particles:spawnBurst(x, y, impactBurstOptions)
+	playImpactSound(impactType)
 end
 
 local function randomCooldownDuration(emitter)
