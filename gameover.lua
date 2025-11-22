@@ -21,8 +21,7 @@ local TEXT_SHADOW_OFFSET = 2
 local TITLE_SHADOW_OFFSET = 3
 local PANEL_FADE_DURATION = 0.45
 local TEXT_FADE_DURATION = 0.35
-local VALUE_ANIM_DURATION = 0.6
-local CONTENT_ANIM_DURATION = PANEL_FADE_DURATION + TEXT_FADE_DURATION + VALUE_ANIM_DURATION
+local VALUE_ANIM_DURATION = 1.2
 local BUTTON_ANIM_DURATION = 0.6
 local TEXT_STAGGER_DURATION = TEXT_FADE_DURATION
 
@@ -183,25 +182,25 @@ local function getSectionInnerSpacing()
 end
 
 local function getButtonAnimationOffset(self)
-	local _, buttonHeight = getButtonMetrics()
-	local distance = (buttonHeight or 56) * 1.1
-	local progress = Easing.clamp01((self.buttonAnim or 0) / BUTTON_ANIM_DURATION)
-	local eased = Easing.easeOutCubic(progress)
-	return (1 - eased) * distance
+        local _, buttonHeight = getButtonMetrics()
+        local distance = (buttonHeight or 56) * 1.1
+        local progress = Easing.clamp01((self.buttonAnim or 0) / BUTTON_ANIM_DURATION)
+        local eased = Easing.easeOutCubic(progress)
+        return (1 - eased) * distance
 end
 
 local function getPanelAnimationProgress(self)
-	local progress = Easing.clamp01((self.contentAnim or 0) / PANEL_FADE_DURATION)
-	return Easing.easeOutCubic(progress)
+        local progress = Easing.clamp01((self.panelAnim or 0) / PANEL_FADE_DURATION)
+        return Easing.easeOutCubic(progress)
 end
 
 local function getTextFadeProgress(self)
-	local progress = Easing.clamp01(((self.contentAnim or 0) - PANEL_FADE_DURATION) / TEXT_FADE_DURATION)
-	return Easing.easeOutCubic(progress)
+        local progress = Easing.clamp01((self.textAnim or 0) / TEXT_FADE_DURATION)
+        return Easing.easeOutCubic(progress)
 end
 
 local function getValueAnimationProgress(self)
-	local progress = Easing.clamp01(((self.contentAnim or 0) - PANEL_FADE_DURATION - TEXT_FADE_DURATION) / VALUE_ANIM_DURATION)
+        local progress = Easing.clamp01((self.valueAnim or 0) / VALUE_ANIM_DURATION)
 	return Easing.easeOutCubic(progress)
 end
 
@@ -539,17 +538,19 @@ function GameOver:enter(data)
 	self.deathMessage = data.endingMessage or pickDeathMessage(self.deathCause)
 	self.customTitle = data.storyTitle
 
-	buttonDefs = {
-		{id = "playAgain", textKey = "gameover.play_again", action = "game"},
-		{id = "quitToMenu", textKey = "gameover.quit_to_menu", action = "menu"},
-	}
+        buttonDefs = {
+                {id = "playAgain", textKey = "gameover.play_again", action = "game"},
+                {id = "quitToMenu", textKey = "gameover.quit_to_menu", action = "menu"},
+        }
 
-	self._cachedWidth, self._cachedHeight = nil, nil
-	self.contentAnim = 0
-	self.buttonAnim = 0
-	self._lastButtonAnimOffset = nil
-	self:updateLayoutMetrics()
-	self:updateButtonLayout()
+        self._cachedWidth, self._cachedHeight = nil, nil
+        self.panelAnim = 0
+        self.textAnim = 0
+        self.valueAnim = 0
+        self.buttonAnim = 0
+        self._lastButtonAnimOffset = nil
+        self:updateLayoutMetrics()
+        self:updateButtonLayout()
 end
 
 function GameOver:draw()
@@ -653,12 +654,18 @@ function GameOver:draw()
 end
 
 function GameOver:update(dt)
-	self.contentAnim = min(CONTENT_ANIM_DURATION, (self.contentAnim or 0) + dt)
-	self.buttonAnim = min(BUTTON_ANIM_DURATION, (self.buttonAnim or 0) + dt)
-	local layoutChanged = self:updateLayoutMetrics()
-	if layoutChanged or getButtonAnimationOffset(self) ~= self._lastButtonAnimOffset then
-		self:updateButtonLayout()
-	end
+        self.panelAnim = min(PANEL_FADE_DURATION, (self.panelAnim or 0) + dt)
+        if (self.panelAnim or 0) >= PANEL_FADE_DURATION then
+                self.textAnim = min(TEXT_FADE_DURATION, (self.textAnim or 0) + dt)
+        end
+        if (self.textAnim or 0) >= TEXT_FADE_DURATION then
+                self.valueAnim = min(VALUE_ANIM_DURATION, (self.valueAnim or 0) + dt)
+        end
+        self.buttonAnim = min(BUTTON_ANIM_DURATION, (self.buttonAnim or 0) + dt)
+        local layoutChanged = self:updateLayoutMetrics()
+        if layoutChanged or getButtonAnimationOffset(self) ~= self._lastButtonAnimOffset then
+                self:updateButtonLayout()
+        end
 end
 
 function GameOver:mousepressed(x, y, button)
