@@ -1715,10 +1715,10 @@ local function lerpColor(a, b, t)
 end
 
 local comboBarColors = {
-	{0.05, 0.85, 0.3, 0.95},
-	{0.95, 0.85, 0.0, 0.95},
-	{1.0, 0.55, 0.0, 0.95},
 	{0.95, 0.2, 0.15, 0.95},
+	{1.0, 0.55, 0.0, 0.95},
+	{0.95, 0.85, 0.0, 0.95},
+	{0.05, 0.85, 0.3, 0.95},
 }
 
 local function getComboBarColor(value)
