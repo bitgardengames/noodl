@@ -469,7 +469,6 @@ Snake.dash = nil
 Snake.timeDilation = nil
 Snake.chronoWard = nil
 Snake.hazardGraceTimer = 0
-Snake.abyssalCatalyst = nil
 Snake.phoenixEcho = nil
 Snake.eventHorizon = nil
 Snake.stormchaser = nil
@@ -547,14 +546,13 @@ function Snake:resetModifiers()
 	self.extraGrowth  = 0
 	self.shieldFlashTimer = 0
 	self.stoneSkinSawGrace = 0
-	self.dash = nil
-	self.timeDilation = nil
-	self.adrenaline = nil
-	self.hazardGraceTimer = 0
-	self.abyssalCatalyst = nil
-	self.phoenixEcho = nil
-	self.eventHorizon = nil
-	self.stormchaser = nil
+self.dash = nil
+self.timeDilation = nil
+self.adrenaline = nil
+self.hazardGraceTimer = 0
+self.phoenixEcho = nil
+self.eventHorizon = nil
+self.stormchaser = nil
 	self.temporalAnchor = nil
 	self.swiftFangs = nil
 	self.zephyrCoils = nil
@@ -621,8 +619,8 @@ function Snake:setMomentumCoilsStacks(count)
 end
 
 function Snake:setDiffractionBarrierActive(active)
-	if active then
-		local state = self.diffractionBarrier
+if active then
+local state = self.diffractionBarrier
 		if not state then
 			state = {intensity = 0, target = 0, time = 0, flash = 0}
 			self.diffractionBarrier = state
@@ -641,34 +639,12 @@ function Snake:setDiffractionBarrierActive(active)
 			state.active = false
 			state.target = 0
 		end
-	end
 end
-
-
-function Snake:setAbyssalCatalystStacks(count)
-	count = max(0, floor((count or 0) + 0.0001))
-	local state = self.abyssalCatalyst
-
-	if count > 0 then
-		if not state then
-			state = {intensity = 0, target = 0, time = 0}
-			self.abyssalCatalyst = state
-		end
-		state.stacks = count
-		state.target = min(1, 0.55 + 0.18 * min(count, 3))
-	elseif state then
-		state.stacks = 0
-		state.target = 0
-	end
-
-	if self.abyssalCatalyst and (self.abyssalCatalyst.stacks or 0) <= 0 and (self.abyssalCatalyst.intensity or 0) <= 0 then
-		self.abyssalCatalyst = nil
-	end
 end
 
 function Snake:setPhoenixEchoCharges(count, options)
-	count = max(0, floor((count or 0) + 0.0001))
-	options = options or {}
+count = max(0, floor((count or 0) + 0.0001))
+options = options or {}
 
 	local state = self.phoenixEcho
 	if not state and (count > 0 or options.triggered or options.instantIntensity) then
@@ -1962,28 +1938,20 @@ local function collectUpgradeVisuals(self)
 		entry.time = temporalAnchor.time or 0
 	end
 
-	local dash = self.dash
-	if dash then
-		local entry = acquireEntry("dash")
-		entry.active = dash.active or false
-		entry.timer = dash.timer or 0
-		entry.duration = dash.duration or 0
-		entry.cooldown = dash.cooldown or 0
-		entry.cooldownTimer = dash.cooldownTimer or 0
-	end
+local dash = self.dash
+if dash then
+local entry = acquireEntry("dash")
+entry.active = dash.active or false
+entry.timer = dash.timer or 0
+entry.duration = dash.duration or 0
+entry.cooldown = dash.cooldown or 0
+entry.cooldownTimer = dash.cooldownTimer or 0
+end
 
-	local abyssal = self.abyssalCatalyst
-	if abyssal and ((abyssal.intensity or 0) > 1e-3 or (abyssal.target or 0) > 0) then
-		local entry = acquireEntry("abyssalCatalyst")
-		entry.intensity = abyssal.intensity or 0
-		entry.stacks = abyssal.stacks or 0
-		entry.pulse = abyssal.pulse or abyssal.time or 0
-	end
-
-	local stormchaser = self.stormchaser
-	if stormchaser and ((stormchaser.intensity or 0) > 1e-3 or (stormchaser.target or 0) > 0) then
-		local entry = acquireEntry("stormchaser")
-		entry.intensity = stormchaser.intensity or 0
+local stormchaser = self.stormchaser
+if stormchaser and ((stormchaser.intensity or 0) > 1e-3 or (stormchaser.target or 0) > 0) then
+local entry = acquireEntry("stormchaser")
+entry.intensity = stormchaser.intensity or 0
 		entry.primed = stormchaser.primed or false
 		entry.time = stormchaser.time or 0
 	end
@@ -2629,25 +2597,11 @@ function Snake:finishDescending()
 end
 
 function Snake:update(dt)
-	if isDead then return false, "dead", {fatal = true} end
+if isDead then return false, "dead", {fatal = true} end
 
-	if self.abyssalCatalyst then
-		local state = self.abyssalCatalyst
-		state.time = (state.time or 0) + dt
-		state.pulse = state.time
-		local intensity = state.intensity or 0
-		local target = state.target or 0
-		local blend = min(1, dt * 3.0)
-		intensity = intensity + (target - intensity) * blend
-		state.intensity = intensity
-		if (state.stacks or 0) <= 0 and intensity < 0.01 then
-			self.abyssalCatalyst = nil
-		end
-	end
-
-	if self.phoenixEcho then
-		local state = self.phoenixEcho
-		state.time = (state.time or 0) + dt
+if self.phoenixEcho then
+local state = self.phoenixEcho
+state.time = (state.time or 0) + dt
 		state.flareDuration = state.flareDuration or 1.2
 		if state.flareTimer then
 			state.flareTimer = max(0, state.flareTimer - dt)

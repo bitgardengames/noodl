@@ -2136,49 +2136,6 @@ pool = {
 		weight = 0.6,
 		}),
 	register({
-		id = "abyssal_catalyst",
-		nameKey = "upgrades.abyssal_catalyst.name",
-		descKey = "upgrades.abyssal_catalyst.description",
-		rarity = "epic",
-		allowDuplicates = false,
-		tags = {"defense", "risk"},
-		onAcquire = function(state
-	)
-		state.effects.laserChargeMult = (state.effects.laserChargeMult or 1) * 0.85
-		state.effects.laserFireMult = (state.effects.laserFireMult or 1) * 0.9
-		state.effects.laserCooldownFlat = (state.effects.laserCooldownFlat or 0) - 0.5
-		state.effects.comboBonusMult = (state.effects.comboBonusMult or 1) * 1.2
-		state.effects.abyssalCatalyst = (state.effects.abyssalCatalyst or 0) + 1
-
-		grantShields(1
-	)
-
-		local celebrationOptions = {
-		color = {0.62, 0.58, 0.94, 1},
-		particleCount = 22,
-		particleSpeed = 150,
-		particleLife = 0.5,
-		textOffset = 48,
-		textScale = 1.14,
-		visual = {
-		variant = "abyssal_catalyst",
-		showBase = false,
-		life = 0.92,
-		innerRadius = 13,
-		outerRadius = 62,
-		addBlend = true,
-		color = {0.52, 0.48, 0.92, 1},
-		variantSecondaryColor = {0.72, 0.66, 0.98, 0.9},
-		variantTertiaryColor = {1.0, 0.84, 1.0, 0.82},
-		},
-		}
-		applySegmentPosition(celebrationOptions, 0.36
-	)
-		celebrateUpgrade(getUpgradeString("abyssal_catalyst", "name"), nil, celebrationOptions
-	)
-		end,
-		}),
-	register({
 		id = "tectonic_resolve",
 		nameKey = "upgrades.tectonic_resolve.name",
 		descKey = "upgrades.tectonic_resolve.description",
@@ -2976,16 +2933,13 @@ function Upgrades:applyPersistentEffects(rebaseline)
 			local maxUses = ability.maxFloorUses or ability.floorCharges
 			ability.floorCharges = max(0, min(ability.floorCharges, maxUses))
 		end
-	else
-		Snake.timeDilation = nil
-	end
+else
+Snake.timeDilation = nil
+end
 
+Snake:setEventHorizonActive(effects.wallPortal and true or false)
 
-	Snake:setAbyssalCatalystStacks(effects.abyssalCatalyst or 0)
-
-	Snake:setEventHorizonActive(effects.wallPortal and true or false)
-
-	Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
+Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
 
 	local counters = state.counters or {}
 	Snake:setSwiftFangsStacks(counters.swiftFangsStacks or 0)
