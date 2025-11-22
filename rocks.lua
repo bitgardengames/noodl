@@ -34,16 +34,16 @@ local lookupHasEntries = false
 local revision = 0
 
 local function swapRemove(list, index)
-        local lastIndex = #list
-        local removed = list[index]
+	local lastIndex = #list
+	local removed = list[index]
 
-        if index ~= lastIndex then
-                list[index] = list[lastIndex]
-        end
+	if index ~= lastIndex then
+		list[index] = list[lastIndex]
+	end
 
-        list[lastIndex] = nil
+	list[lastIndex] = nil
 
-        return removed
+	return removed
 end
 
 local function recordRockBreak()
@@ -82,18 +82,19 @@ local function generateRockShape(size, seed)
 		local angle = step * i
 		-- slight wobble so it’s lumpy, but no sharp spikes
 		local r = baseRadius * (0.9 + rockRng:random() * 0.2)
-                insert(points, cos(angle) * r)
-                insert(points, sin(angle) * r)
+		insert(points, cos(angle) * r)
+		insert(points, sin(angle) * r)
 	end
 
 	return points
 end
 
 local function copyColor(color, out)
-        return Color.copy(color, {
-                default = Color.white,
-                target = out,
-        })
+	return Color.copy(color, {
+		default = Color.white,
+		target = out,
+		}
+	)
 end
 
 local highlightCache = setmetatable({}, { __mode = "k" })
@@ -183,7 +184,7 @@ local function buildRockHighlight(points)
 			local y = highlight[i + 1]
 			local dx = x - cx
 			local dy = y - cy
-                        local len = sqrt(dx * dx + dy * dy)
+			local len = sqrt(dx * dx + dy * dy)
 
 			if len > 0 then
 				local scale = max(0, (len - inset) / len)
@@ -285,72 +286,72 @@ local function releaseOccupancy(rock)
 end
 
 function Rocks:reset()
-        for _, rock in ipairs(current) do
-                releaseOccupancy(rock)
-        end
-        current = {}
-        rockLookup = {}
-        lookupHasEntries = false
-        self.spawnChance = 0.25
-        self.shatterOnFruit = 0
-        self.shatterProgress = 0
-        bumpRevision()
+	for _, rock in ipairs(current) do
+		releaseOccupancy(rock)
+	end
+	current = {}
+	rockLookup = {}
+	lookupHasEntries = false
+	self.spawnChance = 0.25
+	self.shatterOnFruit = 0
+	self.shatterProgress = 0
+	bumpRevision()
 end
 
 local rockShatterPrimaryColor = {0, 0, 0, 1}
 local rockShatterHighlightColor = {0, 0, 0, 1}
 
 local rockShatterPrimaryOptions = {
-        count = 0,
-        speed = 72,
-        speedVariance = 58,
-        life = 0.45,
-        size = 3.8,
-        color = rockShatterPrimaryColor,
-        spread = pi * 2,
-        angleJitter = pi * 0.9,
-        drag = 3.1,
-        gravity = 240,
-        scaleMin = 0.54,
-        scaleVariance = 0.72,
-        fadeTo = 0.06,
+	count = 0,
+	speed = 72,
+	speedVariance = 58,
+	life = 0.45,
+	size = 3.8,
+	color = rockShatterPrimaryColor,
+	spread = pi * 2,
+	angleJitter = pi * 0.9,
+	drag = 3.1,
+	gravity = 240,
+	scaleMin = 0.54,
+	scaleVariance = 0.72,
+	fadeTo = 0.06,
 }
 
 local rockShatterHighlightOptions = {
-        count = 0,
-        speed = 112,
-        speedVariance = 60,
-        life = 0.32,
-        size = 2.4,
-        color = rockShatterHighlightColor,
-        spread = pi * 2,
-        angleJitter = pi,
-        drag = 1.5,
-        gravity = 190,
-        scaleMin = 0.38,
-        scaleVariance = 0.3,
-        fadeTo = 0,
+	count = 0,
+	speed = 112,
+	speedVariance = 60,
+	life = 0.32,
+	size = 2.4,
+	color = rockShatterHighlightColor,
+	spread = pi * 2,
+	angleJitter = pi,
+	drag = 1.5,
+	gravity = 190,
+	scaleMin = 0.38,
+	scaleVariance = 0.3,
+	fadeTo = 0,
 }
 
 local function spawnShatterFX(x, y)
-        local rockColor = Theme.rock or {0.85, 0.75, 0.6, 1}
-        copyColor(rockColor, rockShatterPrimaryColor)
-        rockShatterPrimaryColor[4] = 1
-        local highlight = getHighlightColor(rockColor)
+	local rockColor = Theme.rock or {0.85, 0.75, 0.6, 1}
+	copyColor(rockColor, rockShatterPrimaryColor)
+	rockShatterPrimaryColor[4] = 1
+	local highlight = getHighlightColor(rockColor)
 
-        rockShatterPrimaryOptions.count = love.math.random(8, 12)
-        Particles:spawnBurst(x, y, rockShatterPrimaryOptions)
+	rockShatterPrimaryOptions.count = love.math.random(8, 12)
+	Particles:spawnBurst(x, y, rockShatterPrimaryOptions)
 
-        copyColor(highlight, rockShatterHighlightColor)
-        rockShatterHighlightOptions.count = love.math.random(3, 5)
-        Particles:spawnBurst(x, y, rockShatterHighlightOptions)
+	copyColor(highlight, rockShatterHighlightColor)
+	rockShatterHighlightOptions.count = love.math.random(3, 5)
+	Particles:spawnBurst(x, y, rockShatterHighlightOptions)
 end
 
 local function removeRockAt(index, spawnFX)
-        if not index then return nil end
+	if not index then return nil end
 
-        local rock = swapRemove(current, index)
-        if not rock then return nil end
+	local rock = swapRemove(current, index)
+	if not rock then return nil end
 
 	releaseOccupancy(rock)
 
@@ -608,49 +609,65 @@ function Rocks:update(dt)
 end
 
 local function withRockTransform(rock, fn)
-        lg.push()
+	lg.push()
 
-        local drawX = rock.renderX or rock.x
-        local drawY = rock.renderY or rock.y
-        local offsetY = (rock.offsetY or 0) + (rock.tremorSlideOffset or 0)
+	local drawX = rock.renderX or rock.x
+	local drawY = rock.renderY or rock.y
+	local offsetY = (rock.offsetY or 0) + (rock.tremorSlideOffset or 0)
 
-        lg.translate(drawX, drawY + offsetY)
-        lg.scale(rock.scaleX, rock.scaleY)
-        fn()
-        lg.pop()
+	lg.translate(drawX, drawY + offsetY)
+	lg.scale(rock.scaleX, rock.scaleY)
+	fn()
+	lg.pop()
 end
 
 local function drawRockShadow(rock)
-        withRockTransform(rock, function()
-                lg.setColor(0, 0, 0, 0.4)
-                lg.push()
-                lg.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-                lg.scale(1.1, 1.1)
-                lg.polygon("fill", rock.shape)
-                lg.pop()
-        end)
+	withRockTransform(rock, function()
+		lg.setColor(0, 0, 0, 0.4
+	)
+		lg.push(
+	)
+		lg.translate(SHADOW_OFFSET, SHADOW_OFFSET
+	)
+		lg.scale(1.1, 1.1
+	)
+		lg.polygon("fill", rock.shape
+	)
+		lg.pop(
+	)
+		end
+	)
 end
 
 local function drawRockBody(rock)
-        withRockTransform(rock, function()
-                local baseColor = Theme.rock
-                if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
-                        baseColor = HIT_FLASH_COLOR
-                end
+	withRockTransform(rock, function()
+		local baseColor = Theme.rock
+		if rock.hitFlashTimer and rock.hitFlashTimer > 0 then
+		baseColor = HIT_FLASH_COLOR
+		end
 
-                lg.setColor(baseColor)
-                lg.polygon("fill", rock.shape)
+		lg.setColor(baseColor
+	)
+		lg.polygon("fill", rock.shape
+	)
 
-                if rock.highlightShape then
-                        local highlight = getHighlightColor(baseColor)
-                        lg.setColor(highlight[1], highlight[2], highlight[3], highlight[4])
-                        lg.polygon("fill", rock.highlightShape)
-                end
+		if rock.highlightShape then
+		local highlight = getHighlightColor(baseColor
+	)
+		lg.setColor(highlight[1], highlight[2], highlight[3], highlight[4]
+	)
+		lg.polygon("fill", rock.highlightShape
+	)
+		end
 
-                lg.setColor(0, 0, 0, 1)
-                lg.setLineWidth(3)
-                lg.polygon("line", rock.shape)
-        end)
+		lg.setColor(0, 0, 0, 1
+	)
+		lg.setLineWidth(3
+	)
+		lg.polygon("line", rock.shape
+	)
+		end
+	)
 end
 
 function Rocks:draw()

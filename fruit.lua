@@ -595,11 +595,11 @@ local function drawFruitShadow(data)
 end
 
 local function drawFruitBody(data)
-        if not data then return end
+	if not data then return end
 
-        local x, y = data.x, data.y
-        local alpha = data.alpha
-        local sx, sy = data.sx, data.sy
+	local x, y = data.x, data.y
+	local alpha = data.alpha
+	local sx, sy = data.sx, data.sy
 	local r = data.radius
 	local pulse = data.pulse
 	local bodyColor = data.bodyColor or highlightDefault
@@ -616,64 +616,64 @@ local function drawFruitBody(data)
 	local hry = r * sy * 0.45
 	love.graphics.push()
 	love.graphics.translate(hx, hy)
-        love.graphics.rotate(-0.35)
-        local highlightAlpha = (highlight[4] or 1) * alpha * (0.75 + pulse * 0.25)
-        love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
-        love.graphics.ellipse("fill", 0, 0, hrx, hry)
-        love.graphics.pop()
+	love.graphics.rotate(-0.35)
+	local highlightAlpha = (highlight[4] or 1) * alpha * (0.75 + pulse * 0.25)
+	love.graphics.setColor(highlight[1], highlight[2], highlight[3], highlightAlpha)
+	love.graphics.ellipse("fill", 0, 0, hrx, hry)
+	love.graphics.pop()
 
-        -- outline (2–3px black border)
-        love.graphics.setLineWidth(OUTLINE_SIZE)
-        love.graphics.setColor(0, 0, 0, alpha)
-        love.graphics.ellipse("line", x, y, r * sx, r * sy)
+	-- outline (2–3px black border)
+	love.graphics.setLineWidth(OUTLINE_SIZE)
+	love.graphics.setColor(0, 0, 0, alpha)
+	love.graphics.ellipse("line", x, y, r * sx, r * sy)
 end
 
 local function drawActiveFruitExtras(data)
-        if not data then return end
+	if not data then return end
 
-        local idleSparkleCount = data.idleSparkleCount or 0
-        if idleSparkleCount > 0 then
-                local sparkles = data.idleSparkles
-                if sparkles then
-                        local prevBlendMode, prevAlphaMode = love.graphics.getBlendMode()
-                        local prevColor = { love.graphics.getColor() }
-                        local prevLineWidth = love.graphics.getLineWidth()
+	local idleSparkleCount = data.idleSparkleCount or 0
+	if idleSparkleCount > 0 then
+		local sparkles = data.idleSparkles
+		if sparkles then
+			local prevBlendMode, prevAlphaMode = love.graphics.getBlendMode()
+			local prevColor = { love.graphics.getColor() }
+			local prevLineWidth = love.graphics.getLineWidth()
 
-                        local x, y = data.x, data.y
-                        local pulse = data.pulse
-                        local alpha = data.alpha
+			local x, y = data.x, data.y
+			local pulse = data.pulse
+			local alpha = data.alpha
 
-                        love.graphics.setBlendMode("add")
-                        for i = 1, idleSparkleCount do
-                                local sparkle = sparkles[i]
-                                if not sparkle then break end
-                                local progress = clamp(sparkle.timer / sparkle.duration, 0, 1)
-                                local fade = 1 - progress
-                                local orbit = sparkle.radius + progress * 6
-                                local px = x + math.cos(sparkle.angle) * orbit
-                                local py = y + sin(sparkle.angle) * orbit - progress * 6
-                                local glowSize = sparkle.size * (0.6 + 0.4 * sin(progress * pi))
-                                local alphaMul = 0.25 * fade * (0.6 + pulse * 0.4)
+			love.graphics.setBlendMode("add")
+			for i = 1, idleSparkleCount do
+				local sparkle = sparkles[i]
+				if not sparkle then break end
+				local progress = clamp(sparkle.timer / sparkle.duration, 0, 1)
+				local fade = 1 - progress
+				local orbit = sparkle.radius + progress * 6
+				local px = x + math.cos(sparkle.angle) * orbit
+				local py = y + sin(sparkle.angle) * orbit - progress * 6
+				local glowSize = sparkle.size * (0.6 + 0.4 * sin(progress * pi))
+				local alphaMul = 0.25 * fade * (0.6 + pulse * 0.4)
 
-                                love.graphics.setColor(sparkle.color[1], sparkle.color[2], sparkle.color[3], alphaMul)
-                                love.graphics.circle("fill", px, py, glowSize)
-                                love.graphics.setColor(1, 1, 1, alphaMul * 1.6)
-                                love.graphics.circle("line", px, py, glowSize * 0.9)
-                        end
-                        love.graphics.setBlendMode(prevBlendMode, prevAlphaMode)
-                        love.graphics.setColor(prevColor[1], prevColor[2], prevColor[3], prevColor[4])
-                        love.graphics.setLineWidth(prevLineWidth)
-                end
-        end
+				love.graphics.setColor(sparkle.color[1], sparkle.color[2], sparkle.color[3], alphaMul)
+				love.graphics.circle("fill", px, py, glowSize)
+				love.graphics.setColor(1, 1, 1, alphaMul * 1.6)
+				love.graphics.circle("line", px, py, glowSize * 0.9)
+			end
+			love.graphics.setBlendMode(prevBlendMode, prevAlphaMode)
+			love.graphics.setColor(prevColor[1], prevColor[2], prevColor[3], prevColor[4])
+			love.graphics.setLineWidth(prevLineWidth)
+		end
+	end
 
-        if data.isDragonfruitActive then
-                local x, y = data.x, data.y
-                local alpha = data.alpha
-                local t = data.activeTimer or 0
-                local rarePulse = 0.5 + 0.5 * sin(t * 6.0)
-                love.graphics.setColor(1, 0, 1, 0.15 * rarePulse * alpha)
-                love.graphics.circle("line", x, y, HITBOX_SIZE * 0.8 + rarePulse * 4)
-        end
+	if data.isDragonfruitActive then
+		local x, y = data.x, data.y
+		local alpha = data.alpha
+		local t = data.activeTimer or 0
+		local rarePulse = 0.5 + 0.5 * sin(t * 6.0)
+		love.graphics.setColor(1, 0, 1, 0.15 * rarePulse * alpha)
+		love.graphics.circle("line", x, y, HITBOX_SIZE * 0.8 + rarePulse * 4)
+	end
 end
 
 function Fruit:draw()
@@ -701,24 +701,29 @@ function Fruit:draw()
 		return
 	end
 
-        local list = drawList
-        RenderLayers:withLayer("shadows", function()
-                for i = 1, drawCount do
-                        local data = list[i]
-                        drawFruitShadow(data)
-                end
-        end)
+	local list = drawList
+	RenderLayers:withLayer("shadows", function()
+		for i = 1, drawCount do
+		local data = list[i]
+		drawFruitShadow(data
+	)
+		end
+		end
+	)
 
-        RenderLayers:withLayer("main", function()
-                for i = 1, drawCount do
-                        local data = list[i]
-                        drawFruitBody(data)
-                end
+	RenderLayers:withLayer("main", function()
+		for i = 1, drawCount do
+		local data = list[i]
+		drawFruitBody(data
+	)
+		end
 
-                if activeData then
-                        drawActiveFruitExtras(activeData)
-                end
-        end)
+		if activeData then
+		drawActiveFruitExtras(activeData
+	)
+		end
+		end
+	)
 end
 
 -- Queries

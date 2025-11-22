@@ -400,13 +400,13 @@ local english = {
 				name = "Fresh Supplies",
 				description = "Discard the current shop cards and restock with new ones.",
 			},
-trade_accord = {
-name = "Trade Accord",
-description = "Each shop slot reduces rock spawn chance by 3%.",
-},
-tectonic_resolve = {
-name = "Tectonic Resolve",
-description = "Rock spawn chance decreases by 15%. Each fruit has a 20% chance to shatter the nearest rock.",
+			trade_accord = {
+				name = "Trade Accord",
+				description = "Each shop slot reduces rock spawn chance by 3%.",
+			},
+			tectonic_resolve = {
+				name = "Tectonic Resolve",
+				description = "Rock spawn chance decreases by 15%. Each fruit has a 20% chance to shatter the nearest rock.",
 			},
 			phoenix_echo = {
 				name = "Phoenix Echo",

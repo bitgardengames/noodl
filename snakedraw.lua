@@ -332,50 +332,50 @@ local fruitMarkerCoords = {}
 local fruitMarkerCount = 0
 
 local function collectFruitMarkers(trail)
-        local count = 0
+	local count = 0
 
-        if trail then
-                for i = 1, #trail do
-                        local seg = trail[i]
-                        if seg and seg.fruitMarker then
-                                local x = seg.fruitMarkerX or seg.drawX or seg.x
-                                local y = seg.fruitMarkerY or seg.drawY or seg.y
+	if trail then
+		for i = 1, #trail do
+			local seg = trail[i]
+			if seg and seg.fruitMarker then
+				local x = seg.fruitMarkerX or seg.drawX or seg.x
+				local y = seg.fruitMarkerY or seg.drawY or seg.y
 
-                                if x and y then
-                                        count = count + 1
-                                        local idx = count * 2 - 1
-                                        fruitMarkerCoords[idx] = x
-                                        fruitMarkerCoords[idx + 1] = y
-                                end
-                        end
-                end
-        end
+				if x and y then
+					count = count + 1
+					local idx = count * 2 - 1
+					fruitMarkerCoords[idx] = x
+					fruitMarkerCoords[idx + 1] = y
+				end
+			end
+		end
+	end
 
-        local used = count * 2
-        local previousUsed = fruitMarkerCount * 2
-        if used < previousUsed then
-                for i = used + 1, previousUsed do
-                        fruitMarkerCoords[i] = nil
-                end
-        end
+	local used = count * 2
+	local previousUsed = fruitMarkerCount * 2
+	if used < previousUsed then
+		for i = used + 1, previousUsed do
+			fruitMarkerCoords[i] = nil
+		end
+	end
 
-        fruitMarkerCount = count
+	fruitMarkerCount = count
 
-        return fruitMarkerCoords, fruitMarkerCount
+	return fruitMarkerCoords, fruitMarkerCount
 end
 
 local function drawFruitBulges(markerCoords, markerCount, radius)
-        if not markerCoords or radius <= 0 or markerCount <= 0 then return end
+	if not markerCoords or radius <= 0 or markerCount <= 0 then return end
 
-        for i = 1, markerCount do
-                local idx = (i - 1) * 2
-                local x = markerCoords[idx + 1]
-                local y = markerCoords[idx + 2]
+	for i = 1, markerCount do
+		local idx = (i - 1) * 2
+		local x = markerCoords[idx + 1]
+		local y = markerCoords[idx + 2]
 
-                if x and y then
-                        love.graphics.circle("fill", x, y, radius)
-                end
-        end
+		if x and y then
+			love.graphics.circle("fill", x, y, radius)
+		end
+	end
 end
 
 local function drawCornerCaps(path, radius)
@@ -464,8 +464,8 @@ local function drawSnakeStroke(path, radius, options)
 end
 
 local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
-        local paletteBody = palette and palette.body
-        local paletteOutline = palette and palette.outline
+	local paletteBody = palette and palette.body
+	local paletteOutline = palette and palette.outline
 
 	local bodyColor = paletteBody or SnakeCosmetics:getBodyColor()
 	local outlineColor = paletteOutline or SnakeCosmetics:getOutlineColor()
@@ -513,25 +513,25 @@ local function renderSnakeToCanvas(trail, coords, head, half, options, palette)
 		love.graphics.setLineJoin("bevel")
 	end
 
-        local fruitMarkers, fruitMarkerCount = collectFruitMarkers(trail)
+	local fruitMarkers, fruitMarkerCount = collectFruitMarkers(trail)
 
-        if palette and palette.singlePass then
-                local fillR, fillG, fillB, fillA = bodyR, bodyG, bodyB, bodyA
-                if outlineA and outlineA > fillA then
-                        fillR, fillG, fillB, fillA = outlineR, outlineG, outlineB, outlineA
-                end
-                love.graphics.setColor(fillR, fillG, fillB, fillA)
-                drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
-                drawFruitBulges(fruitMarkers, fruitMarkerCount, bulgeRadius + OUTLINE_SIZE)
-        else
-                love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
-                drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
-                drawFruitBulges(fruitMarkers, fruitMarkerCount, bulgeRadius + OUTLINE_SIZE)
+	if palette and palette.singlePass then
+		local fillR, fillG, fillB, fillA = bodyR, bodyG, bodyB, bodyA
+		if outlineA and outlineA > fillA then
+			fillR, fillG, fillB, fillA = outlineR, outlineG, outlineB, outlineA
+		end
+		love.graphics.setColor(fillR, fillG, fillB, fillA)
+		drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
+		drawFruitBulges(fruitMarkers, fruitMarkerCount, bulgeRadius + OUTLINE_SIZE)
+	else
+		love.graphics.setColor(outlineR, outlineG, outlineB, outlineA)
+		drawSnakeStroke(outlineCoords, half + OUTLINE_SIZE, options)
+		drawFruitBulges(fruitMarkers, fruitMarkerCount, bulgeRadius + OUTLINE_SIZE)
 
-                love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
-                drawSnakeStroke(bodyCoords, half, options)
-                drawFruitBulges(fruitMarkers, fruitMarkerCount, bulgeRadius)
-        end
+		love.graphics.setColor(bodyR, bodyG, bodyB, bodyA)
+		drawSnakeStroke(bodyCoords, half, options)
+		drawFruitBulges(fruitMarkers, fruitMarkerCount, bulgeRadius)
+	end
 
 	love.graphics.pop()
 
@@ -1211,14 +1211,14 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 			love.graphics.setLineWidth(2.4)
 			love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.4 + 0.32 * intensity))
 		end
-end
+	end
 
-love.graphics.pop()
+	love.graphics.pop()
 end
 
 local function drawPhoenixEchoTrail(trail, SEGMENT_SIZE, data)
-if not (trail and data) then return end
-if #trail < 2 then return end
+	if not (trail and data) then return end
+	if #trail < 2 then return end
 
 	local intensity = max(0, data.intensity or 0)
 	local charges = max(0, data.charges or 0)
@@ -1732,27 +1732,36 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			entryPalette = fadePalette(palette, 0.55)
 		end
 
-                RenderLayers:withLayer("main", function()
-                        love.graphics.push("all")
+		RenderLayers:withLayer("main", function()
+			love.graphics.push("all"
+		)
 
-                        love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-                        if exitTrail and #exitTrail > 0 then
-                                drawTrailSegmentToCanvas(exitTrail, half, options, shadowPalette, exitCoords)
-                        end
-                        if entryTrail and #entryTrail > 0 then
-                                drawTrailSegmentToCanvas(entryTrail, half, options, shadowPalette, entryCoords)
-                        end
+			love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET
+		)
+			if exitTrail and #exitTrail > 0 then
+			drawTrailSegmentToCanvas(exitTrail, half, options, shadowPalette, exitCoords
+		)
+			end
+			if entryTrail and #entryTrail > 0 then
+			drawTrailSegmentToCanvas(entryTrail, half, options, shadowPalette, entryCoords
+		)
+			end
 
-                        love.graphics.origin()
-                        if exitTrail and #exitTrail > 0 then
-                                drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords)
-                        end
-                        if entryTrail and #entryTrail > 0 and entryPalette then
-                                drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords)
-                        end
+			love.graphics.origin(
+		)
+			if exitTrail and #exitTrail > 0 then
+			drawTrailSegmentToCanvas(exitTrail, half, options, palette, exitCoords
+		)
+			end
+			if entryTrail and #entryTrail > 0 and entryPalette then
+			drawTrailSegmentToCanvas(entryTrail, half, options, entryPalette, entryCoords
+		)
+			end
 
-                        love.graphics.pop()
-                end)
+			love.graphics.pop(
+		)
+			end
+		)
 
 		if exitHole then
 			drawPortalHole(exitHole, true)
@@ -1809,18 +1818,25 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 	else
 		local coords = buildCoords(trail)
 
-                RenderLayers:withLayer("main", function()
-                        love.graphics.push("all")
+		RenderLayers:withLayer("main", function()
+			love.graphics.push("all"
+		)
 
-                        love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET)
-                        drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords)
+			love.graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET
+		)
+			drawTrailSegmentToCanvas(trail, half, options, shadowPalette, coords
+		)
 
-                        love.graphics.origin()
-                        drawTrailSegmentToCanvas(trail, half, options, palette, coords)
+			love.graphics.origin(
+		)
+			drawTrailSegmentToCanvas(trail, half, options, palette, coords
+		)
 
-                        love.graphics.pop()
-                end)
-        end
+			love.graphics.pop(
+		)
+			end
+		)
+	end
 
 	local shouldDrawOverlay = (hx and hy and drawFace ~= false) or (popTimer and popTimer > 0 and hx and hy)
 	if shouldDrawOverlay then
@@ -1895,8 +1911,8 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 			end
 
 
-if upgradeVisuals and upgradeVisuals.phoenixEcho then
-drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho
+			if upgradeVisuals and upgradeVisuals.phoenixEcho then
+			drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho
 		)
 			end
 			end

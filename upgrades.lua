@@ -399,12 +399,12 @@ local function getSegmentPosition(fraction)
 		index = 1
 	end
 
-        local segment = segments[index]
-        if segment then
-                local x, y = SnakeUtils.getSegmentPosition(segment)
-                if x and y then
-                        return x, y
-                end
+	local segment = segments[index]
+	if segment then
+		local x, y = SnakeUtils.getSegmentPosition(segment)
+		if x and y then
+			return x, y
+		end
 	end
 
 	return Snake:getHead()
@@ -2933,13 +2933,13 @@ function Upgrades:applyPersistentEffects(rebaseline)
 			local maxUses = ability.maxFloorUses or ability.floorCharges
 			ability.floorCharges = max(0, min(ability.floorCharges, maxUses))
 		end
-else
-Snake.timeDilation = nil
-end
+	else
+		Snake.timeDilation = nil
+	end
 
-Snake:setEventHorizonActive(effects.wallPortal and true or false)
+	Snake:setEventHorizonActive(effects.wallPortal and true or false)
 
-Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
+	Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
 
 	local counters = state.counters or {}
 	Snake:setSwiftFangsStacks(counters.swiftFangsStacks or 0)

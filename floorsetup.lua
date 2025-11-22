@@ -122,7 +122,7 @@ local function buildSpawnBuffer(baseSafeZone)
 	end
 
 	local headCol, headRow = Snake:getHeadCell()
-        local dir = Snake:getDirection() or ZERO_DIR
+	local dir = Snake:getDirection() or ZERO_DIR
 	local dirX, dirY = dir.x or 0, dir.y or 0
 
 	if dirX == 0 and dirY == 0 then
@@ -146,13 +146,13 @@ local function buildSpawnBuffer(baseSafeZone)
 end
 
 local function prepareOccupancy()
-        SnakeUtils.initOccupancy()
+	SnakeUtils.initOccupancy()
 
-        for _, segment in ipairs(Snake:getSegments()) do
-                local x, y = SnakeUtils.getSegmentPosition(segment)
-                local col, row = Arena:getTileFromWorld(x, y)
-                SnakeUtils.setOccupied(col, row, true)
-        end
+	for _, segment in ipairs(Snake:getSegments()) do
+		local x, y = SnakeUtils.getSegmentPosition(segment)
+		local col, row = Arena:getTileFromWorld(x, y)
+		SnakeUtils.setOccupied(col, row, true)
+	end
 
 	local safeZone = Snake:getSafeZone(3)
 	local rockSafeZone = Snake:getSafeZone(5)

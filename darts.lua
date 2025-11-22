@@ -55,19 +55,19 @@ local impactColorScratch = {0, 0, 0, 0}
 local insetColorScratch = {0, 0, 0, 0}
 
 local impactBurstOptions = {
-        count = 0,
-        speed = 118,
-        speedVariance = 58,
-        life = 0.3,
-        size = 2.6,
-        color = impactColorScratch,
-        spread = pi * 2,
-        angleJitter = pi * 0.9,
-        drag = 3.8,
-        gravity = 150,
-        scaleMin = 0.5,
-        scaleVariance = 0.42,
-        fadeTo = 0.07,
+	count = 0,
+	speed = 118,
+	speedVariance = 58,
+	life = 0.3,
+	size = 2.6,
+	color = impactColorScratch,
+	spread = pi * 2,
+	angleJitter = pi * 0.9,
+	drag = 3.8,
+	gravity = 150,
+	scaleMin = 0.5,
+	scaleVariance = 0.42,
+	fadeTo = 0.07,
 }
 
 local function clamp01(value)
@@ -91,24 +91,24 @@ local function releaseOccupancy(emitter)
 end
 
 local function scaleColor(color, factor, alphaFactor, target)
-        local scale = factor or 1
-        return Color.scale(color, scale, {
-                default = Color.white,
-                alphaFactor = alphaFactor or scale,
-                target = target,
-                }
-        )
+	local scale = factor or 1
+	return Color.scale(color, scale, {
+		default = Color.white,
+		alphaFactor = alphaFactor or scale,
+		target = target,
+		}
+	)
 end
 
 local function lerp(a, b, t)
-        return a + (b - a) * t
+	return a + (b - a) * t
 end
 
 local function getEmitterColors()
-        local body = Theme.dartBaseColor or BASE_EMITTER_COLOR
-        local accent = Theme.dartAccentColor or BASE_ACCENT_COLOR
-        local telegraph = Theme.dartTelegraphColor or TELEGRAPH_COLOR
-        local dartBody = Theme.dartBodyColor or DART_BODY_COLOR
+	local body = Theme.dartBaseColor or BASE_EMITTER_COLOR
+	local accent = Theme.dartAccentColor or BASE_ACCENT_COLOR
+	local telegraph = Theme.dartTelegraphColor or TELEGRAPH_COLOR
+	local dartBody = Theme.dartBodyColor or DART_BODY_COLOR
 	local dartTip = Theme.dartTipColor or DART_TIP_COLOR
 	local dartTail = Theme.dartTailColor or DART_TAIL_COLOR
 	return body, accent, telegraph, dartBody, dartTip, dartTail
@@ -266,18 +266,18 @@ local function recordImpact(emitter, x, y, impactType)
 end
 
 local function getImpactColor(impactType)
-        if impactType == "rock" then
-                local rockColor = Theme.rock or {0.45, 0.40, 0.36, 1}
-                local color = scaleColor(rockColor, 1.25, 1, impactColorScratch)
-                color[4] = 1
-                return color
-        end
+	if impactType == "rock" then
+		local rockColor = Theme.rock or {0.45, 0.40, 0.36, 1}
+		local color = scaleColor(rockColor, 1.25, 1, impactColorScratch)
+		color[4] = 1
+		return color
+	end
 
-        local _, _, _, _, tipColor = getEmitterColors()
-        local factor = (impactType == "snake") and 1.12 or 0.96
-        local color = scaleColor(tipColor, factor, 1, impactColorScratch)
-        color[4] = 1
-        return color
+	local _, _, _, _, tipColor = getEmitterColors()
+	local factor = (impactType == "snake") and 1.12 or 0.96
+	local color = scaleColor(tipColor, factor, 1, impactColorScratch)
+	color[4] = 1
+	return color
 end
 
 local function triggerImpactBurst(emitter, impactType, x, y)
@@ -289,18 +289,18 @@ local function triggerImpactBurst(emitter, impactType, x, y)
 		return
 	end
 
-        local color = getImpactColor(impactType)
+	local color = getImpactColor(impactType)
 
-        if impactType == "rock" and Rocks and Rocks.triggerHitFlash and emitter and emitter.targetRock then
-                Rocks:triggerHitFlash(emitter.targetRock)
-        end
+	if impactType == "rock" and Rocks and Rocks.triggerHitFlash and emitter and emitter.targetRock then
+		Rocks:triggerHitFlash(emitter.targetRock)
+	end
 
-        impactBurstOptions.count = random(7, 11)
-        impactBurstOptions.color = color
-        impactBurstOptions.gravity = (impactType == "rock") and 200 or 150
-        impactBurstOptions.fadeTo = (impactType == "rock") and 0.03 or 0.07
+	impactBurstOptions.count = random(7, 11)
+	impactBurstOptions.color = color
+	impactBurstOptions.gravity = (impactType == "rock") and 200 or 150
+	impactBurstOptions.fadeTo = (impactType == "rock") and 0.03 or 0.07
 
-        Particles:spawnBurst(x, y, impactBurstOptions)
+	Particles:spawnBurst(x, y, impactBurstOptions)
 end
 
 local function randomCooldownDuration(emitter)
@@ -362,9 +362,9 @@ local function enterFiring(emitter)
 	emitter.dartY = emitter.startY
 	emitter.shotRect = nil
 	emitter.impactTimer = IMPACT_FLASH_DURATION
-        if Audio and Audio.playSound then
-                Audio:playSound("dart_fire")
-        end
+	if Audio and Audio.playSound then
+		Audio:playSound("dart_fire")
+	end
 end
 
 local function updateShotRect(emitter)
@@ -740,8 +740,8 @@ local function drawEmitter(emitter)
 	love.graphics.rectangle("fill", baseX, baseY, tileSize, tileSize, RADIUS, RADIUS)
 
 	-- INSET
-        local insetPad = 2
-        local insetColor = scaleColor(bodyColor, 0.78 + strength * 0.12, 1, insetColorScratch)
+	local insetPad = 2
+	local insetColor = scaleColor(bodyColor, 0.78 + strength * 0.12, 1, insetColorScratch)
 
 	love.graphics.setColor(insetColor)
 	love.graphics.rectangle(

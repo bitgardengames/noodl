@@ -18,18 +18,18 @@ local function ensureParticleSprite()
 		return
 	end
 
-        local canvas = lg.newCanvas(PARTICLE_SPRITE_SIZE, PARTICLE_SPRITE_SIZE)
-        lg.push("all")
-        lg.setCanvas(canvas)
-        lg.clear(0, 0, 0, 0)
-        lg.setColor(1, 1, 1, 1)
-        lg.circle("fill", particleSpriteRadius, particleSpriteRadius, particleSpriteRadius)
-        lg.pop()
+	local canvas = lg.newCanvas(PARTICLE_SPRITE_SIZE, PARTICLE_SPRITE_SIZE)
+	lg.push("all")
+	lg.setCanvas(canvas)
+	lg.clear(0, 0, 0, 0)
+	lg.setColor(1, 1, 1, 1)
+	lg.circle("fill", particleSpriteRadius, particleSpriteRadius, particleSpriteRadius)
+	lg.pop()
 
 	canvas:setFilter("linear", "linear")
 
 	particleSprite = canvas
-        particleBatch = lg.newSpriteBatch(particleSprite, 128)
+	particleBatch = lg.newSpriteBatch(particleSprite, 128)
 end
 
 local atan2 = math.atan2 or function(y, x)
@@ -63,7 +63,7 @@ local SCALE_MIN = 0.6
 local SCALE_VARIANCE = 0.8
 
 local function normalizeDirection(dx, dy)
-        local length = sqrt((dx or 0) * (dx or 0) + (dy or 0) * (dy or 0))
+	local length = sqrt((dx or 0) * (dx or 0) + (dy or 0) * (dy or 0))
 	if not length or length < 1e-4 then
 		return 0, -1
 	end
@@ -126,7 +126,7 @@ local function releaseParticle(self, index)
 end
 
 function Particles:spawnBurst(x, y, options)
-        options = options or EMPTY_OPTIONS
+	options = options or EMPTY_OPTIONS
 
 	local count = max(0, options.count or 6)
 	local speed = options.speed or 60
@@ -245,44 +245,52 @@ end
 
 
 function Particles:draw()
-        local count = self.count
-        if count == 0 then
-                return
-        end
+	local count = self.count
+	if count == 0 then
+		return
+	end
 
-        ensureParticleSprite()
+	ensureParticleSprite()
 
-        if count > particleBatch:getBufferSize() then
-                local currentSize = particleBatch:getBufferSize()
-                local newSize = max(count, (currentSize or 0) * 2)
-                if newSize <= 0 then
-                        newSize = count
-                end
+	if count > particleBatch:getBufferSize() then
+		local currentSize = particleBatch:getBufferSize()
+		local newSize = max(count, (currentSize or 0) * 2)
+		if newSize <= 0 then
+			newSize = count
+		end
 
-                particleBatch = lg.newSpriteBatch(particleSprite, newSize)
-        end
+		particleBatch = lg.newSpriteBatch(particleSprite, newSize)
+	end
 
-        RenderLayers:withLayer("overlay", function()
-                particleBatch:clear()
+	RenderLayers:withLayer("overlay", function()
+		particleBatch:clear(
+	)
 
-                for i = 1, count do
-                        local normAge = self.normAge[i]
-                        if normAge == nil then
-                                local currentT = self.t[i] or 1
-                                normAge = 1 - currentT
-                        end
+		for i = 1, count do
+		local normAge = self.normAge[i]
+		if normAge == nil then
+		local currentT = self.t[i] or 1
+		normAge = 1 - currentT
+		end
 
-                        local currentSize = self.baseSize[i] * (0.8 + normAge * 0.6)
-                        local scale = currentSize / particleSpriteRadius
+		local currentSize = self.baseSize[i] * (0.8 + normAge * 0.6
+	)
+		local scale = currentSize / particleSpriteRadius
 
-                        particleBatch:setColor(self.r[i], self.g[i], self.b[i], self.alpha[i])
-                        particleBatch:add(self.x[i], self.y[i], 0, scale, scale, particleSpriteRadius, particleSpriteRadius)
-                end
+		particleBatch:setColor(self.r[i], self.g[i], self.b[i], self.alpha[i]
+	)
+		particleBatch:add(self.x[i], self.y[i], 0, scale, scale, particleSpriteRadius, particleSpriteRadius
+	)
+		end
 
-                particleBatch:setColor(1, 1, 1, 1)
-                lg.setColor(1, 1, 1, 1)
-                lg.draw(particleBatch)
-        end)
+		particleBatch:setColor(1, 1, 1, 1
+	)
+		lg.setColor(1, 1, 1, 1
+	)
+		lg.draw(particleBatch
+	)
+		end
+	)
 end
 
 function Particles:reset()
@@ -316,7 +324,7 @@ function Particles:spawnBlood(x, y, options)
 		return
 	end
 
-        options = options or EMPTY_OPTIONS
+	options = options or EMPTY_OPTIONS
 
 	local dirX, dirY = normalizeDirection(options.dirX or 0, options.dirY or -1)
 	local baseAngle = atan2(dirY, dirX)

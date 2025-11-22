@@ -71,10 +71,11 @@ local function drawSawStencil()
 end
 
 local function copyColor(color, out)
-        return Color.copy(color, {
-                default = Color.white,
-                target = out,
-        })
+	return Color.copy(color, {
+		default = Color.white,
+		target = out,
+		}
+	)
 end
 
 local highlightCache = setmetatable({}, { __mode = "k" })
@@ -84,55 +85,55 @@ local emptyPoints = {}
 
 local sawPrimaryBurstColor = {0, 0, 0, 1}
 local sawPrimaryBurstOptions = {
-        count = 12,
-        speed = 82,
-        speedVariance = 68,
-        life = 0.35,
-        size = 2.3,
-        color = sawPrimaryBurstColor,
-        spread = pi * 2,
-        angleJitter = pi,
-        drag = 3.5,
-        gravity = 260,
-        scaleMin = 0.45,
-        scaleVariance = 0.5,
-        fadeTo = 0.04,
+	count = 12,
+	speed = 82,
+	speedVariance = 68,
+	life = 0.35,
+	size = 2.3,
+	color = sawPrimaryBurstColor,
+	spread = pi * 2,
+	angleJitter = pi,
+	drag = 3.5,
+	gravity = 260,
+	scaleMin = 0.45,
+	scaleVariance = 0.5,
+	fadeTo = 0.04,
 }
 
 local sawHighlightBurstColor = {1.0, 0.94, 0.52, 1}
 local sawHighlightBurstOptions = {
-        count = 0,
-        speed = 132,
-        speedVariance = 72,
-        life = 0.26,
-        size = 1.8,
-        color = sawHighlightBurstColor,
-        spread = pi * 2,
-        angleJitter = pi,
-        drag = 1.4,
-        gravity = 200,
-        scaleMin = 0.34,
-        scaleVariance = 0.28,
-        fadeTo = 0.02,
+	count = 0,
+	speed = 132,
+	speedVariance = 72,
+	life = 0.26,
+	size = 1.8,
+	color = sawHighlightBurstColor,
+	spread = pi * 2,
+	angleJitter = pi,
+	drag = 1.4,
+	gravity = 200,
+	scaleMin = 0.34,
+	scaleVariance = 0.28,
+	fadeTo = 0.02,
 }
 
 local function swapRemove(list, index)
-        local lastIndex = #list
-        local removed = list[index]
+	local lastIndex = #list
+	local removed = list[index]
 
-        if index ~= lastIndex then
-                list[index] = list[lastIndex]
-        end
+	if index ~= lastIndex then
+		list[index] = list[lastIndex]
+	end
 
-        list[lastIndex] = nil
+	list[lastIndex] = nil
 
-        return removed
+	return removed
 end
 
 local function invalidateSawCache(saw)
-        if not saw then
-                return
-        end
+	if not saw then
+		return
+	end
 
 	saw.centerX = nil
 	saw.centerY = nil
@@ -839,27 +840,27 @@ local function removeSaw(target)
 			end
 			local burstX = px or anchorX
 			local burstY = py or anchorY
-                        local sawColor = Theme.sawColor or {0.85, 0.8, 0.75, 1}
-                        copyColor(sawColor, sawPrimaryBurstColor)
-                        sawPrimaryBurstColor[4] = 1
-                        local highlight = getHighlightColor(sawColor)
+			local sawColor = Theme.sawColor or {0.85, 0.8, 0.75, 1}
+			copyColor(sawColor, sawPrimaryBurstColor)
+			sawPrimaryBurstColor[4] = 1
+			local highlight = getHighlightColor(sawColor)
 
-                        Particles:spawnBurst(burstX, burstY, sawPrimaryBurstOptions)
+			Particles:spawnBurst(burstX, burstY, sawPrimaryBurstOptions)
 
-                        sawHighlightBurstOptions.count = love.math.random(4, 6)
-                        sawHighlightBurstColor[4] = highlight[4] or 1
-                        Particles:spawnBurst(burstX, burstY, sawHighlightBurstOptions)
+			sawHighlightBurstOptions.count = love.math.random(4, 6)
+			sawHighlightBurstColor[4] = highlight[4] or 1
+			Particles:spawnBurst(burstX, burstY, sawHighlightBurstOptions)
 
-                        emitDebugEvent("burst", saw, {
-                                x = burstX,
-                                y = burstY,
-                                }
-                        )
+			emitDebugEvent("burst", saw, {
+				x = burstX,
+				y = burstY,
+				}
+			)
 
-                        swapRemove(current, index)
-                        break
-                end
-        end
+			swapRemove(current, index)
+			break
+		end
+	end
 end
 
 -- Easing similar to Rocks

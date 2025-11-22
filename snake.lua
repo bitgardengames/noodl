@@ -30,13 +30,13 @@ local spawnGluttonsWakeRock
 local crystallizeGluttonsWakeSegments
 
 local function wipeTable(t)
-        if not t then
-                return
-        end
+	if not t then
+		return
+	end
 
-        for key in pairs(t) do
-                t[key] = nil
-        end
+	for key in pairs(t) do
+		t[key] = nil
+	end
 end
 
 local screenW, screenH
@@ -99,32 +99,32 @@ local collectSnakeSegmentCandidatesForRect = SnakeOccupancy.collectSnakeSegmentC
 local collectSnakeSegmentCandidatesForCircle = SnakeOccupancy.collectSnakeSegmentCandidatesForCircle
 
 local function resetSnakeOccupancyGrid()
-        moduleResetSnakeOccupancyGrid()
-        headOccupancyCol = nil
-        headOccupancyRow = nil
+	moduleResetSnakeOccupancyGrid()
+	headOccupancyCol = nil
+	headOccupancyRow = nil
 end
 
 local function ensureOccupancyGrid()
-        local ok, reset = SnakeOccupancy.ensureOccupancyGrid()
-        if reset then
-                headOccupancyCol = nil
-                headOccupancyRow = nil
-        end
+	local ok, reset = SnakeOccupancy.ensureOccupancyGrid()
+	if reset then
+		headOccupancyCol = nil
+		headOccupancyRow = nil
+	end
 
-        return ok
+	return ok
 end
 
 function Snake:needsStencil()
-        local hole = descendingHole
-        if hole then
-                local radius = hole.radius or 0
-                local depth = hole.renderDepth or 0
-                if (radius > 0 or depth > 0) and not hole.fullyConsumed then
-                        return true
-                end
-        end
+	local hole = descendingHole
+	if hole then
+		local radius = hole.radius or 0
+		local depth = hole.renderDepth or 0
+		if (radius > 0 or depth > 0) and not hole.fullyConsumed then
+			return true
+		end
+	end
 
-        return false
+	return false
 end
 
 local trailLength = 0
@@ -240,10 +240,10 @@ local function recalcSegmentLengthsRange(startIndex, endIndex)
 end
 
 local function syncTrailLength()
-        if not trail or #trail == 0 then
-                trailLength = 0
-                return trailLength
-        end
+	if not trail or #trail == 0 then
+		trailLength = 0
+		return trailLength
+	end
 
 	ensureHeadLength()
 	for i = 2, #trail do
@@ -322,7 +322,7 @@ end
 
 local stencilCircleX, stencilCircleY, stencilCircleRadius = 0, 0, 0
 local function drawStencilCircle()
-        love.graphics.circle("fill", stencilCircleX, stencilCircleY, stencilCircleRadius)
+	love.graphics.circle("fill", stencilCircleX, stencilCircleY, stencilCircleRadius)
 end
 
 local clippedHeadX, clippedHeadY, clipCenterX, clipCenterY, clipRadiusValue
@@ -546,13 +546,13 @@ function Snake:resetModifiers()
 	self.extraGrowth  = 0
 	self.shieldFlashTimer = 0
 	self.stoneSkinSawGrace = 0
-self.dash = nil
-self.timeDilation = nil
-self.adrenaline = nil
-self.hazardGraceTimer = 0
-self.phoenixEcho = nil
-self.eventHorizon = nil
-self.stormchaser = nil
+	self.dash = nil
+	self.timeDilation = nil
+	self.adrenaline = nil
+	self.hazardGraceTimer = 0
+	self.phoenixEcho = nil
+	self.eventHorizon = nil
+	self.stormchaser = nil
 	self.temporalAnchor = nil
 	self.swiftFangs = nil
 	self.zephyrCoils = nil
@@ -619,8 +619,8 @@ function Snake:setMomentumCoilsStacks(count)
 end
 
 function Snake:setDiffractionBarrierActive(active)
-if active then
-local state = self.diffractionBarrier
+	if active then
+		local state = self.diffractionBarrier
 		if not state then
 			state = {intensity = 0, target = 0, time = 0, flash = 0}
 			self.diffractionBarrier = state
@@ -639,12 +639,12 @@ local state = self.diffractionBarrier
 			state.active = false
 			state.target = 0
 		end
-end
+	end
 end
 
 function Snake:setPhoenixEchoCharges(count, options)
-count = max(0, floor((count or 0) + 0.0001))
-options = options or {}
+	count = max(0, floor((count or 0) + 0.0001))
+	options = options or {}
 
 	local state = self.phoenixEcho
 	if not state and (count > 0 or options.triggered or options.instantIntensity) then
@@ -866,9 +866,9 @@ end
 -- and then use `speed` for position updates. This gives upgrades an immediate effect.
 
 toCell = function(x, y)
-        if not (x and y) then
-                return nil, nil
-        end
+	if not (x and y) then
+		return nil, nil
+	end
 
 	if Arena and Arena.getTileFromWorld then
 		return Arena:getTileFromWorld(x, y)
@@ -893,14 +893,14 @@ toCell = function(x, y)
 		row = max(1, min(rows, row))
 	end
 
-        return col, row
+	return col, row
 end
 
 SnakeOccupancy.setToCell(toCell)
 
 local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
-        if not ensureOccupancyGrid() then
-                resetTrackedSnakeCells()
+	if not ensureOccupancyGrid() then
+		resetTrackedSnakeCells()
 		clearSnakeBodyOccupancy()
 		headOccupancyCol = nil
 		headOccupancyRow = nil
@@ -944,7 +944,7 @@ local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
 		end
 	end
 
-        rebuildSnakeBodySpatialIndex(trail)
+	rebuildSnakeBodySpatialIndex(trail)
 
 	if assignedHeadCol and assignedHeadRow then
 		headOccupancyCol = assignedHeadCol
@@ -975,11 +975,11 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
 		return
 	end
 
-        local hasTailCol, hasTailRow = getSnakeTailCell()
-        if not (hasTailCol and hasTailRow) then
-                rebuildOccupancyFromTrail(overrideCol, overrideRow)
-                return
-        end
+	local hasTailCol, hasTailRow = getSnakeTailCell()
+	if not (hasTailCol and hasTailRow) then
+		rebuildOccupancyFromTrail(overrideCol, overrideRow)
+		return
+	end
 
 	local processedHead = false
 
@@ -1012,8 +1012,8 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
 		end
 	end
 
-        if not syncSnakeHeadSegments(trail, headCellCount, newHeadSegmentsMax) then
-                rebuildSnakeBodySpatialIndex(trail)
+	if not syncSnakeHeadSegments(trail, headCellCount, newHeadSegmentsMax) then
+		rebuildSnakeBodySpatialIndex(trail)
 		return
 	end
 
@@ -1033,7 +1033,7 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
 		end
 
 		headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-                rebuildSnakeBodySpatialIndex(trail)
+		rebuildSnakeBodySpatialIndex(trail)
 		return
 	end
 
@@ -1067,8 +1067,8 @@ local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, o
 	end
 
 	headOccupancyCol, headOccupancyRow = getSnakeHeadCell()
-        if not syncSnakeTailSegment(trail) then
-                rebuildSnakeBodySpatialIndex(trail)
+	if not syncSnakeTailSegment(trail) then
+		rebuildSnakeBodySpatialIndex(trail)
 	end
 end
 
@@ -1938,20 +1938,20 @@ local function collectUpgradeVisuals(self)
 		entry.time = temporalAnchor.time or 0
 	end
 
-local dash = self.dash
-if dash then
-local entry = acquireEntry("dash")
-entry.active = dash.active or false
-entry.timer = dash.timer or 0
-entry.duration = dash.duration or 0
-entry.cooldown = dash.cooldown or 0
-entry.cooldownTimer = dash.cooldownTimer or 0
-end
+	local dash = self.dash
+	if dash then
+		local entry = acquireEntry("dash")
+		entry.active = dash.active or false
+		entry.timer = dash.timer or 0
+		entry.duration = dash.duration or 0
+		entry.cooldown = dash.cooldown or 0
+		entry.cooldownTimer = dash.cooldownTimer or 0
+	end
 
-local stormchaser = self.stormchaser
-if stormchaser and ((stormchaser.intensity or 0) > 1e-3 or (stormchaser.target or 0) > 0) then
-local entry = acquireEntry("stormchaser")
-entry.intensity = stormchaser.intensity or 0
+	local stormchaser = self.stormchaser
+	if stormchaser and ((stormchaser.intensity or 0) > 1e-3 or (stormchaser.target or 0) > 0) then
+		local entry = acquireEntry("stormchaser")
+		entry.intensity = stormchaser.intensity or 0
 		entry.primed = stormchaser.primed or false
 		entry.time = stormchaser.time or 0
 	end
@@ -2597,11 +2597,11 @@ function Snake:finishDescending()
 end
 
 function Snake:update(dt)
-if isDead then return false, "dead", {fatal = true} end
+	if isDead then return false, "dead", {fatal = true} end
 
-if self.phoenixEcho then
-local state = self.phoenixEcho
-state.time = (state.time or 0) + dt
+	if self.phoenixEcho then
+		local state = self.phoenixEcho
+		state.time = (state.time or 0) + dt
 		state.flareDuration = state.flareDuration or 1.2
 		if state.flareTimer then
 			state.flareTimer = max(0, state.flareTimer - dt)
@@ -4415,24 +4415,24 @@ function Snake:getSegments()
 			snapshot[i] = entry
 		end
 
-                entry[SEGMENT_SNAPSHOT_DRAW_X] = seg.drawX
-                entry[SEGMENT_SNAPSHOT_DRAW_Y] = seg.drawY
-                entry[SEGMENT_SNAPSHOT_DIR_X] = seg.dirX
-                entry[SEGMENT_SNAPSHOT_DIR_Y] = seg.dirY
-        end
+		entry[SEGMENT_SNAPSHOT_DRAW_X] = seg.drawX
+		entry[SEGMENT_SNAPSHOT_DRAW_Y] = seg.drawY
+		entry[SEGMENT_SNAPSHOT_DIR_X] = seg.dirX
+		entry[SEGMENT_SNAPSHOT_DIR_Y] = seg.dirY
+	end
 
-        for i = count + 1, previousCount do
-                local entry = snapshot[i]
-                if entry then
-                        entry[SEGMENT_SNAPSHOT_DRAW_X] = nil
-                        entry[SEGMENT_SNAPSHOT_DRAW_Y] = nil
-                        entry[SEGMENT_SNAPSHOT_DIR_X] = nil
-                        entry[SEGMENT_SNAPSHOT_DIR_Y] = nil
-                        segmentSnapshotPoolCount = segmentSnapshotPoolCount + 1
-                        segmentSnapshotPool[segmentSnapshotPoolCount] = entry
-                        snapshot[i] = nil
-                end
-        end
+	for i = count + 1, previousCount do
+		local entry = snapshot[i]
+		if entry then
+			entry[SEGMENT_SNAPSHOT_DRAW_X] = nil
+			entry[SEGMENT_SNAPSHOT_DRAW_Y] = nil
+			entry[SEGMENT_SNAPSHOT_DIR_X] = nil
+			entry[SEGMENT_SNAPSHOT_DIR_Y] = nil
+			segmentSnapshotPoolCount = segmentSnapshotPoolCount + 1
+			segmentSnapshotPool[segmentSnapshotPoolCount] = entry
+			snapshot[i] = nil
+		end
+	end
 
 	return snapshot
 end

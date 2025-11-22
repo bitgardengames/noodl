@@ -26,15 +26,15 @@ local canvasWidth = 0
 local canvasHeight = 0
 
 local function clearArray(t)
-        for i = #t, 1, -1 do
-                t[i] = nil
-        end
+	for i = #t, 1, -1 do
+		t[i] = nil
+	end
 end
 
 local function clearMap(t)
-        for key in pairs(t) do
-                t[key] = nil
-        end
+	for key in pairs(t) do
+		t[key] = nil
+	end
 end
 
 local function sanitizeLayerSamples(samples)
@@ -138,16 +138,16 @@ local function clearQueuedDrawEntries(draws)
 end
 
 local function resetLayerState()
-        for _, draws in pairs(queuedDraws) do
-                clearQueuedDrawEntries(draws)
-        end
+	for _, draws in pairs(queuedDraws) do
+		clearQueuedDrawEntries(draws)
+	end
 
-        clearArray(layerOrder)
-        clearMap(layerPresent)
+	clearArray(layerOrder)
+	clearMap(layerPresent)
 
-        for name in pairs(layerClearedThisFrame) do
-                layerClearedThisFrame[name] = false
-        end
+	for name in pairs(layerClearedThisFrame) do
+		layerClearedThisFrame[name] = false
+	end
 
 	for name in pairs(layerUsedThisFrame) do
 		layerUsedThisFrame[name] = false
@@ -323,21 +323,21 @@ function RenderLayers:getActiveLayerMSAASamples(layerName)
 end
 
 function RenderLayers:present(offsetX, offsetY)
-        processQueuedDraws()
+	processQueuedDraws()
 
-        local transformOffsetX, transformOffsetY = offsetX, offsetY
-        if transformOffsetX == nil and transformOffsetY == nil then
-                transformOffsetX, transformOffsetY = love.graphics.transformPoint(0, 0)
-        end
+	local transformOffsetX, transformOffsetY = offsetX, offsetY
+	if transformOffsetX == nil and transformOffsetY == nil then
+		transformOffsetX, transformOffsetY = love.graphics.transformPoint(0, 0)
+	end
 
-        love.graphics.push("all")
-        love.graphics.setCanvas()
-        love.graphics.origin()
-        love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.push("all")
+	love.graphics.setCanvas()
+	love.graphics.origin()
+	love.graphics.setColor(1, 1, 1, 1)
 
-        drawLayers(transformOffsetX or 0, transformOffsetY or 0)
+	drawLayers(transformOffsetX or 0, transformOffsetY or 0)
 
-        love.graphics.pop()
+	love.graphics.pop()
 end
 
 return RenderLayers

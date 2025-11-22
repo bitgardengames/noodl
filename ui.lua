@@ -100,10 +100,10 @@ local baseSpacing = {
 	shadowOffset = SHADOW_OFFSET,
 	sectionSpacing = 28,
 	sectionHeaderSpacing = 16,
-        sliderHeight = 56,
-        sliderTrackHeight = 10,
-        sliderHandleRadius = 12,
-        sliderPadding = 18,
+	sliderHeight = 56,
+	sliderTrackHeight = 10,
+	sliderHandleRadius = 12,
+	sliderPadding = 18,
 }
 
 local spacingMinimums = {
@@ -116,10 +116,10 @@ local spacingMinimums = {
 	shadowOffset = SHADOW_OFFSET,
 	sectionSpacing = 18,
 	sectionHeaderSpacing = 10,
-        sliderHeight = 44,
-        sliderTrackHeight = 4,
-        sliderHandleRadius = 10,
-        sliderPadding = 12,
+	sliderHeight = 44,
+	sliderTrackHeight = 4,
+	sliderHandleRadius = 10,
+	sliderPadding = 12,
 }
 
 local baseUpgradeLayout = {
@@ -309,16 +309,16 @@ local function drawAlignedBorder(mode, x, y, w, h, radius, borderWidth)
 end
 
 local function setColor(color, alphaMultiplier)
-        if not color then
-                love.graphics.setColor(1, 1, 1, alphaMultiplier or 1)
-                return
-        end
+	if not color then
+		love.graphics.setColor(1, 1, 1, alphaMultiplier or 1)
+		return
+	end
 
 	local r = color[1] or 1
 	local g = color[2] or 1
-        local b = color[3] or 1
-        local a = color[4] or 1
-        love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
+	local b = color[3] or 1
+	local a = color[4] or 1
+	love.graphics.setColor(r, g, b, a * (alphaMultiplier or 1))
 end
 
 local BUTTON_TEXT_SHADOW_COLOR = {0, 0, 0, 0.7}
@@ -902,51 +902,51 @@ function UI.drawSlider(id, x, y, w, value, opts)
 		UI.drawLabel(label, x + padding, y + padding, w - padding * 2, opts.labelAlign or "left", labelOptions)
 	end
 
-        local sliderValue = clamp01(value or 0)
-        local trackX = x + padding
-        local trackW = w - padding * 2
-        local trackY = y + h - padding - trackHeight
-        local trackRadius = trackHeight / 2
+	local sliderValue = clamp01(value or 0)
+	local trackX = x + padding
+	local trackW = w - padding * 2
+	local trackY = y + h - padding - trackHeight
+	local trackRadius = trackHeight / 2
 
-        local trackFill = opts.trackColor or UI.colors.buttonPress or darkenColor(baseFill, 0.2)
-        local progressFill = opts.progressColor or UI.colors.buttonHover or lightenColor(baseFill, 0.12)
+	local trackFill = opts.trackColor or UI.colors.buttonPress or darkenColor(baseFill, 0.2)
+	local progressFill = opts.progressColor or UI.colors.buttonHover or lightenColor(baseFill, 0.12)
 
-        setColor(trackFill, opts.trackAlpha or 1)
-        love.graphics.rectangle("fill", trackX, trackY, trackW, trackHeight, trackRadius, trackRadius)
+	setColor(trackFill, opts.trackAlpha or 1)
+	love.graphics.rectangle("fill", trackX, trackY, trackW, trackHeight, trackRadius, trackRadius)
 
-        if sliderValue > 0 then
-                setColor(progressFill)
-                love.graphics.rectangle("fill", trackX, trackY, trackW * sliderValue, trackHeight, trackRadius, trackRadius)
-        end
+	if sliderValue > 0 then
+		setColor(progressFill)
+		love.graphics.rectangle("fill", trackX, trackY, trackW * sliderValue, trackHeight, trackRadius, trackRadius)
+	end
 
-        local handleX = trackX + trackW * sliderValue
-        local handleY = trackY + trackHeight / 2
+	local handleX = trackX + trackW * sliderValue
+	local handleY = trackY + trackHeight / 2
 
-        local handleFill = opts.handleColor or lightenColor(baseFill, hovered and 0.18 or 0.1)
-        local handleOutline = opts.handleOutlineColor or UI.colors.border or UI.colors.panelBorder
-        local prevLineWidth = love.graphics.getLineWidth()
+	local handleFill = opts.handleColor or lightenColor(baseFill, hovered and 0.18 or 0.1)
+	local handleOutline = opts.handleOutlineColor or UI.colors.border or UI.colors.panelBorder
+	local prevLineWidth = love.graphics.getLineWidth()
 
-        if UI.colors.shadow then
-                setColor(UI.colors.shadow, 0.8)
-                love.graphics.circle("fill", handleX, handleY + 1.5, handleRadius + 1.5)
-        end
+	if UI.colors.shadow then
+		setColor(UI.colors.shadow, 0.8)
+		love.graphics.circle("fill", handleX, handleY + 1.5, handleRadius + 1.5)
+	end
 
-        setColor(handleFill)
-        love.graphics.circle("fill", handleX, handleY, handleRadius)
+	setColor(handleFill)
+	love.graphics.circle("fill", handleX, handleY, handleRadius)
 
-        local highlightStrength = hovered and 0.18 or 0.1
-        if highlightStrength > 0 then
-                local prevMode, prevAlphaMode = love.graphics.getBlendMode()
-                love.graphics.setBlendMode("add", "alphamultiply")
-                love.graphics.setColor(1, 1, 1, highlightStrength)
-                love.graphics.circle("fill", handleX, handleY, handleRadius)
-                love.graphics.setBlendMode(prevMode, prevAlphaMode)
-        end
+	local highlightStrength = hovered and 0.18 or 0.1
+	if highlightStrength > 0 then
+		local prevMode, prevAlphaMode = love.graphics.getBlendMode()
+		love.graphics.setBlendMode("add", "alphamultiply")
+		love.graphics.setColor(1, 1, 1, highlightStrength)
+		love.graphics.circle("fill", handleX, handleY, handleRadius)
+		love.graphics.setBlendMode(prevMode, prevAlphaMode)
+	end
 
-        love.graphics.setLineWidth(3)
-        setColor(handleOutline)
-        love.graphics.circle("line", handleX, handleY, handleRadius)
-        love.graphics.setLineWidth(prevLineWidth or 1)
+	love.graphics.setLineWidth(3)
+	setColor(handleOutline)
+	love.graphics.circle("line", handleX, handleY, handleRadius)
+	love.graphics.setLineWidth(prevLineWidth or 1)
 
 	if opts.showValue ~= false then
 		local valueFont = UI.fonts[opts.valueFont or "small"]
@@ -1141,8 +1141,8 @@ function UI.drawButton(id, alpha)
 	local text = btn.text or ""
 	local textY = b.y + yOffset + (b.h - UI.fonts.button:getHeight()) / 2
 
-        setColor(BUTTON_TEXT_SHADOW_COLOR, alphaMultiplier)
-        love.graphics.printf(text, b.x + 1, textY + 1, b.w, "center")
+	setColor(BUTTON_TEXT_SHADOW_COLOR, alphaMultiplier)
+	love.graphics.printf(text, b.x + 1, textY + 1, b.w, "center")
 
 	setColor(textColor, alphaMultiplier)
 	love.graphics.printf(text, b.x, textY, b.w, "center")

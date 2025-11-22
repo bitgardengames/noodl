@@ -13,37 +13,37 @@ SnakeUtils.POP_DURATION = 0.3
 SnakeUtils.occupied = {}
 
 local function getSegmentPosition(segment)
-        if type(segment) ~= "table" then
-                return nil, nil
-        end
+	if type(segment) ~= "table" then
+		return nil, nil
+	end
 
-        local x = segment[1]
-        if x then
-                return x, segment[2]
-        end
+	local x = segment[1]
+	if x then
+		return x, segment[2]
+	end
 
-        return segment.drawX or segment.x, segment.drawY or segment.y
+	return segment.drawX or segment.x, segment.drawY or segment.y
 end
 
 local function getSegmentDirection(segment)
-        if type(segment) ~= "table" then
-                return nil, nil
-        end
+	if type(segment) ~= "table" then
+		return nil, nil
+	end
 
-        local dirX = segment[3]
-        if dirX then
-                return dirX, segment[4]
-        end
+	local dirX = segment[3]
+	if dirX then
+		return dirX, segment[4]
+	end
 
-        return segment.dirX, segment.dirY
+	return segment.dirX, segment.dirY
 end
 
 SnakeUtils.getSegmentPosition = getSegmentPosition
 SnakeUtils.getSegmentDirection = getSegmentDirection
 
 local function wipeTable(t)
-        if not t then
-                return
+	if not t then
+		return
 	end
 
 	for key in pairs(t) do
@@ -332,21 +332,21 @@ end
 
 -- Axis-Aligned Bounding Box
 function SnakeUtils.aabb(ax, ay, asize, bx, by, bsize)
-        -- If tables passed, extract drawX/drawY and assume segment-sized squares
-        if type(ax) == "table" then
-                local segmentX, segmentY = getSegmentPosition(ax)
-                if segmentX and segmentY then
-                        ax, ay = segmentX, segmentY
-                        asize = SnakeUtils.SEGMENT_SIZE
-                end
-        end
-        if type(bx) == "table" then
-                local segmentX, segmentY = getSegmentPosition(bx)
-                if segmentX and segmentY then
-                        bx, by = segmentX, segmentY
-                        bsize = SnakeUtils.SEGMENT_SIZE
-                end
-        end
+	-- If tables passed, extract drawX/drawY and assume segment-sized squares
+	if type(ax) == "table" then
+		local segmentX, segmentY = getSegmentPosition(ax)
+		if segmentX and segmentY then
+			ax, ay = segmentX, segmentY
+			asize = SnakeUtils.SEGMENT_SIZE
+		end
+	end
+	if type(bx) == "table" then
+		local segmentX, segmentY = getSegmentPosition(bx)
+		if segmentX and segmentY then
+			bx, by = segmentX, segmentY
+			bsize = SnakeUtils.SEGMENT_SIZE
+		end
+	end
 
 	if not (ax and ay and bx and by) then
 		return false
@@ -416,19 +416,19 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 	local frontCells
 	local frontLookup
 
-        if avoidFront and trail[1] then
-                local head = trail[1]
-                local headX, headY = getSegmentPosition(head)
-                local dirX, dirY = getSegmentDirection(head)
+	if avoidFront and trail[1] then
+		local head = trail[1]
+		local headX, headY = getSegmentPosition(head)
+		local dirX, dirY = getSegmentDirection(head)
 
-                if (dirX == nil or dirY == nil) and opts.direction then
-                        dirX = opts.direction.x
-                        dirY = opts.direction.y
-                end
+		if (dirX == nil or dirY == nil) and opts.direction then
+			dirX = opts.direction.x
+			dirY = opts.direction.y
+		end
 
-                if dirX and dirY and headX and headY then
-                        local headCol, headRow = Arena:getTileFromWorld(headX, headY)
-                        if headCol and headRow then
+		if dirX and dirY and headX and headY then
+			local headCol, headRow = Arena:getTileFromWorld(headX, headY)
+			if headCol and headRow then
 				local buffer = math.max(1, floor(opts.frontBuffer or 1))
 				for i = 1, buffer do
 					local aheadCol = headCol + dirX * i
@@ -480,10 +480,10 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 			list[#list + 1] = segment
 		end
 
-                for i = 1, #trail do
-                        local segment = trail[i]
-                        local segX, segY = getSegmentPosition(segment)
-                        if segX and segY then
+		for i = 1, #trail do
+			local segment = trail[i]
+			local segX, segY = getSegmentPosition(segment)
+			if segX and segY then
 				local half = (segment.segmentSize or SEGMENT_SIZE) * 0.5
 				local left = segX - half
 				local right = segX + half
@@ -572,16 +572,16 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 		if segmentBuckets then
 			local column = segmentBuckets[col]
 			if column then
-                                local list = column[row]
-                                if list then
-                                        for i = 1, #list do
-                                                local segment = list[i]
-                                                local segX, segY = getSegmentPosition(segment)
-                                                if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, segX, segY, SEGMENT_SIZE, SEGMENT_SIZE) then
-                                                        return true
-                                                end
-                                        end
-                                end
+				local list = column[row]
+				if list then
+					for i = 1, #list do
+						local segment = list[i]
+						local segX, segY = getSegmentPosition(segment)
+						if SnakeUtils.aabb(cx, cy, SEGMENT_SIZE, segX, segY, SEGMENT_SIZE, SEGMENT_SIZE) then
+							return true
+						end
+					end
+				end
 			end
 		end
 

@@ -255,7 +255,7 @@ local function rerouteAlongWall(headX, headY, left, right, top, bottom)
 	local hitTop = (headY or clampedY) <= top
 	local hitBottom = (headY or clampedY) >= bottom
 
-        local dir = Snake:getDirection() or ZERO_DIR
+	local dir = Snake:getDirection() or ZERO_DIR
 	local newDirX, newDirY = dir.x or 0, dir.y or 0
 
 	local fallbackVerticalDir = computeFallbackAxisDirection(dir.y, clampedY, centerY)
@@ -543,7 +543,7 @@ local function handleWallCollision(headX, headY)
 		local clampedY = reroutedY or safeY
 		headX, headY = relocateHead(headX, headY, clampedX, clampedY)
 		clampedX, clampedY = headX, headY
-                local dir = Snake.getDirection and Snake:getDirection() or ZERO_DIR
+		local dir = Snake.getDirection and Snake:getDirection() or ZERO_DIR
 
 		return clampedX, clampedY, "wall", {
 			pushX = 0,
@@ -618,7 +618,7 @@ local function handleRockCollision(headX, headY, headCol, headRow, rockRevision)
 		end
 	end
 
-        for _, rock in ipairs(candidates or EMPTY_CANDIDATE_LIST) do
+	for _, rock in ipairs(candidates or EMPTY_CANDIDATE_LIST) do
 		local rockCenterX = rock and (rock.renderX or rock.x) or 0
 		local rockCenterY = rock and (rock.renderY or rock.y) or 0
 		local rockWidth = max(0, (rock and rock.w or SEGMENT_SIZE) - ROCK_COLLISION_INSET * 2)
@@ -676,10 +676,10 @@ local function handleRockCollision(headX, headY, headCol, headRow, rockRevision)
 end
 
 local function handleSawCollision(headX, headY)
-        local sawHit = Saws:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
-        if not sawHit then
-                return
-        end
+	local sawHit = Saws:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+	if not sawHit then
+		return
+	end
 
 	local shielded = Snake:consumeShield()
 	local survivedSaw = shielded
@@ -746,10 +746,10 @@ local function handleSawCollision(headX, headY)
 end
 
 local function handleLaserCollision(headX, headY)
-        local laserHit = Lasers:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
-        if not laserHit then
-                return
-        end
+	local laserHit = Lasers:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+	if not laserHit then
+		return
+	end
 
 	local shielded = Snake:consumeShield()
 	local survived = shielded
@@ -803,16 +803,16 @@ local function handleLaserCollision(headX, headY)
 		recordShieldEvent("laser")
 	end
 
-        return
+	return
 end
 
 local function handleDartCollision(headX, headY)
-        if not Darts or not Darts.checkCollision then
-                return
-        end
+	if not Darts or not Darts.checkCollision then
+		return
+	end
 
-        local dartHit = Darts:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
-        if not dartHit then
+	local dartHit = Darts:checkCollision(headX, headY, SEGMENT_SIZE, SEGMENT_SIZE)
+	if not dartHit then
 		return
 	end
 
@@ -951,26 +951,26 @@ function Movement:update(dt)
 			return state, stateCause, stateContext
 		end
 
-                if not hazardGraceActive and laserEmitterCount > 0 then
-                        local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
-                        if laserState and not developerGodMode then
-                                return laserState, laserCause, laserContext
-                        end
-                end
+		if not hazardGraceActive and laserEmitterCount > 0 then
+			local laserState, laserCause, laserContext = handleLaserCollision(headX, headY)
+			if laserState and not developerGodMode then
+				return laserState, laserCause, laserContext
+			end
+		end
 
-                if not hazardGraceActive and dartEmitterCount > 0 then
-                        local dartState, dartCause, dartContext = handleDartCollision(headX, headY)
-                        if dartState and not developerGodMode then
-                                return dartState, dartCause, dartContext
-                        end
-                end
+		if not hazardGraceActive and dartEmitterCount > 0 then
+			local dartState, dartCause, dartContext = handleDartCollision(headX, headY)
+			if dartState and not developerGodMode then
+				return dartState, dartCause, dartContext
+			end
+		end
 
-                if not hazardGraceActive and sawCount > 0 then
-                        local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
-                        if sawState and not developerGodMode then
-                                return sawState, sawCause, sawContext
-                        end
-                end
+		if not hazardGraceActive and sawCount > 0 then
+			local sawState, sawCause, sawContext = handleSawCollision(headX, headY)
+			if sawState and not developerGodMode then
+				return sawState, sawCause, sawContext
+			end
+		end
 
 		if Snake.checkLaserBodyCollision and not hazardGraceActive and laserEmitterCount > 0 then
 			Snake:checkLaserBodyCollision()

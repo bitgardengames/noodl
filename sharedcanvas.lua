@@ -31,14 +31,14 @@ local function updateDesiredSamples(samples)
 		end
 	end
 
-        if samples >= 2 then
-                desiredMSAASamples = samples
-                defaultCreationOptions.msaa = samples
-                canvasCreationOptions = defaultCreationOptions
-        else
-                desiredMSAASamples = 0
-                canvasCreationOptions = nil
-        end
+	if samples >= 2 then
+		desiredMSAASamples = samples
+		defaultCreationOptions.msaa = samples
+		canvasCreationOptions = defaultCreationOptions
+	else
+		desiredMSAASamples = 0
+		canvasCreationOptions = nil
+	end
 end
 
 local function normalizeOverrideSamples(samples)
@@ -160,12 +160,12 @@ function SharedCanvas.newCanvas(width, height, requestedSamples)
 	end
 
 	local creationOptions = nil
-        if usingDefaultSamples then
-                creationOptions = canvasCreationOptions
-        elseif targetSamples >= 2 then
-                temporaryOverrideOptions.msaa = targetSamples
-                creationOptions = temporaryOverrideOptions
-        end
+	if usingDefaultSamples then
+		creationOptions = canvasCreationOptions
+	elseif targetSamples >= 2 then
+		temporaryOverrideOptions.msaa = targetSamples
+		creationOptions = temporaryOverrideOptions
+	end
 
 	if creationOptions then
 		local ok, result = pcall(love.graphics.newCanvas, w, h, creationOptions)

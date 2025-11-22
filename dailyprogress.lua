@@ -60,16 +60,16 @@ local function serialize(value, indent)
 		for i = 1, #keys do
 			local key = keys[i]
 			local formattedKey
-            if type(key) == "string" and key:match("^[%a_][%w_]*$") then
-                -- plain identifier: totals = { ... }
-                formattedKey = key .. " = "
-            elseif type(key) == "number" then
-                -- numeric index: [1037124] = { ... }
-                formattedKey = string.format("[%d] = ", key)
-            else
-                -- everything else as a quoted string key
-                formattedKey = string.format("[%q] = ", key)
-            end
+			if type(key) == "string" and key:match("^[%a_][%w_]*$") then
+				-- plain identifier: totals = { ... }
+				formattedKey = key .. " = "
+			elseif type(key) == "number" then
+				-- numeric index: [1037124] = { ... }
+				formattedKey = string.format("[%d] = ", key)
+			else
+				-- everything else as a quoted string key
+				formattedKey = string.format("[%q] = ", key)
+			end
 
 			parts[#parts + 1] = string.rep(" ", childIndent) .. formattedKey .. serialize(value[key], childIndent) .. ",\n"
 		end

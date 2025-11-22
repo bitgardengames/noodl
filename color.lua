@@ -16,11 +16,11 @@ local function clamp01(value)
 end
 
 function Color.copy(color, options)
-        options = options or EMPTY_OPTIONS
-        local target = options.target or {}
-        local default = options.default or Color.black
-        local alphaOverride = options.alpha
-        local defaultAlpha = options.defaultAlpha
+	options = options or EMPTY_OPTIONS
+	local target = options.target or {}
+	local default = options.default or Color.black
+	local alphaOverride = options.alpha
+	local defaultAlpha = options.defaultAlpha
 
 	local source = color
 	if type(source) ~= "table" then
@@ -56,13 +56,13 @@ function Color.copyIfPresent(color, options)
 end
 
 function Color.lighten(color, amount, options)
-        options = options or EMPTY_OPTIONS
-        local target = options.target or {}
-        local default = options.default or Color.black
-        local defaultAlpha = options.defaultAlpha
-        local preserveAlpha = options.preserveAlpha or false
-        local alphaMin = options.alphaMin or 0.65
-        local alphaMax = options.alphaMax or 1
+	options = options or EMPTY_OPTIONS
+	local target = options.target or {}
+	local default = options.default or Color.black
+	local defaultAlpha = options.defaultAlpha
+	local preserveAlpha = options.preserveAlpha or false
+	local alphaMin = options.alphaMin or 0.65
+	local alphaMax = options.alphaMax or 1
 
 	local factor = clamp01(amount or 0.35)
 
@@ -95,13 +95,13 @@ function Color.lighten(color, amount, options)
 end
 
 function Color.darken(color, amount, options)
-        options = options or EMPTY_OPTIONS
-        local target = options.target or {}
-        local default = options.default or Color.black
-        local defaultAlpha = options.defaultAlpha
-        local preserveAlpha = options.preserveAlpha ~= false
-        local scaleAlpha = options.scaleAlpha or false
-        local scale = options.scale
+	options = options or EMPTY_OPTIONS
+	local target = options.target or {}
+	local default = options.default or Color.black
+	local defaultAlpha = options.defaultAlpha
+	local preserveAlpha = options.preserveAlpha ~= false
+	local scaleAlpha = options.scaleAlpha or false
+	local scale = options.scale
 
 	local factor = clamp01(amount or 0.35)
 	if scale == nil then
@@ -140,43 +140,43 @@ function Color.darken(color, amount, options)
 end
 
 function Color.withAlpha(color, alpha, options)
-        options = options or EMPTY_OPTIONS
-        local target = options.target or {}
-        local default = options.default or Color.black
-        local defaultAlpha = options.defaultAlpha
-        local alphaOverride = options.alpha
+	options = options or EMPTY_OPTIONS
+	local target = options.target or {}
+	local default = options.default or Color.black
+	local defaultAlpha = options.defaultAlpha
+	local alphaOverride = options.alpha
 
-        local source = color
-        if type(source) ~= "table" then
-                source = nil
-        end
+	local source = color
+	if type(source) ~= "table" then
+		source = nil
+	end
 
-        target[1] = (source and source[1]) or (default and default[1]) or 0
-        target[2] = (source and source[2]) or (default and default[2]) or 0
-        target[3] = (source and source[3]) or (default and default[3]) or 0
+	target[1] = (source and source[1]) or (default and default[1]) or 0
+	target[2] = (source and source[2]) or (default and default[2]) or 0
+	target[3] = (source and source[3]) or (default and default[3]) or 0
 
-        local baseAlpha = source and source[4]
-        if baseAlpha == nil then
-                if alphaOverride ~= nil then
-                        baseAlpha = alphaOverride
-                elseif defaultAlpha ~= nil then
-                        baseAlpha = defaultAlpha
-                elseif default and default[4] ~= nil then
-                        baseAlpha = default[4]
-                else
-                        baseAlpha = 1
-                end
-        end
+	local baseAlpha = source and source[4]
+	if baseAlpha == nil then
+		if alphaOverride ~= nil then
+			baseAlpha = alphaOverride
+		elseif defaultAlpha ~= nil then
+			baseAlpha = defaultAlpha
+		elseif default and default[4] ~= nil then
+			baseAlpha = default[4]
+		else
+			baseAlpha = 1
+		end
+	end
 
-        target[4] = (baseAlpha or 1) * (alpha or 1)
-        return target
+	target[4] = (baseAlpha or 1) * (alpha or 1)
+	return target
 end
 
 function Color.desaturate(color, amount, options)
-        options = options or EMPTY_OPTIONS
-        local target = options.target or {}
-        local default = options.default or Color.white
-        local defaultAlpha = options.defaultAlpha
+	options = options or EMPTY_OPTIONS
+	local target = options.target or {}
+	local default = options.default or Color.white
+	local defaultAlpha = options.defaultAlpha
 	local t = type(color) == "table" and color or default
 
 	local r = (t and t[1]) or 1
@@ -218,10 +218,10 @@ function Color.clampComponent(value)
 end
 
 function Color.scale(color, factor, options)
-        options = options or EMPTY_OPTIONS
-        local target = options.target or {}
-        local default = options.default or Color.white
-        local defaultAlpha = options.defaultAlpha
+	options = options or EMPTY_OPTIONS
+	local target = options.target or {}
+	local default = options.default or Color.white
+	local defaultAlpha = options.defaultAlpha
 
 	local t = type(color) == "table" and color or default
 	local scale = factor or 1

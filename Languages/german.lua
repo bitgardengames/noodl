@@ -400,13 +400,13 @@ local german = {
 					name = "Frische Ware",
 					description = "Wirf alle aktuellen Shop-Karten ab und fülle sie mit neuen auf.",
 				},
-trade_accord = {
-name = "Handelsabkommen",
-description = "Jeder Shop-Platz reduziert die Fels-Spawnchance um 3%.",
-},
-tectonic_resolve = {
-name = "Tektonische Entschlossenheit",
-description = "Die Fels-Spawnchance sinkt um 15%. Jede Frucht hat eine Chance von 20%, den nächstgelegenen Felsen zu zerschmettern.",
+				trade_accord = {
+					name = "Handelsabkommen",
+					description = "Jeder Shop-Platz reduziert die Fels-Spawnchance um 3%.",
+				},
+				tectonic_resolve = {
+					name = "Tektonische Entschlossenheit",
+					description = "Die Fels-Spawnchance sinkt um 15%. Jede Frucht hat eine Chance von 20%, den nächstgelegenen Felsen zu zerschmettern.",
 				},
 				phoenix_echo = {
 					name = "Phönix-Echo",
