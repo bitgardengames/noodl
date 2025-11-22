@@ -21,7 +21,6 @@ local layerNeedsStencilThisFrame = {}
 local layerPresent = {}
 local layerOrder = {}
 local queuedDraws = {}
-local layerOptions = {}
 local canvasWidth = 0
 local canvasHeight = 0
 
@@ -37,77 +36,20 @@ local function clearMap(t)
 	end
 end
 
-local function sanitizeLayerSamples(samples)
-	if samples == nil then
-		return nil
-	end
-
-	local value = tonumber(samples)
-	if not value then
-		return 0
-	end
-
-	value = floor(value)
-	if value < 0 then
-		value = 0
-	end
-
-	if value < 2 then
-		return 0
-	end
-
-	return value
-end
-
-local function ensureLayerOptions(name)
-	local options = layerOptions[name]
-	if not options then
-		options = {}
-		layerOptions[name] = options
-	end
-
-	if options.msaaSamples ~= nil then
-		options.msaaSamples = sanitizeLayerSamples(options.msaaSamples)
-	end
-
-	return options
-end
-
-local function getLayerMSAASamples(name)
-	local options = ensureLayerOptions(name)
-	local samples = options.msaaSamples
-	if samples == nil then
-		return nil
-	end
-
-	return sanitizeLayerSamples(samples)
-end
-
-for _, name in ipairs(DEFAULT_LAYER_ORDER) do
-	ensureLayerOptions(name)
-end
-
 local function ensureCanvas(name, width, height)
-	local requestedSamples = getLayerMSAASamples(name)
-	local canvas, replaced, actualSamples = SharedCanvas.ensureCanvas(canvases[name], width, height, requestedSamples)
-	if canvas ~= canvases[name] then
-		canvases[name] = canvas
-		replaced = true
-	end
+        local canvas, replaced = SharedCanvas.ensureCanvas(canvases[name], width, height)
+        if canvas ~= canvases[name] then
+                canvases[name] = canvas
+                replaced = true
+        end
 
-	local options = layerOptions[name]
-	if options then
-		options.activeMSAASamples = actualSamples or 0
-	end
-
-	return canvas, replaced
+        return canvas, replaced
 end
 
 local function ensureLayerTables(name)
-	ensureLayerOptions(name)
-	if not layerPresent[name] then
-		layerPresent[name] = true
-		layerOrder[#layerOrder + 1] = name
+        if not layerPresent[name] then
+                layerPresent[name] = true
+                layerOrder[#layerOrder + 1] = name
 	end
 
 	if layerClearedThisFrame[name] == nil then
@@ -278,48 +220,6 @@ local function drawLayers(offsetX, offsetY)
 			love.graphics.draw(canvas, offsetX, offsetY)
 		end
 	end
-end
-
-function RenderLayers:setLayerOptions(layerName, options)
-	if not layerName or type(options) ~= "table" then
-		return
-	end
-
-	local layerOption = ensureLayerOptions(layerName)
-	if options.msaaSamples ~= nil then
-		layerOption.msaaSamples = sanitizeLayerSamples(options.msaaSamples)
-	end
-end
-
-function RenderLayers:setLayerMSAASamples(layerName, samples)
-	if not layerName then
-		return
-	end
-
-	local layerOption = ensureLayerOptions(layerName)
-	layerOption.msaaSamples = sanitizeLayerSamples(samples)
-end
-
-function RenderLayers:getLayerOptions(layerName)
-	return ensureLayerOptions(layerName)
-end
-
-function RenderLayers:getLayerMSAASamples(layerName)
-	local samples = getLayerMSAASamples(layerName)
-	if samples == nil then
-		return SharedCanvas.getDesiredSamples()
-	end
-
-	return samples
-end
-
-function RenderLayers:getActiveLayerMSAASamples(layerName)
-	local options = layerOptions[layerName]
-	if options and type(options.activeMSAASamples) == "number" then
-		return options.activeMSAASamples
-	end
-
-	return 0
 end
 
 function RenderLayers:present(offsetX, offsetY)
