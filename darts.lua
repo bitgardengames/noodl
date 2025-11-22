@@ -362,9 +362,9 @@ local function enterFiring(emitter)
 	emitter.dartY = emitter.startY
 	emitter.shotRect = nil
 	emitter.impactTimer = IMPACT_FLASH_DURATION
-	if Audio and Audio.playSound then
-		Audio:playSound("laser_charge")
-	end
+        if Audio and Audio.playSound then
+                Audio:playSound("dart_fire")
+        end
 end
 
 local function updateShotRect(emitter)
