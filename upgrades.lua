@@ -2064,62 +2064,55 @@ pool = {
 	)
 		end
 
-		local grantedCard = {upgrade = chosenUpgrade}
-		Upgrades:acquire(grantedCard, context
-	)
+                local grantedCard = {upgrade = chosenUpgrade}
+                Upgrades:acquire(grantedCard, context
+        )
 
-		local decorated = decorateCard and decorateCard(chosenUpgrade
-	)
-		if card and decorated then
-		card.id = decorated.id
-		card.upgrade = chosenUpgrade
-		card.name = decorated.name
-		card.desc = decorated.desc
-		card.rarity = decorated.rarity
-		card.rarityColor = decorated.rarityColor
-		card.rarityLabel = decorated.rarityLabel
-		card.restockShop = decorated.restockShop
-		elseif card then
-		card.upgrade = chosenUpgrade
-		card.rarity = chosenUpgrade.rarity
-		card.restockShop = chosenUpgrade.restockShop
-		end
-		local revealInfo = {
-		rarity = chosenUpgrade.rarity,
-		revealDelay = 1.15,
-		revealApproachDuration = 0.55,
-		revealHoldDuration = 0.18,
-		revealShakeDuration = 0.5,
-		revealFlashInDuration = 0.22,
-		revealFlashHoldDuration = 0.14,
-		revealFlashOutDuration = 0.48,
-		revealShakeMagnitude = 9,
-		revealShakeFrequency = 26,
-		revealApplyThreshold = 0.6,
-		revealPostPauseDuration = 0.65,
-		revealAnimation = "wildcard",
-		}
+                local decorated = decorateCard and decorateCard(chosenUpgrade
+        )
 
-		if decorated then
-		revealInfo.rarityColor = decorated.rarityColor
-		revealInfo.rarityLabel = decorated.rarityLabel
-		end
+                if card then
+                card.pendingUpgrade = chosenUpgrade
+                end
 
-		if chosenUpgrade.nameKey then
-		revealInfo.nameKey = chosenUpgrade.nameKey
-		elseif decorated then
-		revealInfo.name = decorated.name
-		end
+                local revealInfo = {
+                rarity = chosenUpgrade.rarity,
+                revealDelay = 1.15,
+                revealApproachDuration = 0.55,
+                revealHoldDuration = 0.18,
+                revealShakeDuration = 0.5,
+                revealFlashInDuration = 0.22,
+                revealFlashHoldDuration = 0.14,
+                revealFlashOutDuration = 0.48,
+                revealShakeMagnitude = 9,
+                revealShakeFrequency = 26,
+                revealApplyThreshold = 0.6,
+                revealPostPauseDuration = 0.65,
+                revealAnimation = "wildcard",
+                upgrade = chosenUpgrade,
+                restockShop = decorated and decorated.restockShop or chosenUpgrade.restockShop,
+                }
 
-		if chosenUpgrade.descKey then
-		revealInfo.descKey = chosenUpgrade.descKey
-		revealInfo.descReplacements = getUpgradeDescriptionReplacements(chosenUpgrade.id
-	)
-		elseif decorated then
-		revealInfo.desc = decorated.desc
-		end
+                if decorated then
+                revealInfo.rarityColor = decorated.rarityColor
+                revealInfo.rarityLabel = decorated.rarityLabel
+                end
 
-		revealInfo.upgradeId = chosenUpgrade.id
+                if chosenUpgrade.nameKey then
+                revealInfo.nameKey = chosenUpgrade.nameKey
+                elseif decorated then
+                revealInfo.name = decorated.name
+                end
+
+                if chosenUpgrade.descKey then
+                revealInfo.descKey = chosenUpgrade.descKey
+                revealInfo.descReplacements = getUpgradeDescriptionReplacements(chosenUpgrade.id
+        )
+                elseif decorated then
+                revealInfo.desc = decorated.desc
+                end
+
+                revealInfo.upgradeId = chosenUpgrade.id
 
 		return revealInfo
 		end,
@@ -3175,6 +3168,21 @@ local function applyRevealToCard(card, revealInfo)
 	if revealInfo.rarityLabel then
 		card.rarityLabel = revealInfo.rarityLabel
 	end
+
+	if revealInfo.upgradeId then
+		card.id = revealInfo.upgradeId
+	end
+
+	if revealInfo.upgrade then
+		card.upgrade = revealInfo.upgrade
+	end
+
+	if revealInfo.restockShop ~= nil then
+		card.restockShop = revealInfo.restockShop
+	end
+
+	card.pendingUpgrade = nil
+	card._badgeStyle = nil
 
 	card.pendingRevealInfo = nil
 	card.revealed = true
