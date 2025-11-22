@@ -1570,9 +1570,9 @@ function UI:setCombo(count, timer, duration)
 
         if combo.count >= 2 then
                 if combo.count > previous then
-                        combo.pop = 1.0 + min(combo.count, 10) * 0.03
-                        combo.shakeTimer = combo.shakeDuration
-                        combo.shakeMagnitude = 6 + min(combo.count, 10) * 0.6
+        combo.pop = 1.0 + min(combo.count, 10) * 0.03
+        combo.shakeTimer = combo.shakeDuration
+        combo.shakeMagnitude = 5 + min(combo.count, 10) * 0.5
                 end
 
         else
@@ -1782,7 +1782,39 @@ local function drawComboIndicator(self)
                 love.graphics.setColor(0, 0, 0, 0.25)
                 love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth, barHeight, 6, 6)
 
-                love.graphics.setColor(accent[1], accent[2], accent[3], 0.95)
+                local function lerp(a, b, t)
+                        return a + (b - a) * t
+                end
+
+                local function lerpColor(a, b, t)
+                        return {
+                                lerp(a[1], b[1], t),
+                                lerp(a[2], b[2], t),
+                                lerp(a[3], b[3], t),
+                                lerp(a[4] or 1, b[4] or 1, t),
+                        }
+                end
+
+                local function getComboBarColor(value)
+                        local colors = {
+                                {0.05, 0.85, 0.3, 0.95},
+                                {0.95, 0.85, 0.0, 0.95},
+                                {1.0, 0.55, 0.0, 0.95},
+                                {0.95, 0.2, 0.15, 0.95},
+                        }
+
+                        if value <= 0.33 then
+                                return lerpColor(colors[1], colors[2], clamp01(value / 0.33))
+                        elseif value <= 0.66 then
+                                return lerpColor(colors[2], colors[3], clamp01((value - 0.33) / 0.33))
+                        else
+                                return lerpColor(colors[3], colors[4], clamp01((value - 0.66) / 0.34))
+                        end
+                end
+
+                local barColor = getComboBarColor(progress)
+
+                love.graphics.setColor(barColor)
                 love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth * progress, barHeight, 6, 6)
         end
 
