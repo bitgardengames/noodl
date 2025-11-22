@@ -14,8 +14,6 @@ local LOGO_SETTLE_DURATION = 0.35
 local LOGO_FADE_IN_DURATION = 0.6
 local LOGO_OVERSHOOT_SCALE = 1.12
 local LOGO_START_SCALE = 0.2
-local LOGO_WIGGLE_FREQUENCY = 2.2
-local LOGO_BOB_HEIGHT = 12
 
 local SplashScreen = {
         transitionDurationIn = 0.25,
@@ -53,6 +51,9 @@ function SplashScreen:enter()
         self.timer = 0
         self.logoAudioPlayed = false
         ensureLogo()
+
+        Audio:playSound("intro")
+        self.logoAudioPlayed = true
 end
 
 function SplashScreen:leave()
@@ -85,9 +86,7 @@ local function getAnimatedLogoScale(timer)
         local settleProgress = min((timer - LOGO_POP_DURATION) / LOGO_SETTLE_DURATION, 1)
         local settleScale = LOGO_OVERSHOOT_SCALE - (LOGO_OVERSHOOT_SCALE - 1) * Easing.easeOutCubic(settleProgress)
 
-        local wiggle = 1 + 0.02 * math.sin(timer * LOGO_WIGGLE_FREQUENCY * math.pi * 2)
-
-        return settleScale * wiggle
+        return settleScale
 end
 
 local function getLogoAlpha(timer)
@@ -125,13 +124,10 @@ local function drawLogo(image, width, height, timer)
                 centerY = 0
         end
 
-        local bobOffset = LOGO_BOB_HEIGHT * 0.5 * (1 - math.cos(timer * LOGO_WIGGLE_FREQUENCY * math.pi))
-        local rotation = 0.05 * math.sin(timer * (LOGO_WIGGLE_FREQUENCY * 0.5) * math.pi * 2)
-
         local alpha = getLogoAlpha(timer)
 
         lg.setColor(1, 1, 1, alpha)
-        lg.draw(image, centerX, centerY + bobOffset, rotation, finalScale, finalScale, imgWidth * 0.5, imgHeight * 0.5)
+        lg.draw(image, centerX, centerY, 0, finalScale, finalScale, imgWidth * 0.5, imgHeight * 0.5)
 end
 
 function SplashScreen:update(dt)
@@ -141,14 +137,9 @@ function SplashScreen:update(dt)
 
         self.timer = self.timer + (dt or 0)
 
-        if not self.logoAudioPlayed and self.timer >= LOGO_FADE_IN_DURATION then
-                Audio:playSound("intro")
-                self.logoAudioPlayed = true
-        end
-
         if self.timer >= self.displayDuration then
                 return "menu"
-	end
+        end
 end
 
 local function drawFadeOverlay(timer, duration, width, height)
