@@ -10,6 +10,7 @@ local FADE_IN_DURATION = 0.2
 local FADE_OUT_DURATION = 0.25
 local DEFAULT_FADE_DURATION = 1.25
 local LOGO_FADE_IN_DURATION = 0.6
+local LOGO_ANIMATION_DELAY = 0.25
 
 local SplashScreen = {
         transitionDurationIn = 0.25,
@@ -72,7 +73,12 @@ local function getLogoAlpha(timer)
                 return 0
         end
 
-        local progress = min(timer / LOGO_FADE_IN_DURATION, 1)
+        local adjustedTimer = timer - LOGO_ANIMATION_DELAY
+        if adjustedTimer <= 0 then
+                return 0
+        end
+
+        local progress = min(adjustedTimer / LOGO_FADE_IN_DURATION, 1)
 
         return Easing.easeOutCubic(progress)
 end
