@@ -213,49 +213,50 @@ end
 local MYSTERY_REVEAL_EXTRA_HOLD = 1.6
 local MYSTERY_REVEAL_EXTRA_POST_PAUSE = 1.6
 
-local function updateMysteryReveal(self, card, state, dt)
-	if not dt or dt <= 0 then return end
-	if not card or not state then return end
+local function updateCardReveal(self, card, state, dt)
+        if not dt or dt <= 0 then return end
+        if not card or not state then return end
 
-	local upgrade = card.upgrade
-	if not upgrade or upgrade.id ~= "mystery_card" then
-		return
-	end
+        local pending = card.pendingRevealInfo
+        local reveal = state.reveal
 
-	local pending = card.pendingRevealInfo
-	local reveal = state.mysteryReveal
+        if not pending and not reveal then
+                return
+        end
 
-	if not pending and not reveal then
-		return
-	end
-
-	if pending and not reveal then
-		reveal = {
-			phase = "approach",
-			timer = 0,
-			white = 0,
-			shakeOffset = 0,
-			shakeRotation = 0,
-			applied = false,
-			info = pending,
-			approachDuration = pending.revealApproachDuration or pending.revealDelay or 0.55,
-			holdDuration = pending.revealHoldDuration or 0,
-			shakeDuration = pending.revealShakeDuration or 0.5,
-			flashInDuration = pending.revealFlashInDuration or 0.22,
-			flashOutDuration = pending.revealFlashOutDuration or 0.45,
-			flashHoldDuration = pending.revealFlashHoldDuration or 0,
-			shakeMagnitude = pending.revealShakeMagnitude or 9,
-			shakeFrequency = pending.revealShakeFrequency or 26,
-			applyThreshold = pending.revealApplyThreshold or 0.6,
-			postPauseDuration = (pending.revealPostPauseDuration or pending.revealPostPauseDelay or 0) + MYSTERY_REVEAL_EXTRA_POST_PAUSE,
-			postPauseTimer = 0,
-			focusBoost = 0,
-		}
-		state.mysteryReveal = reveal
-		state.revealHoldTimer = nil
-	else
-		reveal = state.mysteryReveal
-	end
+        if pending and not reveal then
+                local animation = pending.revealAnimation or pending.animation or (card.upgrade and card.upgrade.id)
+                local useMysteryTiming = animation == "mystery_card" or animation == "mystery"
+                local extraHold = pending.revealExtraHoldDuration or (useMysteryTiming and MYSTERY_REVEAL_EXTRA_HOLD or 0)
+                local extraPostPause = pending.revealExtraPostPause or (useMysteryTiming and MYSTERY_REVEAL_EXTRA_POST_PAUSE or 0)
+                reveal = {
+                        phase = "approach",
+                        timer = 0,
+                        white = 0,
+                        shakeOffset = 0,
+                        shakeRotation = 0,
+                        applied = false,
+                        info = pending,
+                        animation = animation,
+                        extraHoldDuration = extraHold,
+                        approachDuration = pending.revealApproachDuration or pending.revealDelay or 0.55,
+                        holdDuration = pending.revealHoldDuration or 0,
+                        shakeDuration = pending.revealShakeDuration or 0.5,
+                        flashInDuration = pending.revealFlashInDuration or 0.22,
+                        flashOutDuration = pending.revealFlashOutDuration or 0.45,
+                        flashHoldDuration = pending.revealFlashHoldDuration or 0,
+                        shakeMagnitude = pending.revealShakeMagnitude or 9,
+                        shakeFrequency = pending.revealShakeFrequency or 26,
+                        applyThreshold = pending.revealApplyThreshold or 0.6,
+                        postPauseDuration = (pending.revealPostPauseDuration or pending.revealPostPauseDelay or 0) + extraPostPause,
+                        postPauseTimer = 0,
+                        focusBoost = 0,
+                }
+                state.reveal = reveal
+                state.revealHoldTimer = nil
+        else
+                reveal = state.reveal
+        end
 
 	if not reveal then return end
 
@@ -531,8 +532,8 @@ function Shop:refreshCards(options)
 		local badgeStyle = getBadgeStyleForCard(card)
 		card._badgeStyle = badgeStyle
 
-		self.cardStates[i] = {
-			progress = 0,
+self.cardStates[i] = {
+progress = 0,
 			delay = initialDelay + (i - 1) * 0.08,
 			selection = 0,
 			selectionClock = 0,
@@ -547,7 +548,7 @@ function Shop:refreshCards(options)
 			focusClock = 0,
 			focusBounce = 0,
 			wasFocused = false,
-			mysteryReveal = nil,
+reveal = nil,
 			revealHoldTimer = nil,
 			backgroundKey = backgroundKey,
 		}
@@ -736,10 +737,8 @@ function Shop:update(dt)
 		state.focusBounce = max(0, (state.focusBounce or 0) - dt * 2.6)
 		state.wasFocused = isFocused
 
-		if card and card.upgrade and card.upgrade.id == "mystery_card" then
-			updateMysteryReveal(self, card, state, dt)
-		end
-	end
+updateCardReveal(self, card, state, dt)
+end
 
 	if self.selected then
 		self.selectionTimer = (self.selectionTimer or 0) + dt
@@ -747,39 +746,40 @@ function Shop:update(dt)
 			local hold = self.selectionHoldDuration or 0
 			local state = self.selectedIndex and self.cardStates and self.cardStates[self.selectedIndex] or nil
 			local flashDone = not (state and state.selectionFlash)
-			local revealDone = true
-			if self.selected and self.selected.upgrade and self.selected.upgrade.id == "mystery_card" then
-				local revealState = state and state.mysteryReveal or nil
-				if self.selected.pendingRevealInfo then
-					revealDone = false
-					if state then
-						state.revealHoldTimer = nil
-					end
-				elseif revealState then
-					local phase = revealState.phase
-					local overlayAlpha = revealState.white or 0
-					if phase and phase ~= "done" then
-						revealDone = false
-						if state then
-							state.revealHoldTimer = nil
-						end
-					elseif overlayAlpha > 0.001 then
-						revealDone = false
-						if state then
-							state.revealHoldTimer = nil
-						end
-					else
-						if state then
-							state.revealHoldTimer = (state.revealHoldTimer or 0) + dt
-							if state.revealHoldTimer < MYSTERY_REVEAL_EXTRA_HOLD then
-								revealDone = false
-							end
-						end
-					end
-				elseif state then
-					state.revealHoldTimer = nil
-				end
-			end
+local revealDone = true
+local revealState = state and state.reveal or nil
+if self.selected and (self.selected.pendingRevealInfo or revealState) then
+if self.selected.pendingRevealInfo then
+revealDone = false
+if state then
+state.revealHoldTimer = nil
+end
+elseif revealState then
+local phase = revealState.phase
+local overlayAlpha = revealState.white or 0
+if phase and phase ~= "done" then
+revealDone = false
+if state then
+state.revealHoldTimer = nil
+end
+elseif overlayAlpha > 0.001 then
+revealDone = false
+if state then
+state.revealHoldTimer = nil
+end
+else
+if state then
+local extraHold = revealState.extraHoldDuration or 0
+state.revealHoldTimer = (state.revealHoldTimer or 0) + dt
+if state.revealHoldTimer < extraHold then
+revealDone = false
+end
+end
+end
+elseif state then
+state.revealHoldTimer = nil
+end
+end
 			if self.selectionTimer >= hold and flashDone and revealDone then
 				self.selectionComplete = true
 				Audio:playSound("shop_purchase")
@@ -1648,7 +1648,7 @@ local function drawCard(card, x, y, w, h, hovered, index, animationState, isSele
 		drawBadge(setColor, badgeStyle, badgeCenterX, badgeCenterY, badgeSize)
 	end
 
-	local revealState = animationState and animationState.mysteryReveal or nil
+local revealState = animationState and animationState.reveal or nil
 	if revealState then
 		local overlayAlpha = revealState.white or 0
 		if overlayAlpha > 0 then
@@ -1781,7 +1781,7 @@ function Shop:draw(screenW, screenH)
 		local xOffset = 0
 		local extraRotation = 0
 		local state = self.cardStates and self.cardStates[i]
-		local revealState = state and state.mysteryReveal or nil
+local revealState = state and state.reveal or nil
 		local focusValue = state and state.focus or 0
 		local fadeOut = state and state.fadeOut or 0
 		if state then
