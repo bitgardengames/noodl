@@ -1,5 +1,6 @@
 local Screen = require("screen")
 local Audio = require("audio")
+local Easing = require("easing")
 
 local lg = love.graphics
 local min = math.min
@@ -10,6 +11,9 @@ local FADE_OUT_DURATION = 0.25
 local DEFAULT_FADE_DURATION = 1.25
 local LOGO_POP_DURATION = 0.65
 local LOGO_SETTLE_DURATION = 0.35
+local LOGO_FADE_IN_DURATION = 0.6
+local LOGO_OVERSHOOT_SCALE = 1.12
+local LOGO_START_SCALE = 0.2
 local LOGO_WIGGLE_FREQUENCY = 2.2
 local LOGO_BOB_HEIGHT = 12
 
@@ -47,12 +51,13 @@ end
 
 function SplashScreen:enter()
         self.timer = 0
+        self.logoAudioPlayed = false
         ensureLogo()
-        Audio:playSound("intro")
 end
 
 function SplashScreen:leave()
-	self.timer = 0
+        self.timer = 0
+        self.logoAudioPlayed = false
 end
 
 local function drawBackground(color, width, height)
@@ -71,18 +76,26 @@ local function getAnimatedLogoScale(timer)
         end
 
         local popProgress = min(timer / LOGO_POP_DURATION, 1)
-        local popScale = 0.6 + 0.6 * popProgress
+        local popScale = LOGO_START_SCALE + (LOGO_OVERSHOOT_SCALE - LOGO_START_SCALE) * Easing.easeOutBack(popProgress)
 
         if timer < LOGO_POP_DURATION then
                 return popScale
         end
 
         local settleProgress = min((timer - LOGO_POP_DURATION) / LOGO_SETTLE_DURATION, 1)
-        local settleScale = 1.2 - 0.2 * settleProgress
+        local settleScale = LOGO_OVERSHOOT_SCALE - (LOGO_OVERSHOOT_SCALE - 1) * Easing.easeOutCubic(settleProgress)
 
         local wiggle = 1 + 0.02 * math.sin(timer * LOGO_WIGGLE_FREQUENCY * math.pi * 2)
 
         return settleScale * wiggle
+end
+
+local function getLogoAlpha(timer)
+        if not timer then
+                return 0
+        end
+
+        return min(timer / LOGO_FADE_IN_DURATION, 1)
 end
 
 local function drawLogo(image, width, height, timer)
@@ -115,19 +128,26 @@ local function drawLogo(image, width, height, timer)
         local bobOffset = LOGO_BOB_HEIGHT * 0.5 * (1 - math.cos(timer * LOGO_WIGGLE_FREQUENCY * math.pi))
         local rotation = 0.05 * math.sin(timer * (LOGO_WIGGLE_FREQUENCY * 0.5) * math.pi * 2)
 
-        lg.setColor(1, 1, 1, 1)
+        local alpha = getLogoAlpha(timer)
+
+        lg.setColor(1, 1, 1, alpha)
         lg.draw(image, centerX, centerY + bobOffset, rotation, finalScale, finalScale, imgWidth * 0.5, imgHeight * 0.5)
 end
 
 function SplashScreen:update(dt)
-	if not self.timer then
-		self.timer = 0
-	end
+        if not self.timer then
+                self.timer = 0
+        end
 
-	self.timer = self.timer + (dt or 0)
+        self.timer = self.timer + (dt or 0)
 
-	if self.timer >= self.displayDuration then
-		return "menu"
+        if not self.logoAudioPlayed and self.timer >= LOGO_FADE_IN_DURATION then
+                Audio:playSound("intro")
+                self.logoAudioPlayed = true
+        end
+
+        if self.timer >= self.displayDuration then
+                return "menu"
 	end
 end
 
