@@ -1211,67 +1211,14 @@ local function drawStormchaserCurrent(trail, SEGMENT_SIZE, data)
 			love.graphics.setLineWidth(2.4)
 			love.graphics.circle("line", hx, hy, SEGMENT_SIZE * (1.4 + 0.32 * intensity))
 		end
-	end
-
-	love.graphics.pop()
 end
 
-
-local function drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, data)
-	if not (trail and data) then return end
-	if #trail < 2 then return end
-
-	local intensity = max(0, data.intensity or 0)
-	if intensity <= 0.01 then return end
-
-	local stacks = max(1, data.stacks or 1)
-	local pulse = data.pulse or 0
-	local stackFactor = min(stacks, 3)
-	local baseRadius = SEGMENT_SIZE * (0.32 + 0.08 * stackFactor)
-	local orbCount = min(28, (#trail - 1) * 2)
-
-	love.graphics.push("all")
-	love.graphics.setBlendMode("add")
-
-	local segmentVectors = buildSegmentVectors(trail)
-
-	for i = 1, orbCount do
-		local progress = (i - 0.5) / orbCount
-		local idxFloat = 1 + progress * max(#trail - 1, 1)
-		local index = floor(idxFloat)
-		local frac = idxFloat - index
-		local nextIndex = min(#trail, index + 1)
-		local px, py, nx, ny, dirX, dirY, perpX, perpY, length = resolveSegmentSpan(trail, segmentVectors, index, nextIndex)
-		if px and py and nx and ny then
-			if not dirX or not dirY or length < 1e-4 then
-				dirX, dirY = 0, 1
-				perpX, perpY = -1, 0
-			elseif not (perpX and perpY) then
-				perpX, perpY = -dirY, dirX
-			end
-			local x = px + (nx - px) * frac
-			local y = py + (ny - py) * frac
-			local swirl = pulse * 1.4 + progress * pi * 4
-			local offset = sin(swirl) * baseRadius * (0.52 + intensity * 0.4)
-			local drift = cos(swirl * 0.8) * baseRadius * 0.18
-			local ax = x + perpX * offset + dirX * drift
-			local ay = y + perpY * offset + dirY * drift
-			local fade = 1 - progress * 0.6
-			local orbRadius = SEGMENT_SIZE * (0.16 + 0.12 * intensity * fade)
-
-			love.graphics.setColor(0.32, 0.2, 0.52, 0.24 * intensity * fade)
-			love.graphics.circle("fill", ax, ay, orbRadius * 1.4)
-			love.graphics.setColor(0.68, 0.56, 0.94, 0.18 * intensity * fade)
-			love.graphics.circle("line", ax, ay, orbRadius * 1.9)
-		end
-	end
-
-	love.graphics.pop()
+love.graphics.pop()
 end
 
 local function drawPhoenixEchoTrail(trail, SEGMENT_SIZE, data)
-	if not (trail and data) then return end
-	if #trail < 2 then return end
+if not (trail and data) then return end
+if #trail < 2 then return end
 
 	local intensity = max(0, data.intensity or 0)
 	local charges = max(0, data.charges or 0)
@@ -1947,13 +1894,9 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		)
 			end
 
-			if upgradeVisuals and upgradeVisuals.abyssalCatalyst then
-			drawAbyssalCatalystVeil(trail, SEGMENT_SIZE, upgradeVisuals.abyssalCatalyst
-		)
-			end
 
-			if upgradeVisuals and upgradeVisuals.phoenixEcho then
-			drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho
+if upgradeVisuals and upgradeVisuals.phoenixEcho then
+drawPhoenixEchoTrail(trail, SEGMENT_SIZE, upgradeVisuals.phoenixEcho
 		)
 			end
 			end

@@ -1048,96 +1048,6 @@ local function drawResonantShell(effect, progress)
 	love.graphics.setLineWidth(1)
 end
 
-local function drawAbyssalCatalyst(effect, progress)
-	local x, y = effect.x, effect.y
-	local innerRadius = effect.innerRadius or 12
-	local outerRadius = effect.outerRadius or 44
-	local coreColor = effect.variantColor or effect.color or {0.52, 0.48, 0.92, 1}
-	local accentColor = effect.variantSecondaryColor or {0.72, 0.66, 0.98, 0.9}
-	local sparkColor = effect.variantTertiaryColor or {1.0, 0.84, 1.0, 0.82}
-
-	local coreAlpha = (coreColor[4] or 1) * clamp01(1.1 - progress * 1.2)
-	if coreAlpha <= 0 then
-		return
-	end
-
-
-	if effect.addBlend then
-		love.graphics.setBlendMode("add")
-	end
-
-	local vortexRadius = outerRadius * (0.34 + 0.42 * (1 - progress))
-	love.graphics.setColor(coreColor[1], coreColor[2], coreColor[3], coreAlpha * 0.85)
-	love.graphics.circle("fill", x, y, vortexRadius, 40)
-
-	local rimRadius = vortexRadius * (1.2 + 0.3 * sin(progress * pi * 3.6))
-	love.graphics.setLineWidth(innerRadius * 0.26)
-	love.graphics.setColor(coreColor[1], coreColor[2], coreColor[3], coreAlpha * 0.6)
-	love.graphics.circle("line", x, y, rimRadius, 40)
-
-	local shardAlphaBase = (accentColor[4] or 1) * clamp01(1.05 - progress * 0.95) * coreAlpha
-	local shardCount = (effect.variantData and effect.variantData.shards) or 5
-	for index = 1, shardCount do
-		local angle = (effect.rotation or 0) + index * (pi * 2 / shardCount) + progress * pi * 1.8
-		local wobble = sin(progress * pi * (4 + index * 0.35)) * 0.3
-		local startRadius = innerRadius * (0.4 + 0.18 * sin(progress * pi * 6 + index))
-		local endRadius = outerRadius * (0.65 + 0.2 * sin(progress * pi * 3.2 + index))
-		local width = innerRadius * (0.3 + 0.1 * cos(progress * pi * 4.6 + index))
-		local dirX, dirY = cos(angle), sin(angle)
-		local perpX, perpY = -dirY, dirX
-
-		local baseX = x + dirX * startRadius
-		local baseY = y + dirY * startRadius
-		local tipX = x + dirX * endRadius + perpX * width * wobble
-		local tipY = y + dirY * endRadius + perpY * width * wobble
-		local leftX = baseX + perpX * width
-		local leftY = baseY + perpY * width
-		local rightX = baseX - perpX * width
-		local rightY = baseY - perpY * width
-
-		love.graphics.setColor(
-			accentColor[1],
-			accentColor[2],
-			accentColor[3],
-			shardAlphaBase * (0.8 + 0.2 * (index % 2
-		)
-		)
-		)
-		love.graphics.polygon("fill", baseX, baseY, leftX, leftY, tipX, tipY, rightX, rightY)
-
-		love.graphics.setLineWidth(innerRadius * 0.12)
-		love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], shardAlphaBase * 0.9)
-		love.graphics.polygon("line", baseX, baseY, leftX, leftY, tipX, tipY, rightX, rightY)
-	end
-
-	local spiralAlpha = (sparkColor[4] or 1) * clamp01(1 - progress * 1.1) * coreAlpha
-	if spiralAlpha > 0 then
-		local orbitCount = shardCount * 2
-		for index = 1, orbitCount do
-			local t = index / orbitCount
-			local angle = (effect.rotation or 0) + progress * pi * 3 + t * pi * 2
-			local radius = innerRadius * (0.8 + 0.5 * progress) + (outerRadius - innerRadius) * t * 0.45
-			radius = radius + sin(progress * pi * 5 + index) * innerRadius * 0.12
-			local size = innerRadius * (0.16 + 0.08 * t)
-			love.graphics.setColor(
-				sparkColor[1],
-				sparkColor[2],
-				sparkColor[3],
-				spiralAlpha * (0.65 + 0.25 * sin(angle * 1.4 + progress * pi * 2
-			)
-			)
-			)
-			love.graphics.circle("fill", x + cos(angle) * radius, y + sin(angle) * radius, size, 14)
-		end
-	end
-
-	if effect.addBlend then
-		love.graphics.setBlendMode("alpha")
-	end
-
-	love.graphics.setLineWidth(1)
-end
-
 local variantDrawers = {
 	phoenix_flare = drawPhoenixFlare,
 	event_horizon = drawEventHorizon,
@@ -1151,7 +1061,6 @@ local variantDrawers = {
 	molting_reflex = drawMoltingReflex,
 	guiding_compass = drawGuidingCompass,
 	velocity_regulator = drawResonantShell,
-	abyssal_catalyst = drawAbyssalCatalyst,
 }
 
 local function drawVariant(effect, progress)
