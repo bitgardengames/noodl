@@ -219,25 +219,17 @@ local function jitterColor(color, jitterAmount, rng)
 end
 
 local function addRoundedSquare(decorations, rng, tileSize, col, row, size, radius, color)
-        local baseAlpha = color[4] or 1
-        local fadeAmplitude = 0.05 + rng:random() * 0.08
-        local fadeSpeed = 0.2 + rng:random() * 0.45
-        decorations[#decorations + 1] = {
-                col = col,
-                row = row,
+local baseAlpha = color[4] or 1
+decorations[#decorations + 1] = {
+col = col,
+row = row,
                 x = (tileSize - size) * 0.5,
                 y = (tileSize - size) * 0.5,
-                w = size,
-                h = size,
-                radius = radius,
-                color = {color[1], color[2], color[3], baseAlpha},
-                fade = {
-                        base = baseAlpha,
-                        amplitude = fadeAmplitude,
-                        speed = fadeSpeed,
-                        offset = rng:random() * pi * 2,
-                },
-        }
+w = size,
+h = size,
+radius = radius,
+color = {color[1], color[2], color[3], baseAlpha},
+}
 end
 
 local function buildDecorationConfig(sw, sh, options, fillColor, accentColor, seed)
