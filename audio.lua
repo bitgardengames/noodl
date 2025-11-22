@@ -27,7 +27,7 @@ local SOUND_DEFINITIONS = {
 	shield_wall = "Assets/Sounds/Activate Glyph Forcefield.wav",
 	shield_rock = "Assets/Sounds/Rotate Stone 03.wav",
 	shield_saw = "Assets/Sounds/Arcane Wind Chime Gust.wav",
-	rock_shatter = "Assets/Sounds/Activate Plinth 03.wav",
+	rock_shatter = "Assets/Sounds/materialStone.mp3",
 	laser_fire = "Assets/Sounds/LASRBeam_Plasma Loop_01.wav",
 }
 
@@ -81,7 +81,7 @@ end
 function Audio:playSound(name, pitch)
 	if not Settings.muteSFX and self.sounds[name] then
 		self.sounds[name]:stop()
-		self.sounds[name]:setVolume(Settings.sfxVolume)
+		self.sounds[name]:setVolume(Settings.sfxVolume) -- should be done on volume change, and then just rely on the stored volume
 		self.sounds[name]:setPitch(pitch or 1)
 		self.sounds[name]:play()
 	end

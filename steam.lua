@@ -1,4 +1,4 @@
-local ok, Steam = pcall(require, "luasteam") -- Thank you luasteam; https://github.com/uspgamedev/luasteam
+local ok, Steam = pcall(require, "luasteam") -- https://github.com/uspgamedev/luasteam
 local steam = {}
 
 steam.initialized = false
