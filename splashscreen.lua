@@ -1,4 +1,5 @@
 local Screen = require("screen")
+local Audio = require("audio")
 
 local lg = love.graphics
 local min = math.min
@@ -7,11 +8,15 @@ local max = math.max
 local FADE_IN_DURATION = 0.2
 local FADE_OUT_DURATION = 0.25
 local DEFAULT_FADE_DURATION = 1.25
+local LOGO_POP_DURATION = 0.65
+local LOGO_SETTLE_DURATION = 0.35
+local LOGO_WIGGLE_FREQUENCY = 2.2
+local LOGO_BOB_HEIGHT = 12
 
 local SplashScreen = {
-	transitionDurationIn = 0.25,
-	transitionDurationOut = 0.25,
-	displayDuration = 2,
+        transitionDurationIn = 0.25,
+        transitionDurationOut = 0.25,
+        displayDuration = 2,
 	backgroundColor = {0.04, 0.04, 0.05, 1},
 }
 
@@ -31,18 +36,19 @@ local function loadImage(path)
 end
 
 local function ensureLogo()
-	if logoImage then
-		return logoImage
-	end
+        if logoImage then
+                return logoImage
+        end
 
-	logoImage = loadImage("Assets/SplashLogo.png")
+        logoImage = loadImage("Assets/BitGarden.png")
 
-	return logoImage
+        return logoImage
 end
 
 function SplashScreen:enter()
-	self.timer = 0
-	ensureLogo()
+        self.timer = 0
+        ensureLogo()
+        Audio:playSound("intro")
 end
 
 function SplashScreen:leave()
@@ -59,34 +65,58 @@ local function drawBackground(color, width, height)
 	lg.rectangle("fill", 0, 0, width, height)
 end
 
-local function drawLogo(image, width, height)
-	if not image then
-		return
-	end
+local function getAnimatedLogoScale(timer)
+        if not timer then
+                return 1
+        end
 
-	local imgWidth, imgHeight = image:getDimensions()
+        local popProgress = min(timer / LOGO_POP_DURATION, 1)
+        local popScale = 0.6 + 0.6 * popProgress
+
+        if timer < LOGO_POP_DURATION then
+                return popScale
+        end
+
+        local settleProgress = min((timer - LOGO_POP_DURATION) / LOGO_SETTLE_DURATION, 1)
+        local settleScale = 1.2 - 0.2 * settleProgress
+
+        local wiggle = 1 + 0.02 * math.sin(timer * LOGO_WIGGLE_FREQUENCY * math.pi * 2)
+
+        return settleScale * wiggle
+end
+
+local function drawLogo(image, width, height, timer)
+        if not image then
+                return
+        end
+
+        local imgWidth, imgHeight = image:getDimensions()
 	if not imgWidth or not imgHeight or imgWidth == 0 or imgHeight == 0 then
 		return
 	end
 
-	local maxWidth = width * 0.5
-	local maxHeight = height * 0.5
-	local scale = min(maxWidth / imgWidth, maxHeight / imgHeight, 1)
-	if scale <= 0 then
-		scale = 1
-	end
+        local maxWidth = width * 0.5
+        local maxHeight = height * 0.5
+        local baseScale = min(maxWidth / imgWidth, maxHeight / imgHeight, 1)
+        if baseScale <= 0 then
+                baseScale = 1
+        end
 
-	local drawWidth = imgWidth * scale
-	local drawHeight = imgHeight * scale
-	local x = (width - drawWidth) * 0.5
-	local y = (height - drawHeight) * 0.5 - 20
+        local animatedScale = getAnimatedLogoScale(timer)
+        local finalScale = baseScale * animatedScale
 
-	if y < 0 then
-		y = 0
-	end
+        local centerX = width * 0.5
+        local centerY = height * 0.5 - 20
 
-	lg.setColor(1, 1, 1, 1)
-	lg.draw(image, x, y, 0, scale, scale)
+        if centerY < 0 then
+                centerY = 0
+        end
+
+        local bobOffset = LOGO_BOB_HEIGHT * 0.5 * (1 - math.cos(timer * LOGO_WIGGLE_FREQUENCY * math.pi))
+        local rotation = 0.05 * math.sin(timer * (LOGO_WIGGLE_FREQUENCY * 0.5) * math.pi * 2)
+
+        lg.setColor(1, 1, 1, 1)
+        lg.draw(image, centerX, centerY + bobOffset, rotation, finalScale, finalScale, imgWidth * 0.5, imgHeight * 0.5)
 end
 
 function SplashScreen:update(dt)
@@ -137,7 +167,7 @@ function SplashScreen:draw()
 	end
 
 	drawBackground(self.backgroundColor, sw, sh)
-	drawLogo(logoImage, sw, sh)
+        drawLogo(logoImage, sw, sh, self.timer or 0)
 	drawFadeOverlay(self.timer, self.displayDuration, sw, sh)
 
 	lg.setColor(1, 1, 1, 1)
