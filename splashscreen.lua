@@ -9,11 +9,7 @@ local max = math.max
 local FADE_IN_DURATION = 0.2
 local FADE_OUT_DURATION = 0.25
 local DEFAULT_FADE_DURATION = 1.25
-local LOGO_POP_DURATION = 0.65
-local LOGO_SETTLE_DURATION = 0.35
 local LOGO_FADE_IN_DURATION = 0.6
-local LOGO_OVERSHOOT_SCALE = 1.12
-local LOGO_START_SCALE = 0.2
 
 local SplashScreen = {
         transitionDurationIn = 0.25,
@@ -71,30 +67,14 @@ local function drawBackground(color, width, height)
 	lg.rectangle("fill", 0, 0, width, height)
 end
 
-local function getAnimatedLogoScale(timer)
-        if not timer then
-                return 1
-        end
-
-        local popProgress = min(timer / LOGO_POP_DURATION, 1)
-        local popScale = LOGO_START_SCALE + (LOGO_OVERSHOOT_SCALE - LOGO_START_SCALE) * Easing.easeOutBack(popProgress)
-
-        if timer < LOGO_POP_DURATION then
-                return popScale
-        end
-
-        local settleProgress = min((timer - LOGO_POP_DURATION) / LOGO_SETTLE_DURATION, 1)
-        local settleScale = LOGO_OVERSHOOT_SCALE - (LOGO_OVERSHOOT_SCALE - 1) * Easing.easeOutCubic(settleProgress)
-
-        return settleScale
-end
-
 local function getLogoAlpha(timer)
         if not timer then
                 return 0
         end
 
-        return min(timer / LOGO_FADE_IN_DURATION, 1)
+        local progress = min(timer / LOGO_FADE_IN_DURATION, 1)
+
+        return Easing.easeOutCubic(progress)
 end
 
 local function drawLogo(image, width, height, timer)
@@ -114,8 +94,7 @@ local function drawLogo(image, width, height, timer)
                 baseScale = 1
         end
 
-        local animatedScale = getAnimatedLogoScale(timer)
-        local finalScale = baseScale * animatedScale
+        local finalScale = baseScale
 
         local centerX = width * 0.5
         local centerY = height * 0.5 - 20
