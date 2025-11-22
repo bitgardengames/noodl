@@ -11,7 +11,6 @@ local UI = require("ui")
 local Localization = require("localization")
 local Theme = require("theme")
 local SnakeCosmetics = require("snakecosmetics")
-local InputMode = require("inputmode")
 local Timer = require("timer")
 local Steam = require("steam")
 local GamepadAliases = require("gamepadaliases")
@@ -134,10 +133,9 @@ function App:draw()
 end
 
 function App:keypressed(key)
-	InputMode:noteKeyboard()
-	if key == "printscreen" then
-		local time = os.date("%Y-%m-%d_%H-%M-%S")
-		love.graphics.captureScreenshot("screenshot_" .. time .. ".png")
+        if key == "printscreen" then
+                local time = os.date("%Y-%m-%d_%H-%M-%S")
+                love.graphics.captureScreenshot("screenshot_" .. time .. ".png")
 	end
 
 	return self:forwardEvent("keypressed", key)
@@ -164,20 +162,8 @@ local function createEventForwarder(eventName, preHook)
 end
 
 local eventForwarders = {
-	mousepressed = function()
-		InputMode:noteMouse()
-	end,
-	mousereleased = function()
-		InputMode:noteMouse()
-	end,
-	mousemoved = function()
-		InputMode:noteMouse()
-	end,
-	wheelmoved = function()
-		InputMode:noteMouse()
-	end,
-	-- Joystick/gamepad events are handled separately so that we can
-	-- normalize button names based on the active controller layout.
+        -- Joystick/gamepad events are handled separately so that we can
+        -- normalize button names based on the active controller layout.
 }
 
 local passthroughEvents = {}
@@ -201,41 +187,37 @@ function App:joystickremoved(joystick)
 end
 
 function App:joystickpressed(joystick, button)
-	InputMode:noteGamepad()
-	GamepadAliases:noteJoystick(joystick)
-	local normalized = GamepadAliases:normalizeButton(button)
-	return self:forwardEvent("joystickpressed", joystick, normalized)
+        GamepadAliases:noteJoystick(joystick)
+        local normalized = GamepadAliases:normalizeButton(button)
+        return self:forwardEvent("joystickpressed", joystick, normalized)
 end
 
 function App:joystickreleased(joystick, button)
-	GamepadAliases:noteJoystick(joystick)
-	local normalized = GamepadAliases:normalizeButton(button)
-	return self:forwardEvent("joystickreleased", joystick, normalized)
+        GamepadAliases:noteJoystick(joystick)
+        local normalized = GamepadAliases:normalizeButton(button)
+        return self:forwardEvent("joystickreleased", joystick, normalized)
 end
 
 function App:joystickaxis(joystick, axis, value)
-	InputMode:noteGamepadAxis(value)
-	GamepadAliases:noteJoystick(joystick)
-	return self:forwardEvent("joystickaxis", joystick, axis, value)
+        GamepadAliases:noteJoystick(joystick)
+        return self:forwardEvent("joystickaxis", joystick, axis, value)
 end
 
 function App:gamepadpressed(joystick, button)
-	InputMode:noteGamepad()
-	GamepadAliases:noteJoystick(joystick)
-	local normalized = GamepadAliases:normalizeButton(button)
-	return self:forwardEvent("gamepadpressed", joystick, normalized)
+        GamepadAliases:noteJoystick(joystick)
+        local normalized = GamepadAliases:normalizeButton(button)
+        return self:forwardEvent("gamepadpressed", joystick, normalized)
 end
 
 function App:gamepadreleased(joystick, button)
-	GamepadAliases:noteJoystick(joystick)
-	local normalized = GamepadAliases:normalizeButton(button)
-	return self:forwardEvent("gamepadreleased", joystick, normalized)
+        GamepadAliases:noteJoystick(joystick)
+        local normalized = GamepadAliases:normalizeButton(button)
+        return self:forwardEvent("gamepadreleased", joystick, normalized)
 end
 
 function App:gamepadaxis(joystick, axis, value)
-	InputMode:noteGamepadAxis(value)
-	GamepadAliases:noteJoystick(joystick)
-	return self:forwardEvent("gamepadaxis", joystick, axis, value)
+        GamepadAliases:noteJoystick(joystick)
+        return self:forwardEvent("gamepadaxis", joystick, axis, value)
 end
 
 return App
