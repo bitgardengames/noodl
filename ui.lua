@@ -1812,7 +1812,7 @@ local function drawComboIndicator(self)
                         end
                 end
 
-                local barColor = getComboBarColor(progress)
+                local barColor = getComboBarColor(1 - progress)
 
                 love.graphics.setColor(barColor)
                 love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth * progress, barHeight, 6, 6)
