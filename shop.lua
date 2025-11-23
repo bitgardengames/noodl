@@ -1770,21 +1770,20 @@ function Shop:draw(screenW, screenH)
 
 	local mx, my = UI.refreshCursor()
 
-        local function renderCard(i, card)
-                local columnIndex = ((i - 1) % columns)
-                local rowIndex = floor((i - 1) / columns)
-                local baseX = startX + columnIndex * (cardWidth + spacing)
-                local baseY = startY + rowIndex * (cardHeight + rowSpacing)
-                local alpha = 1
-                local scale = 1
-                local yOffset = 0
-                local xOffset = 0
-                local extraRotation = 0
-                local state = self.cardStates and self.cardStates[i]
-                local revealState = state and state.reveal or nil
-                local focusValue = state and state.focus or 0
-                local fadeOut = state and state.fadeOut or 0
-                local clock = Timer.getTime()
+	local function renderCard(i, card)
+		local columnIndex = ((i - 1) % columns)
+		local rowIndex = floor((i - 1) / columns)
+		local baseX = startX + columnIndex * (cardWidth + spacing)
+		local baseY = startY + rowIndex * (cardHeight + rowSpacing)
+		local alpha = 1
+		local scale = 1
+		local yOffset = 0
+		local xOffset = 0
+		local extraRotation = 0
+		local state = self.cardStates and self.cardStates[i]
+		local revealState = state and state.reveal or nil
+		local focusValue = state and state.focus or 0
+		local fadeOut = state and state.fadeOut or 0
 		if state then
 			local progress = state.progress or 0
 			local eased = progress * progress * (3 - 2 * progress)
@@ -1793,14 +1792,9 @@ function Shop:draw(screenW, screenH)
 
 			-- Start cards a touch smaller and ease them up to full size so
 			-- the reveal animation feels like a gentle pop rather than a flat fade.
-                        local appearScaleMin = 0.94
-                        local appearScaleMax = 1.0
-                        scale = appearScaleMin + (appearScaleMax - appearScaleMin) * eased
-                        if progress > 0.65 then
-                                local settleT = max(0, min(1, (progress - 0.65) / 0.35))
-                                local settleEase = sin(settleT * math.pi)
-                                scale = scale + 0.015 * settleEase
-                        end
+			local appearScaleMin = 0.94
+			local appearScaleMax = 1.0
+			scale = appearScaleMin + (appearScaleMax - appearScaleMin) * eased
 
 			local hover = state.hover or 0
 			if hover > 0 and not self.selected then
@@ -1838,16 +1832,14 @@ function Shop:draw(screenW, screenH)
 			revealFocus = max(0, min(1, boost))
 		end
 		local combinedFocus = max(focusEase, revealFocus)
-                local fadeEase = fadeOut * fadeOut * (3 - 2 * fadeOut)
-                local discardData = (state and state.discardActive and state.discard and self.restocking) and state.discard or nil
-                local discardOffsetX, discardOffsetY, discardRotation = 0, 0, 0
-                local baseCenterX = baseX + cardWidth / 2
-                local baseCenterY = baseY + cardHeight / 2
-                if discardData then
-                        local fadeT = max(0, min(1, fadeOut))
-                        local time = discardData.duration and discardData.duration > 0 and min(1, (discardData.clock or 0) / discardData.duration) or fadeT
-                        local discardEase = fadeT * fadeT * (3 - 2 * fadeT)
-                        local motionEase = time * time * (3 - 2 * time)
+		local fadeEase = fadeOut * fadeOut * (3 - 2 * fadeOut)
+		local discardData = (state and state.discardActive and state.discard and self.restocking) and state.discard or nil
+		local discardOffsetX, discardOffsetY, discardRotation = 0, 0, 0
+		if discardData then
+			local fadeT = max(0, min(1, fadeOut))
+			local time = discardData.duration and discardData.duration > 0 and min(1, (discardData.clock or 0) / discardData.duration) or fadeT
+			local discardEase = fadeT * fadeT * (3 - 2 * fadeT)
+			local motionEase = time * time * (3 - 2 * time)
 			local dropEase = discardEase * discardEase
 			local swayClock = (discardData.clock or 0) * (discardData.swaySpeed or 3.2)
 			local sway = sin(swayClock) * (discardData.swayMagnitude or 14) * (1 - motionEase)
@@ -1855,24 +1847,16 @@ function Shop:draw(screenW, screenH)
 			local dropDistance = discardData.dropDistance or 0
 			local arcHeight = discardData.arcHeight or 0
 			discardOffsetY = dropDistance * dropEase - arcHeight * (1 - motionEase)
-                        discardRotation = (discardData.rotation or 0) * dropEase
-                        scale = scale * (1 - 0.12 * discardEase)
-                        alpha = alpha * (1 - 0.7 * discardEase)
-                end
+			discardRotation = (discardData.rotation or 0) * dropEase
+			scale = scale * (1 - 0.12 * discardEase)
+			alpha = alpha * (1 - 0.7 * discardEase)
+		end
 
-                -- Subtle idle movement so the shop feels alive even before interaction.
-                local ambientPhase = clock * 0.85 + i * 0.7
-                local ambientSway = sin(ambientPhase)
-                local ambientDrift = cos(ambientPhase * 0.66)
-                yOffset = yOffset + ambientSway * 5 * (1 - fadeEase)
-                xOffset = xOffset + ambientDrift * 3 * (1 - fadeEase)
-                extraRotation = extraRotation + ambientSway * 0.02 * (1 - fadeEase)
-
-                local cardSelected = card == self.selected
-                if cardSelected or combinedFocus > 0 then
-                        local focusAmount = combinedFocus
-                        yOffset = yOffset + 46 * focusAmount
-                        scale = scale * (1 + 0.35 * focusAmount)
+		local cardSelected = card == self.selected
+		if cardSelected or combinedFocus > 0 then
+			local focusAmount = combinedFocus
+			yOffset = yOffset + 46 * focusAmount
+			scale = scale * (1 + 0.35 * focusAmount)
 			alpha = min(1, alpha * (1 + 0.6 * focusAmount))
 			-- Make sure the selected card renders at full opacity while it
 			-- animates toward the center. Without this clamp the focus easing
@@ -1895,30 +1879,18 @@ function Shop:draw(screenW, screenH)
 			end
 		end
 
-                alpha = max(0, min(alpha, 1))
+		alpha = max(0, min(alpha, 1))
 
-                local shakeOffset = (revealState and revealState.shakeOffset) or 0
-                extraRotation = extraRotation + ((revealState and revealState.shakeRotation) or 0)
+		local shakeOffset = (revealState and revealState.shakeOffset) or 0
+		extraRotation = extraRotation + ((revealState and revealState.shakeRotation) or 0)
 
-                -- Apply parallax tilt and offset driven by the cursor so hover feels tactile.
-                local hoverInfluence = max(combinedFocus, state and state.hover or 0)
-                if hoverInfluence > 0 then
-                        local relativeX = (mx - baseCenterX) / (cardWidth * 0.5)
-                        local relativeY = (my - baseCenterY) / (cardHeight * 0.5)
-                        relativeX = max(-1, min(1, relativeX))
-                        relativeY = max(-1, min(1, relativeY))
-                        extraRotation = extraRotation + relativeX * 0.08 * hoverInfluence
-                        xOffset = xOffset + relativeX * 8 * hoverInfluence
-                        yOffset = yOffset + relativeY * 6 * hoverInfluence
-                end
-
-                local centerX = baseCenterX
-                local centerY = baseCenterY - yOffset
-                if cardSelected or combinedFocus > 0 then
-                        local focusAmount = combinedFocus
-                        centerX = centerX + (screenW / 2 - centerX) * focusAmount
-                        local targetY = layoutCenterY
-                        centerY = centerY + (targetY - centerY) * focusAmount
+		local centerX = baseX + cardWidth / 2
+		local centerY = baseY + cardHeight / 2 - yOffset
+		if cardSelected or combinedFocus > 0 then
+			local focusAmount = combinedFocus
+			centerX = centerX + (screenW / 2 - centerX) * focusAmount
+			local targetY = layoutCenterY
+			centerY = centerY + (targetY - centerY) * focusAmount
 		else
 			if discardData then
 				centerX = centerX + discardOffsetX
