@@ -298,10 +298,11 @@ function FruitEvents.boostComboTimer(amount)
 end
 
 function FruitEvents.handleConsumption(x, y)
-	local basePoints = Fruit:getPoints()
-	local wasComboActive = (comboState.timer or 0) > 0
-	local nextComboCount = wasComboActive and (comboState.count or 0) + 1 or 1
-	local comboMultiplier = getComboMultiplier(nextComboCount)
+        local basePoints = Fruit:getPoints()
+        local wasComboActive = (comboState.timer or 0) > 0
+        local currentComboCount = wasComboActive and (comboState.count or 0) or 0
+        local nextComboCount = wasComboActive and currentComboCount + 1 or 1
+        local comboMultiplier = getComboMultiplier(currentComboCount)
 	local multiplier = getUpgradeEffect("fruitValueMult") or 1
 	if multiplier < 1 then
 		multiplier = 1
