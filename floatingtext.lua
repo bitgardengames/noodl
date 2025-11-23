@@ -16,6 +16,7 @@ local lerp = Easing.lerp
 local easeOutCubic = Easing.easeOutCubic
 local easeInCubic = Easing.easeInCubic
 local easeOutBack = Easing.easeOutBack
+local easeOutExpo = Easing.easeOutExpo
 
 local defaultFont = UI.fonts.subtitle or UI.fonts.display or lg.newFont("Assets/Fonts/Comfortaa-Bold.ttf", 24)
 
@@ -28,28 +29,35 @@ local DEFAULTS = {
 	duration = 1.0,
 	riseSpeed = 30,
 	scale = 0.9,
-	pop = {
-		scale = 1.12,
-		duration = 0.18,
-	},
-	wobble = {
-		magnitude = 5,
-		frequency = 2.4,
-	},
-	drift = 12,
-	fadeStart = 0.35,
-	rotation = math.rad(5),
-	shadow = {
-		offsetX = 2,
-		offsetY = 2,
-		alpha = 0.35,
-	},
-	glow = {
-		color = {baseColor[1], baseColor[2], baseColor[3], 0.55},
-		frequency = 3.4,
-		magnitude = 0.45,
-	},
-	jitter = 0.8,
+        pop = {
+                scale = 1.12,
+                duration = 0.18,
+        },
+        wobble = {
+                magnitude = 5,
+                frequency = 2.4,
+        },
+        float = {
+                magnitude = 4,
+                frequency = 1.35,
+        },
+        drift = 12,
+        fadeStart = 0.35,
+        fadeIn = 0.12,
+        rotation = math.rad(5),
+        shadow = {
+                offsetX = 2,
+                offsetY = 2,
+                alpha = 0.35,
+        },
+        glow = {
+                color = {baseColor[1], baseColor[2], baseColor[3], 0.55},
+                frequency = 3.4,
+                magnitude = 0.45,
+                spread = 0.06,
+                layers = 2,
+        },
+        jitter = 0.8,
 }
 
 local function deepCopyTable(source)
@@ -255,32 +263,45 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
 	local popScale = baseScale * (options.popScaleFactor or popDefaults.scale)
 	local popDuration = options.popDuration or popDefaults.duration
 
-	local wobbleDefaults = defaults.wobble or DEFAULTS.wobble
-	local wobbleMagnitude = options.wobbleMagnitude or wobbleDefaults.magnitude
-	local wobbleFrequency = options.wobbleFrequency or wobbleDefaults.frequency
+        local wobbleDefaults = defaults.wobble or DEFAULTS.wobble
+        local wobbleMagnitude = options.wobbleMagnitude or wobbleDefaults.magnitude
+        local wobbleFrequency = options.wobbleFrequency or wobbleDefaults.frequency
+
+        local floatDefaults = defaults.float or DEFAULTS.float
+        local floatMagnitude = options.floatMagnitude or floatDefaults.magnitude
+        local floatFrequency = options.floatFrequency or floatDefaults.frequency
 
 	local fadeStart = options.fadeStart or defaults.fadeStart or DEFAULTS.fadeStart
-	local drift = resolveDrift(defaults, options)
-	local rise = resolveRiseDistance(defaults, entryDuration, riseSpeed, options)
-	local rotationAmplitude = options.rotationAmplitude or defaults.rotation or DEFAULTS.rotation
-	local rotationDirection = (random() < 0.5) and -1 or 1
-	local glowColor, glowFrequency, glowMagnitude = buildGlow(defaults, options.glow, entry.glowColor)
-	entry.glowColor = glowColor
-	if glowColor then
-		entry.glowFrequency = glowFrequency or 0
-		entry.glowMagnitude = glowMagnitude or 0
-		entry.hasGlow = (entry.glowMagnitude or 0) > 0
-	else
-		entry.glowFrequency = 0
-		entry.glowMagnitude = 0
-		entry.hasGlow = false
-	end
-	local jitter = options.jitter
-	if jitter == nil then
-		jitter = defaults.jitter or DEFAULTS.jitter
-	end
+        local drift = resolveDrift(defaults, options)
+        local rise = resolveRiseDistance(defaults, entryDuration, riseSpeed, options)
+        local rotationAmplitude = options.rotationAmplitude or defaults.rotation or DEFAULTS.rotation
+        local rotationDirection = (random() < 0.5) and -1 or 1
+        local glowColor, glowFrequency, glowMagnitude = buildGlow(defaults, options.glow, entry.glowColor)
+        entry.glowColor = glowColor
+        if glowColor then
+                entry.glowFrequency = glowFrequency or 0
+                entry.glowMagnitude = glowMagnitude or 0
+                entry.glowSpread = (options.glow and options.glow.spread) or (defaults.glow and defaults.glow.spread) or DEFAULTS.glow.spread or 0
+                entry.glowLayers = (options.glow and options.glow.layers) or (defaults.glow and defaults.glow.layers) or DEFAULTS.glow.layers or 1
+                entry.hasGlow = (entry.glowMagnitude or 0) > 0
+        else
+                entry.glowFrequency = 0
+                entry.glowMagnitude = 0
+                entry.glowSpread = 0
+                entry.glowLayers = 0
+                entry.hasGlow = false
+        end
+        local jitter = options.jitter
+        if jitter == nil then
+                jitter = defaults.jitter or DEFAULTS.jitter
+        end
 
-	local fadeStartTime, fadeDuration = resolveFade(entryDuration, fadeStart)
+        local fadeInDuration = options.fadeInDuration
+        if fadeInDuration == nil then
+                fadeInDuration = defaults.fadeIn or DEFAULTS.fadeIn
+        end
+
+        local fadeStartTime, fadeDuration = resolveFade(entryDuration, fadeStart)
 
 	local shadowBuffer = entry._shadow
 	local resolvedShadow = buildShadow(defaults, options.shadow, shadowBuffer)
@@ -319,19 +340,28 @@ function FloatingText:add(text, x, y, color, duration, riseSpeed, font, options)
 	else
 		entry.settleDurationInv = nil
 	end
-	entry.wobbleMagnitude = wobbleMagnitude
-	entry.wobbleFrequency = wobbleFrequency
-	entry.fadeStart = clamp(fadeStart, 0, 0.99)
-	entry.fadeStartTime = fadeStartTime
-	entry.fadeDuration = fadeDuration
-	if fadeDuration and fadeDuration > 0 then
-		entry.fadeDurationInv = 1 / fadeDuration
-	else
-		entry.fadeDurationInv = nil
-	end
-	entry.drift = drift
-	entry.rotationAmplitude = rotationAmplitude
-	entry.rotationDirection = rotationDirection
+        entry.wobbleMagnitude = wobbleMagnitude
+        entry.wobbleFrequency = wobbleFrequency
+        entry.floatMagnitude = floatMagnitude or 0
+        entry.floatFrequency = floatFrequency or 0
+        entry.floatPhase = random() * pi * 2
+        entry.fadeStart = clamp(fadeStart, 0, 0.99)
+        entry.fadeStartTime = fadeStartTime
+        entry.fadeDuration = fadeDuration
+        if fadeDuration and fadeDuration > 0 then
+                entry.fadeDurationInv = 1 / fadeDuration
+        else
+                entry.fadeDurationInv = nil
+        end
+        entry.fadeInDuration = fadeInDuration or 0
+        if entry.fadeInDuration > 0 then
+                entry.fadeInDurationInv = 1 / entry.fadeInDuration
+        else
+                entry.fadeInDurationInv = nil
+        end
+        entry.drift = drift
+        entry.rotationAmplitude = rotationAmplitude
+        entry.rotationDirection = rotationDirection
 	entry.glowPhase = random() * pi * 2
 	entry.glowAlpha = 0
 	entry.jitter = jitter or 0
@@ -369,10 +399,13 @@ function FloatingText:update(dt)
 		local durationInv = entry.durationInv
 		local progress = durationInv and clamp(entry.timer * durationInv, 0, 1) or 1
 
-		entry.offsetY = -entry.riseDistance * easeOutCubic(progress)
-		entry.offsetX = entry.drift * progress + entry.wobbleMagnitude * sin(entry.wobbleFrequency * entry.timer)
+                entry.offsetY = -entry.riseDistance * easeOutCubic(progress)
+                if entry.floatMagnitude ~= 0 and entry.floatFrequency ~= 0 then
+                        entry.offsetY = entry.offsetY + entry.floatMagnitude * sin(entry.floatFrequency * entry.timer + entry.floatPhase)
+                end
+                entry.offsetX = entry.drift * progress + entry.wobbleMagnitude * sin(entry.wobbleFrequency * entry.timer)
 
-		if entry.hasJitter then
+                if entry.hasJitter then
 			local falloff = (1 - progress)
 			local jitterStrength = entry.jitter * falloff * falloff
 			local phase = entry.jitterSeed
@@ -400,13 +433,14 @@ function FloatingText:update(dt)
 
 		entry.rotation = entry.rotationAmplitude * entry.rotationDirection * sin(progress * pi)
 
-		if entry.hasGlow then
-			local pulse = sin(entry.timer * entry.glowFrequency + entry.glowPhase) * 0.5 + 0.5
-			local emphasis = (1 - progress * 0.6)
-			entry.glowAlpha = pulse * entry.glowMagnitude * emphasis
-		else
-			entry.glowAlpha = 0
-		end
+                if entry.hasGlow then
+                        local pulse = sin(entry.timer * entry.glowFrequency + entry.glowPhase) * 0.5 + 0.5
+                        local emphasis = (1 - progress * 0.6)
+                        local riseBoost = easeOutExpo(clamp(progress * 1.4, 0, 1))
+                        entry.glowAlpha = pulse * entry.glowMagnitude * emphasis * (0.65 + riseBoost * 0.35)
+                else
+                        entry.glowAlpha = 0
+                end
 
 		if duration > 0 and entry.timer >= duration then
 			local lastIndex = #entries
@@ -435,10 +469,14 @@ function FloatingText:draw()
 			currentFont = entry.font
 		end
 
-		local alpha = entry.color[4] or 1
-		if entry.duration > 0 and entry.fadeStartTime then
-			if entry.timer >= entry.fadeStartTime then
-				local fadeProgress = clamp((entry.timer - entry.fadeStartTime) * (entry.fadeDurationInv or 0), 0, 1)
+                local alpha = entry.color[4] or 1
+                if entry.fadeInDuration and entry.fadeInDuration > 0 then
+                        local fadeInProgress = clamp(entry.timer * (entry.fadeInDurationInv or 0), 0, 1)
+                        alpha = alpha * easeOutCubic(fadeInProgress)
+                end
+                if entry.duration > 0 and entry.fadeStartTime then
+                        if entry.timer >= entry.fadeStartTime then
+                                local fadeProgress = clamp((entry.timer - entry.fadeStartTime) * (entry.fadeDurationInv or 0), 0, 1)
 				alpha = alpha * (1 - easeInCubic(fadeProgress))
 			end
 		end
@@ -484,9 +522,18 @@ function FloatingText:draw()
 		for index = 1, #glowEntries do
 			local glow = glowEntries[index]
 			local entry = glow.entry
-			lg.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], glow.alpha * entry.glowAlpha)
-			lg.print(entry.text, glow.baseX, glow.baseY, glow.rotation, glow.scale, glow.scale, glow.originX, glow.originY)
-		end
+                        local layers = entry.glowLayers or 1
+                        local spread = entry.glowSpread or 0
+                        for layer = 1, max(layers, 1) do
+                                local layerFalloff = 1 - (layer - 1) * 0.35
+                                local layerAlpha = glow.alpha * entry.glowAlpha * layerFalloff
+                                if layerAlpha > 0.001 then
+                                        local layerScale = glow.scale * (1 + spread * (layer - 1))
+                                        lg.setColor(entry.glowColor[1], entry.glowColor[2], entry.glowColor[3], layerAlpha)
+                                        lg.print(entry.text, glow.baseX, glow.baseY, glow.rotation, layerScale, layerScale, glow.originX, glow.originY)
+                                end
+                        end
+                end
 
 		lg.setBlendMode(defaultBlendMode, defaultAlphaMode)
 	end
@@ -511,7 +558,7 @@ function defaultInstance:new(overrides)
 end
 
 function defaultInstance:getPrototype()
-	return FloatingText
+        return FloatingText
 end
 
 return defaultInstance
