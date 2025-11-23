@@ -1770,12 +1770,13 @@ function Shop:draw(screenW, screenH)
 
 	local mx, my = UI.refreshCursor()
 
-	local function renderCard(i, card)
-		local columnIndex = ((i - 1) % columns)
-		local rowIndex = floor((i - 1) / columns)
-		local baseX = startX + columnIndex * (cardWidth + spacing)
-		local baseY = startY + rowIndex * (cardHeight + rowSpacing)
-		local alpha = 1
+        local function renderCard(i, card)
+                local time = self.time or 0
+                local columnIndex = ((i - 1) % columns)
+                local rowIndex = floor((i - 1) / columns)
+                local baseX = startX + columnIndex * (cardWidth + spacing)
+                local baseY = startY + rowIndex * (cardHeight + rowSpacing)
+                local alpha = 1
 		local scale = 1
 		local yOffset = 0
 		local xOffset = 0
@@ -1785,50 +1786,57 @@ function Shop:draw(screenW, screenH)
 		local focusValue = state and state.focus or 0
 		local fadeOut = state and state.fadeOut or 0
 		if state then
-			local progress = state.progress or 0
-			local eased = progress * progress * (3 - 2 * progress)
-			alpha = eased
-			yOffset = (1 - eased) * 48
+                        local progress = state.progress or 0
+                        local eased = progress * progress * (3 - 2 * progress)
+                        alpha = eased
+                        yOffset = (1 - eased) * 48
 
-			-- Start cards a touch smaller and ease them up to full size so
-			-- the reveal animation feels like a gentle pop rather than a flat fade.
-			local appearScaleMin = 0.94
-			local appearScaleMax = 1.0
-			scale = appearScaleMin + (appearScaleMax - appearScaleMin) * eased
+                        -- Start cards a touch smaller and ease them up to full size so
+                        -- the reveal animation feels like a gentle pop rather than a flat fade.
+                        local appearScaleMin = 0.94
+                        local appearScaleMax = 1.02
+                        local settlePulse = sin(min(1, eased) * pi)
+                        scale = appearScaleMin + (appearScaleMax - appearScaleMin) * eased
+                        scale = scale * (1 + 0.015 * settlePulse * (1 - eased))
 
-			local hover = state.hover or 0
-			if hover > 0 and not self.selected then
-				local hoverEase = hover * hover * (3 - 2 * hover)
-				scale = scale * (1 + 0.07 * hoverEase)
-				yOffset = yOffset - 8 * hoverEase
-			end
+                        local hover = state.hover or 0
+                        if hover > 0 and not self.selected then
+                                local hoverEase = hover * hover * (3 - 2 * hover)
+                                scale = scale * (1 + 0.08 * hoverEase)
+                                yOffset = yOffset - 10 * hoverEase
+                        end
 
-			local selection = state.selection or 0
-			if selection > 0 then
-				local pulse = 1 + 0.05 * sin((state.selectionClock or 0) * 8)
+                        local selection = state.selection or 0
+                        if selection > 0 then
+                                local pulse = 1 + 0.05 * sin((state.selectionClock or 0) * 8)
 				scale = scale * (1 + 0.08 * selection) * pulse
 				alpha = min(1, alpha * (1 + 0.2 * selection))
 			end
 
-			local focusEase = focusValue * focusValue * (3 - 2 * focusValue)
-			-- Keep a subtle positional nudge for focus without drifting the card at rest.
-			local hoverStrength = state.hover or 0
-			yOffset = yOffset - 6 * focusEase * eased
-			xOffset = xOffset + 4 * hoverStrength * focusEase * eased
+                        local focusEase = focusValue * focusValue * (3 - 2 * focusValue)
+                        -- Keep a subtle positional nudge for focus without drifting the card at rest.
+                        local hoverStrength = state.hover or 0
+                        yOffset = yOffset - 8 * focusEase * eased
+                        xOffset = xOffset + 5 * hoverStrength * focusEase * eased
 
-			local bounce = state.focusBounce or 0
-			if bounce > 0 then
-				local bounceEase = bounce * bounce * (3 - 2 * bounce)
-				scale = scale * (1 + 0.09 * bounceEase)
-				yOffset = yOffset - 10 * bounceEase
-			end
-		end
+                        local bounce = state.focusBounce or 0
+                        if bounce > 0 then
+                                local bounceEase = bounce * bounce * (3 - 2 * bounce)
+                                scale = scale * (1 + 0.095 * bounceEase)
+                                yOffset = yOffset - 12 * bounceEase
+                        end
+                end
 
-		local focus = focusValue
-		local focusEase = focusValue * focusValue * (3 - 2 * focusValue)
-		local revealFocus = 0
-		if revealState then
-			local boost = revealState.focusBoost or 0
+                -- Add a gentle ambient drift so idle cards feel alive without introducing rotation.
+                local ambientPhase = time * 0.65 + i * 0.8
+                yOffset = yOffset + sin(ambientPhase) * 2.2
+                scale = scale * (1 + 0.005 * sin(ambientPhase + 0.75))
+
+                local focus = focusValue
+                local focusEase = focusValue * focusValue * (3 - 2 * focusValue)
+                local revealFocus = 0
+                if revealState then
+                        local boost = revealState.focusBoost or 0
 			revealFocus = max(0, min(1, boost))
 		end
 		local combinedFocus = max(focusEase, revealFocus)
