@@ -44,6 +44,9 @@ UI.combo = {
 	timer = 0,
 	duration = 0,
 	pop = 0,
+	textAlpha = 0,
+	textTarget = 0,
+	textFadeSpeed = 14,
 	shakeTimer = 0,
 	shakeDuration = 0.35,
 	shakeMagnitude = 0,
@@ -1199,6 +1202,8 @@ function UI:reset()
 	self.combo.timer = 0
 	self.combo.duration = 0
 	self.combo.pop = 0
+	self.combo.textAlpha = 0
+	self.combo.textTarget = 0
 	self.shields.count = 0
 	self.shields.display = 0
 	self.shields.popTimer = 0
@@ -1445,6 +1450,10 @@ function UI:update(dt)
 		self.combo.pop = max(0, self.combo.pop - dt * 3)
 	end
 
+	local comboTextTarget = (self.combo.count or 0) >= 2 and (self.combo.timer or 0) > 0 and 1 or 0
+	self.combo.textTarget = comboTextTarget
+	self.combo.textAlpha = approachExp(self.combo.textAlpha or 0, comboTextTarget, dt, self.combo.textFadeSpeed or 14)
+
 	if self.combo.shakeTimer and self.combo.shakeTimer > 0 then
 		self.combo.shakeTimer = max(0, self.combo.shakeTimer - dt)
 	end
@@ -1573,7 +1582,11 @@ function UI:setCombo(count, timer, duration)
 			combo.pop = 1.0 + min(combo.count, 10) * 0.03
 			combo.shakeTimer = combo.shakeDuration
 			combo.shakeMagnitude = 5 + min(combo.count, 10) * 0.5
+			if previous < 2 then
+				combo.textAlpha = 0
+			end
 		end
+		combo.textTarget = 1
 
 	else
 		if previous >= 2 then
@@ -1581,9 +1594,9 @@ function UI:setCombo(count, timer, duration)
 			combo.shakeTimer = 0
 			combo.shakeMagnitude = 0
 		end
+		combo.textTarget = 0
 	end
 end
-
 
 function UI:setShields(count, opts)
 	local shields = self.shields
@@ -1803,12 +1816,19 @@ local function drawComboIndicator(self)
         love.graphics.setLineWidth(3)
         love.graphics.rectangle("line", x, y, width, height, 18, 18)
 
-        if showComboText then
-                UI.setFont("button")
-                love.graphics.setColor(Theme.textColor)
-                love.graphics.printf(titleText, x, y + 8, width, "center")
-        end
+		if showComboText then
+			UI.setFont("button")
+			local textAlpha = self.combo.textAlpha or 0
+			love.graphics.setColor(
+				Theme.textColor[1],
+				Theme.textColor[2],
+				Theme.textColor[3],
+				(Theme.textColor[4] or 1) * textAlpha
+			)
+			love.graphics.printf(titleText, x, y + 8, width, "center")
+		end
 
+		
 	local barPadding = 18
 	local barHeight = 10
 	local barWidth = width - barPadding * 2
