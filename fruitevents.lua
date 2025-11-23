@@ -330,7 +330,7 @@ function FruitEvents.handleConsumption(x, y)
 	Snake:markFruitSegment(markerX, markerY)
 
 	Face:set("happy", 2)
-	FloatingText:add("+" .. tostring((comboMultiplier or 1) * points) .. comboMultiplierLabel, x, y, Theme.textColor, 1.0, 40)
+	FloatingText:add("+" .. tostring((comboMultiplier or 1) * points), x, y, Theme.textColor, 1.0, 40)
 	Score:increase(points)
 	Audio:playSound("fruit", fruitPitch)
 	SessionStats:add("fruitEaten", 1)
