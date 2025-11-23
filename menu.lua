@@ -5,6 +5,7 @@ local Theme = require("theme")
 local DrawWord = require("drawword")
 local RenderLayers = require("renderlayers")
 local Face = require("face")
+local Easing = require("easing")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local DailyChallenges = require("dailychallenges")
@@ -515,16 +516,16 @@ function Menu:enter()
 			w = UI.spacing.buttonWidth,
 			h = UI.spacing.buttonHeight,
 			labelKey = entry.key,
-			action = entry.action,
-			hovered = false,
-			scale = 1,
-			alpha = 0,
-			offsetY = 50,
-		}
-	end
+                        action = entry.action,
+                        hovered = false,
+                        scale = 0.94,
+                        alpha = 0,
+                        offsetY = 55,
+                }
+        end
 
-	buttons = buttonList:reset(defs)
-	updateButtonTexts(Localization:getRevision())
+        buttons = buttonList:reset(defs)
+        updateButtonTexts(Localization:getRevision())
 end
 
 function Menu:update(dt)
@@ -546,17 +547,21 @@ function Menu:update(dt)
 	end
 
 	for i, btn in ipairs(buttons) do
-		if btn.hovered then
-			btn.scale = min((btn.scale or 1) + dt * 5, 1.1)
-		else
-			btn.scale = max((btn.scale or 1) - dt * 5, 1.0)
-		end
+                local appearDelay = (i - 1) * 0.06
+                local linearAppear = (t - appearDelay) / 0.45
+                local appearProgress = Easing.clamp01(linearAppear)
+                local easedAlpha = Easing.easeOutCubic(appearProgress)
+                local liftedProgress = Easing.easeOutBack(appearProgress)
 
-		local appearDelay = (i - 1) * 0.08
-		local appearTime = min((t - appearDelay) * 3, 1)
-		btn.alpha = max(0, min(appearTime, 1))
-		btn.offsetY = (1 - btn.alpha) * 50
-	end
+                btn.alpha = easedAlpha
+                btn.offsetY = (1 - liftedProgress) * 55
+
+                local baseScale = Easing.lerp(0.94, 1.02, liftedProgress)
+                local hoverTarget = btn.hovered and 1.08 or 1.0
+                local targetScale = baseScale * hoverTarget
+                local currentScale = btn.scale or targetScale
+                btn.scale = currentScale + (targetScale - currentScale) * min(dt * 10, 1)
+        end
 
 	if titleSaw then
 		titleSaw:update(dt)
