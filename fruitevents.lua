@@ -38,22 +38,8 @@ local comboBurstOptions = {
 }
 
 local function getComboMultiplier(comboCount)
-	comboCount = comboCount or 0
-	if comboCount >= 15 then
-		return 4.0
-	elseif comboCount >= 10 then
-		return 3.0
-	elseif comboCount >= 7 then
-		return 2.0
-	elseif comboCount >= 5 then
-		return 1.5
-	elseif comboCount >= 3 then
-		return 1.2
-	elseif comboCount >= 1 then
-		return 1.0
-	end
-
-	return 1.0
+    local combo = comboCount or 0
+    return max(1, min(combo, 10))
 end
 
 local function getComboPitch(comboMultiplier, wasComboActive)
@@ -298,15 +284,12 @@ function FruitEvents.boostComboTimer(amount)
 end
 
 function FruitEvents.handleConsumption(x, y)
-        local basePoints = Fruit:getPoints()
-        local wasComboActive = (comboState.timer or 0) > 0
-        local currentComboCount = wasComboActive and (comboState.count or 0) or 0
-        local nextComboCount = wasComboActive and currentComboCount + 1 or 1
-        local comboMultiplier = getComboMultiplier(currentComboCount)
-	local multiplier = getUpgradeEffect("fruitValueMult") or 1
-	if multiplier < 1 then
-		multiplier = 1
-	end
+	local basePoints = Fruit:getPoints()
+	local wasComboActive = (comboState.timer or 0) > 0
+	local currentComboCount = wasComboActive and (comboState.count or 0) or 0
+	local nextComboCount = wasComboActive and currentComboCount + 1 or 1
+	local comboMultiplier = getComboMultiplier(currentComboCount)
+	local multiplier = max(1, getUpgradeEffect("fruitValueMult") or 1)
 	local fruitPitch = getComboPitch(comboMultiplier, wasComboActive)
 	local points = basePoints * comboMultiplier * multiplier
 	if points < 0 then
