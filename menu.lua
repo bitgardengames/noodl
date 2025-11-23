@@ -32,10 +32,13 @@ local buttonLocaleRevision = nil
 local t = 0
 local dailyChallenge = nil
 local dailyChallengeAnim = 0
+local dailyChallengeAppearDelay = 0
 local DAILY_BAR_CELEBRATION_DURATION = 6
 local DAILY_BAR_CELEBRATION_FADE_WINDOW = 0.85
 local DAILY_BAR_CELEBRATION_MAX_SPARKLE_DURATION = 1
 local DAILY_BAR_CELEBRATION_SPAWN_WINDOW = max(0, DAILY_BAR_CELEBRATION_DURATION - DAILY_BAR_CELEBRATION_MAX_SPARKLE_DURATION)
+local DAILY_PANEL_ANIM_SPEED = 2
+local DAILY_PANEL_EXTRA_DELAY = 0.18
 
 local streakLineArgs = {streak = 0, unit = nil}
 local bestLineArgs = {best = 0, unit = nil}
@@ -454,20 +457,21 @@ local function shouldCelebrateDailyChallenge()
 end
 
 function Menu:enter()
-	t = 0
-	UI.clearButtons()
+        t = 0
+        UI.clearButtons()
 
 	Audio:playMusic("menu")
 	Screen:update()
 	Face:set("happy", 10)
 
-	DailyProgress:load()
-	dailyPanelCache = {}
+        DailyProgress:load()
+        dailyPanelCache = {}
 
-	dailyChallenge = DailyChallenges:getDailyChallenge()
-	dailyChallengeAnim = 0
-	resetDailyBarCelebration()
-	resetAnalogAxis()
+        dailyChallenge = DailyChallenges:getDailyChallenge()
+        dailyChallengeAnim = 0
+        dailyChallengeAppearDelay = 0
+        resetDailyBarCelebration()
+        resetAnalogAxis()
 
 	MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 
@@ -503,7 +507,7 @@ function Menu:enter()
 		end
 	end
 
-	local defs = {}
+        local defs = {}
 
 	for i, entry in ipairs(labels) do
 		local x = centerX - UI.spacing.buttonWidth / 2
@@ -525,19 +529,25 @@ function Menu:enter()
         end
 
         buttons = buttonList:reset(defs)
+        local lastButtonDelay = (#buttons > 0 and (#buttons - 1) * 0.06) or 0
+        dailyChallengeAppearDelay = lastButtonDelay + 0.45 + DAILY_PANEL_EXTRA_DELAY
         updateButtonTexts(Localization:getRevision())
 end
 
 function Menu:update(dt)
 	t = t + dt
 
-	local mx, my = UI.refreshCursor()
-	buttonList:updateHover(mx, my)
-	Tooltip:update(dt, mx, my)
+        local mx, my = UI.refreshCursor()
+        buttonList:updateHover(mx, my)
+        Tooltip:update(dt, mx, my)
 
-	if dailyChallenge then
-		dailyChallengeAnim = min(dailyChallengeAnim + dt * 2, 1)
-	end
+        if dailyChallenge then
+                if t >= dailyChallengeAppearDelay then
+                        dailyChallengeAnim = min(dailyChallengeAnim + dt * DAILY_PANEL_ANIM_SPEED, 1)
+                else
+                        dailyChallengeAnim = 0
+                end
+        end
 
 	updateDailyBarCelebration(dt, shouldCelebrateDailyChallenge())
 
@@ -647,19 +657,24 @@ function Menu:draw()
 		end
 	end
 
-	if dailyChallenge and dailyChallengeAnim > 0 then
-		local alpha = min(1, dailyChallengeAnim)
-		local eased = alpha * alpha
-		local panelWidth = min(menuLayout.panelMaxWidth or 420, max(280, menuLayout.contentWidth or (sw - 72)))
-		local padding = UI.spacing.panelPadding or 16
-		local panelMargin = (menuLayout.marginHorizontal or 36) * EDGE_PROXIMITY_FACTOR
-		local panelOffsetX = 25
-		local panelOffsetY = 25
-		local panelX = sw - panelWidth - panelMargin + panelOffsetX
-		local headerFont = UI.fonts.small
-		local titleFont = UI.fonts.button
-		local bodyFont = UI.fonts.body
-		local progressFont = UI.fonts.small
+        if dailyChallenge and dailyChallengeAnim > 0 then
+                local appearProgress = min(1, dailyChallengeAnim)
+                local eased = Easing.easeOutQuint(appearProgress)
+                local liftProgress = Easing.easeOutBack(appearProgress)
+                local settleProgress = Easing.easeOutCubic(appearProgress)
+                local alpha = eased
+                local panelWidth = min(menuLayout.panelMaxWidth or 420, max(280, menuLayout.contentWidth or (sw - 72)))
+                local padding = UI.spacing.panelPadding or 16
+                local panelMargin = (menuLayout.marginHorizontal or 36) * EDGE_PROXIMITY_FACTOR
+                local basePanelOffsetX = 25
+                local basePanelOffsetY = 25
+                local animatedOffsetX = basePanelOffsetX + (1 - settleProgress) * 26
+                local animatedOffsetY = basePanelOffsetY + (1 - liftProgress) * 24
+                local panelX = sw - panelWidth - panelMargin + animatedOffsetX
+                local headerFont = UI.fonts.small
+                local titleFont = UI.fonts.button
+                local bodyFont = UI.fonts.body
+                local progressFont = UI.fonts.small
 
 		local dailyPanelEntry = getDailyPanelCacheEntry(dailyChallenge, panelWidth, padding, bodyFont, progressFont)
 		local headerText = dailyPanelEntry and dailyPanelEntry.headerText or ""
@@ -678,7 +693,7 @@ function Menu:draw()
 			panelHeight = panelHeight + 8 + streakHeight
 		end
 
-		local panelY = max(menuLayout.marginTop or 36, (menuLayout.bottomY or (sh - (menuLayout.marginBottom or 36))) - panelHeight) + panelOffsetY
+                local panelY = max(menuLayout.marginTop or 36, (menuLayout.bottomY or (sh - (menuLayout.marginBottom or 36))) - panelHeight) + animatedOffsetY
 
 		local mx, my = UI.getCursorPosition()
 		local hovered = mx >= panelX and mx <= (panelX + panelWidth) and my >= panelY and my <= (panelY + panelHeight)
@@ -707,12 +722,17 @@ function Menu:draw()
 			Tooltip:hide("dailyChallengeReset")
 		end
 
-		setColorWithAlpha(Theme.shadowColor, eased * 0.7)
-		love.graphics.rectangle("fill", panelX + 5, panelY + 5, panelWidth, panelHeight, 14, 14)
+                setColorWithAlpha(Theme.shadowColor, eased * 0.7)
+                love.graphics.rectangle("fill", panelX + 5, panelY + 5, panelWidth, panelHeight, 14, 14)
 
-		local panelFillColor = Theme.panelColor
-		setColorWithAlpha(panelFillColor, alpha)
-		UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 14)
+                local panelFillColor = Theme.panelColor
+                setColorWithAlpha(panelFillColor, alpha)
+                love.graphics.push()
+                love.graphics.translate(panelX + panelWidth / 2, panelY + panelHeight / 2)
+                love.graphics.scale(Easing.lerp(0.96, 1.0, liftProgress))
+                love.graphics.translate(-(panelX + panelWidth / 2), -(panelY + panelHeight / 2))
+                UI.drawRoundedRect(panelX, panelY, panelWidth, panelHeight, 14)
+                love.graphics.pop()
 
 		setColorWithAlpha(DAILY_PANEL_OUTLINE_COLOR, alpha)
 		love.graphics.setLineWidth(3)
