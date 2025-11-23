@@ -483,11 +483,11 @@ function GameState:update(dt)
 end
 
 function GameState:draw()
-	if self.transitionMode == "menuSlide" and self.transitioning then
-		local currentState = getCurrentState(self)
-		local previousState = self.previousState
-		local width = love.graphics.getWidth()
-		local height = love.graphics.getHeight()
+if self.transitionMode == "menuSlide" and self.transitioning then
+local currentState = getCurrentState(self)
+local previousState = self.previousState
+local width = love.graphics.getWidth()
+local height = love.graphics.getHeight()
 		local context = self.transitionContext
 		local progress = (context and context.progress) or clamp01(self.transitionTime)
 
@@ -519,8 +519,14 @@ function GameState:draw()
 		if previousState then
 			local outgoingProgress = clamp01(progress * 2)
 			MenuScene.setDrawRole("outgoing")
+			local offsetX, offsetY, scale, centerX, centerY = MenuScene.getOutgoingTransform(outgoingProgress, width, height)
 			love.graphics.push()
-			love.graphics.translate(MenuScene.getOutgoingOffset(outgoingProgress, width), 0)
+			love.graphics.translate(offsetX or 0, offsetY or 0)
+			if scale and scale ~= 1 then
+				love.graphics.translate(centerX or 0, centerY or 0)
+				love.graphics.scale(scale, scale)
+				love.graphics.translate(-(centerX or 0), -(centerY or 0))
+			end
 			previousState:draw()
 			love.graphics.pop()
 		end
@@ -534,8 +540,14 @@ function GameState:draw()
 			end
 
 			MenuScene.setDrawRole("incoming")
+			local offsetX, offsetY, scale, centerX, centerY = MenuScene.getIncomingTransform(incomingProgress, width, height)
 			love.graphics.push()
-			love.graphics.translate(MenuScene.getIncomingOffset(incomingProgress, width), 0)
+			love.graphics.translate(offsetX or 0, offsetY or 0)
+			if scale and scale ~= 1 then
+				love.graphics.translate(centerX or 0, centerY or 0)
+				love.graphics.scale(scale, scale)
+				love.graphics.translate(-(centerX or 0), -(centerY or 0))
+			end
 			currentState:draw()
 			love.graphics.pop()
 		end
