@@ -502,20 +502,20 @@ function MenuScene.endManualBackground()
 end
 
 function MenuScene.shouldDrawBackground()
-	if manualBackground then
-		return false
-	end
+if manualBackground then
+return false
+end
 
-	return drawRole ~= "outgoing"
+return drawRole ~= "outgoing"
 end
 
 local function resolveSlideProgress(progress)
 	progress = Easing.clamp01(progress or 0)
 
-	local eased = Easing.easeInOutCubic(progress)
-	local accent = (Easing.easeOutBack(progress) - progress) * 0.18
+	local eased = Easing.easeInOutSine(progress)
+	local accent = (Easing.easeOutCubic(progress) - progress) * 0.12
 
-	return Easing.clamp(eased + accent, 0, 1.08)
+	return Easing.clamp(eased + accent, 0, 1.05)
 end
 
 function MenuScene.getIncomingOffset(progress, width)
@@ -534,14 +534,15 @@ end
 
 local function resolveLift(progress, maxOffset)
 	local arc = sin(progress * pi)
-	return (arc * arc) * (maxOffset or 0)
+	local easedArc = arc * Easing.easeOutCubic(progress)
+	return (easedArc * easedArc) * (maxOffset or 0)
 end
 
 function MenuScene.getIncomingTransform(progress, width, height)
 	local eased = resolveSlideProgress(progress)
 	local slide = 1 - eased
-	local lift = resolveLift(1 - progress, 12)
-	local scale = 1.01 - 0.01 * Easing.easeOutCubic(progress)
+	local lift = resolveLift(1 - progress, 14)
+	local scale = 1.015 - 0.015 * Easing.easeOutCubic(progress)
 
 	return slide * (width or 0), lift, scale, getTransformCenter(width, height)
 end
@@ -549,8 +550,8 @@ end
 function MenuScene.getOutgoingTransform(progress, width, height)
 	local eased = resolveSlideProgress(progress)
 	local slide = -eased
-	local lift = -resolveLift(progress, 8)
-	local scale = 1 - 0.03 * Easing.easeOutCubic(progress)
+	local lift = -resolveLift(progress, 10)
+	local scale = 1 - 0.028 * Easing.easeInOutSine(progress)
 
 	return slide * (width or 0), lift, scale, getTransformCenter(width, height)
 end
