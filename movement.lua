@@ -27,7 +27,7 @@ local MAX_SNAKE_TIME_STEP = 1 / 60
 
 local function isDeveloperGodMode()
 	return Snake.isDeveloperGodMode and Snake:isDeveloperGodMode()
-end
+	end
 
 local cachedRockCandidates = {}
 local cachedRockHeadCol
@@ -43,7 +43,7 @@ function Movement:applyForcedDirection(dirX, dirY)
 	end
 
 	Snake:setDirectionVector(dirX, dirY)
-end
+	end
 
 local SEGMENT_SIZE = 24 -- same size as rocks and snake
 local ROCK_COLLISION_INSET = 2 -- shrink collision boxes slightly to avoid premature hits
@@ -211,7 +211,7 @@ local function recordShieldEvent(cause)
 			Achievements:check(achievementId)
 		end
 	end
-end
+	end
 
 -- AABB collision check
 local function aabb(ax, ay, aw, ah, bx, by, bw, bh)
@@ -570,7 +570,7 @@ local function handleWallCollision(headX, headY)
 		Snake:onShieldConsumed(headX, headY, "wall")
 	end
 
-	recordShieldEvent("wall")
+		recordShieldEvent("wall")
 
 	return headX, headY
 end
@@ -742,7 +742,7 @@ local function handleSawCollision(headX, headY)
 		recordShieldEvent("saw")
 	end
 
-	return
+	return "hit", "saw", {damage = 0}
 end
 
 local function handleLaserCollision(headX, headY)
