@@ -178,12 +178,9 @@ local function applyComboReward(fruitType, x, y, comboCount, wasComboActive)
 
 	local totalBonus = max(0, scaledCombo + extraBonus)
 
-	if totalBonus > 0 then
-		Score:addBonus(totalBonus)
-
-		local summary = string.format("Combo Bonus +%d", totalBonus)
-		FloatingText:add(summary, x, y - 74, {1, 0.95, 0.6, 1}, 1.3, 48)
-	end
+        if totalBonus > 0 then
+                Score:addBonus(totalBonus)
+        end
 
 	comboBurstOptions.count = love.math.random(10, 14) + comboCount
 	comboBurstOptions.speed = 90 + comboCount * 12
@@ -330,7 +327,7 @@ function FruitEvents.handleConsumption(x, y)
 	Snake:markFruitSegment(markerX, markerY)
 
 	Face:set("happy", 2)
-	FloatingText:add("+" .. tostring((comboMultiplier or 1) * points), x, y, Theme.textColor, 1.0, 40)
+        FloatingText:add("+" .. tostring(points), x, y, Theme.textColor, 1.0, 40)
 	Score:increase(points)
 	Audio:playSound("fruit", fruitPitch)
 	SessionStats:add("fruitEaten", 1)
@@ -410,14 +407,15 @@ function FruitEvents.handleConsumption(x, y)
 		}
 	)
 
-	local state = {
-		snakeScore = Score:get(),
-		snakeApplesEaten = Score:get(),
-		totalFruitEaten = PlayerStats:get("totalFruitEaten") or 0,
-		totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
-		bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
-	}
-	Achievements:checkAll(state)
+        local state = {
+                snakeScore = Score:get(),
+                snakeApplesEaten = Score:get(),
+                totalFruitEaten = PlayerStats:get("totalFruitEaten") or 0,
+                totalDragonfruitEaten = PlayerStats:get("totalDragonfruitEaten") or 0,
+                bestComboStreak = PlayerStats:get("bestComboStreak") or 0,
+        }
+
+        Achievements:checkAll(state)
 end
 
 return FruitEvents
