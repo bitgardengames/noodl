@@ -2355,7 +2355,7 @@ function UI:drawFruitSockets()
 		love.graphics.rectangle("fill", panelX + shadowOffsetX, panelY + shadowOffsetY, panelW, panelH, 12, 12)
 	end
 
-	local basePanelColor = Theme.arenaBG or Theme.panelColor or DEFAULT_SOCKET_PANEL_COLOR
+	local basePanelColor = Theme.panelColor or DEFAULT_SOCKET_PANEL_COLOR
 	local panelColor = basePanelColor
 	if goalFlash > 0 then
 		panelColor = lightenColor(panelColor, 0.25 * goalFlash)

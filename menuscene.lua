@@ -272,7 +272,7 @@ local function buildDecorationConfig(sw, sh, options, fillColor, accentColor, se
                 local lighten = rng:random() < 0.45
                 local target = lighten and highlightTarget or shadowTarget
                 local amount = lighten and (0.1 + rng:random() * 0.06) or (0.12 + rng:random() * 0.04)
-                local alpha = lighten and (0.18 + rng:random() * 0.05) or (0.22 + rng:random() * 0.05)
+                local alpha = lighten and (0.18 + rng:random() * 0.04) or (0.22 + rng:random() * 0.04)
                 local color = mixColorTowards(baseColor, target, amount, alpha)
 
                 if rng:random() < 0.35 then

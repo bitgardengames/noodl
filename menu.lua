@@ -667,13 +667,7 @@ function Menu:draw()
 		local progressText = dailyPanelEntry and dailyPanelEntry.progressText or nil
 		local ratio = dailyPanelEntry and dailyPanelEntry.ratio or 0
 
-		local panelHeight = padding * 2
-		+ headerFont:getHeight()
-		+ 6
-		+ titleFont:getHeight()
-		+ 10
-		+ descHeight
-		+ statusBarHeight
+		local panelHeight = padding * 2 + headerFont:getHeight() + 6 + titleFont:getHeight() + 10 + descHeight + statusBarHeight
 
 		if streakText then
 			panelHeight = panelHeight + 8 + streakHeight
