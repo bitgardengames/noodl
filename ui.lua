@@ -1732,29 +1732,32 @@ local function getComboBarColor(value)
 end
 
 local function drawComboIndicator(self)
-	local combo = self.combo
-	local comboActive = combo and combo.count >= 2 and (combo.duration or 0) > 0
+        local combo = self.combo
+        local duration = combo and combo.duration or 0
+        local timer = 0
+        local progress = 0
 
-	if not comboActive then
-		return
-	end
+        if not combo or duration <= 0 then
+                return
+        end
 
-	local duration = combo.duration or 0
-	local timer = 0
-	local progress = 0
-	timer = max(0, min(combo.timer or 0, duration))
-	progress = duration > 0 and timer / duration or 0
+        timer = max(0, min(combo.timer or 0, duration))
+        progress = duration > 0 and timer / duration or 0
 
-	local screenW = love.graphics.getWidth()
-	local titleText = "Combo"
-	titleText = "Combo x" .. combo.count
+        if timer <= 0 then
+                return
+        end
 
-	local width = max(240, UI.fonts.button:getWidth(titleText) + 120)
-	local height = 68
-	local x = (screenW - width) / 2
-	local y = 16
+        local screenW = love.graphics.getWidth()
+        local showComboText = combo.count and combo.count >= 2
+        local titleText = showComboText and ("Combo x" .. combo.count) or ""
 
-	local intensity = min(max(combo.count - 1, 0), 10) / 10
+        local width = max(240, UI.fonts.button:getWidth(titleText) + 120)
+        local height = 68
+        local x = (screenW - width) / 2
+        local y = 16
+
+        local intensity = min(max(combo.count - 1, 0), 10) / 10
 	local accent = {
 		1 - 0.32 * intensity,
 		0.78 + 0.17 * intensity,
@@ -1791,33 +1794,33 @@ local function drawComboIndicator(self)
 	)
 	love.graphics.rectangle("fill", x, y, width, height, 18, 18)
 
-	love.graphics.setColor(
-		UI.colors.border[1] + (accent[1] - UI.colors.border[1]) * 0.4 * intensity,
-		UI.colors.border[2] + (accent[2] - UI.colors.border[2]) * 0.4 * intensity,
-		UI.colors.border[3] + (accent[3] - UI.colors.border[3]) * 0.4 * intensity,
-		UI.colors.border[4]
-	)
-	love.graphics.setLineWidth(3)
-	love.graphics.rectangle("line", x, y, width, height, 18, 18)
+        love.graphics.setColor(
+                UI.colors.border[1] + (accent[1] - UI.colors.border[1]) * 0.4 * intensity,
+                UI.colors.border[2] + (accent[2] - UI.colors.border[2]) * 0.4 * intensity,
+                UI.colors.border[3] + (accent[3] - UI.colors.border[3]) * 0.4 * intensity,
+                UI.colors.border[4]
+        )
+        love.graphics.setLineWidth(3)
+        love.graphics.rectangle("line", x, y, width, height, 18, 18)
 
-	UI.setFont("button")
-	love.graphics.setColor(Theme.textColor)
-	love.graphics.printf(titleText, x, y + 8, width, "center")
+        if showComboText then
+                UI.setFont("button")
+                love.graphics.setColor(Theme.textColor)
+                love.graphics.printf(titleText, x, y + 8, width, "center")
+        end
 
 	local barPadding = 18
 	local barHeight = 10
 	local barWidth = width - barPadding * 2
 	local comboBarY = y + height - barPadding - barHeight
 
-	if comboActive then
-		love.graphics.setColor(0, 0, 0, 0.25)
-		love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth, barHeight, 6, 6)
+        love.graphics.setColor(0, 0, 0, 0.25)
+        love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth, barHeight, 6, 6)
 
-		local barColor = getComboBarColor(progress)
+        local barColor = getComboBarColor(progress)
 
-		love.graphics.setColor(barColor)
-		love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth * progress, barHeight, 6, 6)
-	end
+        love.graphics.setColor(barColor)
+        love.graphics.rectangle("fill", x + barPadding, comboBarY, barWidth * progress, barHeight, 6, 6)
 
 	love.graphics.pop()
 end
