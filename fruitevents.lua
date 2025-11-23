@@ -288,10 +288,13 @@ function FruitEvents.handleConsumption(x, y)
 	local wasComboActive = (comboState.timer or 0) > 0
 	local currentComboCount = wasComboActive and (comboState.count or 0) or 0
 	local nextComboCount = wasComboActive and currentComboCount + 1 or 1
-	local comboMultiplier = getComboMultiplier(currentComboCount)
-	local multiplier = max(1, getUpgradeEffect("fruitValueMult") or 1)
-	local fruitPitch = getComboPitch(comboMultiplier, wasComboActive)
-	local points = basePoints * comboMultiplier * multiplier
+        local comboMultiplier = getComboMultiplier(currentComboCount)
+        local baseFloatingScale = (FloatingText.defaults and FloatingText.defaults.scale) or 1
+        local comboScale = 1 + (comboMultiplier - 1) * 0.05
+        local floatingTextScale = baseFloatingScale * comboScale
+        local multiplier = max(1, getUpgradeEffect("fruitValueMult") or 1)
+        local fruitPitch = getComboPitch(comboMultiplier, wasComboActive)
+        local points = basePoints * comboMultiplier * multiplier
 	if points < 0 then
 		points = 0
 	else
@@ -305,14 +308,16 @@ function FruitEvents.handleConsumption(x, y)
 
 	Snake:grow()
 
-	local markerX, markerY = Fruit:getPosition()
-	if not markerX then markerX = x end
-	if not markerY then markerY = y end
-	Snake:markFruitSegment(markerX, markerY)
+        local markerX, markerY = Fruit:getPosition()
+        if not markerX then markerX = x end
+        if not markerY then markerY = y end
+        Snake:markFruitSegment(markerX, markerY)
 
-	Face:set("happy", 2)
-        FloatingText:add("+" .. tostring(points), x, y, Theme.textColor, 1.0, 40)
-	Score:increase(points)
+        Face:set("happy", 2)
+        FloatingText:add("+" .. tostring(points), x, y, Theme.textColor, 1.0, 40, nil, {
+                scale = floatingTextScale,
+        })
+        Score:increase(points)
 	Audio:playSound("fruit", fruitPitch)
 	SessionStats:add("fruitEaten", 1)
 	if Snake.onFruitCollected then
