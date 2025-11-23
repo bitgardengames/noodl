@@ -659,7 +659,7 @@ function Menu:draw()
 
         if dailyChallenge and dailyChallengeAnim > 0 then
                 local appearProgress = min(1, dailyChallengeAnim)
-                local eased = Easing.easeOutQuint(appearProgress)
+                local eased = Easing.easeInOutSine(appearProgress)
                 local liftProgress = Easing.easeOutBack(appearProgress)
                 local settleProgress = Easing.easeOutCubic(appearProgress)
                 local alpha = eased
