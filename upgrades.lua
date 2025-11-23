@@ -1106,18 +1106,32 @@ pool = {
 		Snake:addSpeedMultiplier(1.04
 	)
 
-		celebrateUpgrade(getUpgradeString("serpents_reflex", "name"), nil, {
-		color = {0.98, 0.76, 0.36, 1},
-		particleCount = 12,
-		particleSpeed = 120,
-		particleLife = 0.34,
-		textOffset = 36,
-		textScale = 1.06,
-		}
-	)
-		end,
-		}),
-	register({
+                local celebrationOptions = {
+                color = {0.98, 0.76, 0.36, 1},
+                particleCount = 12,
+                particleSpeed = 120,
+                particleLife = 0.34,
+                textOffset = 36,
+                textScale = 1.06,
+                visual = {
+                variant = "adrenaline_rush",
+                showBase = false,
+                life = 0.72,
+                innerRadius = 10,
+                outerRadius = 52,
+                addBlend = true,
+                color = {0.98, 0.76, 0.36, 1},
+                variantSecondaryColor = {1.0, 0.6, 0.32, 0.92},
+                variantTertiaryColor = {1.0, 0.92, 0.64, 0.82},
+                },
+                }
+                applySegmentPosition(celebrationOptions, 0.2
+        )
+                celebrateUpgrade(getUpgradeString("serpents_reflex", "name"), nil, celebrationOptions
+        )
+                end,
+                }),
+        register({
 		id = "swift_fangs",
 		nameKey = "upgrades.swift_fangs.name",
 		descKey = "upgrades.swift_fangs.description",
@@ -1147,15 +1161,26 @@ pool = {
 		local celebrationOptions = {
 		color = {1, 0.63, 0.42, 1},
 		particleCount = 18,
-		particleSpeed = 150,
-		particleLife = 0.38,
-		textOffset = 46,
-		textScale = 1.18,
-		}
-		applySegmentPosition(celebrationOptions, 0.28
-	)
-		celebrateUpgrade(getUpgradeString("swift_fangs", "name"), nil, celebrationOptions
-	)
+                particleSpeed = 150,
+                particleLife = 0.38,
+                textOffset = 46,
+                textScale = 1.18,
+                visual = {
+                variant = "fang_flurry",
+                showBase = false,
+                life = 0.8,
+                innerRadius = 12,
+                outerRadius = 58,
+                addBlend = true,
+                color = {1, 0.63, 0.42, 1},
+                variantSecondaryColor = {1.0, 0.84, 0.68, 0.92},
+                variantTertiaryColor = {1.0, 0.52, 0.22, 0.78},
+                },
+                }
+                applySegmentPosition(celebrationOptions, 0.28
+        )
+                celebrateUpgrade(getUpgradeString("swift_fangs", "name"), nil, celebrationOptions
+        )
 		end,
 		}),
 	register({
@@ -1294,19 +1319,32 @@ pool = {
 		tags = {"adrenaline"},
 		onAcquire = function(state
 	)
-		state.effects.adrenaline = state.effects.adrenaline or {duration = 3, boost = 1.5}
-		celebrateUpgrade(getUpgradeString("adrenaline_surge", "name"), nil, {
-		color = {1, 0.42, 0.42, 1},
-		particleCount = 20,
-		particleSpeed = 160,
-		particleLife = 0.36,
-		textOffset = 42,
-		textScale = 1.16,
-		skipVisuals = true,
-		}
-	)
-		end,
-		}),
+                state.effects.adrenaline = state.effects.adrenaline or {duration = 3, boost = 1.5}
+                local celebrationOptions = {
+                color = {1, 0.42, 0.42, 1},
+                particleCount = 20,
+                particleSpeed = 160,
+                particleLife = 0.36,
+                textOffset = 42,
+                textScale = 1.16,
+                visual = {
+                variant = "adrenaline_rush",
+                showBase = false,
+                life = 0.74,
+                innerRadius = 12,
+                outerRadius = 56,
+                addBlend = true,
+                color = {1, 0.42, 0.42, 1},
+                variantSecondaryColor = {1.0, 0.26, 0.26, 0.92},
+                variantTertiaryColor = {1.0, 0.74, 0.66, 0.86},
+                },
+                }
+                applySegmentPosition(celebrationOptions, 0.34
+        )
+                celebrateUpgrade(getUpgradeString("adrenaline_surge", "name"), nil, celebrationOptions
+        )
+                end,
+                }),
 	register({
 		id = "seismic_dampener",
 		nameKey = "upgrades.seismic_dampener.name",
@@ -2167,29 +2205,45 @@ pool = {
 		dash.breaksRocks = true
 		state.effects.dash = dash
 
-		if not state.counters.thunderDashHandlerRegistered then
-		state.counters.thunderDashHandlerRegistered = true
-		Upgrades:addEventHandler("dashActivated", function(data
-	)
-		local label = getUpgradeString("thunder_dash", "activation_text"
-	)
-		celebrateUpgrade(label, data, {
-		color = {1.0, 0.78, 0.32, 1},
-		particleCount = 24,
-		particleSpeed = 160,
-		particleLife = 0.35,
-		particleSize = 4,
-		particleSpread = pi * 2,
-		particleSpeedVariance = 90,
-		textOffset = 52,
-		textScale = 1.14,
-		}
-	)
-		end
-	)
-		end
-		end,
-		}),
+                if not state.counters.thunderDashHandlerRegistered then
+                state.counters.thunderDashHandlerRegistered = true
+                Upgrades:addEventHandler("dashActivated", function(data
+        )
+                local label = getUpgradeString("thunder_dash", "activation_text"
+        )
+                local celebrationOptions = {
+                color = {1.0, 0.78, 0.32, 1},
+                particleCount = 24,
+                particleSpeed = 160,
+                particleLife = 0.35,
+                particleSize = 4,
+                particleSpread = pi * 2,
+                particleSpeedVariance = 90,
+                textOffset = 52,
+                textScale = 1.14,
+                visual = {
+                variant = "storm_burst",
+                showBase = false,
+                life = 0.78,
+                innerRadius = 14,
+                outerRadius = 64,
+                addBlend = true,
+                glowAlpha = 0.28,
+                haloAlpha = 0.2,
+                color = {1.0, 0.78, 0.32, 1},
+                variantSecondaryColor = {0.86, 0.94, 1.0, 0.9},
+                variantTertiaryColor = {1.0, 0.95, 0.75, 0.88},
+                },
+                }
+                applySegmentPosition(celebrationOptions, 0.3
+        )
+                celebrateUpgrade(label, data, celebrationOptions
+        )
+                end
+        )
+                end
+                end,
+                }),
 	register({
 		id = "sparkstep_relay",
 		nameKey = "upgrades.sparkstep_relay.name",
@@ -2323,15 +2377,39 @@ pool = {
 		state.counters = state.counters or {}
 		local stacks = (state.counters.momentumCoilsStacks or 0) + 1
 		state.counters.momentumCoilsStacks = stacks
-		Snake:setMomentumCoilsStacks(stacks
-	)
-		else
-		local stacks = (Snake.momentumCoils and Snake.momentumCoils.stacks or 0) + 1
-		Snake:setMomentumCoilsStacks(stacks
-	)
-		end
-		end,
-		}),
+                Snake:setMomentumCoilsStacks(stacks
+        )
+                else
+                local stacks = (Snake.momentumCoils and Snake.momentumCoils.stacks or 0) + 1
+                Snake:setMomentumCoilsStacks(stacks
+        )
+                end
+
+                local celebrationOptions = {
+                color = {0.86, 0.74, 1.0, 1},
+                particleCount = 18,
+                particleSpeed = 130,
+                particleLife = 0.44,
+                textOffset = 50,
+                textScale = 1.12,
+                visual = {
+                variant = "coiled_focus",
+                showBase = false,
+                life = 0.82,
+                innerRadius = 14,
+                outerRadius = 62,
+                addBlend = true,
+                color = {0.86, 0.74, 1.0, 1},
+                variantSecondaryColor = {0.68, 0.54, 0.96, 0.9},
+                variantTertiaryColor = {0.98, 0.9, 1.0, 0.78},
+                },
+                }
+                applySegmentPosition(celebrationOptions, 0.36
+        )
+                celebrateUpgrade(getUpgradeString("momentum_coils", "name"), nil, celebrationOptions
+        )
+                end,
+                }),
 	register({
 		id = "event_horizon",
 		nameKey = "upgrades.event_horizon.name",
