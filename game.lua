@@ -1825,32 +1825,51 @@ function Game:update(dt)
 end
 
 function Game:setupFloor(floorNum)
-	self.currentFloorData = Floors[floorNum] or Floors[1]
+        self.currentFloorData = Floors[floorNum] or Floors[1]
 
-	FruitEvents.reset()
+        FruitEvents.reset()
 
-	self.floorTimer = 0
+        self.floorTimer = 0
 
-	local setup = FloorSetup.prepare(floorNum, self.currentFloorData)
-	local traitContext = setup.traitContext
-	local spawnPlan = setup.spawnPlan
+        self.pendingTraitContext = nil
+        self.pendingSpawnPlan = nil
 
-	UI:setFruitGoal(traitContext.fruitGoal)
+        local setup = FloorSetup.prepare(floorNum, self.currentFloorData)
+        local traitContext = setup.traitContext
+        local spawnPlan = setup.spawnPlan
 
-	self.transitionNotes = nil
+        UI:setFruitGoal(traitContext.fruitGoal)
 
-	Upgrades:applyPersistentEffects(true)
+        self.transitionNotes = nil
 
-	if Snake.adrenaline then
-		Snake.adrenaline.active = false
-		Snake.adrenaline.timer = 0
-		Snake.adrenaline.suppressVisuals = nil
-	end
+        Upgrades:applyPersistentEffects(true)
 
-	FloorSetup.finalizeContext(traitContext, spawnPlan)
-	Upgrades:notify("floorStart", {floor = floorNum, context = traitContext})
+        if Snake.adrenaline then
+                Snake.adrenaline.active = false
+                Snake.adrenaline.timer = 0
+                Snake.adrenaline.suppressVisuals = nil
+        end
 
-	FloorSetup.spawnHazards(spawnPlan)
+        FloorSetup.finalizeContext(traitContext, spawnPlan)
+
+        self.pendingTraitContext = traitContext
+        self.pendingSpawnPlan = spawnPlan
+end
+
+function Game:activatePreparedFloor()
+        local spawnPlan = self.pendingSpawnPlan
+        if not spawnPlan then
+                return
+        end
+
+        local traitContext = self.pendingTraitContext or {}
+
+        Upgrades:notify("floorStart", {floor = self.floor, context = traitContext})
+
+        FloorSetup.spawnHazards(spawnPlan)
+
+        self.pendingSpawnPlan = nil
+        self.pendingTraitContext = nil
 end
 
 function Game:draw()
