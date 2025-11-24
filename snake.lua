@@ -3,6 +3,8 @@ local MovementContext = require("movementcontext")
 local SnakeUtils = require("snakeutils")
 local SnakeDraw = require("snakedraw")
 local SnakeUpgrades = require("snakeupgrades")
+local SnakeUpgradesState = require("snake_upgrades_state")
+local SnakeDamage = require("snake_damage")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Lasers = require("lasers")
@@ -311,26 +313,6 @@ target[DIR_X] = x
 target[DIR_Y] = y
 end
 
-local SHIELD_DAMAGE_FLOATING_TEXT_COLOR = {1, 0.78, 0.68, 1}
-local SHIELD_DAMAGE_FLOATING_TEXT_OPTIONS = {
-	scale = 18,
-	popScaleFactor = 1.45,
-	popDuration = 0.24,
-	wobbleMagnitude = 0.2,
-	wobbleFrequency = 4.6,
-	shadow = {
-		color = {0, 0, 0, 0.6},
-		offset = {0, 3},
-		blur = 1.6,
-	},
-	glow = {
-		color = {1, 0.42, 0.32, 0.45},
-		magnitude = 0.35,
-		frequency = 5.2,
-	},
-	jitter = 2.4,
-}
-
 -- Shared burst configuration to avoid allocations when trimming segments.
 local LOSE_SEGMENTS_DEFAULT_BURST_COLOR = {1, 0.8, 0.4, 1}
 local LOSE_SEGMENTS_SAW_BURST_COLOR = {1, 0.6, 0.3, 1}
@@ -383,9 +365,7 @@ local SEGMENT_SPACING = SnakeUtils.SEGMENT_SPACING
 -- distance travelled since last grid snap (in world units)
 local moveProgress = 0
 local POP_DURATION = SnakeUtils.POP_DURATION
-local SHIELD_FLASH_DURATION = 0.3
 local HAZARD_GRACE_DURATION = SnakeUpgrades.HAZARD_GRACE_DURATION -- brief invulnerability window after surviving certain hazards
-local DAMAGE_FLASH_DURATION = 0.45
 local TAIL_HIT_FLASH_DURATION = 0.18
 local TAIL_HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
 -- keep polyline spacing stable for rendering
@@ -413,295 +393,26 @@ Snake.swiftFangs = nil
 local resolveTimeDilationScale = SnakeUpgrades.resolveTimeDilationScale
 
 -- getters / mutators (safe API for upgrades)
-function Snake:getSpeed()
-	local speed = (self.baseSpeed or 1) * (self.speedMult or 1)
-
-	return speed
-end
-
-function Snake:addSpeedMultiplier(mult)
-	self.speedMult = (self.speedMult or 1) * (mult or 1)
-end
-
-function Snake:addShields(n)
-	n = n or 1
-	local previous = self.shields or 0
-	local updated = previous + n
-	if updated < 0 then
-		updated = 0
-	end
-	self.shields = updated
-
-	if n ~= 0 then
-		UI:setShields(self.shields)
-	end
-
-end
-
-function Snake:consumeShield()
-	if (self.shields or 0) > 0 then
-		self.shields = self.shields - 1
-		self.shieldFlashTimer = SHIELD_FLASH_DURATION
-		UI:setShields(self.shields)
-		SessionStats:add("shieldsSaved", 1)
-		return true
-	end
-	return false
-end
-
-function Snake:resetModifiers()
-        self.speedMult    = 1
-        self.shields = 0
-	self.extraGrowth  = 0
-	self.shieldFlashTimer = 0
-	self.stoneSkinSawGrace = 0
-	self.dash = nil
-	self.timeDilation = nil
-	self.adrenaline = nil
-	self.hazardGraceTimer = 0
-	self.phoenixEcho = nil
-        self.eventHorizon = nil
-        self.stormchaser = nil
-        self.temporalAnchor = nil
-        self.swiftFangs = nil
-        self.zephyrCoils = nil
-        self.momentumCoils = nil
-        self.serpentsReflex = nil
-        self.deliberateCoil = nil
-        self.stoneSkinVisual = nil
-        self.speedVisual = nil
-        self.diffractionBarrier = nil
-        UI:setShields(self.shields or 0, {silent = true, immediate = true})
-end
-
-function Snake:setSwiftFangsStacks(count)
-	count = max(0, floor((count or 0) + 0.0001))
-	local state = self.swiftFangs
-	local previous = state and (state.stacks or 0) or 0
-
-	if count > 0 then
-		if not state then
-			state = {intensity = 0, baseTarget = 0, time = 0, stacks = 0, flash = 0}
-			self.swiftFangs = state
-		end
-
-		state.stacks = count
-		state.baseTarget = min(0.65, 0.32 + 0.11 * min(count, 4))
-		state.target = state.baseTarget
-		if count > previous then
-			state.intensity = max(state.intensity or 0, 0.55)
-			state.flash = min(1, (state.flash or 0) + 0.7)
-		end
-	elseif state then
-		state.stacks = 0
-		state.baseTarget = 0
-		state.target = 0
-	end
-
-	if self.swiftFangs then
-		local data = self.swiftFangs
-		if (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01 then
-			self.swiftFangs = nil
-        end
-end
-
-function Snake:setSerpentsReflexStacks(count)
-        count = max(0, floor((count or 0) + 0.0001))
-
-        local state = self.serpentsReflex
-        local previous = state and (state.stacks or 0) or 0
-
-        if count > 0 then
-                if not state then
-                        state = {stacks = 0, intensity = 0, target = 0, time = 0, flash = 0}
-                        self.serpentsReflex = state
-                end
-
-                state.stacks = count
-                state.target = min(1, 0.28 + 0.12 * min(count, 4))
-                if count > previous then
-                        state.flash = min(1, (state.flash or 0) + 0.65)
-                        state.intensity = max(state.intensity or 0, 0.35)
-                end
-        elseif state then
-                state.stacks = 0
-                state.target = 0
-        end
-
-        if self.serpentsReflex then
-                local data = self.serpentsReflex
-                if (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01 and (data.flash or 0) <= 0.01 then
-                        self.serpentsReflex = nil
-                end
-        end
-end
-
-function Snake:setDeliberateCoilStacks(count)
-        count = max(0, floor((count or 0) + 0.0001))
-
-        local state = self.deliberateCoil
-        if not state and count <= 0 then
-                return
-        end
-
-        if not state then
-                state = {stacks = 0, intensity = 0, target = 0, time = 0}
-                self.deliberateCoil = state
-        end
-
-        state.stacks = count
-        if count > 0 then
-                state.target = min(1, 0.38 + 0.14 * min(count, 3))
-                if (state.intensity or 0) < 0.25 then
-                        state.intensity = max(state.intensity or 0, 0.25)
-                end
-        else
-                state.target = 0
-        end
-end
-end
-
-function Snake:setMomentumCoilsStacks(count)
-	count = max(0, floor((count or 0) + 0.0001))
-
-	local state = self.momentumCoils
-	if not state and count <= 0 then
-		return
-	end
-
-	if not state then
-		state = {stacks = 0, intensity = 0, target = 0, time = 0}
-		self.momentumCoils = state
-	end
-
-	state.stacks = count
-	if count > 0 then
-		state.target = min(1, 0.45 + 0.2 * min(count, 3))
-		if (state.intensity or 0) < 0.25 then
-			state.intensity = max(state.intensity or 0, 0.25)
-		end
-	else
-		state.target = 0
-	end
-end
-
-function Snake:setDiffractionBarrierActive(active)
-        SnakeUpgrades.setDiffractionBarrierActive(self, active)
-end
-
-function Snake:setPhoenixEchoCharges(count, options)
-        SnakeUpgrades.setPhoenixEchoCharges(self, count, options)
-end
-
-
-
-function Snake:setEventHorizonActive(active)
-        SnakeUpgrades.setEventHorizonActive(self, active)
-end
-
-function Snake:onShieldConsumed(x, y, cause)
-        SnakeUpgrades.onShieldConsumed(self, x, y, cause)
-end
-
-function Snake:addStoneSkinSawGrace(n)
-        SnakeUpgrades.addStoneSkinSawGrace(self, n)
-end
-
-function Snake:consumeStoneSkinSawGrace()
-        return SnakeUpgrades.consumeStoneSkinSawGrace(self, SHIELD_FLASH_DURATION)
-end
-
-function Snake:isHazardGraceActive()
-        return SnakeUpgrades.isHazardGraceActive(self)
-end
-
-function Snake:beginHazardGrace(duration)
-        SnakeUpgrades.beginHazardGrace(self, duration)
-end
+Snake.getSpeed = SnakeUpgradesState.getSpeed
+Snake.addSpeedMultiplier = SnakeUpgradesState.addSpeedMultiplier
+Snake.addShields = SnakeUpgradesState.addShields
+Snake.consumeShield = SnakeUpgradesState.consumeShield
+Snake.resetModifiers = SnakeUpgradesState.resetModifiers
+Snake.setSwiftFangsStacks = SnakeUpgradesState.setSwiftFangsStacks
+Snake.setSerpentsReflexStacks = SnakeUpgradesState.setSerpentsReflexStacks
+Snake.setDeliberateCoilStacks = SnakeUpgradesState.setDeliberateCoilStacks
+Snake.setMomentumCoilsStacks = SnakeUpgradesState.setMomentumCoilsStacks
+Snake.setDiffractionBarrierActive = SnakeUpgradesState.setDiffractionBarrierActive
+Snake.setPhoenixEchoCharges = SnakeUpgradesState.setPhoenixEchoCharges
+Snake.setEventHorizonActive = SnakeUpgradesState.setEventHorizonActive
+Snake.onShieldConsumed = SnakeUpgradesState.onShieldConsumed
+Snake.addStoneSkinSawGrace = SnakeUpgradesState.addStoneSkinSawGrace
+Snake.consumeStoneSkinSawGrace = SnakeUpgradesState.consumeStoneSkinSawGrace
+Snake.isHazardGraceActive = SnakeUpgradesState.isHazardGraceActive
+Snake.beginHazardGrace = SnakeUpgradesState.beginHazardGrace
 
 function Snake:onDamageTaken(cause, info)
-        local pushX = (info and info[CTX_PUSH_X]) or 0
-        local pushY = (info and info[CTX_PUSH_Y]) or 0
-        local translated = false
-
-        if pushX ~= 0 or pushY ~= 0 then
-                self:translate(pushX, pushY)
-                translated = true
-        end
-
-        local snapX = info and info[CTX_SNAP_X]
-        local snapY = info and info[CTX_SNAP_Y]
-        if snapX and snapY and not translated then
-                self:setHeadPosition(snapX, snapY)
-        end
-
-        local dirX = info and info[CTX_DIR_X]
-        local dirY = info and info[CTX_DIR_Y]
-        if (dirX and dirX ~= 0) or (dirY and dirY ~= 0) then
-                self:setDirectionVector(dirX or 0, dirY or 0)
-        end
-
-        local grace = (info and info[CTX_GRACE]) or (HAZARD_GRACE_DURATION * 2)
-        if grace and grace > 0 then
-                self:beginHazardGrace(grace)
-        end
-
-	local headX, headY = self:getHead()
-	if headX and headY then
-		local centerX = headX + SEGMENT_SIZE * 0.5
-		local centerY = headY + SEGMENT_SIZE * 0.5
-
-local burstDirX, burstDirY = 0, -1
-local pushMag = sqrt(pushX * pushX + pushY * pushY)
-if pushMag > 1e-4 then
-burstDirX = pushX / pushMag
-burstDirY = pushY / pushMag
-elseif dirX and dirY and (dirX ~= 0 or dirY ~= 0) then
-local dirMag = sqrt(dirX * dirX + dirY * dirY)
-if dirMag > 1e-4 then
-burstDirX = -dirX / dirMag
-burstDirY = -dirY / dirMag
-end
-else
-local faceX = direction and direction[DIR_X] or 0
-local faceY = direction and direction[DIR_Y] or -1
-local faceMag = sqrt(faceX * faceX + faceY * faceY)
-if faceMag > 1e-4 then
-burstDirX = -faceX / faceMag
-burstDirY = -faceY / faceMag
-end
-end
-
-		if Particles and Particles.spawnBurst then
-			Particles:spawnBurst(centerX, centerY, SHIELD_BREAK_PARTICLE_OPTIONS)
-		end
-
-                local shielded = info and info[CTX_DAMAGE] ~= nil and info[CTX_DAMAGE] <= 0
-                if Particles and Particles.spawnBlood and not shielded then
-                        SHIELD_BLOOD_PARTICLE_OPTIONS.dirX = burstDirX
-                        SHIELD_BLOOD_PARTICLE_OPTIONS.dirY = burstDirY
-			Particles:spawnBlood(centerX, centerY, SHIELD_BLOOD_PARTICLE_OPTIONS)
-		end
-
-		if FloatingText and FloatingText.add then
-                        local inflicted = info and (info[CTX_INFLICTED_DAMAGE] or info[CTX_DAMAGE])
-			local label
-			if shielded then
-				label = "SHIELD!"
-			elseif inflicted and inflicted > 0 then
-				label = nil
-			else
-				label = "HIT!"
-			end
-
-			if label then
-				FloatingText:add(label, centerX, centerY - 30, SHIELD_DAMAGE_FLOATING_TEXT_COLOR, 0.9, 36, nil, SHIELD_DAMAGE_FLOATING_TEXT_OPTIONS)
-			end
-		end
-	end
-
-	self.shieldFlashTimer = SHIELD_FLASH_DURATION
-	self.damageFlashTimer = DAMAGE_FLASH_DURATION
+        SnakeDamage.onDamageTaken(self, cause, info, direction)
 end
 
 -- >>> Small integration note:
