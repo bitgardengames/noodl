@@ -42,42 +42,52 @@ SnakeUtils.getSegmentPosition = getSegmentPosition
 SnakeUtils.getSegmentDirection = getSegmentDirection
 
 local function wipeTable(t)
-	if not t then
-		return
+        if not t then
+                return
+        end
+
+        for key in pairs(t) do
+                t[key] = nil
+        end
+end
+
+local function fillColumn(column, rows)
+	for row = 1, rows do
+		column[row] = false
 	end
 
-	for key in pairs(t) do
-		t[key] = nil
+	for row = #column, rows + 1, -1 do
+		column[row] = nil
 	end
 end
 
 function SnakeUtils.initOccupancy()
-	local occupied = SnakeUtils.occupied
-	if type(occupied) ~= "table" then
-		occupied = {}
-		SnakeUtils.occupied = occupied
-	end
-	local cols = Arena.cols or 0
-	if cols <= 0 then
-		for col = 1, #occupied do
-			occupied[col] = nil
-		end
-		return
-	end
+        local occupied = SnakeUtils.occupied
+        if type(occupied) ~= "table" then
+                occupied = {}
+                SnakeUtils.occupied = occupied
+        end
+        local cols = Arena.cols or 0
+        local rows = Arena.rows or 0
+        if cols <= 0 then
+                for col = 1, #occupied do
+                        occupied[col] = nil
+                end
+                return
+        end
 
 	for col = 1, cols do
-		local column = occupied[col]
-		if not column then
-			column = {}
-			occupied[col] = column
-		else
-			wipeTable(column)
-		end
-	end
+                local column = occupied[col]
+                if not column then
+                        column = {}
+                        occupied[col] = column
+                end
+                fillColumn(column, rows)
+        end
 
-	for col = cols + 1, #occupied do
-		occupied[col] = nil
-	end
+        for col = cols + 1, #occupied do
+                occupied[col] = nil
+        end
 end
 
 -- Mark / unmark cells
@@ -97,26 +107,17 @@ function SnakeUtils.setOccupied(col, row, value)
 		return
 	end
 
-	local column = occupied[col]
-	if not column then
-		if not value then
-			return
-		end
+        local column = occupied[col]
+        if not column then
+                column = {}
+                occupied[col] = column
+                fillColumn(column, rows)
+        end
 
-		column = {}
-		occupied[col] = column
-	end
-
-	local current = column[row]
-	if value then
-		if current then
-			return
-		end
-
-		column[row] = true
-	elseif current then
-		column[row] = nil
-	end
+        local desired = not not value
+        if column[row] ~= desired then
+                column[row] = desired
+        end
 end
 
 function SnakeUtils.isOccupied(col, row)
@@ -164,24 +165,21 @@ local function markCells(cells, value)
 		local col, row = normalizeCell(cell[1], cell[2])
 		if col then
 			local column = occupied[col]
-			if not column then
-				if value then
-					column = {}
-					occupied[col] = column
-				else
-					column = nil
-				end
-			end
+                        if not column then
+                                if value then
+                                        column = {}
+                                        occupied[col] = column
+                                        fillColumn(column, Arena.rows or 0)
+                                else
+                                        column = nil
+                                end
+                        end
 
-			if column then
-				if value then
-					column[row] = true
-				else
-					column[row] = nil
-				end
-			end
-		end
-	end
+                        if column then
+                                column[row] = not not value
+                        end
+                end
+        end
 end
 
 -- Reserve a collection of cells and return the subset that we actually marked.
@@ -198,12 +196,12 @@ function SnakeUtils.reserveCells(cells)
 		local col, row = normalizeCell(cell[1], cell[2])
 		if col then
 			local column = occupied[col]
-			if column and not column[row] then
-				column[row] = true
-				reserved[#reserved + 1] = {col, row}
-			end
-		end
-	end
+                        if column and not column[row] then
+                                column[row] = true
+                                reserved[#reserved + 1] = {col, row}
+                        end
+                end
+        end
 
 	return reserved
 end
