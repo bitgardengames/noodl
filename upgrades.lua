@@ -2197,20 +2197,44 @@ pool = {
 		state.effects.rockShatter = (state.effects.rockShatter or 0) + 0.20
 		end,
 		}),
-	register({
-		id = "phoenix_echo",
-		nameKey = "upgrades.phoenix_echo.name",
-		descKey = "upgrades.phoenix_echo.description",
-		rarity = "epic",
-		tags = {"defense", "risk"},
-		onAcquire = function(state
-	)
-		state.counters.phoenixEchoCharges = (state.counters.phoenixEchoCharges or 0) + 1
-		end,
-		}),
-	register({
-		id = "thunder_dash",
-		nameKey = "upgrades.thunder_dash.name",
+        register({
+                id = "phoenix_echo",
+                nameKey = "upgrades.phoenix_echo.name",
+                descKey = "upgrades.phoenix_echo.description",
+                rarity = "epic",
+                tags = {"defense", "risk"},
+                onAcquire = function(state
+        )
+                state.counters.phoenixEchoCharges = (state.counters.phoenixEchoCharges or 0) + 1
+
+                local celebrationOptions = {
+                color = {1, 0.62, 0.32, 1},
+                particleCount = 18,
+                particleSpeed = 150,
+                particleLife = 0.5,
+                textOffset = 56,
+                textScale = 1.18,
+                visual = {
+                variant = "phoenix_flare",
+                showBase = false,
+                life = 0.9,
+                innerRadius = 14,
+                outerRadius = 56,
+                addBlend = true,
+                color = {1, 0.62, 0.32, 1},
+                variantSecondaryColor = {1, 0.44, 0.14, 0.95},
+                variantTertiaryColor = {1, 0.85, 0.48, 0.88},
+                },
+                }
+                applySegmentPosition(celebrationOptions, 0.48
+        )
+                celebrateUpgrade(getUpgradeString("phoenix_echo", "name"), nil, celebrationOptions
+        )
+                end,
+                }),
+        register({
+                id = "thunder_dash",
+                nameKey = "upgrades.thunder_dash.name",
 		descKey = "upgrades.thunder_dash.description",
 		rarity = "rare",
 		tags = {"mobility"},
@@ -2361,25 +2385,36 @@ pool = {
 
 		if not state.counters.temporalAnchorHandlerRegistered then
 		state.counters.temporalAnchorHandlerRegistered = true
-		Upgrades:addEventHandler("timeDilationActivated", function(data
-	)
-		local label = getUpgradeString("temporal_anchor", "activation_text"
-	)
-		celebrateUpgrade(label, data, {
-		color = {0.62, 0.84, 1.0, 1},
-		particleCount = 26,
-		particleSpeed = 120,
-		particleLife = 0.5,
-		particleSize = 5,
-		particleSpread = pi * 2,
-		particleSpeedVariance = 70,
-		textOffset = 60,
-		textScale = 1.12,
-		}
-	)
-		end
-	)
-		end
+                Upgrades:addEventHandler("timeDilationActivated", function(data
+        )
+                local label = getUpgradeString("temporal_anchor", "activation_text"
+        )
+                celebrateUpgrade(label, data, {
+                color = {0.62, 0.84, 1.0, 1},
+                particleCount = 26,
+                particleSpeed = 120,
+                particleLife = 0.5,
+                particleSize = 5,
+                particleSpread = pi * 2,
+                particleSpeedVariance = 70,
+                textOffset = 60,
+                textScale = 1.12,
+                visual = {
+                variant = "temporal_anchor",
+                showBase = false,
+                life = 0.78,
+                innerRadius = 12,
+                outerRadius = 60,
+                addBlend = true,
+                color = {0.62, 0.84, 1.0, 1},
+                variantSecondaryColor = {0.34, 0.74, 1.0, 0.9},
+                variantTertiaryColor = {0.9, 0.96, 1.0, 0.72},
+                },
+                }
+        )
+                end
+        )
+                end
 		end,
 		}),
 	register({

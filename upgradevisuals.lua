@@ -975,10 +975,10 @@ local function drawMoltingReflex(effect, progress)
 end
 
 local function drawResonantShell(effect, progress)
-	local x, y = effect.x, effect.y
-	local innerRadius = effect.innerRadius or 12
-	local outerRadius = effect.outerRadius or 44
-	local shellColor = effect.variantColor or effect.color or {0.8, 0.88, 1.0, 1}
+        local x, y = effect.x, effect.y
+        local innerRadius = effect.innerRadius or 12
+        local outerRadius = effect.outerRadius or 44
+        local shellColor = effect.variantColor or effect.color or {0.8, 0.88, 1.0, 1}
 	local waveColor = effect.variantSecondaryColor or {0.54, 0.76, 1.0, 0.92}
 	local sparkColor = effect.variantTertiaryColor or {1.0, 0.96, 0.82, 0.75}
 
@@ -1045,22 +1045,84 @@ local function drawResonantShell(effect, progress)
 		end
 	end
 
-	love.graphics.setLineWidth(1)
+        love.graphics.setLineWidth(1)
+end
+
+local function drawTemporalAnchor(effect, progress)
+        local x, y = effect.x, effect.y
+        local innerRadius = effect.innerRadius or 12
+        local outerRadius = effect.outerRadius or 44
+        local bandColor = effect.variantColor or effect.color or {0.62, 0.84, 1.0, 1}
+        local accentColor = effect.variantSecondaryColor or {0.34, 0.74, 1.0, 0.9}
+        local sparkColor = effect.variantTertiaryColor or {0.9, 0.96, 1.0, 0.72}
+
+        local bandAlpha = (bandColor[4] or 1) * clamp01(1.05 - progress * 1.1)
+        if bandAlpha <= 0 then return end
+
+        love.graphics.push("all")
+
+        if effect.addBlend then
+                love.graphics.setBlendMode("add")
+                love.graphics.setColor(bandColor[1], bandColor[2], bandColor[3], bandAlpha * 0.18)
+                love.graphics.circle("fill", x, y, outerRadius * (0.68 + 0.18 * sin(progress * pi * 3.2)), 48)
+                love.graphics.setBlendMode("alpha")
+        end
+
+        local ticks = 10
+        local rotation = (effect.rotation or 0) + progress * pi * 1.6
+        love.graphics.setLineWidth(innerRadius * 0.2)
+        love.graphics.setColor(bandColor[1], bandColor[2], bandColor[3], bandAlpha * 0.9)
+        for index = 1, ticks do
+                local angle = rotation + (index - 1) * (pi * 2 / ticks)
+                local startRadius = innerRadius * (0.9 + 0.18 * sin(progress * pi * 4 + index))
+                local endRadius = outerRadius * (0.55 + 0.2 * sin(progress * pi * 3.4 + index))
+                local sx = x + cos(angle) * startRadius
+                local sy = y + sin(angle) * startRadius
+                local ex = x + cos(angle) * endRadius
+                local ey = y + sin(angle) * endRadius
+                love.graphics.line(sx, sy, ex, ey)
+        end
+
+        love.graphics.setLineWidth(innerRadius * 0.3)
+        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], (accentColor[4] or 1) * bandAlpha * 0.95)
+        love.graphics.circle("line", x, y, innerRadius * (0.9 + 0.25 * sin(progress * pi * 5.2)), 36)
+
+        local sweep = pi * (0.4 + 0.18 * sin(progress * pi * 3.6))
+        local arcRadius = innerRadius * (1.6 + 0.2 * sin(progress * pi * 4.4))
+        love.graphics.setLineWidth(innerRadius * 0.26)
+        love.graphics.arc("line", "open", x, y, arcRadius, rotation - sweep * 0.5, rotation + sweep * 0.5, 32)
+        love.graphics.arc("line", "open", x, y, arcRadius * 0.7, rotation + pi - sweep * 0.5, rotation + pi + sweep * 0.5, 32)
+
+        local sparkAlpha = (sparkColor[4] or 1) * clamp01(1 - progress * 1.2)
+        if sparkAlpha > 0 then
+                love.graphics.setColor(sparkColor[1], sparkColor[2], sparkColor[3], sparkAlpha)
+                local sparkCount = 6
+                for index = 1, sparkCount do
+                        local offset = (index - 1) / sparkCount
+                        local angle = rotation + offset * pi * 2 + sin(progress * pi * (6 + index)) * 0.12
+                        local radius = innerRadius + (outerRadius - innerRadius) * (0.4 + 0.35 * progress)
+                        love.graphics.circle("fill", x + cos(angle) * radius, y + sin(angle) * radius, innerRadius * 0.22, 12)
+                end
+        end
+
+        love.graphics.pop()
+        love.graphics.setLineWidth(1)
 end
 
 local variantDrawers = {
-	phoenix_flare = drawPhoenixFlare,
-	event_horizon = drawEventHorizon,
-	storm_burst = drawStormBurst,
-	fang_flurry = drawFangFlurry,
+        phoenix_flare = drawPhoenixFlare,
+        event_horizon = drawEventHorizon,
+        storm_burst = drawStormBurst,
+        fang_flurry = drawFangFlurry,
 	extra_bite_chomp = drawExtraBiteChomp,
 	stoneguard_bastion = drawStoneguardBastion,
 	bountiful_harvest = drawPocketSprings,
 	coiled_focus = drawCoiledFocus,
-	adrenaline_rush = drawAdrenalineRush,
-	molting_reflex = drawMoltingReflex,
-	guiding_compass = drawGuidingCompass,
-	velocity_regulator = drawResonantShell,
+        adrenaline_rush = drawAdrenalineRush,
+        molting_reflex = drawMoltingReflex,
+        guiding_compass = drawGuidingCompass,
+        velocity_regulator = drawResonantShell,
+        temporal_anchor = drawTemporalAnchor,
 }
 
 local function drawVariant(effect, progress)
