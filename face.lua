@@ -408,22 +408,20 @@ function Face:draw(x, y, scale, options)
 	local imageScale = finalScale * (entry.scale or 1)
 	love.graphics.draw(entry.image, x, y, 0, imageScale, imageScale, entry.originX, entry.originY)
 
-	if highlight > 0 then
-		local baseRadius = EYE_RADIUS
-		local glowRadius = baseRadius * (1.35 + 0.35 * highlight)
-		local pulse = 0.82 + 0.18 * math.sin(time * 6)
-		local alpha = (0.16 + 0.22 * highlight) * pulse
+        if highlight > 0 then
+                local baseRadius = EYE_RADIUS
+                local glowRadius = baseRadius * (1.35 + 0.35 * highlight)
+                local pulse = 0.82 + 0.18 * math.sin(time * 6)
+                local alpha = (0.26 + 0.24 * highlight) * pulse
 
-		love.graphics.translate(x, y)
-		love.graphics.scale(finalScale)
-		love.graphics.translate(-FACE_WIDTH / 2, -FACE_HEIGHT / 2)
+                love.graphics.translate(x, y)
+                love.graphics.scale(finalScale)
+                love.graphics.translate(-FACE_WIDTH / 2, -FACE_HEIGHT / 2)
 
-		love.graphics.setBlendMode("add")
-		love.graphics.setColor(1.0, 0.72, 0.28, alpha)
-		love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
-		love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
-		love.graphics.setBlendMode("alpha")
-	end
+                love.graphics.setColor(1.0, 0.72, 0.28, alpha)
+                love.graphics.circle("fill", LEFT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
+                love.graphics.circle("fill", RIGHT_EYE_CENTER_X, EYE_CENTER_Y, glowRadius)
+        end
 
 	love.graphics.setColor(1, 1, 1, 1)
 	love.graphics.pop()
