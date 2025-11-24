@@ -219,8 +219,8 @@ function DailyProgress:isComplete(challengeId, dayValue)
 end
 
 function DailyProgress:setComplete(challengeId, dayValue, complete, saveAfter)
-	self:_ensureLoaded()
-	self:_ensureData()
+        self:_ensureLoaded()
+        self:_ensureData()
 
 	local entry = self:_getChallengeEntry(dayValue, challengeId, true)
 	if not entry then
@@ -229,9 +229,33 @@ function DailyProgress:setComplete(challengeId, dayValue, complete, saveAfter)
 
 	entry.complete = complete and true or false
 
-	if saveAfter ~= false then
-		self:save()
-	end
+        if saveAfter ~= false then
+                self:save()
+        end
+end
+
+function DailyProgress:getMenuAnimationProgress(challengeId, dayValue)
+        self:_ensureLoaded()
+        self:_ensureData()
+
+        local entry = self:_getChallengeEntry(dayValue, challengeId, false)
+        return (entry and entry.menuAnimationProgress) or 0
+end
+
+function DailyProgress:setMenuAnimationProgress(challengeId, dayValue, ratio, saveAfter)
+        self:_ensureLoaded()
+        self:_ensureData()
+
+        local entry = self:_getChallengeEntry(dayValue, challengeId, true)
+        if not entry then
+                return
+        end
+
+        entry.menuAnimationProgress = max(0, ratio or 0)
+
+        if saveAfter ~= false then
+                self:save()
+        end
 end
 
 function DailyProgress:getStreak()

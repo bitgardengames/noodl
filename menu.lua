@@ -38,6 +38,7 @@ local DAILY_BAR_CELEBRATION_FADE_WINDOW = 0.85
 local DAILY_BAR_CELEBRATION_SHIMMER_SPEED = 0.55
 local DAILY_PANEL_ANIM_SPEED = 2
 local DAILY_PANEL_EXTRA_DELAY = 0.18
+local DAILY_BAR_PROGRESS_SPEED = 0.85
 
 local streakLineArgs = {streak = 0, unit = nil}
 local bestLineArgs = {best = 0, unit = nil}
@@ -51,6 +52,11 @@ local LOGO_VERTICAL_LIFT = 80
 local dailyPanelCache = {}
 local dailyChallengeAnimationKey = nil
 local dailyChallengeAnimationSeenKey = nil
+local dailyBarAnimationProgress = 0
+local dailyBarAnimationTarget = 0
+local dailyBarAnimationIdentifier = nil
+local dailyBarAnimationDayValue = nil
+local dailyBarAnimationSeenProgress = 0
 
 local dailyBarCelebration = {
         active = false,
@@ -317,14 +323,28 @@ local function resetAnalogAxis()
         analogAxisDirections.vertical = nil
 end
 
+local function getDailyDayValue()
+        local date = DailyChallenges._sessionDate or os.date("*t")
+        local dayValue = (date.year or 0) * 512 + (date.yday or 0)
+
+        return dayValue
+end
+
+local function getDailyChallengeIdentifier(challenge)
+        if not challenge then
+                return "daily"
+        end
+
+        return tostring(challenge.id or challenge.titleKey or "daily")
+end
+
 local function getDailyAnimationKey(challenge)
         if not challenge then
                 return nil
         end
 
-        local date = DailyChallenges._sessionDate or os.date("*t")
-        local dayValue = (date.year or 0) * 512 + (date.yday or 0)
-        local identifier = tostring(challenge.id or challenge.titleKey or "daily")
+        local dayValue = getDailyDayValue()
+        local identifier = getDailyChallengeIdentifier(challenge)
 
         return string.format("%s:%d", identifier, dayValue)
 end
@@ -334,6 +354,50 @@ local function resetDailyBarCelebration()
         dailyBarCelebration.time = 0
         dailyBarCelebration.shimmerPhase = 0
         dailyBarCelebration.finished = false
+end
+
+local function resetDailyBarAnimation()
+        dailyBarAnimationProgress = 0
+        dailyBarAnimationTarget = 0
+        dailyBarAnimationIdentifier = nil
+        dailyBarAnimationDayValue = nil
+        dailyBarAnimationSeenProgress = 0
+end
+
+local function initializeDailyBarAnimation(challenge)
+        resetDailyBarAnimation()
+
+        if not challenge or not challenge.statusBar then
+                return
+        end
+
+        local ratio = max(0, min(challenge.statusBar.ratio or 0, 1))
+        local identifier = getDailyChallengeIdentifier(challenge)
+        local dayValue = getDailyDayValue()
+        local seenProgress = DailyProgress:getMenuAnimationProgress(identifier, dayValue) or 0
+
+        dailyBarAnimationTarget = ratio
+        dailyBarAnimationIdentifier = identifier
+        dailyBarAnimationDayValue = dayValue
+        dailyBarAnimationSeenProgress = max(0, min(seenProgress, ratio))
+        dailyBarAnimationProgress = dailyBarAnimationSeenProgress
+
+        if ratio <= dailyBarAnimationSeenProgress then
+                dailyBarAnimationProgress = ratio
+        end
+end
+
+local function recordDailyBarAnimationProgress()
+        if not dailyBarAnimationIdentifier or not dailyBarAnimationDayValue then
+                return
+        end
+
+        if dailyBarAnimationTarget <= dailyBarAnimationSeenProgress then
+                return
+        end
+
+        DailyProgress:setMenuAnimationProgress(dailyBarAnimationIdentifier, dailyBarAnimationDayValue, dailyBarAnimationTarget)
+        dailyBarAnimationSeenProgress = dailyBarAnimationTarget
 end
 
 local function updateDailyBarCelebration(dt, shouldCelebrate)
@@ -454,6 +518,7 @@ function Menu:enter()
 
         dailyChallengeAppearDelay = 0
         resetDailyBarCelebration()
+        initializeDailyBarAnimation(dailyChallenge)
         resetAnalogAxis()
 
 	MenuScene.prepareBackground(self:getMenuBackgroundOptions())
@@ -537,7 +602,19 @@ function Menu:update(dt)
                 end
         end
 
-	updateDailyBarCelebration(dt, shouldCelebrateDailyChallenge())
+        if dailyBarAnimationTarget and dailyBarAnimationProgress < dailyBarAnimationTarget then
+                local nextProgress = dailyBarAnimationProgress + dt * DAILY_BAR_PROGRESS_SPEED
+                if nextProgress >= dailyBarAnimationTarget then
+                        dailyBarAnimationProgress = dailyBarAnimationTarget
+                        recordDailyBarAnimationProgress()
+                else
+                        dailyBarAnimationProgress = nextProgress
+                end
+        elseif dailyBarAnimationTarget and dailyBarAnimationProgress > dailyBarAnimationTarget then
+                dailyBarAnimationProgress = dailyBarAnimationTarget
+        end
+
+        updateDailyBarCelebration(dt, shouldCelebrateDailyChallenge())
 
 	local currentRevision = Localization:getRevision()
 	if buttonLocaleRevision ~= currentRevision then
@@ -669,13 +746,14 @@ function Menu:draw()
 		local titleText = dailyPanelEntry and dailyPanelEntry.titleText or ""
 		local descriptionText = dailyPanelEntry and dailyPanelEntry.descriptionText or ""
 		local descHeight = dailyPanelEntry and dailyPanelEntry.descriptionHeight or 0
-		local statusBarHeight = dailyPanelEntry and dailyPanelEntry.statusBarHeight or 0
-		local streakText = dailyPanelEntry and dailyPanelEntry.streakText or nil
-		local streakHeight = dailyPanelEntry and dailyPanelEntry.streakHeight or 0
-		local progressText = dailyPanelEntry and dailyPanelEntry.progressText or nil
-		local ratio = dailyPanelEntry and dailyPanelEntry.ratio or 0
+                local statusBarHeight = dailyPanelEntry and dailyPanelEntry.statusBarHeight or 0
+                local streakText = dailyPanelEntry and dailyPanelEntry.streakText or nil
+                local streakHeight = dailyPanelEntry and dailyPanelEntry.streakHeight or 0
+                local progressText = dailyPanelEntry and dailyPanelEntry.progressText or nil
+                local ratio = dailyPanelEntry and dailyPanelEntry.ratio or 0
+                local displayRatio = ratio
 
-		local panelHeight = padding * 2 + headerFont:getHeight() + 6 + titleFont:getHeight() + 10 + descHeight + statusBarHeight
+                local panelHeight = padding * 2 + headerFont:getHeight() + 6 + titleFont:getHeight() + 10 + descHeight + statusBarHeight
 
 		if streakText then
 			panelHeight = panelHeight + 8 + streakHeight
@@ -788,7 +866,12 @@ function Menu:draw()
                         setColorWithAlpha({0, 0, 0, 0.35}, alpha)
                         UI.drawRoundedRect(textX, textY, barWidth, barHeight, barRadius)
 
-                        local fillWidth = barWidth * ratio
+                        displayRatio = max(0, min(displayRatio, ratio))
+                        if dailyBarAnimationTarget and dailyBarAnimationTarget > 0 then
+                                displayRatio = min(displayRatio, max(0, dailyBarAnimationProgress))
+                        end
+
+                        local fillWidth = barWidth * displayRatio
                         if fillWidth > 0 then
                                 setColorWithAlpha(Theme.progressColor, alpha)
                                 UI.drawRoundedRect(textX, textY, fillWidth, barHeight, barRadius)
