@@ -17,6 +17,7 @@ local Score = require("score")
 local SnakeCosmetics = require("snakecosmetics")
 local SnakeTrail = require("snake_trail")
 local SnakeOccupancyHelper = require("snake_occupancy")
+local SnakeAbilities = require("snake_abilities")
 local FloatingText = require("floatingtext")
 local Face = require("face")
 local SnakeOccupancy = require("snakeoccupancy")
@@ -73,11 +74,11 @@ local severedPieces = {}
 local portalAnimation = nil
 
 -- Reused ability state tables to avoid allocations every HUD refresh.
-local DASH_STATE_ACTIVE = 1
-local DASH_STATE_TIMER = 2
-local DASH_STATE_DURATION = 3
-local DASH_STATE_COOLDOWN = 4
-local DASH_STATE_COOLDOWN_TIMER = 5
+local DASH_STATE_ACTIVE = SnakeAbilities.DASH_STATE_ACTIVE
+local DASH_STATE_TIMER = SnakeAbilities.DASH_STATE_TIMER
+local DASH_STATE_DURATION = SnakeAbilities.DASH_STATE_DURATION
+local DASH_STATE_COOLDOWN = SnakeAbilities.DASH_STATE_COOLDOWN
+local DASH_STATE_COOLDOWN_TIMER = SnakeAbilities.DASH_STATE_COOLDOWN_TIMER
 
 Snake.DASH_STATE_ACTIVE = DASH_STATE_ACTIVE
 Snake.DASH_STATE_TIMER = DASH_STATE_TIMER
@@ -85,16 +86,14 @@ Snake.DASH_STATE_DURATION = DASH_STATE_DURATION
 Snake.DASH_STATE_COOLDOWN = DASH_STATE_COOLDOWN
 Snake.DASH_STATE_COOLDOWN_TIMER = DASH_STATE_COOLDOWN_TIMER
 
-local dashStateCache = {false, 0, 0, 0, 0}
-
-local TIME_STATE_ACTIVE = 1
-local TIME_STATE_TIMER = 2
-local TIME_STATE_DURATION = 3
-local TIME_STATE_COOLDOWN = 4
-local TIME_STATE_COOLDOWN_TIMER = 5
-local TIME_STATE_SCALE = 6
-local TIME_STATE_FLOOR_CHARGES = 7
-local TIME_STATE_MAX_FLOOR_USES = 8
+local TIME_STATE_ACTIVE = SnakeAbilities.TIME_STATE_ACTIVE
+local TIME_STATE_TIMER = SnakeAbilities.TIME_STATE_TIMER
+local TIME_STATE_DURATION = SnakeAbilities.TIME_STATE_DURATION
+local TIME_STATE_COOLDOWN = SnakeAbilities.TIME_STATE_COOLDOWN
+local TIME_STATE_COOLDOWN_TIMER = SnakeAbilities.TIME_STATE_COOLDOWN_TIMER
+local TIME_STATE_SCALE = SnakeAbilities.TIME_STATE_SCALE
+local TIME_STATE_FLOOR_CHARGES = SnakeAbilities.TIME_STATE_FLOOR_CHARGES
+local TIME_STATE_MAX_FLOOR_USES = SnakeAbilities.TIME_STATE_MAX_FLOOR_USES
 
 Snake.TIME_STATE_ACTIVE = TIME_STATE_ACTIVE
 Snake.TIME_STATE_TIMER = TIME_STATE_TIMER
@@ -104,8 +103,6 @@ Snake.TIME_STATE_COOLDOWN_TIMER = TIME_STATE_COOLDOWN_TIMER
 Snake.TIME_STATE_SCALE = TIME_STATE_SCALE
 Snake.TIME_STATE_FLOOR_CHARGES = TIME_STATE_FLOOR_CHARGES
 Snake.TIME_STATE_MAX_FLOOR_USES = TIME_STATE_MAX_FLOOR_USES
-
-local timeDilationStateCache = {false, 0, 0, 0, 0, 1, nil, nil}
 
 local segmentPoolState = SnakeTrail.newPoolState()
 
@@ -389,8 +386,6 @@ Snake.eventHorizon = nil
 Snake.stormchaser = nil
 Snake.temporalAnchor = nil
 Snake.swiftFangs = nil
-
-local resolveTimeDilationScale = SnakeUpgrades.resolveTimeDilationScale
 
 -- getters / mutators (safe API for upgrades)
 Snake.getSpeed = SnakeUpgradesState.getSpeed
@@ -2777,168 +2772,35 @@ shake = 0.28,
 end
 
 function Snake:activateDash()
-	local dash = self.dash
-	if not dash or dash.active then
-		return false
-	end
-
-	if (dash.cooldownTimer or 0) > 0 then
-		return false
-	end
-
-	dash.active = true
-	dash.timer = dash.duration or 0
-	dash.cooldownTimer = dash.cooldown or 0
-
-	if dash.timer <= 0 then
-		dash.active = false
-	end
-
-	local hx, hy = self:getHead()
-	local Upgrades = getUpgradesModule()
-	if Upgrades and Upgrades.notify then
-		Upgrades:notify("dashActivated", {
-			x = hx,
-			y = hy,
-			}
-		)
-	end
-
-	return dash.active
+        return SnakeAbilities.activateDash(self)
 end
 
 function Snake:isDashActive()
-	return self.dash and self.dash.active or false
+        return SnakeAbilities.isDashActive(self)
 end
 
 function Snake:getDashState()
-        if not self.dash then
-                return nil
-        end
-
-        local state = dashStateCache
-        state[DASH_STATE_ACTIVE] = self.dash.active or false
-        state[DASH_STATE_TIMER] = self.dash.timer or 0
-        state[DASH_STATE_DURATION] = self.dash.duration or 0
-        state[DASH_STATE_COOLDOWN] = self.dash.cooldown or 0
-        state[DASH_STATE_COOLDOWN_TIMER] = self.dash.cooldownTimer or 0
-
-        return state
+        return SnakeAbilities.getDashState(self)
 end
 
 function Snake:onDashBreakRock(x, y)
-	local dash = self.dash
-	if not dash then return end
-
-	local Upgrades = getUpgradesModule()
-	if Upgrades and Upgrades.notify then
-		Upgrades:notify("dashBreakRock", {
-			x = x,
-			y = y,
-			}
-		)
-	end
+        return SnakeAbilities.onDashBreakRock(self, x, y)
 end
 
 function Snake:activateTimeDilation()
-	local ability = self.timeDilation
-	if not ability or ability.active then
-		return false
-	end
-
-	if (ability.cooldownTimer or 0) > 0 then
-		return false
-	end
-
-	local charges = ability.floorCharges
-	if charges == nil and ability.maxFloorUses then
-		charges = ability.maxFloorUses
-		ability.floorCharges = charges
-	end
-	if charges ~= nil and charges <= 0 then
-		return false
-	end
-
-	ability.active = true
-	ability.timer = ability.duration or 0
-	ability.cooldownTimer = ability.cooldown or 0
-
-	if ability.timer <= 0 then
-		ability.active = false
-	end
-
-	if ability.active and charges ~= nil then
-		ability.floorCharges = max(0, charges - 1)
-	end
-
-	local hx, hy = self:getHead()
-	local Upgrades = getUpgradesModule()
-	if Upgrades and Upgrades.notify then
-		Upgrades:notify("timeDilationActivated", {
-			x = hx,
-			y = hy,
-			}
-		)
-	end
-
-	return ability.active
+        return SnakeAbilities.activateTimeDilation(self)
 end
 
 function Snake:triggerChronoWard(duration, scale)
-	duration = duration or 0
-	if duration <= 0 then
-		return false
-	end
-
-	scale = scale or 0.45
-	if not (scale and scale > 0) then
-		scale = 0.05
-	else
-		scale = max(0.05, min(1, scale))
-	end
-
-	local effect = self.chronoWard
-	if not effect then
-		effect = {}
-		self.chronoWard = effect
-	end
-
-	effect.duration = duration
-	effect.timeScale = min(effect.timeScale or 1, scale)
-	if not (effect.timeScale and effect.timeScale > 0) then
-		effect.timeScale = scale
-	end
-
-	effect.timer = max(effect.timer or 0, duration)
-	effect.active = true
-	effect.target = 1
-	effect.time = effect.time or 0
-	effect.intensity = effect.intensity or 0
-
-	return true
+        return SnakeAbilities.triggerChronoWard(self, duration, scale)
 end
 
 function Snake:getTimeDilationState()
-        local ability = self.timeDilation
-        if not ability then
-                return nil
-        end
-
-        local state = timeDilationStateCache
-        state[TIME_STATE_ACTIVE] = ability.active or false
-        state[TIME_STATE_TIMER] = ability.timer or 0
-        state[TIME_STATE_DURATION] = ability.duration or 0
-        state[TIME_STATE_COOLDOWN] = ability.cooldown or 0
-        state[TIME_STATE_COOLDOWN_TIMER] = ability.cooldownTimer or 0
-        state[TIME_STATE_SCALE] = resolveTimeDilationScale(ability)
-        state[TIME_STATE_FLOOR_CHARGES] = ability.floorCharges
-        state[TIME_STATE_MAX_FLOOR_USES] = ability.maxFloorUses
-
-        return state
+        return SnakeAbilities.getTimeDilationState(self)
 end
 
 function Snake:getTimeScale()
-	return resolveTimeDilationScale(self.timeDilation, self.chronoWard)
+        return SnakeAbilities.getTimeScale(self)
 end
 
 function Snake:grow()
