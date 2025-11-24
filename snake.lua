@@ -3451,16 +3451,37 @@ function Snake:getTimeScale()
 end
 
 function Snake:grow()
-	local bonus = self.extraGrowth or 0
-	segmentCount = segmentCount + 1 + bonus
-	popTimer = POP_DURATION
+        local bonus = self.extraGrowth or 0
+        segmentCount = segmentCount + 1 + bonus
+        popTimer = POP_DURATION
+end
+
+local function computeFruitScoreLoss(segmentBuffer, amount)
+        if not segmentBuffer or not amount or amount <= 0 then
+                return 0
+        end
+
+        local remaining = amount
+        local scoreLost = 0
+        local index = #segmentBuffer
+
+        while index >= 1 and remaining > 0 do
+                local segment = segmentBuffer[index]
+                if segment and segment.fruitMarker and segment.fruitScore then
+                        scoreLost = scoreLost + segment.fruitScore
+                end
+                index = index - 1
+                remaining = remaining - 1
+        end
+
+        return scoreLost
 end
 
 function Snake:loseSegments(count, options)
-	count = floor(count or 0)
-	if count <= 0 then
-		return 0
-	end
+        count = floor(count or 0)
+        if count <= 0 then
+                return 0
+        end
 
         local available = max(0, (segmentCount or 1) - 1)
         local trimmed = min(count, available)
@@ -3559,32 +3580,11 @@ local function chopTailLossAmount()
         return min(loss, available)
 end
 
-local function computeFruitScoreLoss(segmentBuffer, amount)
-        if not segmentBuffer or not amount or amount <= 0 then
+function Snake:chopTailByHazard(cause)
+        local loss = chopTailLossAmount()
+        if loss <= 0 then
                 return 0
         end
-
-        local remaining = amount
-        local scoreLost = 0
-        local index = #segmentBuffer
-
-        while index >= 1 and remaining > 0 do
-                local segment = segmentBuffer[index]
-                if segment and segment.fruitMarker and segment.fruitScore then
-                        scoreLost = scoreLost + segment.fruitScore
-                end
-                index = index - 1
-                remaining = remaining - 1
-        end
-
-        return scoreLost
-end
-
-function Snake:chopTailByHazard(cause)
-	local loss = chopTailLossAmount()
-	if loss <= 0 then
-		return 0
-	end
 
 	local hazardCause = cause or "saw"
 	local trimmed = self:loseSegments(loss, {cause = hazardCause})
