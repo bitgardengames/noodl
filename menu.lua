@@ -781,17 +781,18 @@ function Menu:draw()
 				textY = textY + progressFont:getHeight() + 6
 			end
 
-			local barHeight = 14
-			local barWidth = panelWidth - padding * 2
+                        local barHeight = 14
+                        local barWidth = panelWidth - padding * 2
+                        local barRadius = 8
 
-			setColorWithAlpha({0, 0, 0, 0.35}, alpha)
-			UI.drawRoundedRect(textX, textY, barWidth, barHeight, 8)
+                        setColorWithAlpha({0, 0, 0, 0.35}, alpha)
+                        UI.drawRoundedRect(textX, textY, barWidth, barHeight, barRadius)
 
-			local fillWidth = barWidth * ratio
-			if fillWidth > 0 then
-				setColorWithAlpha(Theme.progressColor, alpha)
-				UI.drawRoundedRect(textX, textY, fillWidth, barHeight, 8)
-			end
+                        local fillWidth = barWidth * ratio
+                        if fillWidth > 0 then
+                                setColorWithAlpha(Theme.progressColor, alpha)
+                                UI.drawRoundedRect(textX, textY, fillWidth, barHeight, barRadius)
+                        end
 
                         local celebrationVisible = ratio >= 0.999 and (dailyBarCelebration.active or dailyBarCelebration.finished)
                         if celebrationVisible then
@@ -814,29 +815,28 @@ function Menu:draw()
                                 local shimmerAlpha = (0.26 + 0.14 * sin(timer * 1.6)) * fadeAlpha
 
                                 if shimmerAlpha > 0 then
-                                        local prevScissor = {love.graphics.getScissor()}
-                                        if prevScissor[1] then
-                                                love.graphics.intersectScissor(textX, textY, barWidth, barHeight)
-                                        else
-                                                love.graphics.setScissor(textX, textY, barWidth, barHeight)
-                                        end
+                                        local prevStencilMode, prevStencilValue = love.graphics.getStencilTest()
+                                        love.graphics.stencil(function()
+                                                UI.drawRoundedRect(textX, textY, barWidth, barHeight, barRadius)
+                                        end, "replace", 1)
+                                        love.graphics.setStencilTest("greater", 0)
 
                                         setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
-                                        UI.drawRoundedRect(shimmerX, textY, sheenWidth, barHeight, 8)
+                                        UI.drawRoundedRect(shimmerX, textY, sheenWidth, barHeight, barRadius)
 
-                                        if prevScissor[1] then
-                                                love.graphics.setScissor(prevScissor[1], prevScissor[2], prevScissor[3], prevScissor[4])
+                                        if prevStencilMode then
+                                                love.graphics.setStencilTest(prevStencilMode, prevStencilValue)
                                         else
-                                                love.graphics.setScissor()
+                                                love.graphics.setStencilTest()
                                         end
                                 end
 
                                 love.graphics.setColor(1, 1, 1, 1)
                         end
 
-			setColorWithAlpha(Theme.panelBorder, alpha)
-			love.graphics.setLineWidth(1.5)
-			love.graphics.rectangle("line", textX, textY, barWidth, barHeight, 8, 8)
+                        setColorWithAlpha(Theme.panelBorder, alpha)
+                        love.graphics.setLineWidth(1.5)
+                        love.graphics.rectangle("line", textX, textY, barWidth, barHeight, barRadius, barRadius)
 
 			textY = textY + barHeight
 		end
