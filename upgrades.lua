@@ -491,76 +491,105 @@ local function getSawCenters(limit)
 	)
 end
 
-local function getLaserEmitterDetails(limit)
-	if not Lasers or not Lasers.iterateEmitters then
-		return {}
-	end
+-- Reused emitter target buffers to avoid repeated allocations when sampling hazards.
+local EMPTY_TARGET_LIST = {}
+local laserTargetBuffer = {}
+local dartTargetBuffer = {}
 
-	local targets = {}
-	local maxCount = limit
-	if maxCount and maxCount <= 0 then
-		maxCount = nil
-	end
-	Lasers:iterateEmitters(function(beam)
-		if not beam then
-		return
-		end
-
-		local x = beam.x
-		local y = beam.y
-		if x and y then
-		targets[#targets + 1] = {
-		x = x,
-		y = y,
-		dir = beam.dir,
-		facing = beam.facing,
-		}
-
-		if maxCount and #targets >= maxCount then
-		return true
-		end
-		end
-		end
-	)
-
-	return targets
+local function clearTargetBuffer(buffer, usedCount)
+        local previousCount = #buffer
+        for i = usedCount + 1, previousCount do
+                buffer[i] = nil
+        end
 end
 
+-- Returns a reusable table of active laser emitters; contents are overwritten on each call.
+local function getLaserEmitterDetails(limit)
+        if not Lasers or not Lasers.iterateEmitters then
+                clearTargetBuffer(laserTargetBuffer, 0)
+                return EMPTY_TARGET_LIST
+        end
+
+        local targets = laserTargetBuffer
+        local count = 0
+        local maxCount = limit
+        if maxCount and maxCount <= 0 then
+                maxCount = nil
+        end
+
+        Lasers:iterateEmitters(function(beam)
+                if not beam then
+                        return
+                end
+
+                local x = beam.x
+                local y = beam.y
+                if x and y then
+                        count = count + 1
+                        local target = targets[count]
+                        if not target then
+                                target = {}
+                                targets[count] = target
+                        end
+
+                        target.x = x
+                        target.y = y
+                        target.dir = beam.dir
+                        target.facing = beam.facing
+
+                        if maxCount and count >= maxCount then
+                                return true
+                        end
+                end
+        end)
+
+        clearTargetBuffer(targets, count)
+        return targets
+end
+
+-- Returns a reusable table of active dart emitters; contents are overwritten on each call.
 local function getDartEmitterDetails(limit)
-	if not Darts or not Darts.iterateEmitters then
-		return {}
-	end
+        if not Darts or not Darts.iterateEmitters then
+                clearTargetBuffer(dartTargetBuffer, 0)
+                return EMPTY_TARGET_LIST
+        end
 
-	local targets = {}
-	local maxCount = limit
-	if maxCount and maxCount <= 0 then
-		maxCount = nil
-	end
+        local targets = dartTargetBuffer
+        local count = 0
+        local maxCount = limit
+        if maxCount and maxCount <= 0 then
+                maxCount = nil
+        end
 
-	Darts:iterateEmitters(function(emitter)
-		if not emitter then
-		return
-		end
+        Darts:iterateEmitters(function(emitter)
+                if not emitter then
+                        return
+                end
 
-		local x = emitter.x
-		local y = emitter.y
-		if x and y then
-		targets[#targets + 1] = {
-		x = x,
-		y = y,
-		dir = emitter.dir,
-		facing = emitter.facing,
-		type = "dart",
-		}
+                local x = emitter.x
+                local y = emitter.y
+                if x and y then
+                        count = count + 1
+                        local target = targets[count]
+                        if not target then
+                                target = {}
+                                targets[count] = target
+                        end
 
-		if maxCount and #targets >= maxCount then
-		return true
-		end
-		end
-		end
-	)
+                        target.x = x
+                        target.y = y
+                        target.dir = emitter.dir
+                        target.facing = emitter.facing
+                        target.type = "dart"
 
-	return targets
+                        if maxCount and count >= maxCount then
+                                return true
+                        end
+                end
+        end)
+
+        clearTargetBuffer(targets, count)
+        return targets
 end
 
 local function arenaHasGrid()
