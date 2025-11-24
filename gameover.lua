@@ -307,8 +307,8 @@ local function drawHighlightStats(self, entries, x, y, width, sectionPadding, in
 	local valueY = labelY + labelFont:getHeight() + innerSpacing
 
 	local mutedColor = UI.colors.mutedText or UI.colors.text
-	local baseValueColor = UI.colors.text or {1, 1, 1, 1}
-	local highlightColor = Theme.progressColor or UI.colors.highlight or baseValueColor
+        local baseValueColor = Theme.snakeDefault or UI.colors.text or {1, 1, 1, 1}
+        local highlightColor = Theme.snakeDefault or Theme.progressColor or UI.colors.highlight or baseValueColor
 
 	for index, entry in ipairs(entries) do
 		local entryX = x + sectionPadding + (index - 1) * columnWidth
@@ -351,7 +351,7 @@ local function drawDetailedStats(entries, x, y, width, sectionPadding, innerSpac
 	local rowHeight = (labelFont:getHeight() or 0) + innerSpacing + (valueFont:getHeight() or 0)
 	local rows = ceil(#entries / columns)
 	local mutedColor = UI.colors.mutedText or UI.colors.text
-	local valueColor = UI.colors.text or {1, 1, 1, 1}
+        local valueColor = Theme.snakeDefault or UI.colors.text or {1, 1, 1, 1}
 
 	for index, entry in ipairs(entries) do
 		local column = (index - 1) % columns
