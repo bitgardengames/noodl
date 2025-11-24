@@ -3008,14 +3008,16 @@ function Upgrades:applyPersistentEffects(rebaseline)
 		Snake.timeDilation = nil
 	end
 
-	Snake:setEventHorizonActive(effects.wallPortal and true or false)
+        Snake:setEventHorizonActive(effects.wallPortal and true or false)
 
-	Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
+        Snake:setDiffractionBarrierActive(effects.diffractionBarrier and true or false)
 
-	local counters = state.counters or {}
-	Snake:setSwiftFangsStacks(counters.swiftFangsStacks or 0)
+        local counters = state.counters or {}
+        Snake:setSwiftFangsStacks(counters.swiftFangsStacks or 0)
 
-	Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
+        Snake:setMomentumCoilsStacks(counters.momentumCoilsStacks or 0)
+
+        Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
 end
 
 function Upgrades:canOffer(upgrade, context, allowTaken)
