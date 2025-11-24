@@ -831,13 +831,6 @@ function Menu:draw()
                                         end
                                 end
 
-                                local outlineAlpha = 0.6 * fadeAlpha
-                                if outlineAlpha > 0 then
-                                        setColorWithAlpha({1, 1, 1, outlineAlpha}, alpha)
-                                        love.graphics.setLineWidth(2)
-                                        love.graphics.rectangle("line", textX - 1, textY - 1, barWidth + 2, barHeight + 2, 9, 9)
-                                        love.graphics.setLineWidth(1)
-                                end
                                 love.graphics.setColor(1, 1, 1, 1)
                         end
 
