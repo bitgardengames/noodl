@@ -2064,7 +2064,7 @@ pool = {
 		revealFlashOutDuration = 0.48,
 		revealShakeMagnitude = 9,
 		revealShakeFrequency = 26,
-		revealApplyThreshold = 0.6,
+                revealApplyThreshold = 1,
 		revealPostPauseDuration = 1.2,
 		revealAnimation = "wildcard",
 		}
@@ -2143,7 +2143,7 @@ pool = {
 		revealFlashOutDuration = 0.48,
 		revealShakeMagnitude = 9,
 		revealShakeFrequency = 26,
-		revealApplyThreshold = 0.6,
+                revealApplyThreshold = 1,
 		revealPostPauseDuration = 0.65,
 		revealAnimation = "wildcard",
 		upgrade = chosenUpgrade,
