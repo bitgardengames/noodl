@@ -364,18 +364,22 @@ end
 
 -- handle input direction
 function SnakeUtils.calculateDirection(current, input)
-	local nd = SnakeUtils.directions[input]
-	if nd and not (nd.x == -current.x and nd.y == -current.y) then
-		return nd
-	end
-	return current
+local nd = SnakeUtils.directions[input]
+if nd then
+local currX = (current and current[1]) or 0
+local currY = (current and current[2]) or 0
+if not (nd[1] == -currX and nd[2] == -currY) then
+return nd
+end
+end
+return current
 end
 
 SnakeUtils.directions = {
-	up    = {x = 0, y = -1},
-	down  = {x = 0, y = 1},
-	left  = {x = -1, y = 0},
-	right = {x = 1, y = 0},
+up    = {0, -1},
+down  = {0, 1},
+left  = {-1, 0},
+right = {1, 0},
 }
 
 -- safer apple spawn (grid aware)
@@ -412,17 +416,17 @@ function SnakeUtils.getSafeSpawn(trail, fruit, rocks, safeZone, opts)
 
 	local avoidFront = not not opts.avoidFrontOfSnake
 	local frontCells
-	local frontLookup
+local frontLookup
 
-	if avoidFront and trail[1] then
-		local head = trail[1]
-		local headX, headY = getSegmentPosition(head)
-		local dirX, dirY = getSegmentDirection(head)
+if avoidFront and trail[1] then
+local head = trail[1]
+local headX, headY = getSegmentPosition(head)
+local dirX, dirY = getSegmentDirection(head)
 
-		if (dirX == nil or dirY == nil) and opts.direction then
-			dirX = opts.direction.x
-			dirY = opts.direction.y
-		end
+if (dirX == nil or dirY == nil) and opts.direction then
+dirX = opts.direction[1]
+dirY = opts.direction[2]
+end
 
 		if dirX and dirY and headX and headY then
 			local headCol, headRow = Arena:getTileFromWorld(headX, headY)

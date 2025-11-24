@@ -20,7 +20,7 @@ local sqrt = math.sqrt
 
 local Movement = {}
 
-local ZERO_DIR = {x = 0, y = 0}
+local ZERO_DIR = {0, 0}
 local EMPTY_CANDIDATE_LIST = {}
 
 local MAX_SNAKE_TIME_STEP = 1 / 60
@@ -250,20 +250,20 @@ local function rerouteAlongWall(headX, headY, left, right, top, bottom)
 	local clampedX = max(left, min(right, headX or left))
 	local clampedY = max(top, min(bottom, headY or top))
 
-	local hitLeft = (headX or clampedX) <= left
-	local hitRight = (headX or clampedX) >= right
-	local hitTop = (headY or clampedY) <= top
-	local hitBottom = (headY or clampedY) >= bottom
+local hitLeft = (headX or clampedX) <= left
+local hitRight = (headX or clampedX) >= right
+local hitTop = (headY or clampedY) <= top
+local hitBottom = (headY or clampedY) >= bottom
 
-	local dir = Snake:getDirection() or ZERO_DIR
-	local newDirX, newDirY = dir.x or 0, dir.y or 0
+local dir = Snake:getDirection() or ZERO_DIR
+local newDirX, newDirY = dir[1] or 0, dir[2] or 0
 
-	local fallbackVerticalDir = computeFallbackAxisDirection(dir.y, clampedY, centerY)
-	local fallbackHorizontalDir = computeFallbackAxisDirection(dir.x, clampedX, centerX)
+local fallbackVerticalDir = computeFallbackAxisDirection(dir[2], clampedY, centerY)
+local fallbackHorizontalDir = computeFallbackAxisDirection(dir[1], clampedX, centerX)
 
-	local collidedHorizontal = hitLeft or hitRight
-	local collidedVertical = hitTop or hitBottom
-	local horizontalDominant = abs(dir.x or 0) >= abs(dir.y or 0)
+local collidedHorizontal = hitLeft or hitRight
+local collidedVertical = hitTop or hitBottom
+local horizontalDominant = abs(dir[1] or 0) >= abs(dir[2] or 0)
 
 	if collidedHorizontal and collidedVertical then
 		if horizontalDominant then
@@ -309,25 +309,25 @@ local function rerouteAlongWall(headX, headY, left, right, top, bottom)
 		end
 	end
 
-	if newDirX == 0 and newDirY == 0 then
-		if hitLeft and not hitRight then
-			newDirX = 1
-		elseif hitRight and not hitLeft then
-			newDirX = -1
-		elseif hitTop and not hitBottom then
-			newDirY = 1
-		elseif hitBottom and not hitTop then
-			newDirY = -1
-		else
-			if dir.x and dir.x ~= 0 then
-				newDirX = dir.x > 0 and 1 or -1
-			elseif dir.y and dir.y ~= 0 then
-				newDirY = dir.y > 0 and 1 or -1
-			else
-				newDirY = 1
-			end
-		end
-	end
+if newDirX == 0 and newDirY == 0 then
+if hitLeft and not hitRight then
+newDirX = 1
+elseif hitRight and not hitLeft then
+newDirX = -1
+elseif hitTop and not hitBottom then
+newDirY = 1
+elseif hitBottom and not hitTop then
+newDirY = -1
+else
+if dir[1] and dir[1] ~= 0 then
+newDirX = dir[1] > 0 and 1 or -1
+elseif dir[2] and dir[2] ~= 0 then
+newDirY = dir[2] > 0 and 1 or -1
+else
+newDirY = 1
+end
+end
+end
 
 	Movement:applyForcedDirection(newDirX, newDirY)
 
@@ -522,7 +522,7 @@ local function handleWallCollision(headX, headY)
 		return headX, headY
 	end
 
-	local portalX, portalY = portalThroughWall(headX, headY)
+local portalX, portalY = portalThroughWall(headX, headY)
 	if portalX and portalY then
 		Audio:playSound("wall_portal")
 		return portalX, portalY
@@ -535,27 +535,27 @@ local function handleWallCollision(headX, headY)
 	local top = ay + inset
 	local bottom = ay + ah - inset
 
-	if not Snake:consumeShield() then
-		local safeX = clamp(headX, left, right)
-		local safeY = clamp(headY, top, bottom)
-		local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY, left, right, top, bottom)
-		local clampedX = reroutedX or safeX
-		local clampedY = reroutedY or safeY
-		headX, headY = relocateHead(headX, headY, clampedX, clampedY)
-		clampedX, clampedY = headX, headY
-		local dir = Snake.getDirection and Snake:getDirection() or ZERO_DIR
+if not Snake:consumeShield() then
+local safeX = clamp(headX, left, right)
+local safeY = clamp(headY, top, bottom)
+local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY, left, right, top, bottom)
+local clampedX = reroutedX or safeX
+local clampedY = reroutedY or safeY
+headX, headY = relocateHead(headX, headY, clampedX, clampedY)
+clampedX, clampedY = headX, headY
+local dir = Snake.getDirection and Snake:getDirection() or ZERO_DIR
 
-		return clampedX, clampedY, "wall", {
-			pushX = 0,
-			pushY = 0,
-			snapX = clampedX,
-			snapY = clampedY,
-			dirX = dir.x or 0,
-			dirY = dir.y or 0,
-			grace = WALL_GRACE,
-			shake = 0.2,
-		}
-	end
+return clampedX, clampedY, "wall", {
+pushX = 0,
+pushY = 0,
+snapX = clampedX,
+snapY = clampedY,
+dirX = dir[1] or 0,
+dirY = dir[2] or 0,
+grace = WALL_GRACE,
+shake = 0.2,
+}
+end
 
 	local reroutedX, reroutedY = rerouteAlongWall(headX, headY, left, right, top, bottom)
 	local clampedX = reroutedX or clamp(headX, left, right)

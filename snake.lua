@@ -41,8 +41,10 @@ local function wipeTable(t)
 end
 
 local screenW, screenH
-local direction = {x = 1, y = 0}
-local pendingDir = {x = 1, y = 0}
+local DIR_X, DIR_Y = 1, 2
+
+local direction = {1, 0}
+local pendingDir = {1, 0}
 local trail = {}
 local descendingHole = nil
 local segmentCount = 1
@@ -390,12 +392,12 @@ local function getActiveTrailHead()
 end
 
 local function assignDirection(target, x, y)
-	if not target then
-		return
-	end
+if not target then
+return
+end
 
-	target.x = x
-	target.y = y
+target[DIR_X] = x
+target[DIR_Y] = y
 end
 
 local SHIELD_DAMAGE_FLOATING_TEXT_COLOR = {1, 0.78, 0.68, 1}
@@ -738,26 +740,26 @@ function Snake:onDamageTaken(cause, info)
 		local centerX = headX + SEGMENT_SIZE * 0.5
 		local centerY = headY + SEGMENT_SIZE * 0.5
 
-		local burstDirX, burstDirY = 0, -1
-		local pushMag = sqrt(pushX * pushX + pushY * pushY)
-		if pushMag > 1e-4 then
-			burstDirX = pushX / pushMag
-			burstDirY = pushY / pushMag
-		elseif dirX and dirY and (dirX ~= 0 or dirY ~= 0) then
-			local dirMag = sqrt(dirX * dirX + dirY * dirY)
-			if dirMag > 1e-4 then
-				burstDirX = -dirX / dirMag
-				burstDirY = -dirY / dirMag
-			end
-		else
-			local faceX = direction and direction.x or 0
-			local faceY = direction and direction.y or -1
-			local faceMag = sqrt(faceX * faceX + faceY * faceY)
-			if faceMag > 1e-4 then
-				burstDirX = -faceX / faceMag
-				burstDirY = -faceY / faceMag
-			end
-		end
+local burstDirX, burstDirY = 0, -1
+local pushMag = sqrt(pushX * pushX + pushY * pushY)
+if pushMag > 1e-4 then
+burstDirX = pushX / pushMag
+burstDirY = pushY / pushMag
+elseif dirX and dirY and (dirX ~= 0 or dirY ~= 0) then
+local dirMag = sqrt(dirX * dirX + dirY * dirY)
+if dirMag > 1e-4 then
+burstDirX = -dirX / dirMag
+burstDirY = -dirY / dirMag
+end
+else
+local faceX = direction and direction[DIR_X] or 0
+local faceY = direction and direction[DIR_Y] or -1
+local faceMag = sqrt(faceX * faceX + faceY * faceY)
+if faceMag > 1e-4 then
+burstDirX = -faceX / faceMag
+burstDirY = -faceY / faceMag
+end
+end
 
 		if Particles and Particles.spawnBurst then
 			Particles:spawnBurst(centerX, centerY, SHIELD_BREAK_PARTICLE_OPTIONS)
@@ -1971,16 +1973,16 @@ local function buildInitialTrail()
 	local midRow = floor(Arena.rows / 2)
 	local startX, startY = Arena:getCenterOfTile(midCol, midRow)
 
-	for i = 0, segmentCount - 1 do
-		local cx = startX - i * SEGMENT_SPACING * direction.x
-		local cy = startY - i * SEGMENT_SPACING * direction.y
-		local segment = acquireSegment()
-		segment.drawX = cx
-		segment.drawY = cy
-		segment.dirX = direction.x
-		segment.dirY = direction.y
-		t[#t + 1] = segment
-	end
+for i = 0, segmentCount - 1 do
+local cx = startX - i * SEGMENT_SPACING * direction[DIR_X]
+local cy = startY - i * SEGMENT_SPACING * direction[DIR_Y]
+local segment = acquireSegment()
+segment.drawX = cx
+segment.drawY = cy
+segment.dirX = direction[DIR_X]
+segment.dirY = direction[DIR_Y]
+t[#t + 1] = segment
+end
 	if #t > 0 then
 		t[1].lengthToPrev = 0
 	end
@@ -2100,12 +2102,12 @@ crystallizeGluttonsWakeSegments = function(buffer, startIndex, endIndex, upgrade
 end
 
 function Snake:setDirection(name)
-	if not isDead then
-		local nd = SnakeUtils.calculateDirection(direction, name)
-		if nd then
-			assignDirection(pendingDir, nd.x, nd.y)
-		end
-	end
+if not isDead then
+local nd = SnakeUtils.calculateDirection(direction, name)
+if nd then
+assignDirection(pendingDir, nd[DIR_X], nd[DIR_Y])
+end
+end
 end
 
 function Snake:setDead(state)
@@ -2379,33 +2381,33 @@ function Snake:getSafeZone(lookahead)
 		return cells
 	end
 
-	local dir = self:getDirection()
+local dir = self:getDirection()
 
-	for i = 1, lookahead do
-		local cx = hx + dir.x * i
-		local cy = hy + dir.y * i
-		count = addSafeCellUnique(cells, seen, gen, count, cx, cy)
-	end
+for i = 1, lookahead do
+local cx = hx + dir[DIR_X] * i
+local cy = hy + dir[DIR_Y] * i
+count = addSafeCellUnique(cells, seen, gen, count, cx, cy)
+end
 
-	local pending = pendingDir
-	if pending and (pending.x ~= dir.x or pending.y ~= dir.y) then
-		-- Immediate turn path (if the queued direction snaps before the next tile)
-		local px, py = hx, hy
-		for i = 1, lookahead do
-			px = px + pending.x
-			py = py + pending.y
-			count = addSafeCellUnique(cells, seen, gen, count, px, py)
-		end
+local pending = pendingDir
+if pending and (pending[DIR_X] ~= dir[DIR_X] or pending[DIR_Y] ~= dir[DIR_Y]) then
+-- Immediate turn path (if the queued direction snaps before the next tile)
+local px, py = hx, hy
+for i = 1, lookahead do
+px = px + pending[DIR_X]
+py = py + pending[DIR_Y]
+count = addSafeCellUnique(cells, seen, gen, count, px, py)
+end
 
-		-- Typical turn path: advance one tile forward, then apply the queued turn
-		local turnCol = hx + dir.x
-		local turnRow = hy + dir.y
-		px, py = turnCol, turnRow
-		for i = 2, lookahead do
-			px = px + pending.x
-			py = py + pending.y
-			count = addSafeCellUnique(cells, seen, gen, count, px, py)
-		end
+-- Typical turn path: advance one tile forward, then apply the queued turn
+local turnCol = hx + dir[DIR_X]
+local turnRow = hy + dir[DIR_Y]
+px, py = turnCol, turnRow
+for i = 2, lookahead do
+px = px + pending[DIR_X]
+py = py + pending[DIR_Y]
+count = addSafeCellUnique(cells, seen, gen, count, px, py)
+end
 	end
 
 	clearExcessSafeCells(cells, count)
@@ -2923,15 +2925,15 @@ function Snake:update(dt)
 	local headCellCount = 0
 
 	-- advance cell clock, maybe snap & commit queued direction
-	if hole then
-		moveProgress = 0
-		local stepX = direction.x * speed * dt
-		local stepY = direction.y * speed * dt
-		newX = head.drawX + stepX
-		newY = head.drawY + stepY
-	else
-		local remaining = speed * dt
-		local currentDirX, currentDirY = direction.x, direction.y
+if hole then
+moveProgress = 0
+local stepX = direction[DIR_X] * speed * dt
+local stepY = direction[DIR_Y] * speed * dt
+newX = head.drawX + stepX
+newY = head.drawY + stepY
+else
+local remaining = speed * dt
+local currentDirX, currentDirY = direction[DIR_X], direction[DIR_Y]
 		local currX, currY = head.drawX, head.drawY
 		local snaps = 0
 		local segmentLength = SEGMENT_SPACING
@@ -2969,10 +2971,10 @@ function Snake:update(dt)
 					end
 				end
 
-				assignDirection(direction, pendingDir.x, pendingDir.y)
-				currentDirX, currentDirY = direction.x, direction.y
-			end
-		end
+assignDirection(direction, pendingDir[DIR_X], pendingDir[DIR_Y])
+currentDirX, currentDirY = direction[DIR_X], direction[DIR_Y]
+end
+end
 
 		if snaps > 0 then
 			SessionStats:add("tilesTravelled", snaps)
@@ -2996,14 +2998,14 @@ function Snake:update(dt)
 	local buffer = newHeadSegments
 	local bufferCount = 0
 
-	while remaining >= SAMPLE_STEP do
-		prevX = prevX + nx * SAMPLE_STEP
-		prevY = prevY + ny * SAMPLE_STEP
-                local segment = acquireSegment()
-                segment.drawX = prevX
-                segment.drawY = prevY
-                segment.dirX = direction.x
-                segment.dirY = direction.y
+while remaining >= SAMPLE_STEP do
+prevX = prevX + nx * SAMPLE_STEP
+prevY = prevY + ny * SAMPLE_STEP
+local segment = acquireSegment()
+segment.drawX = prevX
+segment.drawY = prevY
+segment.dirX = direction[DIR_X]
+segment.dirY = direction[DIR_Y]
                 segment.fruitMarker = nil
                 segment.fruitMarkerX = nil
                 segment.fruitMarkerY = nil
@@ -3175,16 +3177,16 @@ function Snake:update(dt)
 							segmentStartX, segmentStartY = targetX, targetY
 							break
 						else
-							local pushX = -(direction.x or 0) * SEGMENT_SPACING
-							local pushY = -(direction.y or 0) * SEGMENT_SPACING
-							local context = {
-								pushX = pushX,
-								pushY = pushY,
-								dirX = -(direction.x or 0),
-								dirY = -(direction.y or 0),
-								grace = HAZARD_GRACE_DURATION * 2,
-								shake = 0.28,
-							}
+local pushX = -(direction[DIR_X] or 0) * SEGMENT_SPACING
+local pushY = -(direction[DIR_Y] or 0) * SEGMENT_SPACING
+local context = {
+pushX = pushX,
+pushY = pushY,
+dirX = -(direction[DIR_X] or 0),
+dirY = -(direction[DIR_Y] or 0),
+grace = HAZARD_GRACE_DURATION * 2,
+shake = 0.28,
+}
 							return false, "self", context
 						end
 					end

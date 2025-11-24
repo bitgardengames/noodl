@@ -19,7 +19,7 @@ local max = math.max
 local min = math.min
 
 local FloorSetup = {}
-local ZERO_DIR = {x = 0, y = 0}
+local ZERO_DIR = {0, 0}
 
 local TRACK_LENGTH = 120
 local DEFAULT_SAW_RADIUS = 16
@@ -122,8 +122,8 @@ local function buildSpawnBuffer(baseSafeZone)
 	end
 
 	local headCol, headRow = Snake:getHeadCell()
-	local dir = Snake:getDirection() or ZERO_DIR
-	local dirX, dirY = dir.x or 0, dir.y or 0
+local dir = Snake:getDirection() or ZERO_DIR
+local dirX, dirY = dir[1] or 0, dir[2] or 0
 
 	if dirX == 0 and dirY == 0 then
 		dirX, dirY = 1, 0
