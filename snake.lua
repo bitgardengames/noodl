@@ -2,6 +2,7 @@ local Arena = require("arena")
 local MovementContext = require("movementcontext")
 local SnakeUtils = require("snakeutils")
 local SnakeDraw = require("snakedraw")
+local SnakeRender = require("snake_render")
 local SnakeUpgrades = require("snakeupgrades")
 local SnakeUpgradesState = require("snake_upgrades_state")
 local SnakeDamage = require("snake_damage")
@@ -68,8 +69,6 @@ local segmentCount = 1
 local popTimer = 0
 local isDead = false
 
-local clippedTrailBuffer = {}
-local clippedTrailProxy = {drawX = 0, drawY = 0}
 local severedPieces = {}
 local portalAnimation = nil
 
@@ -117,6 +116,8 @@ local SEGMENT_SNAPSHOT_DIR_Y = 4
 
 local newHeadSegments = {}
 local newHeadSegmentsMax = 0
+
+local renderState = SnakeRender.newState()
 
 local occupancyState = SnakeOccupancyHelper.newState()
 local headCellBuffer = occupancyState.headCellBuffer
@@ -218,87 +219,6 @@ local function clearPortalAnimation(state)
 	state.exitTrail = nil
 	state.entryHole = nil
 	state.exitHole = nil
-end
-
-local function smoothStep(edge0, edge1, value)
-	if edge0 == nil or edge1 == nil or value == nil then
-		return 0
-	end
-
-	if edge0 == edge1 then
-		return value >= edge1 and 1 or 0
-	end
-
-	local t = (value - edge0) / (edge1 - edge0)
-	if t < 0 then
-		t = 0
-	elseif t > 1 then
-		t = 1
-	end
-
-	return t * t * (3 - 2 * t)
-end
-
-local function clearSeveredPieces()
-	if not severedPieces then
-		return
-	end
-
-	for i = #severedPieces, 1, -1 do
-		local piece = severedPieces[i]
-		if piece and piece.trail then
-			recycleTrail(piece.trail)
-			piece.trail = nil
-		end
-		severedPieces[i] = nil
-	end
-end
-
-local stencilCircleX, stencilCircleY, stencilCircleRadius = 0, 0, 0
-local function drawStencilCircle()
-	love.graphics.circle("fill", stencilCircleX, stencilCircleY, stencilCircleRadius)
-end
-
-local clippedHeadX, clippedHeadY, clipCenterX, clipCenterY, clipRadiusValue
-local function getClippedHeadPosition()
-	if not (clippedHeadX and clippedHeadY) then
-		return clippedHeadX, clippedHeadY
-	end
-
-	local radius = clipRadiusValue or 0
-	if radius > 0 then
-		local dx = clippedHeadX - (clipCenterX or 0)
-		local dy = clippedHeadY - (clipCenterY or 0)
-		if dx * dx + dy * dy < radius * radius then
-			return nil, nil
-		end
-	end
-
-	return clippedHeadX, clippedHeadY
-end
-
-local currentHeadOwner = nil
-local function getOwnerHead()
-	if currentHeadOwner then
-		return currentHeadOwner:getHead()
-	end
-
-	return nil, nil
-end
-
-local activeTrailForHead = nil
-local function getActiveTrailHead()
-	local trailData = activeTrailForHead
-	if not trailData then
-		return nil, nil
-	end
-
-	local headSeg = trailData[1]
-	if not headSeg then
-		return nil, nil
-	end
-
-	return headSeg.drawX or headSeg.x, headSeg.drawY or headSeg.y
 end
 
 local function assignDirection(target, x, y)
@@ -1470,18 +1390,18 @@ function Snake:load(w, h)
 	segmentCount = 1
 	popTimer = 0
 	moveProgress = 0
-	isDead = false
-	self.shieldFlashTimer = 0
-	self.hazardGraceTimer = 0
-	self.damageFlashTimer = 0
-	self.tailHitFlashTimer = 0
-	recycleTrail(trail)
-	trail = buildInitialTrail()
-	syncTrailLength()
-	descendingHole = nil
-	clearSeveredPieces()
-	severedPieces = {}
-	clearPortalAnimation(portalAnimation)
+        isDead = false
+        self.shieldFlashTimer = 0
+        self.hazardGraceTimer = 0
+        self.damageFlashTimer = 0
+        self.tailHitFlashTimer = 0
+        recycleTrail(trail)
+        trail = buildInitialTrail()
+        syncTrailLength()
+        descendingHole = nil
+        SnakeRender.clearSeveredPieces(renderState, severedPieces, recycleTrail)
+        severedPieces = {}
+        clearPortalAnimation(portalAnimation)
 	portalAnimation = nil
 	local stride = (Arena and Arena.rows or 0) + 16
 	if stride <= 0 then
@@ -1877,119 +1797,24 @@ end
 end
 
 function Snake:drawClipped(hx, hy, hr)
-	if not trail or #trail == 0 then
-		return
-	end
-
-	local headX, headY = self:getHead()
-	local clipRadius = hr or 0
-	local renderTrail = trail
-
-	if clipRadius > 0 then
-		local radiusSq = clipRadius * clipRadius
-		local startIndex = 1
-
-		while startIndex <= #trail do
-			local seg = trail[startIndex]
-			local x = seg and (seg.drawX or seg.x)
-			local y = seg and (seg.drawY or seg.y)
-
-			if not (x and y) then
-				break
-			end
-
-			local dx = x - hx
-			local dy = y - hy
-			if dx * dx + dy * dy > radiusSq then
-				break
-			end
-
-			startIndex = startIndex + 1
-		end
-
-		if startIndex == 1 then
-			-- Head is still outside the clip region; render entire trail
-			renderTrail = trail
-		else
-			local trimmed = clippedTrailBuffer
-			local trimmedLen = #trimmed
-			if trimmedLen > 0 then
-				for i = trimmedLen, 1, -1 do
-					trimmed[i] = nil
-				end
-			end
-
-			if startIndex > #trail then
-				-- Entire snake is within the clip; nothing to draw outside
-				renderTrail = trimmed
-			else
-				local prev = trail[startIndex - 1]
-				local curr = trail[startIndex]
-				local px = prev and (prev.drawX or prev.x)
-				local py = prev and (prev.drawY or prev.y)
-				local cx = curr and (curr.drawX or curr.x)
-				local cy = curr and (curr.drawY or curr.y)
-				local ix, iy
-
-				if px and py and cx and cy then
-					ix, iy = findCircleIntersection(px, py, cx, cy, hx, hy, clipRadius)
-				end
-
-				if not (ix and iy) then
-					if descendingHole and abs((descendingHole.x or 0) - hx) < 1e-3 and abs((descendingHole.y or 0) - hy) < 1e-3 then
-						ix = descendingHole.entryPointX or px
-						iy = descendingHole.entryPointY or py
-					else
-						ix, iy = px, py
-					end
-				end
-
-				if ix and iy then
-					local proxy = clippedTrailProxy
-					proxy.drawX = ix
-					proxy.drawY = iy
-					proxy.x = nil
-					proxy.y = nil
-					trimmed[1] = proxy
-				end
-
-				local insertIndex = ix and iy and 2 or 1
-				for i = startIndex, #trail do
-					trimmed[insertIndex] = trail[i]
-					insertIndex = insertIndex + 1
-				end
-
-				renderTrail = trimmed
-			end
-		end
-	end
-
-	love.graphics.push("all")
-	local upgradeVisuals = collectUpgradeVisuals(self)
-
-	if clipRadius > 0 then
-		stencilCircleX, stencilCircleY, stencilCircleRadius = hx, hy, clipRadius
-		love.graphics.stencil(drawStencilCircle, "replace", 1)
-		love.graphics.setStencilTest("equal", 0)
-	end
-
-	local shouldDrawFace = descendingHole == nil
-	local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
-
-	if not hideDescendingBody then
-		clippedHeadX, clippedHeadY = headX, headY
-		clipCenterX, clipCenterY, clipRadiusValue = hx, hy, clipRadius
-		SnakeDraw.run(renderTrail, segmentCount, SEGMENT_SIZE, popTimer, getClippedHeadPosition, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, shouldDrawFace)
-		clippedHeadX, clippedHeadY, clipCenterX, clipCenterY, clipRadiusValue = nil, nil, nil, nil, nil
-	end
-
-	if clipRadius > 0 and descendingHole and not hideDescendingBody and abs((descendingHole.x or 0) - hx) < 1e-3 and abs((descendingHole.y or 0) - hy) < 1e-3 then
-		love.graphics.setStencilTest("equal", 1)
-		drawDescendingIntoHole(descendingHole)
-	end
-
-	love.graphics.setStencilTest()
-	love.graphics.pop()
+        SnakeRender.drawClipped(renderState, {
+                snake = self,
+                trail = trail,
+                segmentCount = segmentCount,
+                segmentSize = SEGMENT_SIZE,
+                popTimer = popTimer,
+                clipX = hx,
+                clipY = hy,
+                clipRadius = hr,
+                headX = select(1, self:getHead()),
+                headY = select(2, self:getHead()),
+                descendingHole = descendingHole,
+                collectUpgradeVisuals = collectUpgradeVisuals,
+                shields = self.shields,
+                shieldFlashTimer = self.shieldFlashTimer,
+                findCircleIntersection = findCircleIntersection,
+                drawDescendingIntoHole = drawDescendingIntoHole,
+        })
 end
 
 function Snake:startDescending(hx, hy, hr)
@@ -2659,77 +2484,64 @@ shake = 0.28,
 		end
 	end
 
-	if portalAnimation then
-		local state = portalAnimation
-		local duration = state.duration or 0.3
-		if not duration or duration <= 1e-4 then
-			duration = 1e-4
-		end
+        if portalAnimation then
+                local state = portalAnimation
+                local duration = state.duration or 0.3
+                if not duration or duration <= 1e-4 then
+                        duration = 1e-4
+                end
+                state.duration = duration
 
-		state.timer = (state.timer or 0) + dt
-		local progress = state.timer / duration
-		if progress < 0 then progress = 0 end
-		if progress > 1 then progress = 1 end
-		state.progress = progress
+                local completed = SnakeRender.updatePortalAnimation(state, dt)
 
-		local totalLength = state.totalLength
-		if not totalLength or totalLength <= 0 then
-			totalLength = computeTrailLength(state.entrySourceTrail)
-			if totalLength <= 0 then
-				totalLength = SEGMENT_SPACING
-			end
-			state.totalLength = totalLength
-		end
+                local totalLength = state.totalLength
+                if not totalLength or totalLength <= 0 then
+                        totalLength = computeTrailLength(state.entrySourceTrail)
+                        if totalLength <= 0 then
+                                totalLength = SEGMENT_SPACING
+                        end
+                        state.totalLength = totalLength
+                end
 
-		local entryLength = totalLength * (1 - progress)
-		local exitLength = totalLength * progress
+                local entryLength = totalLength * (1 - (state.progress or 0))
+                local exitLength = totalLength * (state.progress or 0)
 
-		state.entryTrail = sliceTrailByLength(state.entrySourceTrail, entryLength, state.entryTrail)
-		state.exitTrail = sliceTrailByLength(trail, exitLength, state.exitTrail)
+                state.entryTrail = sliceTrailByLength(state.entrySourceTrail, entryLength, state.entryTrail)
+                state.exitTrail = sliceTrailByLength(trail, exitLength, state.exitTrail)
 
-		local entryHole = state.entryHole
-		if entryHole then
-			entryHole.x = state.entryX
-			entryHole.y = state.entryY
-			entryHole.time = (entryHole.time or 0) + dt
+                local entryHole = state.entryHole
+                if entryHole then
+                        entryHole.x = state.entryX
+                        entryHole.y = state.entryY
+                        entryHole.time = (entryHole.time or 0) + dt
 
-			local entryOpen = smoothStep(0.0, 0.22, progress)
-			local entryClose = smoothStep(0.68, 1, progress)
-			local entryVisibility = max(0, entryOpen * (1 - entryClose))
+                        local entryOpen = entryHole.open or 0
+                        entryHole.closing = 1 - entryHole.visibility
+                        local baseRadius = entryHole.baseRadius or (SEGMENT_SIZE * 0.7)
+                        entryHole.radius = baseRadius * (0.55 + 0.65 * entryOpen)
+                        entryHole.spin = (entryHole.spin or 0) + dt * (2.4 + 2.1 * entryOpen)
+                        entryHole.pulse = (entryHole.pulse or 0) + dt
+                end
 
-			entryHole.open = entryOpen
-			entryHole.closing = entryClose
-			entryHole.visibility = entryVisibility
-			local baseRadius = entryHole.baseRadius or (SEGMENT_SIZE * 0.7)
-			entryHole.radius = baseRadius * (0.55 + 0.65 * entryOpen)
-			entryHole.spin = (entryHole.spin or 0) + dt * (2.4 + 2.1 * entryOpen)
-			entryHole.pulse = (entryHole.pulse or 0) + dt
-		end
+                local exitHole = state.exitHole
+                if exitHole then
+                        exitHole.x = state.exitX
+                        exitHole.y = state.exitY
+                        exitHole.time = (exitHole.time or 0) + dt
 
-		local exitHole = state.exitHole
-		if exitHole then
-			exitHole.x = state.exitX
-			exitHole.y = state.exitY
-			exitHole.time = (exitHole.time or 0) + dt
+                        local exitOpen = exitHole.open or 0
+                        exitHole.closing = 1 - exitHole.visibility
+                        local baseRadius = exitHole.baseRadius or (SEGMENT_SIZE * 0.75)
+                        exitHole.radius = baseRadius * (0.5 + 0.6 * exitOpen)
+                        exitHole.spin = (exitHole.spin or 0) + dt * (2.0 + 2.2 * exitOpen)
+                        exitHole.pulse = (exitHole.pulse or 0) + dt
+                end
 
-			local exitOpen = smoothStep(0.08, 0.48, progress)
-			local exitSettle = smoothStep(0.82, 1, progress)
-			local exitVisibility = max(exitOpen, (1 - exitSettle) * 0.45)
-
-			exitHole.open = exitOpen
-			exitHole.closing = exitSettle
-			exitHole.visibility = exitVisibility
-			local baseRadius = exitHole.baseRadius or (SEGMENT_SIZE * 0.75)
-			exitHole.radius = baseRadius * (0.5 + 0.6 * exitOpen)
-			exitHole.spin = (exitHole.spin or 0) + dt * (2.0 + 2.2 * exitOpen)
-			exitHole.pulse = (exitHole.pulse or 0) + dt
-		end
-
-		if progress >= 1 then
-			clearPortalAnimation(state)
-			portalAnimation = nil
-		end
-	end
+                if completed then
+                        clearPortalAnimation(state)
+                        portalAnimation = nil
+                end
+        end
 
 	-- update timers
 	if popTimer > 0 then
@@ -3041,39 +2853,6 @@ local function isSawCutPointExposed(saw, sx, sy, px, py)
 	local projection = dx * nx + dy * ny
 
 	return projection >= -tolerance
-end
-
-local function clamp01(value)
-	return max(0, min(1, value or 0))
-end
-
-local function scaleColorAlpha(color, scale)
-	local r = 1
-	local g = 1
-	local b = 1
-	local a = 1
-
-	if type(color) == "table" then
-		r = color[1] or r
-		g = color[2] or g
-		b = color[3] or b
-		a = color[4] or a
-	end
-
-	return {r, g, b, clamp01(a * scale)}
-end
-
-local function buildSeveredPalette(fade)
-	local palette = SnakeCosmetics and SnakeCosmetics:getPaletteForSkin() or nil
-	local bodyColor = palette and palette.body or (SnakeCosmetics and SnakeCosmetics.getBodyColor and SnakeCosmetics:getBodyColor())
-	local outlineColor = palette and palette.outline or (SnakeCosmetics and SnakeCosmetics.getOutlineColor and SnakeCosmetics:getOutlineColor())
-
-	local alpha = clamp01(fade or 1)
-
-	return {
-		body = scaleColorAlpha(bodyColor, alpha),
-		outline = scaleColorAlpha(outlineColor, alpha),
-	}
 end
 
 local function addSeveredTrail(pieceTrail, segmentEstimate)
@@ -3661,91 +3440,25 @@ function Snake:markFruitSegment(fruitX, fruitY, fruitScore)
 end
 
 function Snake:draw()
-	if not isDead then
-		local upgradeVisuals = collectUpgradeVisuals(self)
-
-		if severedPieces and #severedPieces > 0 then
-			for i = 1, #severedPieces do
-				local piece = severedPieces[i]
-				local trailData = piece and piece.trail
-				if trailData and #trailData > 1 then
-					local remaining = piece.timer or 0
-					local life = piece.life or SEVERED_TAIL_LIFE
-					local fadeDuration = piece.fadeDuration or SEVERED_TAIL_FADE_DURATION
-					local fade = 1
-
-					if fadeDuration and fadeDuration > 0 then
-						if remaining <= fadeDuration then
-							fade = clamp01(remaining / fadeDuration)
-						end
-					elseif life and life > 0 then
-						fade = clamp01(remaining / life)
-					end
-
-					local drawOptions = {
-						drawFace = false,
-						paletteOverride = buildSeveredPalette(fade),
-						overlayEffect = nil,
-						flatStartCap = true,
-					}
-
-					activeTrailForHead = trailData
-					SnakeDraw.run(trailData, piece.segmentCount or #trailData, SEGMENT_SIZE, 0, getActiveTrailHead, 0, 0, nil, drawOptions)
-					activeTrailForHead = nil
-				end
-			end
-		end
-
-		local shouldDrawFace = descendingHole == nil
-		local hideDescendingBody = descendingHole and descendingHole.fullyConsumed
-
-		if not hideDescendingBody then
-			local drawOptions
-			if portalAnimation then
-				drawOptions = {
-					drawFace = shouldDrawFace,
-					portalAnimation = {
-						entryTrail = portalAnimation.entryTrail,
-						exitTrail = portalAnimation.exitTrail,
-						entryX = portalAnimation.entryX,
-						entryY = portalAnimation.entryY,
-						exitX = portalAnimation.exitX,
-						exitY = portalAnimation.exitY,
-						progress = portalAnimation.progress or 0,
-						duration = portalAnimation.duration or 0.3,
-						timer = portalAnimation.timer or 0,
-						entryHole = portalAnimation.entryHole,
-						exitHole = portalAnimation.exitHole,
-					},
-				}
-			else
-				drawOptions = shouldDrawFace
-			end
-
-			local tailHitFlash
-			if self.tailHitFlashTimer and self.tailHitFlashTimer > 0 then
-				tailHitFlash = clamp01(self.tailHitFlashTimer / TAIL_HIT_FLASH_DURATION)
-			end
-
-			if tailHitFlash and tailHitFlash > 0 then
-				if type(drawOptions) ~= "table" then
-					drawOptions = {drawFace = drawOptions ~= false}
-				else
-					if drawOptions.drawFace == nil then
-						drawOptions.drawFace = true
-					end
-				end
-
-				drawOptions.tailHitFlash = tailHitFlash
-				drawOptions.tailHitFlashColor = TAIL_HIT_FLASH_COLOR
-			end
-
-			currentHeadOwner = self
-			SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getOwnerHead, self.shields or 0, self.shieldFlashTimer or 0, upgradeVisuals, drawOptions)
-			currentHeadOwner = nil
-		end
-
-	end
+        SnakeRender.draw(renderState, {
+                snake = self,
+                trail = trail,
+                segmentCount = segmentCount,
+                segmentSize = SEGMENT_SIZE,
+                popTimer = popTimer,
+                descendingHole = descendingHole,
+                portalAnimation = portalAnimation,
+                tailHitFlashTimer = self.tailHitFlashTimer,
+                tailHitFlashDuration = TAIL_HIT_FLASH_DURATION,
+                tailHitFlashColor = TAIL_HIT_FLASH_COLOR,
+                severedPieces = severedPieces,
+                severedLife = SEVERED_TAIL_LIFE,
+                severedFadeDuration = SEVERED_TAIL_FADE_DURATION,
+                shields = self.shields,
+                shieldFlashTimer = self.shieldFlashTimer,
+                isDead = isDead,
+                collectUpgradeVisuals = collectUpgradeVisuals,
+        })
 end
 
 function Snake:resetPosition()
