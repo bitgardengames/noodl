@@ -54,6 +54,26 @@ local clippedTrailProxy = {drawX = 0, drawY = 0}
 local severedPieces = {}
 local portalAnimation = nil
 
+-- Reused ability state tables to avoid allocations every HUD refresh.
+local dashStateCache = {
+        active = false,
+        timer = 0,
+        duration = 0,
+        cooldown = 0,
+        cooldownTimer = 0,
+}
+
+local timeDilationStateCache = {
+        active = false,
+        timer = 0,
+        duration = 0,
+        cooldown = 0,
+        cooldownTimer = 0,
+        timeScale = 1,
+        floorCharges = nil,
+        maxFloorUses = nil,
+}
+
 local segmentPool = {}
 local segmentPoolCount = 0
 
@@ -3323,17 +3343,18 @@ function Snake:isDashActive()
 end
 
 function Snake:getDashState()
-	if not self.dash then
-		return nil
-	end
+        if not self.dash then
+                return nil
+        end
 
-	return {
-		active = self.dash.active or false,
-		timer = self.dash.timer or 0,
-		duration = self.dash.duration or 0,
-		cooldown = self.dash.cooldown or 0,
-		cooldownTimer = self.dash.cooldownTimer or 0,
-	}
+        local state = dashStateCache
+        state.active = self.dash.active or false
+        state.timer = self.dash.timer or 0
+        state.duration = self.dash.duration or 0
+        state.cooldown = self.dash.cooldown or 0
+        state.cooldownTimer = self.dash.cooldownTimer or 0
+
+        return state
 end
 
 function Snake:onDashBreakRock(x, y)
@@ -3429,21 +3450,22 @@ function Snake:triggerChronoWard(duration, scale)
 end
 
 function Snake:getTimeDilationState()
-	local ability = self.timeDilation
-	if not ability then
-		return nil
-	end
+        local ability = self.timeDilation
+        if not ability then
+                return nil
+        end
 
-	return {
-		active = ability.active or false,
-		timer = ability.timer or 0,
-		duration = ability.duration or 0,
-		cooldown = ability.cooldown or 0,
-		cooldownTimer = ability.cooldownTimer or 0,
-		timeScale = resolveTimeDilationScale(ability),
-		floorCharges = ability.floorCharges,
-		maxFloorUses = ability.maxFloorUses,
-	}
+        local state = timeDilationStateCache
+        state.active = ability.active or false
+        state.timer = ability.timer or 0
+        state.duration = ability.duration or 0
+        state.cooldown = ability.cooldown or 0
+        state.cooldownTimer = ability.cooldownTimer or 0
+        state.timeScale = resolveTimeDilationScale(ability)
+        state.floorCharges = ability.floorCharges
+        state.maxFloorUses = ability.maxFloorUses
+
+        return state
 end
 
 function Snake:getTimeScale()
