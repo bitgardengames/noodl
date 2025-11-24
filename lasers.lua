@@ -53,13 +53,18 @@ local function getTime()
 	return Timer.getTime()
 end
 
+local copyColorOptions = {
+        default = {1, 0.38, 0.18, 1},
+        defaultAlpha = nil,
+        alpha = nil,
+}
+
 local function copyColor(color, alpha)
-	return Color.copy(color, {
-		default = {1, 0.38, 0.18, alpha or 1},
-		defaultAlpha = alpha,
-		alpha = alpha,
-		}
-	)
+        local options = copyColorOptions
+        options.default[4] = alpha or 1
+        options.defaultAlpha = alpha
+        options.alpha = alpha
+        return Color.copy(color, options)
 end
 
 local function clamp(value, minimum, maximum)
@@ -469,17 +474,29 @@ local function computeBeamTarget(beam, rockLookup)
 		end
 	end
 
-	if beam.dir == "horizontal" then
-		local minX = min(startX, endX)
-		local width = max(0, abs(endX - startX))
-		local thickness = beam.beamThickness or DEFAULT_BEAM_THICKNESS
-		beam.beamRect = {minX, startY - thickness * 0.5, width, thickness}
-	else
-		local minY = min(startY, endY)
-		local height = max(0, abs(endY - startY))
-		local thickness = beam.beamThickness or DEFAULT_BEAM_THICKNESS
-		beam.beamRect = {startX - thickness * 0.5, minY, thickness, height}
-	end
+        local rect = beam.beamRect
+        if not rect then
+                rect = {}
+                beam.beamRect = rect
+        end
+
+        if beam.dir == "horizontal" then
+                local minX = min(startX, endX)
+                local width = max(0, abs(endX - startX))
+                local thickness = beam.beamThickness or DEFAULT_BEAM_THICKNESS
+                rect[1] = minX
+                rect[2] = startY - thickness * 0.5
+                rect[3] = width
+                rect[4] = thickness
+        else
+                local minY = min(startY, endY)
+                local height = max(0, abs(endY - startY))
+                local thickness = beam.beamThickness or DEFAULT_BEAM_THICKNESS
+                rect[1] = startX - thickness * 0.5
+                rect[2] = minY
+                rect[3] = thickness
+                rect[4] = height
+        end
 
 	beam.beamStartX = startX
 	beam.beamStartY = startY
