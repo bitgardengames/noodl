@@ -728,7 +728,7 @@ function UI.drawPanel(x, y, w, h, opts)
 	radius = radius or 0
 	local borderWidth = 0
 	if opts.border ~= false then
-		borderWidth = opts.borderWidth or 2
+		borderWidth = opts.borderWidth or 3
 	end
 	local shadowPadding = calculateShadowPadding(borderWidth, opts.shadowStrokeWidth)
 	local shadowRadius = radius + shadowPadding
