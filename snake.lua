@@ -1,6 +1,7 @@
 local Arena = require("arena")
 local SnakeUtils = require("snakeutils")
 local SnakeDraw = require("snakedraw")
+local SnakeUpgrades = require("snake_upgrades")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Lasers = require("lasers")
@@ -450,7 +451,7 @@ local SEGMENT_SPACING = SnakeUtils.SEGMENT_SPACING
 local moveProgress = 0
 local POP_DURATION = SnakeUtils.POP_DURATION
 local SHIELD_FLASH_DURATION = 0.3
-local HAZARD_GRACE_DURATION = 0.12 -- brief invulnerability window after surviving certain hazards
+local HAZARD_GRACE_DURATION = SnakeUpgrades.HAZARD_GRACE_DURATION -- brief invulnerability window after surviving certain hazards
 local DAMAGE_FLASH_DURATION = 0.45
 local TAIL_HIT_FLASH_DURATION = 0.18
 local TAIL_HIT_FLASH_COLOR = {0.95, 0.08, 0.12, 1}
@@ -476,29 +477,7 @@ Snake.stormchaser = nil
 Snake.temporalAnchor = nil
 Snake.swiftFangs = nil
 
-local function resolveTimeDilationScale(primary, secondary)
-	local scale = 1
-
-	if primary and primary.active then
-		local primaryScale = primary.timeScale or 1
-		if not (primaryScale and primaryScale > 0) then
-			primaryScale = 0.05
-		end
-		scale = primaryScale
-	end
-
-	if secondary and secondary.active then
-		local secondaryScale = secondary.timeScale or 1
-		if not (secondaryScale and secondaryScale > 0) then
-			secondaryScale = 0.05
-		end
-		if secondaryScale < scale then
-			scale = secondaryScale
-		end
-	end
-
-	return scale
-end
+local resolveTimeDilationScale = SnakeUpgrades.resolveTimeDilationScale
 
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
@@ -674,160 +653,37 @@ function Snake:setMomentumCoilsStacks(count)
 end
 
 function Snake:setDiffractionBarrierActive(active)
-	if active then
-		local state = self.diffractionBarrier
-		if not state then
-			state = {intensity = 0, target = 0, time = 0, flash = 0}
-			self.diffractionBarrier = state
-		end
-
-		if not state.active then
-			state.flash = min(1.25, (state.flash or 0) + 0.9)
-			state.intensity = max(state.intensity or 0, 0.55)
-		end
-
-		state.active = true
-		state.target = 1
-	else
-		local state = self.diffractionBarrier
-		if state then
-			state.active = false
-			state.target = 0
-		end
-	end
+        SnakeUpgrades.setDiffractionBarrierActive(self, active)
 end
 
 function Snake:setPhoenixEchoCharges(count, options)
-	count = max(0, floor((count or 0) + 0.0001))
-	options = options or {}
-
-	local state = self.phoenixEcho
-	if not state and (count > 0 or options.triggered or options.instantIntensity) then
-		state = {intensity = 0, target = 0, time = 0, flareTimer = 0, flareDuration = 1.2, charges = 0}
-		self.phoenixEcho = state
-	elseif not state then
-		return
-	end
-
-	local previous = state.charges or 0
-	state.charges = count
-
-	if count > 0 then
-		state.target = min(1, 0.55 + 0.18 * min(count, 3))
-	else
-		state.target = 0
-	end
-
-	if count > previous then
-		state.flareTimer = max(state.flareTimer or 0, 1.25)
-	elseif count < previous then
-		state.flareTimer = max(state.flareTimer or 0, 0.9)
-	end
-
-	if options.triggered then
-		state.flareTimer = max(state.flareTimer or 0, options.triggered)
-		state.intensity = max(state.intensity or 0, 0.85)
-	end
-
-	if options.instantIntensity then
-		state.intensity = max(state.intensity or 0, options.instantIntensity)
-	end
-
-	if options.flareDuration then
-		state.flareDuration = options.flareDuration
-	elseif not state.flareDuration then
-		state.flareDuration = 1.2
-	end
-
-	if count <= 0 and state.target <= 0 and (state.intensity or 0) <= 0 and (state.flareTimer or 0) <= 0 then
-		self.phoenixEcho = nil
-	end
+        SnakeUpgrades.setPhoenixEchoCharges(self, count, options)
 end
 
 
 
 function Snake:setEventHorizonActive(active)
-	if active then
-		local state = self.eventHorizon
-		if not state then
-			state = {intensity = 0, target = 1, spin = 0, time = 0}
-			self.eventHorizon = state
-		end
-		state.target = 1
-		state.active = true
-	else
-		local state = self.eventHorizon
-		if state then
-			state.target = 0
-			state.active = false
-		end
-	end
+        SnakeUpgrades.setEventHorizonActive(self, active)
 end
 
 function Snake:onShieldConsumed(x, y, cause)
-	if (not x or not y) and self.getHead then
-		x, y = self:getHead()
-	end
-
-	local Upgrades = package.loaded["upgrades"]
-	if Upgrades and Upgrades.notify then
-		Upgrades:notify("shieldConsumed", {
-			x = x,
-			y = y,
-			cause = cause or "unknown",
-			}
-		)
-	end
+        SnakeUpgrades.onShieldConsumed(self, x, y, cause)
 end
 
 function Snake:addStoneSkinSawGrace(n)
-	n = n or 1
-	if n <= 0 then return end
-	self.stoneSkinSawGrace = (self.stoneSkinSawGrace or 0) + n
-
-	local visual = self.stoneSkinVisual
-	if not visual then
-		visual = {intensity = 0, target = 0, flash = 0, time = 0, charges = 0}
-		self.stoneSkinVisual = visual
-	end
-
-	visual.charges = self.stoneSkinSawGrace or 0
-	visual.target = min(1, 0.45 + 0.18 * min(visual.charges, 4))
-	visual.intensity = max(visual.intensity or 0, 0.32 + 0.12 * min(visual.charges, 3))
-	visual.flash = max(visual.flash or 0, 0.75)
+        SnakeUpgrades.addStoneSkinSawGrace(self, n)
 end
 
 function Snake:consumeStoneSkinSawGrace()
-	if (self.stoneSkinSawGrace or 0) > 0 then
-		self.stoneSkinSawGrace = self.stoneSkinSawGrace - 1
-		self.shieldFlashTimer = SHIELD_FLASH_DURATION
-
-		if self.stoneSkinVisual then
-			local visual = self.stoneSkinVisual
-			visual.charges = self.stoneSkinSawGrace or 0
-			visual.target = min(1, 0.45 + 0.18 * min(visual.charges, 4))
-			visual.flash = max(visual.flash or 0, 1)
-		end
-
-		return true
-	end
-	return false
+        return SnakeUpgrades.consumeStoneSkinSawGrace(self, SHIELD_FLASH_DURATION)
 end
 
 function Snake:isHazardGraceActive()
-	return (self.hazardGraceTimer or 0) > 0
+        return SnakeUpgrades.isHazardGraceActive(self)
 end
 
 function Snake:beginHazardGrace(duration)
-	local grace = duration or HAZARD_GRACE_DURATION
-	if not (grace and grace > 0) then
-		return
-	end
-
-	local current = self.hazardGraceTimer or 0
-	if grace > current then
-		self.hazardGraceTimer = grace
-	end
+        SnakeUpgrades.beginHazardGrace(self, duration)
 end
 
 function Snake:onDamageTaken(cause, info)
