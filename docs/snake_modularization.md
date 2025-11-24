@@ -10,14 +10,6 @@
 - Functions such as `releaseSegment`, `recalcSegmentLengthsRange`, `syncTrailLength`, and `recycleTrail` manage pooled segments, compute total length, and clean up discarded trail data.【F:snake.lua†L203-L319】
 - Extracting them into a `snake_trail.lua` helper would localize pooling, length math, and trimming, reducing the variable footprint in the main snake controller.
 
-## Upgrade and buff state management
-- The group of getters/setters (`getSpeed`, `addShields`, `resetModifiers`, and stack handlers for Swift Fangs, Serpent's Reflex, Deliberate Coil, Momentum Coils, etc.) maintain upgrade timers, flash values, and UI updates.【F:snake.lua†L532-L702】
-- Housing these in a `snake_upgrades_state.lua` module would separate passive/active buff bookkeeping from movement logic and shrink shared state.
-
-## Damage response and hazard grace
-- `onDamageTaken` applies pushback, snapping, direction overrides, hazard grace timers, and particle feedback while coordinating shield consumption.【F:snake.lua†L738-L787】
-- Moving damage handling (including shield flash/blood FX constants) into a `snake_damage.lua` module would reduce cross-talk with movement variables.
-
 ## Lifecycle and upgrade hooks
 - `load`, Glutton's Wake crystalization helpers, and direction/death setters reset trail state, rebuild occupancy, and notify upgrade systems about spawned rocks.【F:snake.lua†L2032-L2129】
 - Extracting these lifecycle/reset utilities into `snake_lifecycle.lua` would keep startup/respawn logic discrete from per-frame updates.
