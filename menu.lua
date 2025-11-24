@@ -808,31 +808,30 @@ function Menu:draw()
                                         fadeAlpha = 0
                                 end
 
-                                local glowPulse = 0.6 + 0.4 * sin(timer * 1.6)
-                                local auraAlpha = 0.2 * fadeAlpha * glowPulse
-                                if auraAlpha > 0 then
-                                        setColorWithAlpha({1, 0.85, 0.6, auraAlpha}, alpha)
-                                        UI.drawRoundedRect(textX - 6, textY - 6, barWidth + 12, barHeight + 12, 14)
-                                        setColorWithAlpha({1, 0.96, 0.84, auraAlpha * 0.8}, alpha)
-                                        UI.drawRoundedRect(textX - 3, textY - 3, barWidth + 6, barHeight + 6, 10)
+                                local glowPulse = 0.6 + 0.4 * sin(timer * 1.2)
+                                local glowAlpha = 0.18 * fadeAlpha * glowPulse
+                                if glowAlpha > 0 then
+                                        setColorWithAlpha({1, 0.92, 0.78, glowAlpha}, alpha)
+                                        UI.drawRoundedRect(textX - 4, textY - 4, barWidth + 8, barHeight + 8, 12)
                                 end
 
-                                local sheenWidth = max(barWidth * 0.32, barHeight * 1.6)
+                                local sheenWidth = max(barWidth * 0.24, barHeight * 1.4)
                                 local shimmerPhase = (dailyBarCelebration.shimmerPhase or 0) % 1
                                 local shimmerX = textX - sheenWidth + shimmerPhase * (barWidth + sheenWidth * 2)
-                                local shimmerAlpha = (0.38 + 0.22 * sin(timer * 2.4)) * fadeAlpha
+                                local shimmerAlpha = (0.26 + 0.14 * sin(timer * 1.6)) * fadeAlpha
 
                                 if shimmerAlpha > 0 then
                                         setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
                                         UI.drawRoundedRect(shimmerX, textY, sheenWidth, barHeight, 8)
                                 end
 
-                                local glossAlpha = 0.16 * fadeAlpha
-                                if glossAlpha > 0 then
-                                        setColorWithAlpha({1, 1, 1, glossAlpha}, alpha)
-                                        love.graphics.rectangle("fill", textX, textY, barWidth, barHeight * 0.38, 8, 8)
+                                local outlineAlpha = 0.6 * fadeAlpha
+                                if outlineAlpha > 0 then
+                                        setColorWithAlpha({1, 1, 1, outlineAlpha}, alpha)
+                                        love.graphics.setLineWidth(2)
+                                        love.graphics.rectangle("line", textX - 1, textY - 1, barWidth + 2, barHeight + 2, 9, 9)
+                                        love.graphics.setLineWidth(1)
                                 end
-
                                 love.graphics.setColor(1, 1, 1, 1)
                         end
 
