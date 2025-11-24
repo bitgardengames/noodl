@@ -162,10 +162,10 @@ function TransitionManager:openShop()
 end
 
 function TransitionManager:startFloorIntro(duration, extra)
-	extra = shallowCopy(extra)
-	if not extra.transitionResumePhase then
-		extra.transitionResumePhase = "playing"
-	end
+        extra = shallowCopy(extra)
+        if not extra.transitionResumePhase then
+                extra.transitionResumePhase = "playing"
+        end
 
 	if extra.transitionResumePhase == "fadein" and not extra.transitionResumeFadeDuration then
 		extra.transitionResumeFadeDuration = 0.9
@@ -173,10 +173,14 @@ function TransitionManager:startFloorIntro(duration, extra)
 		extra.transitionResumeFadeDuration = nil
 	end
 
-	self.data.transitionIntroConfirmed = nil
-	self.data.transitionIntroReady = nil
+        self.data.transitionIntroConfirmed = nil
+        self.data.transitionIntroReady = nil
 
-	self:mergeData(extra)
+        self:mergeData(extra)
+
+        if self.game and self.game.activatePreparedFloor then
+                self.game:activatePreparedFloor()
+        end
 
 	local data = self.data
 	local introDuration = duration or data.transitionIntroDuration or 2.2
