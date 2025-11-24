@@ -198,8 +198,10 @@ local lastCollectedMeta = nil
 local idleSparkles = {}
 local drawList = {}
 
+local COPY_COLOR_OPTIONS = {default = Color.white}
+
 local function copyColor(color)
-	return Color.copy(color, {default = Color.white})
+        return Color.copy(color, COPY_COLOR_OPTIONS)
 end
 
 -- Easing
