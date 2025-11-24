@@ -502,7 +502,7 @@ function Menu:enter()
 
         Audio:playMusic("menu")
         Screen:update()
-        Face:set("happy", 10)
+        Face:set("happy", love.math.random(3, 4))
 
         DailyProgress:load()
         dailyPanelCache = {}
