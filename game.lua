@@ -1307,7 +1307,9 @@ function Game:startFadeIn(duration)
 end
 
 function Game:updateDescending(dt, worldDt)
-	Snake:update(dt)
+        local snakeDt = worldDt or dt
+
+        Snake:update(snakeDt)
 
 	-- Keep saw blades animating while the snake descends into the exit hole
 	if Saws and Saws.update then
@@ -1773,14 +1775,14 @@ function Game:update(dt)
 		return
 	end
 
-	local stateHandler = STATE_UPDATERS[self.state]
-	if stateHandler and stateHandler(self, dt, worldDt) then
-		return
-	end
+        local stateHandler = STATE_UPDATERS[self.state]
+        if stateHandler and stateHandler(self, dt, worldDt) then
+                return
+        end
 
-	if self.state == "playing" then
-		self:updateGameplay(dt)
-	end
+        if self.state == "playing" then
+                self:updateGameplay(worldDt)
+        end
 
 	self:updateEntities(worldDt)
 
