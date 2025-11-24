@@ -150,18 +150,19 @@ local function releaseSegment(segment)
 		removeSnakeBodySpatialEntry(col, row, segment)
 	end
 
-	segment.drawX = nil
-	segment.drawY = nil
-	segment.x = nil
-	segment.y = nil
-	segment.dirX = nil
-	segment.dirY = nil
-	segment.fruitMarker = nil
-	segment.fruitMarkerX = nil
-	segment.fruitMarkerY = nil
-	segment.lengthToPrev = nil
-	segment.cellCol = nil
-	segment.cellRow = nil
+        segment.drawX = nil
+        segment.drawY = nil
+        segment.x = nil
+        segment.y = nil
+        segment.dirX = nil
+        segment.dirY = nil
+        segment.fruitMarker = nil
+        segment.fruitMarkerX = nil
+        segment.fruitMarkerY = nil
+        segment.fruitScore = nil
+        segment.lengthToPrev = nil
+        segment.cellCol = nil
+        segment.cellRow = nil
 
 	segmentPoolCount = segmentPoolCount + 1
 	segmentPool[segmentPoolCount] = segment
@@ -1345,21 +1346,22 @@ local function copySegmentData(segment)
 		return nil
 	end
 
-	local copy = acquireSegment()
-	copy.drawX = segment.drawX
-	copy.drawY = segment.drawY
-	copy.dirX = segment.dirX
-	copy.dirY = segment.dirY
-	copy.x = segment.x
-	copy.y = segment.y
-	copy.fruitMarker = segment.fruitMarker
-	copy.fruitMarkerX = segment.fruitMarkerX
-	copy.fruitMarkerY = segment.fruitMarkerY
-	copy.lengthToPrev = segment.lengthToPrev
-	copy.cellCol = segment.cellCol
-	copy.cellRow = segment.cellRow
+        local copy = acquireSegment()
+        copy.drawX = segment.drawX
+        copy.drawY = segment.drawY
+        copy.dirX = segment.dirX
+        copy.dirY = segment.dirY
+        copy.x = segment.x
+        copy.y = segment.y
+        copy.fruitMarker = segment.fruitMarker
+        copy.fruitMarkerX = segment.fruitMarkerX
+        copy.fruitMarkerY = segment.fruitMarkerY
+        copy.fruitScore = segment.fruitScore
+        copy.lengthToPrev = segment.lengthToPrev
+        copy.cellCol = segment.cellCol
+        copy.cellRow = segment.cellRow
 
-	return copy
+        return copy
 end
 
 local function computeTrailLength(trailData)
@@ -3121,17 +3123,18 @@ function Snake:update(dt)
 	while remaining >= SAMPLE_STEP do
 		prevX = prevX + nx * SAMPLE_STEP
 		prevY = prevY + ny * SAMPLE_STEP
-		local segment = acquireSegment()
-		segment.drawX = prevX
-		segment.drawY = prevY
-		segment.dirX = direction.x
-		segment.dirY = direction.y
-		segment.fruitMarker = nil
-		segment.fruitMarkerX = nil
-		segment.fruitMarkerY = nil
-		segment.lengthToPrev = nil
-		bufferCount = bufferCount + 1
-		buffer[bufferCount] = segment
+                local segment = acquireSegment()
+                segment.drawX = prevX
+                segment.drawY = prevY
+                segment.dirX = direction.x
+                segment.dirY = direction.y
+                segment.fruitMarker = nil
+                segment.fruitMarkerX = nil
+                segment.fruitMarkerY = nil
+                segment.fruitScore = nil
+                segment.lengthToPrev = nil
+                bufferCount = bufferCount + 1
+                buffer[bufferCount] = segment
 		remaining = remaining - SAMPLE_STEP
 	end
 
@@ -3603,14 +3606,16 @@ function Snake:loseSegments(count, options)
 		return 0
 	end
 
-	local available = max(0, (segmentCount or 1) - 1)
-	local trimmed = min(count, available)
-	if trimmed <= 0 then
-		return 0
-	end
+        local available = max(0, (segmentCount or 1) - 1)
+        local trimmed = min(count, available)
+        if trimmed <= 0 then
+                return 0
+        end
 
-	local exitWasOpen = Arena and Arena.hasExit and Arena:hasExit()
-	segmentCount = segmentCount - trimmed
+        local fruitScoreLost = computeFruitScoreLoss(trail, trimmed)
+
+        local exitWasOpen = Arena and Arena.hasExit and Arena:hasExit()
+        segmentCount = segmentCount - trimmed
 	popTimer = 0
 
 	local shouldTrimTrail = true
@@ -3653,17 +3658,17 @@ function Snake:loseSegments(count, options)
 		end
 	end
 
-	local apples = SessionStats:get("fruitEaten") or 0
-	apples = max(0, apples - trimmed)
-	SessionStats:set("fruitEaten", apples)
+        local apples = SessionStats:get("fruitEaten") or 0
+        apples = max(0, apples - trimmed)
+        SessionStats:set("fruitEaten", apples)
 
-	if Score and Score.addBonus and Score.get then
-		local currentScore = Score:get() or 0
-		local deduction = min(currentScore, trimmed)
-		if deduction > 0 then
-			Score:addBonus(-deduction)
-		end
-	end
+        if Score and Score.addBonus and Score.get then
+                local currentScore = Score:get() or 0
+                local deduction = min(currentScore, fruitScoreLost)
+                if deduction > 0 then
+                        Score:addBonus(-deduction)
+                end
+        end
 
 	if (not options) or options.spawnParticles ~= false then
 		local burstColor = LOSE_SEGMENTS_DEFAULT_BURST_COLOR
@@ -3689,13 +3694,34 @@ function Snake:loseSegments(count, options)
 end
 
 local function chopTailLossAmount()
-	local available = max(0, (segmentCount or 1) - 1)
-	if available <= 0 then
-		return 0
-	end
+        local available = max(0, (segmentCount or 1) - 1)
+        if available <= 0 then
+                return 0
+        end
 
-	local loss = floor(max(1, available * 0.2))
-	return min(loss, available)
+        local loss = floor(max(1, available * 0.2))
+        return min(loss, available)
+end
+
+local function computeFruitScoreLoss(segmentBuffer, amount)
+        if not segmentBuffer or not amount or amount <= 0 then
+                return 0
+        end
+
+        local remaining = amount
+        local scoreLost = 0
+        local index = #segmentBuffer
+
+        while index >= 1 and remaining > 0 do
+                local segment = segmentBuffer[index]
+                if segment and segment.fruitMarker and segment.fruitScore then
+                        scoreLost = scoreLost + segment.fruitScore
+                end
+                index = index - 1
+                remaining = remaining - 1
+        end
+
+        return scoreLost
 end
 
 function Snake:chopTailByHazard(cause)
@@ -3958,11 +3984,12 @@ function Snake:handleSawBodyCut(context)
 		dirX = previousSegment.dirX or 0
 		dirY = previousSegment.dirY or 0
 	end
-	newTail.dirX = dirX
-	newTail.dirY = dirY
-	newTail.fruitMarker = nil
-	newTail.fruitMarkerX = nil
-	newTail.fruitMarkerY = nil
+        newTail.dirX = dirX
+        newTail.dirY = dirY
+        newTail.fruitMarker = nil
+        newTail.fruitMarkerX = nil
+        newTail.fruitMarkerY = nil
+        newTail.fruitScore = nil
 
 	local severedTrail = {}
 	severedTrail[1] = copySegmentData(newTail)
@@ -4382,10 +4409,10 @@ function Snake:checkSawBodyCollision()
 	return false
 end
 
-function Snake:markFruitSegment(fruitX, fruitY)
-	if not trail or #trail == 0 then
-		return
-	end
+function Snake:markFruitSegment(fruitX, fruitY, fruitScore)
+        if not trail or #trail == 0 then
+                return
+        end
 
 	local targetIndex = 1
 
@@ -4410,17 +4437,18 @@ function Snake:markFruitSegment(fruitX, fruitY)
 		end
 	end
 
-	local segment = trail[targetIndex]
-	if segment then
-		segment.fruitMarker = true
-		if fruitX and fruitY then
-			segment.fruitMarkerX = fruitX
-			segment.fruitMarkerY = fruitY
-		else
-			segment.fruitMarkerX = nil
-			segment.fruitMarkerY = nil
-		end
-	end
+        local segment = trail[targetIndex]
+        if segment then
+                segment.fruitMarker = true
+                segment.fruitScore = fruitScore
+                if fruitX and fruitY then
+                        segment.fruitMarkerX = fruitX
+                        segment.fruitMarkerY = fruitY
+                else
+                        segment.fruitMarkerX = nil
+                        segment.fruitMarkerY = nil
+                end
+        end
 end
 
 function Snake:draw()

@@ -306,12 +306,12 @@ function FruitEvents.handleConsumption(x, y)
 	local countsForGoal = not (collectedMeta and collectedMeta.countsForGoal == false)
 	local col, row = Fruit:getTile()
 
-	Snake:grow()
+        Snake:grow()
 
         local markerX, markerY = Fruit:getPosition()
         if not markerX then markerX = x end
         if not markerY then markerY = y end
-        Snake:markFruitSegment(markerX, markerY)
+        Snake:markFruitSegment(markerX, markerY, points)
 
         Face:set("happy", 2)
         FloatingText:add("+" .. tostring(points), x, y, Theme.textColor, 1.0, 40, nil, {
