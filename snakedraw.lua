@@ -16,6 +16,16 @@ local tau = math.pi * 2
 local sin = math.sin
 local sqrt = math.sqrt
 
+local function clamp01(value)
+	if value < 0 then
+		return 0
+	end
+	if value > 1 then
+		return 1
+	end
+	return value
+end
+
 local SnakeDraw = ModuleUtil.create("SnakeDraw")
 
 -- tweakables
