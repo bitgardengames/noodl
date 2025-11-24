@@ -399,28 +399,33 @@ local TRANSITION_VISUAL_SYSTEMS = ModuleUtil.prepareSystems({
 )
 
 local FLOOR_INTRO_BACKGROUND_SYSTEMS = ModuleUtil.prepareSystems({
-	Face,
-	Popup,
-	Arena,
-	Lasers,
+        Face,
+        Popup,
+        Arena,
+        Lasers,
 	Darts,
 	Saws,
 	Rocks,
 	Particles,
 	UpgradeVisuals,
 	Achievements,
-	FloatingText,
-	Score,
-	}
+        FloatingText,
+        Score,
+        }
 )
 
-local function cloneColor(color, fallback, out)
-	local source = color or fallback or DEFAULT_IMPACT_RIPPLE_COLOR
-	if not source then
-		return nil
-	end
+local CLONE_COLOR_OPTIONS = {}
 
-	return Color.copy(source, {target = out or {}})
+local function cloneColor(color, fallback, out)
+        local source = color or fallback or DEFAULT_IMPACT_RIPPLE_COLOR
+        if not source then
+                return nil
+        end
+
+        local options = CLONE_COLOR_OPTIONS
+        options.target = out or {}
+
+        return Color.copy(source, options)
 end
 
 local function resetFeedbackState(self)
