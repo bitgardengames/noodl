@@ -2065,7 +2065,7 @@ pool = {
 		revealShakeMagnitude = 9,
 		revealShakeFrequency = 26,
 		revealApplyThreshold = 0.6,
-		revealPostPauseDuration = 0.65,
+		revealPostPauseDuration = 1.2,
 		revealAnimation = "wildcard",
 		}
 		end
