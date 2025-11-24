@@ -502,10 +502,6 @@ end
 -- getters / mutators (safe API for upgrades)
 function Snake:getSpeed()
 	local speed = (self.baseSpeed or 1) * (self.speedMult or 1)
-	local scale = resolveTimeDilationScale(self.timeDilation, self.chronoWard)
-	if scale ~= 1 then
-		speed = speed * scale
-	end
 
 	return speed
 end
