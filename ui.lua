@@ -1765,8 +1765,14 @@ local function drawComboIndicator(self)
         local showComboText = combo.count and combo.count >= 2
         local titleText = showComboText and ("Combo x" .. combo.count) or ""
 
-        local width = max(240, UI.fonts.button:getWidth(titleText) + 120)
-        local height = 68
+        local compactWidth = 220
+        local compactHeight = 46
+        local expandedWidth = showComboText and max(240, UI.fonts.button:getWidth(titleText) + 120) or compactWidth
+        local expandedHeight = 68
+        local textVisibility = clamp01(self.combo.textAlpha or 0)
+
+        local width = lerp(compactWidth, expandedWidth, textVisibility)
+        local height = lerp(compactHeight, expandedHeight, textVisibility)
         local x = (screenW - width) / 2
         local y = 16
 
