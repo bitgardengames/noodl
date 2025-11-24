@@ -22,11 +22,25 @@ local pi = math.pi
 local abs = math.abs
 local insert = table.insert
 
+local DASH_STATE_ACTIVE = Snake.DASH_STATE_ACTIVE
+local DASH_STATE_TIMER = Snake.DASH_STATE_TIMER
+local DASH_STATE_DURATION = Snake.DASH_STATE_DURATION
+local DASH_STATE_COOLDOWN_TIMER = Snake.DASH_STATE_COOLDOWN_TIMER
+local DASH_STATE_COOLDOWN = Snake.DASH_STATE_COOLDOWN
+
+local TIME_STATE_ACTIVE = Snake.TIME_STATE_ACTIVE
+local TIME_STATE_TIMER = Snake.TIME_STATE_TIMER
+local TIME_STATE_DURATION = Snake.TIME_STATE_DURATION
+local TIME_STATE_COOLDOWN_TIMER = Snake.TIME_STATE_COOLDOWN_TIMER
+local TIME_STATE_COOLDOWN = Snake.TIME_STATE_COOLDOWN
+local TIME_STATE_FLOOR_CHARGES = Snake.TIME_STATE_FLOOR_CHARGES
+local TIME_STATE_MAX_FLOOR_USES = Snake.TIME_STATE_MAX_FLOOR_USES
+
 local SHOP_RARITY_RANK = {
-	common = 1,
-	uncommon = 2,
-	rare = 3,
-	epic = 4,
+        common = 1,
+        uncommon = 2,
+        rare = 3,
+        epic = 4,
 	legendary = 5,
 }
 
@@ -236,27 +250,27 @@ local function captureHUDDynamicState(state)
 	snapshot.adrenalineTimer = adrenaline and adrenaline.timer or 0
 	snapshot.adrenalineDuration = adrenaline and adrenaline.duration or 0
 
-	local dashState = Snake.getDashState and Snake:getDashState() or nil
-	snapshot.dashPresent = dashState ~= nil
-	if dashState then
-		snapshot.dashActive = dashState.active or false
-		snapshot.dashTimer = dashState.timer or 0
-		snapshot.dashDuration = dashState.duration or 0
-		snapshot.dashCooldownTimer = dashState.cooldownTimer or 0
-		snapshot.dashCooldown = dashState.cooldown or 0
-	end
+        local dashState = Snake.getDashState and Snake:getDashState() or nil
+        snapshot.dashPresent = dashState ~= nil
+        if dashState then
+                snapshot.dashActive = dashState[DASH_STATE_ACTIVE] or false
+                snapshot.dashTimer = dashState[DASH_STATE_TIMER] or 0
+                snapshot.dashDuration = dashState[DASH_STATE_DURATION] or 0
+                snapshot.dashCooldownTimer = dashState[DASH_STATE_COOLDOWN_TIMER] or 0
+                snapshot.dashCooldown = dashState[DASH_STATE_COOLDOWN] or 0
+        end
 
-	local timeState = Snake.getTimeDilationState and Snake:getTimeDilationState() or nil
-	snapshot.timePresent = timeState ~= nil
-	if timeState then
-		snapshot.timeActive = timeState.active or false
-		snapshot.timeTimer = timeState.timer or 0
-		snapshot.timeDuration = timeState.duration or 0
-		snapshot.timeCooldownTimer = timeState.cooldownTimer or 0
-		snapshot.timeCooldown = timeState.cooldown or 0
-		snapshot.timeFloorCharges = timeState.floorCharges or 0
-		snapshot.timeMaxFloorUses = timeState.maxFloorUses or 0
-	end
+        local timeState = Snake.getTimeDilationState and Snake:getTimeDilationState() or nil
+        snapshot.timePresent = timeState ~= nil
+        if timeState then
+                snapshot.timeActive = timeState[TIME_STATE_ACTIVE] or false
+                snapshot.timeTimer = timeState[TIME_STATE_TIMER] or 0
+                snapshot.timeDuration = timeState[TIME_STATE_DURATION] or 0
+                snapshot.timeCooldownTimer = timeState[TIME_STATE_COOLDOWN_TIMER] or 0
+                snapshot.timeCooldown = timeState[TIME_STATE_COOLDOWN] or 0
+                snapshot.timeFloorCharges = timeState[TIME_STATE_FLOOR_CHARGES] or 0
+                snapshot.timeMaxFloorUses = timeState[TIME_STATE_MAX_FLOOR_USES] or 0
+        end
 
 	return snapshot
 end
@@ -2676,29 +2690,29 @@ function Upgrades:getHUDIndicators()
 		)
 	end
 
-	local dashState = Snake.getDashState and Snake:getDashState()
-	if dashState then
-		local label = Localization:get("upgrades.thunder_dash.name")
-		local accent = {1.0, 0.78, 0.32, 1}
-		local status
-		local charge
-		local chargeLabel
-		local showBar = false
+        local dashState = Snake.getDashState and Snake:getDashState()
+        if dashState then
+                local label = Localization:get("upgrades.thunder_dash.name")
+                local accent = {1.0, 0.78, 0.32, 1}
+                local status
+                local charge
+                local chargeLabel
+                local showBar = false
 
-		if dashState.active and dashState.duration > 0 then
-			local remaining = max(dashState.timer or 0, 0)
-			charge = clamp(remaining / dashState.duration, 0, 1)
-			chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remaining)})
-			status = hudStatus("active")
-			showBar = true
-		else
-			local cooldown = dashState.cooldown or 0
-			local remainingCooldown = max(dashState.cooldownTimer or 0, 0)
-			if cooldown > 0 and remainingCooldown > 0 then
-				local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
-				charge = progress
-				chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remainingCooldown)})
-				status = hudStatus("charging")
+                if dashState[DASH_STATE_ACTIVE] and dashState[DASH_STATE_DURATION] > 0 then
+                        local remaining = max(dashState[DASH_STATE_TIMER] or 0, 0)
+                        charge = clamp(remaining / dashState[DASH_STATE_DURATION], 0, 1)
+                        chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remaining)})
+                        status = hudStatus("active")
+                        showBar = true
+                else
+                        local cooldown = dashState[DASH_STATE_COOLDOWN] or 0
+                        local remainingCooldown = max(dashState[DASH_STATE_COOLDOWN_TIMER] or 0, 0)
+                        if cooldown > 0 and remainingCooldown > 0 then
+                                local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
+                                charge = progress
+                                chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remainingCooldown)})
+                                status = hudStatus("charging")
 				showBar = true
 			else
 				charge = 1
@@ -2721,38 +2735,38 @@ function Upgrades:getHUDIndicators()
 		)
 	end
 
-	local timeState = Snake.getTimeDilationState and Snake:getTimeDilationState()
-	if timeState then
-		local label = Localization:get("upgrades.temporal_anchor.name")
-		local accent = {0.62, 0.84, 1.0, 1}
-		local status
-		local charge
-		local chargeLabel
-		local showBar = false
+        local timeState = Snake.getTimeDilationState and Snake:getTimeDilationState()
+        if timeState then
+                local label = Localization:get("upgrades.temporal_anchor.name")
+                local accent = {0.62, 0.84, 1.0, 1}
+                local status
+                local charge
+                local chargeLabel
+                local showBar = false
 
-		local chargesRemaining = timeState.floorCharges
-		local maxUses = timeState.maxFloorUses
+                local chargesRemaining = timeState[TIME_STATE_FLOOR_CHARGES]
+                local maxUses = timeState[TIME_STATE_MAX_FLOOR_USES]
 
-		if timeState.active and timeState.duration > 0 then
-			local remaining = max(timeState.timer or 0, 0)
-			charge = clamp(remaining / timeState.duration, 0, 1)
-			chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remaining)})
-			status = hudStatus("active")
-			showBar = true
-		else
-			if maxUses and chargesRemaining ~= nil and chargesRemaining <= 0 then
-				charge = 0
-				status = hudStatus("depleted")
-				chargeLabel = nil
-				showBar = false
-			else
-				local cooldown = timeState.cooldown or 0
-				local remainingCooldown = max(timeState.cooldownTimer or 0, 0)
-				if cooldown > 0 and remainingCooldown > 0 then
-					local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
-					charge = progress
-					chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remainingCooldown)})
-					status = hudStatus("charging")
+                if timeState[TIME_STATE_ACTIVE] and timeState[TIME_STATE_DURATION] > 0 then
+                        local remaining = max(timeState[TIME_STATE_TIMER] or 0, 0)
+                        charge = clamp(remaining / timeState[TIME_STATE_DURATION], 0, 1)
+                        chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remaining)})
+                        status = hudStatus("active")
+                        showBar = true
+                else
+                        if maxUses and chargesRemaining ~= nil and chargesRemaining <= 0 then
+                                charge = 0
+                                status = hudStatus("depleted")
+                                chargeLabel = nil
+                                showBar = false
+                        else
+                                local cooldown = timeState[TIME_STATE_COOLDOWN] or 0
+                                local remainingCooldown = max(timeState[TIME_STATE_COOLDOWN_TIMER] or 0, 0)
+                                if cooldown > 0 and remainingCooldown > 0 then
+                                        local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
+                                        charge = progress
+                                        chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remainingCooldown)})
+                                        status = hudStatus("charging")
 					showBar = true
 				else
 					charge = 1

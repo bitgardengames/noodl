@@ -57,24 +57,39 @@ local severedPieces = {}
 local portalAnimation = nil
 
 -- Reused ability state tables to avoid allocations every HUD refresh.
-local dashStateCache = {
-        active = false,
-        timer = 0,
-        duration = 0,
-        cooldown = 0,
-        cooldownTimer = 0,
-}
+local DASH_STATE_ACTIVE = 1
+local DASH_STATE_TIMER = 2
+local DASH_STATE_DURATION = 3
+local DASH_STATE_COOLDOWN = 4
+local DASH_STATE_COOLDOWN_TIMER = 5
 
-local timeDilationStateCache = {
-        active = false,
-        timer = 0,
-        duration = 0,
-        cooldown = 0,
-        cooldownTimer = 0,
-        timeScale = 1,
-        floorCharges = nil,
-        maxFloorUses = nil,
-}
+Snake.DASH_STATE_ACTIVE = DASH_STATE_ACTIVE
+Snake.DASH_STATE_TIMER = DASH_STATE_TIMER
+Snake.DASH_STATE_DURATION = DASH_STATE_DURATION
+Snake.DASH_STATE_COOLDOWN = DASH_STATE_COOLDOWN
+Snake.DASH_STATE_COOLDOWN_TIMER = DASH_STATE_COOLDOWN_TIMER
+
+local dashStateCache = {false, 0, 0, 0, 0}
+
+local TIME_STATE_ACTIVE = 1
+local TIME_STATE_TIMER = 2
+local TIME_STATE_DURATION = 3
+local TIME_STATE_COOLDOWN = 4
+local TIME_STATE_COOLDOWN_TIMER = 5
+local TIME_STATE_SCALE = 6
+local TIME_STATE_FLOOR_CHARGES = 7
+local TIME_STATE_MAX_FLOOR_USES = 8
+
+Snake.TIME_STATE_ACTIVE = TIME_STATE_ACTIVE
+Snake.TIME_STATE_TIMER = TIME_STATE_TIMER
+Snake.TIME_STATE_DURATION = TIME_STATE_DURATION
+Snake.TIME_STATE_COOLDOWN = TIME_STATE_COOLDOWN
+Snake.TIME_STATE_COOLDOWN_TIMER = TIME_STATE_COOLDOWN_TIMER
+Snake.TIME_STATE_SCALE = TIME_STATE_SCALE
+Snake.TIME_STATE_FLOOR_CHARGES = TIME_STATE_FLOOR_CHARGES
+Snake.TIME_STATE_MAX_FLOOR_USES = TIME_STATE_MAX_FLOOR_USES
+
+local timeDilationStateCache = {false, 0, 0, 0, 0, 1, nil, nil}
 
 local segmentPool = {}
 local segmentPoolCount = 0
@@ -3350,11 +3365,11 @@ function Snake:getDashState()
         end
 
         local state = dashStateCache
-        state.active = self.dash.active or false
-        state.timer = self.dash.timer or 0
-        state.duration = self.dash.duration or 0
-        state.cooldown = self.dash.cooldown or 0
-        state.cooldownTimer = self.dash.cooldownTimer or 0
+        state[DASH_STATE_ACTIVE] = self.dash.active or false
+        state[DASH_STATE_TIMER] = self.dash.timer or 0
+        state[DASH_STATE_DURATION] = self.dash.duration or 0
+        state[DASH_STATE_COOLDOWN] = self.dash.cooldown or 0
+        state[DASH_STATE_COOLDOWN_TIMER] = self.dash.cooldownTimer or 0
 
         return state
 end
@@ -3458,14 +3473,14 @@ function Snake:getTimeDilationState()
         end
 
         local state = timeDilationStateCache
-        state.active = ability.active or false
-        state.timer = ability.timer or 0
-        state.duration = ability.duration or 0
-        state.cooldown = ability.cooldown or 0
-        state.cooldownTimer = ability.cooldownTimer or 0
-        state.timeScale = resolveTimeDilationScale(ability)
-        state.floorCharges = ability.floorCharges
-        state.maxFloorUses = ability.maxFloorUses
+        state[TIME_STATE_ACTIVE] = ability.active or false
+        state[TIME_STATE_TIMER] = ability.timer or 0
+        state[TIME_STATE_DURATION] = ability.duration or 0
+        state[TIME_STATE_COOLDOWN] = ability.cooldown or 0
+        state[TIME_STATE_COOLDOWN_TIMER] = ability.cooldownTimer or 0
+        state[TIME_STATE_SCALE] = resolveTimeDilationScale(ability)
+        state[TIME_STATE_FLOOR_CHARGES] = ability.floorCharges
+        state[TIME_STATE_MAX_FLOOR_USES] = ability.maxFloorUses
 
         return state
 end
