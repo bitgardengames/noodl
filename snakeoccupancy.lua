@@ -25,7 +25,9 @@ local snakeOccupiedFirst = 1
 local snakeOccupiedLast = 0
 local occupancyCols = 0
 local occupancyRows = 0
+local snakeBodyOccupancyMaxIndex = 0
 local snakeBodyOccupancy = {}
+local snakeBodySpatialIndexMaxIndex = 0
 local snakeBodySpatialIndex = {}
 local snakeBodySpatialIndexAvailable = false
 
@@ -106,31 +108,60 @@ function SnakeOccupancy.wasRecentlyVacated(col, row)
 	return recentlyVacatedLookup[key] == recentlyVacatedGeneration
 end
 
-local function wipeTable(t)
-	if not t then
-		return
-	end
+local function clearArrayRange(t, length)
+        for i = 1, length do
+                t[i] = nil
+        end
+end
 
-	for k in pairs(t) do
-		t[k] = nil
-	end
+local function clearArray(t)
+        clearArrayRange(t, #t)
+end
+
+local function getGridIndex(col, row)
+        if not (col and row) then
+                return nil
+        end
+
+        if occupancyRows <= 0 or col < 1 or row < 1 or row > occupancyRows then
+                return nil
+        end
+
+        return (col - 1) * occupancyRows + row
+end
+
+local function hasSpatialEntries()
+        local limit = max(snakeBodySpatialIndexMaxIndex, occupancyCols * occupancyRows)
+        for i = 1, limit do
+                if snakeBodySpatialIndex[i] then
+                        return true
+                end
+        end
+
+        return false
 end
 
 function SnakeOccupancy.clearSnakeBodySpatialIndex()
-	for _, column in pairs(snakeBodySpatialIndex) do
-		wipeTable(column)
-	end
+        local limit = max(snakeBodySpatialIndexMaxIndex, occupancyCols * occupancyRows)
+        for i = 1, limit do
+                local bucket = snakeBodySpatialIndex[i]
+                if bucket then
+                        clearArray(bucket)
+                        snakeBodySpatialIndex[i] = nil
+                end
+        end
 
-	snakeBodySpatialIndexAvailable = false
+        snakeBodySpatialIndexMaxIndex = 0
+        snakeBodySpatialIndexAvailable = false
 end
 
 function SnakeOccupancy.clearSnakeBodyOccupancy()
-	for _, column in pairs(snakeBodyOccupancy) do
-		wipeTable(column)
-	end
+        local limit = max(snakeBodyOccupancyMaxIndex, occupancyCols * occupancyRows)
+        clearArrayRange(snakeBodyOccupancy, limit)
 
-	SnakeOccupancy.clearRecentlyVacatedCells()
-	SnakeOccupancy.clearSnakeBodySpatialIndex()
+        snakeBodyOccupancyMaxIndex = 0
+        SnakeOccupancy.clearRecentlyVacatedCells()
+        SnakeOccupancy.clearSnakeBodySpatialIndex()
 end
 
 function SnakeOccupancy.resetTrackedSnakeCells()
@@ -248,15 +279,16 @@ function SnakeOccupancy.getSnakeHeadCell()
 end
 
 function SnakeOccupancy.resetSnakeOccupancyGrid()
-	if SnakeUtils and SnakeUtils.initOccupancy then
-		SnakeUtils.initOccupancy()
-	end
+        occupancyCols = (Arena and Arena.cols) or 0
+        occupancyRows = (Arena and Arena.rows) or 0
+        cellKeyStride = 0
 
-	SnakeOccupancy.resetTrackedSnakeCells()
-	SnakeOccupancy.clearSnakeBodyOccupancy()
+        if SnakeUtils and SnakeUtils.initOccupancy then
+                SnakeUtils.initOccupancy()
+        end
 
-	occupancyCols = (Arena and Arena.cols) or 0
-	occupancyRows = (Arena and Arena.rows) or 0
+        SnakeOccupancy.resetTrackedSnakeCells()
+        SnakeOccupancy.clearSnakeBodyOccupancy()
 end
 
 function SnakeOccupancy.ensureOccupancyGrid()
@@ -279,88 +311,73 @@ function SnakeOccupancy.ensureOccupancyGrid()
 end
 
 function SnakeOccupancy.addSnakeBodyOccupancy(col, row)
-	if not (col and row) then
-		return
-	end
+        local index = getGridIndex(col, row)
+        if not index then
+                return
+        end
 
-	local column = snakeBodyOccupancy[col]
-	if not column then
-		column = {}
-		snakeBodyOccupancy[col] = column
-	end
-
-	column[row] = (column[row] or 0) + 1
+        snakeBodyOccupancy[index] = (snakeBodyOccupancy[index] or 0) + 1
+        snakeBodyOccupancyMaxIndex = max(snakeBodyOccupancyMaxIndex, index)
 end
 
 function SnakeOccupancy.removeSnakeBodyOccupancy(col, row)
-	if not (col and row) then
-		return
-	end
+        local index = getGridIndex(col, row)
+        if not index then
+                return
+        end
 
-	local column = snakeBodyOccupancy[col]
-	if not column then
-		return
-	end
-
-	local count = (column[row] or 0) - 1
-	if count <= 0 then
-		column[row] = nil
-		if not next(column) then
-			snakeBodyOccupancy[col] = nil
-		end
-	else
-		column[row] = count
-	end
+        local count = (snakeBodyOccupancy[index] or 0) - 1
+        if count <= 0 then
+                snakeBodyOccupancy[index] = nil
+        else
+                snakeBodyOccupancy[index] = count
+        end
 end
 
 function SnakeOccupancy.isCellOccupiedBySnakeBody(col, row)
-	if not (col and row) then
-		return false
-	end
+        local index = getGridIndex(col, row)
+        if not index then
+                return false
+        end
 
-	local column = snakeBodyOccupancy[col]
-	if not column then
-		return false
-	end
-
-	return (column[row] or 0) > 0
+        return (snakeBodyOccupancy[index] or 0) > 0
 end
 
 function SnakeOccupancy.addSnakeBodySpatialEntry(col, row, segment)
-	if not (col and row and segment) then
-		return
-	end
+        if not segment then
+                return
+        end
 
-	local column = snakeBodySpatialIndex[col]
-	if not column then
-		column = {}
-		snakeBodySpatialIndex[col] = column
-	end
+        local index = getGridIndex(col, row)
+        if not index then
+                return
+        end
 
-	local bucket = column[row]
-	if not bucket then
-		bucket = {}
-		column[row] = bucket
-	end
+        local bucket = snakeBodySpatialIndex[index]
+        if not bucket then
+                bucket = {}
+                snakeBodySpatialIndex[index] = bucket
+        end
 
-	bucket[#bucket + 1] = segment
-	snakeBodySpatialIndexAvailable = true
+        bucket[#bucket + 1] = segment
+        snakeBodySpatialIndexMaxIndex = max(snakeBodySpatialIndexMaxIndex, index)
+        snakeBodySpatialIndexAvailable = true
 end
 
 local function hasSnakeBodySpatialEntry(col, row, segment)
-	if not (col and row and segment) then
-		return false
-	end
+        if not segment then
+                return false
+        end
 
-	local column = snakeBodySpatialIndex[col]
-	if not column then
-		return false
-	end
+        local index = getGridIndex(col, row)
+        if not index then
+                return false
+        end
 
-	local bucket = column[row]
-	if not bucket then
-		return false
-	end
+        local bucket = snakeBodySpatialIndex[index]
+        if not bucket then
+                return false
+        end
 
 	for i = 1, #bucket do
 		if bucket[i] == segment then
@@ -368,23 +385,23 @@ local function hasSnakeBodySpatialEntry(col, row, segment)
 		end
 	end
 
-	return false
+        return false
 end
 
 function SnakeOccupancy.removeSnakeBodySpatialEntry(col, row, segment)
-	if not (col and row and segment) then
-		return
-	end
+        if not segment then
+                return
+        end
 
-	local column = snakeBodySpatialIndex[col]
-	if not column then
-		return
-	end
+        local index = getGridIndex(col, row)
+        if not index then
+                return
+        end
 
-	local bucket = column[row]
-	if not bucket then
-		return
-	end
+        local bucket = snakeBodySpatialIndex[index]
+        if not bucket then
+                return
+        end
 
 	for i = #bucket, 1, -1 do
 		if bucket[i] == segment then
@@ -394,16 +411,13 @@ function SnakeOccupancy.removeSnakeBodySpatialEntry(col, row, segment)
 		end
 	end
 
-	if not bucket[1] then
-		column[row] = nil
-		if not next(column) then
-			snakeBodySpatialIndex[col] = nil
-		end
-	end
+        if not bucket[1] then
+                snakeBodySpatialIndex[index] = nil
+        end
 
-	if snakeBodySpatialIndexAvailable and not next(snakeBodySpatialIndex) then
-		snakeBodySpatialIndexAvailable = false
-	end
+        if snakeBodySpatialIndexAvailable and not hasSpatialEntries() then
+                snakeBodySpatialIndexAvailable = false
+        end
 end
 
 function SnakeOccupancy.rebuildSnakeBodySpatialIndex(trail)
@@ -432,11 +446,7 @@ function SnakeOccupancy.rebuildSnakeBodySpatialIndex(trail)
 		end
 	end
 
-	if not next(snakeBodySpatialIndex) then
-		snakeBodySpatialIndexAvailable = false
-	else
-		snakeBodySpatialIndexAvailable = true
-	end
+        snakeBodySpatialIndexAvailable = hasSpatialEntries()
 end
 
 local function syncSegmentSpatialEntry(trail, segmentIndex)
@@ -622,30 +632,29 @@ function SnakeOccupancy.collectSnakeSegmentCandidatesForRect(x, y, w, h)
 		return segmentCandidateBuffer, segmentCandidateCount, segmentCandidateLookup, segmentCandidateGeneration
 	end
 
-	local generation = segmentCandidateGeneration
-	local spatialIndex = snakeBodySpatialIndex
-	local lookup = segmentCandidateLookup
-	local buffer = segmentCandidateBuffer
-	local count = segmentCandidateCount
+        local generation = segmentCandidateGeneration
+        local spatialIndex = snakeBodySpatialIndex
+        local lookup = segmentCandidateLookup
+        local buffer = segmentCandidateBuffer
+        local count = segmentCandidateCount
+        local rows = occupancyRows
 
-	for col = minCol, maxCol do
-		local column = spatialIndex[col]
-		if column then
-			for row = minRow, maxRow do
-				local entries = column[row]
-				if entries then
-					for i = 1, #entries do
-						local segment = entries[i]
-						if segment and lookup[segment] ~= generation then
-							lookup[segment] = generation
-							count = count + 1
-							buffer[count] = segment
-						end
-					end
-				end
-			end
-		end
-	end
+        for col = minCol, maxCol do
+                local baseIndex = (col - 1) * rows
+                for row = minRow, maxRow do
+                        local entries = spatialIndex[baseIndex + row]
+                        if entries then
+                                for i = 1, #entries do
+                                        local segment = entries[i]
+                                        if segment and lookup[segment] ~= generation then
+                                                lookup[segment] = generation
+                                                count = count + 1
+                                                buffer[count] = segment
+                                        end
+                                end
+                        end
+                end
+        end
 
 	segmentCandidateCount = count
 	buffer[count + 1] = nil
