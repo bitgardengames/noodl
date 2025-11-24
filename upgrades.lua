@@ -179,9 +179,9 @@ local function valuesEqual(a, b)
 end
 
 local function dynamicStateChanged(previous, current)
-	if previous == current then
-		return false
-	end
+        if previous == current then
+                return false
+        end
 
 	if not previous then
 		for _, value in pairs(current) do
@@ -213,11 +213,22 @@ local function dynamicStateChanged(previous, current)
 		end
 	end
 
-	return false
+        return false
 end
 
+local function clearTable(t)
+        for key in pairs(t) do
+                t[key] = nil
+        end
+end
+
+local hudSnapshotBuffers = {{}, {}}
+local nextHudSnapshotIndex = 1
+
 local function captureHUDDynamicState(state)
-	local snapshot = {}
+        local snapshot = hudSnapshotBuffers[nextHudSnapshotIndex]
+        nextHudSnapshotIndex = nextHudSnapshotIndex == 1 and 2 or 1
+        clearTable(snapshot)
 
 	local adrenaline = Snake.adrenaline
 	snapshot.adrenalineTaken = getStacks(state, "adrenaline_surge") > 0
