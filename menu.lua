@@ -793,9 +793,50 @@ function Menu:draw()
 				UI.drawRoundedRect(textX, textY, fillWidth, barHeight, 8)
 			end
 
-                        setColorWithAlpha(Theme.panelBorder, alpha)
-                        love.graphics.setLineWidth(1.5)
-                        love.graphics.rectangle("line", textX, textY, barWidth, barHeight, 8, 8)
+                        local celebrationVisible = ratio >= 0.999 and (dailyBarCelebration.active or dailyBarCelebration.finished)
+                        if celebrationVisible then
+                                local timer = dailyBarCelebration.time or 0
+                                local fadeAlpha = 1
+
+                                if dailyBarCelebration.active then
+                                        local fadeStart = max(0, DAILY_BAR_CELEBRATION_DURATION - DAILY_BAR_CELEBRATION_FADE_WINDOW)
+                                        if timer > fadeStart then
+                                                local fadeProgress = (timer - fadeStart) / DAILY_BAR_CELEBRATION_FADE_WINDOW
+                                                fadeAlpha = max(0, min(1, 1 - fadeProgress))
+                                        end
+                                else
+                                        fadeAlpha = 0
+                                end
+
+                                local sheenWidth = max(barWidth * 0.24, barHeight * 1.4)
+                                local shimmerPhase = (dailyBarCelebration.shimmerPhase or 0) % 1
+                                local shimmerX = textX - sheenWidth + shimmerPhase * (barWidth + sheenWidth * 2)
+                                local shimmerAlpha = (0.26 + 0.14 * sin(timer * 1.6)) * fadeAlpha
+
+                                if shimmerAlpha > 0 then
+                                        local prevScissor = {love.graphics.getScissor()}
+                                        if prevScissor[1] then
+                                                love.graphics.intersectScissor(textX, textY, barWidth, barHeight)
+                                        else
+                                                love.graphics.setScissor(textX, textY, barWidth, barHeight)
+                                        end
+
+                                        setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
+                                        UI.drawRoundedRect(shimmerX, textY, sheenWidth, barHeight, 8)
+
+                                        if prevScissor[1] then
+                                                love.graphics.setScissor(prevScissor[1], prevScissor[2], prevScissor[3], prevScissor[4])
+                                        else
+                                                love.graphics.setScissor()
+                                        end
+                                end
+
+                                love.graphics.setColor(1, 1, 1, 1)
+                        end
+
+			setColorWithAlpha(Theme.panelBorder, alpha)
+			love.graphics.setLineWidth(1.5)
+			love.graphics.rectangle("line", textX, textY, barWidth, barHeight, 8, 8)
 
 			textY = textY + barHeight
 		end
