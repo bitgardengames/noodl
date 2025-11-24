@@ -808,21 +808,27 @@ function Menu:draw()
                                         fadeAlpha = 0
                                 end
 
-                                local glowPulse = 0.6 + 0.4 * sin(timer * 1.2)
-                                local glowAlpha = 0.18 * fadeAlpha * glowPulse
-                                if glowAlpha > 0 then
-                                        setColorWithAlpha({1, 0.92, 0.78, glowAlpha}, alpha)
-                                        UI.drawRoundedRect(textX - 4, textY - 4, barWidth + 8, barHeight + 8, 12)
-                                end
-
                                 local sheenWidth = max(barWidth * 0.24, barHeight * 1.4)
                                 local shimmerPhase = (dailyBarCelebration.shimmerPhase or 0) % 1
                                 local shimmerX = textX - sheenWidth + shimmerPhase * (barWidth + sheenWidth * 2)
                                 local shimmerAlpha = (0.26 + 0.14 * sin(timer * 1.6)) * fadeAlpha
 
                                 if shimmerAlpha > 0 then
+                                        local prevScissor = {love.graphics.getScissor()}
+                                        if prevScissor[1] then
+                                                love.graphics.intersectScissor(textX, textY, barWidth, barHeight)
+                                        else
+                                                love.graphics.setScissor(textX, textY, barWidth, barHeight)
+                                        end
+
                                         setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
                                         UI.drawRoundedRect(shimmerX, textY, sheenWidth, barHeight, 8)
+
+                                        if prevScissor[1] then
+                                                love.graphics.setScissor(prevScissor[1], prevScissor[2], prevScissor[3], prevScissor[4])
+                                        else
+                                                love.graphics.setScissor()
+                                        end
                                 end
 
                                 local outlineAlpha = 0.6 * fadeAlpha
