@@ -551,15 +551,16 @@ function Snake:resetModifiers()
 	self.adrenaline = nil
 	self.hazardGraceTimer = 0
 	self.phoenixEcho = nil
-	self.eventHorizon = nil
-	self.stormchaser = nil
-	self.temporalAnchor = nil
-	self.swiftFangs = nil
-	self.zephyrCoils = nil
-	self.stoneSkinVisual = nil
-	self.speedVisual = nil
-	self.diffractionBarrier = nil
-	UI:setShields(self.shields or 0, {silent = true, immediate = true})
+        self.eventHorizon = nil
+        self.stormchaser = nil
+        self.temporalAnchor = nil
+        self.swiftFangs = nil
+        self.zephyrCoils = nil
+        self.momentumCoils = nil
+        self.stoneSkinVisual = nil
+        self.speedVisual = nil
+        self.diffractionBarrier = nil
+        UI:setShields(self.shields or 0, {silent = true, immediate = true})
 end
 
 function Snake:setSwiftFangsStacks(count)
@@ -1901,15 +1902,24 @@ local function collectUpgradeVisuals(self)
 		entry.flash = swiftFangs.flash or 0
 	end
 
-	local zephyr = self.zephyrCoils
-	if zephyr and (((zephyr.intensity or 0) > 0.01) or (zephyr.stacks or 0) > 0 or (zephyr.target or 0) > 0) then
-		local entry = acquireEntry("zephyrCoils")
-		entry.stacks = zephyr.stacks or 0
-		entry.intensity = zephyr.intensity or 0
-		entry.time = zephyr.time or 0
-		entry.ratio = zephyr.speedRatio or (1 + 0.2 * min(1, max(0, zephyr.intensity or 0)))
-		entry.hasBody = (segmentCount or 0) > 1
-	end
+        local zephyr = self.zephyrCoils
+        if zephyr and (((zephyr.intensity or 0) > 0.01) or (zephyr.stacks or 0) > 0 or (zephyr.target or 0) > 0) then
+                local entry = acquireEntry("zephyrCoils")
+                entry.stacks = zephyr.stacks or 0
+                entry.intensity = zephyr.intensity or 0
+                entry.time = zephyr.time or 0
+                entry.ratio = zephyr.speedRatio or (1 + 0.2 * min(1, max(0, zephyr.intensity or 0)))
+                entry.hasBody = (segmentCount or 0) > 1
+        end
+
+        local momentum = self.momentumCoils
+        if momentum and (((momentum.intensity or 0) > 0.01) or (momentum.stacks or 0) > 0) then
+                local entry = acquireEntry("momentumCoils")
+                entry.stacks = momentum.stacks or 0
+                entry.intensity = momentum.intensity or 0
+                entry.target = momentum.target or 0
+                entry.time = momentum.time or 0
+        end
 
 	local timeDilation = self.timeDilation
 	if timeDilation then
@@ -2887,10 +2897,10 @@ function Snake:update(dt)
 		end
 	end
 
-	if self.swiftFangs then
-		local state = self.swiftFangs
-		state.time = (state.time or 0) + dt * (1.4 + min(1.8, (speed / max(1, self.baseSpeed or 1))))
-		state.flash = max(0, (state.flash or 0) - dt * 1.8)
+        if self.swiftFangs then
+                local state = self.swiftFangs
+                state.time = (state.time or 0) + dt * (1.4 + min(1.8, (speed / max(1, self.baseSpeed or 1))))
+                state.flash = max(0, (state.flash or 0) - dt * 1.8)
 
 		local baseTarget = state.baseTarget or 0
 		local baseSpeed = self.baseSpeed or 1
@@ -2915,9 +2925,25 @@ function Snake:update(dt)
 		state.active = (target > baseTarget + 0.02) or (ratio > 15) or ((state.flash or 0) > 0.05)
 
 		if (state.stacks or 0) <= 0 and target <= 0 and intensity < 0.02 then
-			self.swiftFangs = nil
-		end
-	end
+                        self.swiftFangs = nil
+                end
+        end
+
+        if self.momentumCoils then
+                local state = self.momentumCoils
+                local blend = min(1, dt * 2.8)
+                local target = max(0, state.target or 0)
+                local current = max(0, state.intensity or 0)
+
+                current = current + (target - current) * blend
+                state.intensity = current
+                state.target = target
+                state.time = (state.time or 0) + dt * (1.6 + current * 1.1)
+
+                if current <= 0.01 and target <= 0 and (state.stacks or 0) <= 0 then
+                        self.momentumCoils = nil
+                end
+        end
 
 	local newX, newY
 	local headCells = headCellBuffer

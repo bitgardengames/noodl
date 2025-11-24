@@ -782,10 +782,10 @@ drawTrailSegmentToCanvas = function(trail, half, options, paletteOverride, coord
 end
 
 local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTimer)
-	local hasShield = shieldCount and shieldCount > 0
-	if not hasShield and not (shieldFlashTimer and shieldFlashTimer > 0) then
-		return
-	end
+        local hasShield = shieldCount and shieldCount > 0
+        if not hasShield and not (shieldFlashTimer and shieldFlashTimer > 0) then
+                return
+        end
 
 	local baseRadius = SEGMENT_SIZE * (0.95 + 0.06 * max(0, (shieldCount or 1) - 1))
 	local time = Timer.getTime()
@@ -804,15 +804,69 @@ local function drawShieldBubble(hx, hy, SEGMENT_SIZE, shieldCount, shieldFlashTi
 	love.graphics.setColor(0.45, 0.85, 1, lineAlpha)
 	love.graphics.circle("line", hx, hy, baseRadius * pulse)
 
-	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.setLineWidth(1)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setLineWidth(1)
+end
+
+local function drawMomentumCoilsAura(trail, SEGMENT_SIZE, data)
+        if not trail or not data then return end
+        local head = trail[1]
+        if not head then return end
+
+        local hx, hy = head.drawX, head.drawY
+        if not (hx and hy) then return end
+
+        local stacks = max(0, data.stacks or 0)
+        if stacks <= 0 then return end
+
+        local intensity = max(0, data.intensity or 0)
+        if intensity <= 0.01 then return end
+
+        local time = data.time or 0
+        local target = max(0, data.target or 0)
+        local coilCount = min(3, max(1, floor(stacks + 0.25)))
+        local baseRadius = SEGMENT_SIZE * (0.92 + 0.08 * min(stacks, 4))
+        local sweep = 0.9 + 0.25 * intensity
+        local width = SEGMENT_SIZE * (0.12 + 0.02 * intensity)
+        local accentColor = {0.62, 0.5, 0.96, 0.42 + 0.35 * intensity}
+        local baseColor = {0.86, 0.74, 1.0, 0.28 + 0.28 * (intensity + target)}
+
+        drawSoftGlow(hx, hy, baseRadius * (1.2 + 0.18 * intensity), 0.86, 0.74, 1.0, 0.16 + 0.24 * intensity, "add")
+
+        love.graphics.setLineWidth(width)
+        for i = 1, coilCount do
+                local offset = (i - 0.5) / coilCount
+                local angle = time * (1.5 + 0.35 * intensity) + offset * pi * 1.3
+                local wobble = sin(time * 1.4 + i) * 0.25
+                local radius = baseRadius * (0.9 + 0.12 * i + 0.08 * wobble)
+                local fade = max(0, 1 - (i - 1) * 0.22)
+
+                love.graphics.setColor(baseColor[1], baseColor[2], baseColor[3], baseColor[4] * fade)
+                love.graphics.arc("line", "open", hx, hy, radius, angle - sweep, angle + sweep, 22)
+
+                local secondaryRadius = radius * (0.86 + 0.04 * sin(time * 2 + i))
+                love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], accentColor[4] * fade)
+                love.graphics.arc("line", "open", hx, hy, secondaryRadius, angle + pi * 0.45 - sweep * 0.8, angle + pi * 0.45 + sweep * 0.8, 18)
+        end
+
+        local highlightSegments = min(#trail, 4)
+        for i = 1, highlightSegments do
+                local seg = trail[i]
+                if seg then
+                        local scale = 0.55 + 0.08 * stacks + 0.04 * i
+                        local alpha = (0.16 + 0.24 * intensity) * (1 - (i - 1) * 0.18)
+                        drawSoftGlow(seg.drawX, seg.drawY, SEGMENT_SIZE * scale, 0.86, 0.74, 1.0, alpha, "add")
+                end
+        end
+
+        love.graphics.setLineWidth(1)
 end
 
 local function drawswiftFangsAura(hx, hy, SEGMENT_SIZE, data)
-	if not data then return end
+        if not data then return end
 
-	local stacks = data.stacks
-	local intensity = data.intensity
+        local stacks = data.stacks
+        local intensity = data.intensity
 	local flash = data.flash
 	local target = data.target
 
@@ -1862,15 +1916,20 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		)
 			end
 
-			if upgradeVisuals and upgradeVisuals.swiftFangs then
-			drawswiftFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.swiftFangs
-		)
-			end
+                        if upgradeVisuals and upgradeVisuals.swiftFangs then
+                        drawswiftFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.swiftFangs
+                )
+                        end
 
-			if upgradeVisuals and upgradeVisuals.zephyrCoils then
-			drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils
-		)
-			end
+                        if upgradeVisuals and upgradeVisuals.momentumCoils then
+                        drawMomentumCoilsAura(trail, SEGMENT_SIZE, upgradeVisuals.momentumCoils
+                )
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.zephyrCoils then
+                        drawZephyrSlipstream(trail, SEGMENT_SIZE, upgradeVisuals.zephyrCoils
+                )
+                        end
 
 			if upgradeVisuals and upgradeVisuals.dash then
 			drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash
