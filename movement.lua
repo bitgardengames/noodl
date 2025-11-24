@@ -6,6 +6,7 @@ local Saws = require("saws")
 local Lasers = require("lasers")
 local Darts = require("darts")
 local Arena = require("arena")
+local MovementContext = require("movementcontext")
 local Particles = require("particles")
 local Upgrades = require("upgrades")
 local PlayerStats = require("playerstats")
@@ -22,6 +23,34 @@ local Movement = {}
 
 local ZERO_DIR = {0, 0}
 local EMPTY_CANDIDATE_LIST = {}
+
+local CTX_PUSH_X = MovementContext.PUSH_X
+local CTX_PUSH_Y = MovementContext.PUSH_Y
+local CTX_SNAP_X = MovementContext.SNAP_X
+local CTX_SNAP_Y = MovementContext.SNAP_Y
+local CTX_DIR_X = MovementContext.DIR_X
+local CTX_DIR_Y = MovementContext.DIR_Y
+local CTX_GRACE = MovementContext.GRACE
+local CTX_SHAKE = MovementContext.SHAKE
+local CTX_DAMAGE = MovementContext.DAMAGE
+local CTX_INFLICTED_DAMAGE = MovementContext.INFLICTED_DAMAGE
+
+local hazardContext = {}
+
+local function resetHazardContext()
+        hazardContext[CTX_PUSH_X] = 0
+        hazardContext[CTX_PUSH_Y] = 0
+        hazardContext[CTX_SNAP_X] = nil
+        hazardContext[CTX_SNAP_Y] = nil
+        hazardContext[CTX_DIR_X] = nil
+        hazardContext[CTX_DIR_Y] = nil
+        hazardContext[CTX_GRACE] = nil
+        hazardContext[CTX_SHAKE] = nil
+        hazardContext[CTX_DAMAGE] = nil
+        hazardContext[CTX_INFLICTED_DAMAGE] = nil
+
+        return hazardContext
+end
 
 local MAX_SNAKE_TIME_STEP = 1 / 60
 
@@ -522,40 +551,39 @@ local function handleWallCollision(headX, headY)
 		return headX, headY
 	end
 
-local portalX, portalY = portalThroughWall(headX, headY)
-	if portalX and portalY then
-		Audio:playSound("wall_portal")
-		return portalX, portalY
-	end
+        local portalX, portalY = portalThroughWall(headX, headY)
+        if portalX and portalY then
+                Audio:playSound("wall_portal")
+                return portalX, portalY
+        end
 
-	local ax, ay, aw, ah = Arena:getBounds()
-	local inset = Arena.tileSize / 2
-	local left = ax + inset
-	local right = ax + aw - inset
-	local top = ay + inset
-	local bottom = ay + ah - inset
+        local ax, ay, aw, ah = Arena:getBounds()
+        local inset = Arena.tileSize / 2
+        local left = ax + inset
+        local right = ax + aw - inset
+        local top = ay + inset
+        local bottom = ay + ah - inset
 
-if not Snake:consumeShield() then
-local safeX = clamp(headX, left, right)
-local safeY = clamp(headY, top, bottom)
-local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY, left, right, top, bottom)
-local clampedX = reroutedX or safeX
-local clampedY = reroutedY or safeY
-headX, headY = relocateHead(headX, headY, clampedX, clampedY)
-clampedX, clampedY = headX, headY
-local dir = Snake.getDirection and Snake:getDirection() or ZERO_DIR
+        if not Snake:consumeShield() then
+                local safeX = clamp(headX, left, right)
+                local safeY = clamp(headY, top, bottom)
+                local reroutedX, reroutedY = rerouteAlongWall(safeX, safeY, left, right, top, bottom)
+                local clampedX = reroutedX or safeX
+                local clampedY = reroutedY or safeY
+                headX, headY = relocateHead(headX, headY, clampedX, clampedY)
+                clampedX, clampedY = headX, headY
+                local dir = Snake.getDirection and Snake:getDirection() or ZERO_DIR
 
-return clampedX, clampedY, "wall", {
-pushX = 0,
-pushY = 0,
-snapX = clampedX,
-snapY = clampedY,
-dirX = dir[1] or 0,
-dirY = dir[2] or 0,
-grace = WALL_GRACE,
-shake = 0.2,
-}
-end
+                local context = resetHazardContext()
+                context[CTX_SNAP_X] = clampedX
+                context[CTX_SNAP_Y] = clampedY
+                context[CTX_DIR_X] = dir[1] or 0
+                context[CTX_DIR_Y] = dir[2] or 0
+                context[CTX_GRACE] = WALL_GRACE
+                context[CTX_SHAKE] = 0.2
+
+                return clampedX, clampedY, "wall", context
+        end
 
 	local reroutedX, reroutedY = rerouteAlongWall(headX, headY, left, right, top, bottom)
 	local clampedX = reroutedX or clamp(headX, left, right)
@@ -640,35 +668,32 @@ local function handleRockCollision(headX, headY, headCol, headRow, rockRevision)
 				if Snake.onDashBreakRock then
 					Snake:onDashBreakRock(centerX, centerY)
 				end
-			else
-				local context = {
-					pushX = 0,
-					pushY = 0,
-					grace = DAMAGE_GRACE,
-					shake = 0.35,
-				}
+                        else
+                                local context = resetHazardContext()
+                                context[CTX_GRACE] = DAMAGE_GRACE
+                                context[CTX_SHAKE] = 0.35
 
-				local shielded = Snake:consumeShield()
+                                local shielded = Snake:consumeShield()
 
-				if not shielded then
-					Rocks:triggerHitFlash(rock)
-					return "hit", "rock", context
-				end
+                                if not shielded then
+                                        Rocks:triggerHitFlash(rock)
+                                        return "hit", "rock", context
+                                end
 
-				Rocks:destroy(rock)
-				context.damage = 0
+                                Rocks:destroy(rock)
+                                context[CTX_DAMAGE] = 0
 
-				Particles:spawnBurst(centerX, centerY, ROCK_SHIELD_BURST_OPTIONS)
-				Audio:playSound("shield_rock")
+                                Particles:spawnBurst(centerX, centerY, ROCK_SHIELD_BURST_OPTIONS)
+                                Audio:playSound("shield_rock")
 
-				if Snake.onShieldConsumed then
-					Snake:onShieldConsumed(centerX, centerY, "rock")
-				end
+                                if Snake.onShieldConsumed then
+                                        Snake:onShieldConsumed(centerX, centerY, "rock")
+                                end
 
-				recordShieldEvent("rock")
+                                recordShieldEvent("rock")
 
-				return "hit", "rock", context
-			end
+                                return "hit", "rock", context
+                        end
 
 			break
 		end
@@ -715,13 +740,14 @@ local function handleSawCollision(headX, headY)
 			)
 		end
 
-		return "hit", "saw", {
-			pushX = pushX,
-			pushY = pushY,
-			grace = DAMAGE_GRACE,
-			shake = 0.4,
-		}
-	end
+                local context = resetHazardContext()
+                context[CTX_PUSH_X] = pushX
+                context[CTX_PUSH_Y] = pushY
+                context[CTX_GRACE] = DAMAGE_GRACE
+                context[CTX_SHAKE] = 0.4
+
+                return "hit", "saw", context
+        end
 
 	Saws:destroy(sawHit)
 
@@ -742,7 +768,10 @@ local function handleSawCollision(headX, headY)
 		recordShieldEvent("saw")
 	end
 
-	return "hit", "saw", {damage = 0}
+        local context = resetHazardContext()
+        context[CTX_DAMAGE] = 0
+
+        return "hit", "saw", context
 end
 
 local function handleLaserCollision(headX, headY)
@@ -773,13 +802,14 @@ local function handleLaserCollision(headX, headY)
 			end
 		end
 
-		return "hit", "laser", {
-			pushX = pushX,
-			pushY = pushY,
-			grace = DAMAGE_GRACE,
-			shake = 0.32,
-		}
-	end
+                local context = resetHazardContext()
+                context[CTX_PUSH_X] = pushX
+                context[CTX_PUSH_Y] = pushY
+                context[CTX_GRACE] = DAMAGE_GRACE
+                context[CTX_SHAKE] = 0.32
+
+                return "hit", "laser", context
+        end
 
 	Lasers:onShieldedHit(laserHit, headX, headY)
 
@@ -847,13 +877,14 @@ local function handleDartCollision(headX, headY)
 			Darts:onSnakeImpact(dartHit, impactX, impactY)
 		end
 
-		return "hit", "dart", {
-			pushX = pushX,
-			pushY = pushY,
-			grace = DAMAGE_GRACE,
-			shake = 0.28,
-		}
-	end
+                local context = resetHazardContext()
+                context[CTX_PUSH_X] = pushX
+                context[CTX_PUSH_Y] = pushY
+                context[CTX_GRACE] = DAMAGE_GRACE
+                context[CTX_SHAKE] = 0.28
+
+                return "hit", "dart", context
+        end
 
 	Darts:onShieldedHit(dartHit, impactX, impactY)
 

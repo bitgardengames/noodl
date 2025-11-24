@@ -1,4 +1,5 @@
 local Arena = require("arena")
+local MovementContext = require("movementcontext")
 local SnakeUtils = require("snakeutils")
 local SnakeDraw = require("snakedraw")
 local SnakeUpgrades = require("snakeupgrades")
@@ -29,6 +30,17 @@ local max = math.max
 local EMPTY_TABLE = {}
 local spawnGluttonsWakeRock
 local crystallizeGluttonsWakeSegments
+
+local CTX_PUSH_X = MovementContext.PUSH_X
+local CTX_PUSH_Y = MovementContext.PUSH_Y
+local CTX_SNAP_X = MovementContext.SNAP_X
+local CTX_SNAP_Y = MovementContext.SNAP_Y
+local CTX_DIR_X = MovementContext.DIR_X
+local CTX_DIR_Y = MovementContext.DIR_Y
+local CTX_GRACE = MovementContext.GRACE
+local CTX_SHAKE = MovementContext.SHAKE
+local CTX_DAMAGE = MovementContext.DAMAGE
+local CTX_INFLICTED_DAMAGE = MovementContext.INFLICTED_DAMAGE
 
 local function wipeTable(t)
 	if not t then
@@ -724,31 +736,31 @@ function Snake:beginHazardGrace(duration)
 end
 
 function Snake:onDamageTaken(cause, info)
-	info = info or {}
+        local pushX = (info and info[CTX_PUSH_X]) or 0
+        local pushY = (info and info[CTX_PUSH_Y]) or 0
+        local translated = false
 
-	local pushX = info.pushX or 0
-	local pushY = info.pushY or 0
-	local translated = false
+        if pushX ~= 0 or pushY ~= 0 then
+                self:translate(pushX, pushY)
+                translated = true
+        end
 
-	if pushX ~= 0 or pushY ~= 0 then
-		self:translate(pushX, pushY)
-		translated = true
-	end
+        local snapX = info and info[CTX_SNAP_X]
+        local snapY = info and info[CTX_SNAP_Y]
+        if snapX and snapY and not translated then
+                self:setHeadPosition(snapX, snapY)
+        end
 
-	if info.snapX and info.snapY and not translated then
-		self:setHeadPosition(info.snapX, info.snapY)
-	end
+        local dirX = info and info[CTX_DIR_X]
+        local dirY = info and info[CTX_DIR_Y]
+        if (dirX and dirX ~= 0) or (dirY and dirY ~= 0) then
+                self:setDirectionVector(dirX or 0, dirY or 0)
+        end
 
-	local dirX = info.dirX
-	local dirY = info.dirY
-	if (dirX and dirX ~= 0) or (dirY and dirY ~= 0) then
-		self:setDirectionVector(dirX or 0, dirY or 0)
-	end
-
-	local grace = info.grace or (HAZARD_GRACE_DURATION * 2)
-	if grace and grace > 0 then
-		self:beginHazardGrace(grace)
-	end
+        local grace = (info and info[CTX_GRACE]) or (HAZARD_GRACE_DURATION * 2)
+        if grace and grace > 0 then
+                self:beginHazardGrace(grace)
+        end
 
 	local headX, headY = self:getHead()
 	if headX and headY then
@@ -780,15 +792,15 @@ end
 			Particles:spawnBurst(centerX, centerY, SHIELD_BREAK_PARTICLE_OPTIONS)
 		end
 
-		local shielded = info.damage ~= nil and info.damage <= 0
-		if Particles and Particles.spawnBlood and not shielded then
-			SHIELD_BLOOD_PARTICLE_OPTIONS.dirX = burstDirX
-			SHIELD_BLOOD_PARTICLE_OPTIONS.dirY = burstDirY
+                local shielded = info and info[CTX_DAMAGE] ~= nil and info[CTX_DAMAGE] <= 0
+                if Particles and Particles.spawnBlood and not shielded then
+                        SHIELD_BLOOD_PARTICLE_OPTIONS.dirX = burstDirX
+                        SHIELD_BLOOD_PARTICLE_OPTIONS.dirY = burstDirY
 			Particles:spawnBlood(centerX, centerY, SHIELD_BLOOD_PARTICLE_OPTIONS)
 		end
 
 		if FloatingText and FloatingText.add then
-			local inflicted = info.inflictedDamage or info.damage
+                        local inflicted = info and (info[CTX_INFLICTED_DAMAGE] or info[CTX_DAMAGE])
 			local label
 			if shielded then
 				label = "SHIELD!"

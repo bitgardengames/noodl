@@ -13,6 +13,7 @@ local Popup = require("popup")
 local Score = require("score")
 local PauseMenu = require("pausemenu")
 local Movement = require("movement")
+local MovementContext = require("movementcontext")
 local Particles = require("particles")
 local UpgradeVisuals = require("upgradevisuals")
 local Achievements = require("achievements")
@@ -46,6 +47,10 @@ local sin = math.sin
 local sqrt = math.sqrt
 
 local EMPTY_TABLE = {}
+
+local CTX_SHAKE = MovementContext.SHAKE
+local CTX_DAMAGE = MovementContext.DAMAGE
+local CTX_INFLICTED_DAMAGE = MovementContext.INFLICTED_DAMAGE
 
 local Game = {}
 Game.worldTimeScale = 1
@@ -1187,15 +1192,15 @@ function Game:applyDamage(amount, cause, context)
 		inflicted = 0
 	end
 
-	if context then
-		context.inflictedDamage = inflicted
-	end
+        if context then
+                context[CTX_INFLICTED_DAMAGE] = inflicted
+        end
 
 	if inflicted <= 0 then
 		return true
 	end
 
-	local impactStrength = max(0.35, ((context and context.shake) or 0) + inflicted * 0.12)
+        local impactStrength = max(0.35, ((context and context[CTX_SHAKE]) or 0) + inflicted * 0.12)
 
 	if Snake and Snake.onDamageTaken then
 		Snake:onDamageTaken(cause, context)
@@ -1203,9 +1208,9 @@ function Game:applyDamage(amount, cause, context)
 
 	self:triggerImpactFeedback(impactStrength, context)
 
-	if Settings.screenShake ~= false and context and context.shake and self.Effects and self.Effects.shake then
-		self.Effects:shake(context.shake)
-	end
+        if Settings.screenShake ~= false and context and context[CTX_SHAKE] and self.Effects and self.Effects.shake then
+                self.Effects:shake(context[CTX_SHAKE])
+        end
 
 	return false
 end
@@ -1348,8 +1353,8 @@ function Game:updateGameplay(dt)
 
 	local moveResult, cause, context = Movement:update(dt)
 
-	if moveResult == "hit" then
-		local damage = (context and context.damage) or 1
+        if moveResult == "hit" then
+                local damage = (context and context[CTX_DAMAGE]) or 1
 		local survived = self:applyDamage(damage, cause, context)
 		if not survived then
 			local replayTriggered = false
