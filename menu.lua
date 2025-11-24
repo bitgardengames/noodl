@@ -35,10 +35,7 @@ local dailyChallengeAnim = 0
 local dailyChallengeAppearDelay = 0
 local DAILY_BAR_CELEBRATION_DURATION = 6
 local DAILY_BAR_CELEBRATION_FADE_WINDOW = 0.85
-local DAILY_BAR_CELEBRATION_MAX_SPARKLE_DURATION = 1
-local DAILY_BAR_CELEBRATION_SPAWN_WINDOW = max(0, DAILY_BAR_CELEBRATION_DURATION - DAILY_BAR_CELEBRATION_MAX_SPARKLE_DURATION)
-local DAILY_BAR_CELEBRATION_PULSE_INTERVAL = 0.55
-local DAILY_BAR_CELEBRATION_RIBBON_SPEED = 1.6
+local DAILY_BAR_CELEBRATION_SHIMMER_SPEED = 0.55
 local DAILY_PANEL_ANIM_SPEED = 2
 local DAILY_PANEL_EXTRA_DELAY = 0.18
 
@@ -52,15 +49,13 @@ local BUTTON_VERTICAL_SHIFT = 40
 local BUTTON_EXTRA_SPACING = 2
 local LOGO_VERTICAL_LIFT = 80
 local dailyPanelCache = {}
+local dailyChallengeAnimationKey = nil
+local dailyChallengeAnimationSeenKey = nil
 
 local dailyBarCelebration = {
         active = false,
         time = 0,
-        spawnTimer = 0,
-        sparkles = {},
-        pulses = {},
-        pulseTimer = 0,
-        ribbonTime = 0,
+        shimmerPhase = 0,
         finished = false,
 }
 local analogAxisDirections = {horizontal = nil, vertical = nil}
@@ -309,113 +304,60 @@ local analogAxisActions = {
 }
 
 local analogAxisMap = {
-	leftx = {slot = "horizontal"},
-	rightx = {slot = "horizontal"},
-	lefty = {slot = "vertical"},
-	righty = {slot = "vertical"},
-	[1] = {slot = "horizontal"},
-	[2] = {slot = "vertical"},
+        leftx = {slot = "horizontal"},
+        rightx = {slot = "horizontal"},
+        lefty = {slot = "vertical"},
+        righty = {slot = "vertical"},
+        [1] = {slot = "horizontal"},
+        [2] = {slot = "vertical"},
 }
 
 local function resetAnalogAxis()
-	analogAxisDirections.horizontal = nil
-	analogAxisDirections.vertical = nil
+        analogAxisDirections.horizontal = nil
+        analogAxisDirections.vertical = nil
+end
+
+local function getDailyAnimationKey(challenge)
+        if not challenge then
+                return nil
+        end
+
+        local date = DailyChallenges._sessionDate or os.date("*t")
+        local dayValue = (date.year or 0) * 512 + (date.yday or 0)
+        local identifier = tostring(challenge.id or challenge.titleKey or "daily")
+
+        return string.format("%s:%d", identifier, dayValue)
 end
 
 local function resetDailyBarCelebration()
         dailyBarCelebration.active = false
         dailyBarCelebration.time = 0
-        dailyBarCelebration.spawnTimer = 0
-        dailyBarCelebration.sparkles = {}
-        dailyBarCelebration.pulses = {}
-        dailyBarCelebration.pulseTimer = 0
-        dailyBarCelebration.ribbonTime = 0
+        dailyBarCelebration.shimmerPhase = 0
         dailyBarCelebration.finished = false
 end
 
-local function spawnDailyBarSparkle()
-        local sparkle = {
-                x = random(),
-                duration = 0.6 + random() * 0.4,
-                life = 0,
-                lift = 6 + random() * 6,
-        }
-        table.insert(dailyBarCelebration.sparkles, sparkle)
-end
-
-local function spawnDailyBarPulse()
-        return {
-                time = 0,
-                duration = 0.85 + random() * 0.25,
-                strength = 0.7 + random() * 0.25,
-        }
-end
-
 local function updateDailyBarCelebration(dt, shouldCelebrate)
-	if shouldCelebrate then
+        if shouldCelebrate then
                 if not dailyBarCelebration.active and not dailyBarCelebration.finished then
                         dailyBarCelebration.active = true
                         dailyBarCelebration.time = 0
-                        dailyBarCelebration.spawnTimer = 0
-                        dailyBarCelebration.sparkles = {}
-                        dailyBarCelebration.pulses = {}
-                        dailyBarCelebration.pulseTimer = 0
-                        dailyBarCelebration.ribbonTime = 0
+                        dailyBarCelebration.shimmerPhase = 0
                 end
 
                 if dailyBarCelebration.active then
                         dailyBarCelebration.time = dailyBarCelebration.time + dt
-                        dailyBarCelebration.ribbonTime = dailyBarCelebration.ribbonTime + dt * DAILY_BAR_CELEBRATION_RIBBON_SPEED
+                        dailyBarCelebration.shimmerPhase = (dailyBarCelebration.shimmerPhase or 0) + dt * DAILY_BAR_CELEBRATION_SHIMMER_SPEED
 
                         if dailyBarCelebration.time < DAILY_BAR_CELEBRATION_DURATION then
-                                if dailyBarCelebration.time < DAILY_BAR_CELEBRATION_SPAWN_WINDOW then
-                                        dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer - dt
-
-					local spawnInterval = 0.12
-					while dailyBarCelebration.spawnTimer <= 0 do
-						spawnDailyBarSparkle()
-						dailyBarCelebration.spawnTimer = dailyBarCelebration.spawnTimer + spawnInterval
-
-                                                if dailyBarCelebration.time >= DAILY_BAR_CELEBRATION_SPAWN_WINDOW then
-                                                        break
-                                                end
-                                        end
-                                else
-                                        dailyBarCelebration.spawnTimer = 0
-                                end
-
-                                dailyBarCelebration.pulseTimer = dailyBarCelebration.pulseTimer - dt
-                                while dailyBarCelebration.pulseTimer <= 0 do
-                                        table.insert(dailyBarCelebration.pulses, spawnDailyBarPulse())
-                                        dailyBarCelebration.pulseTimer = dailyBarCelebration.pulseTimer + DAILY_BAR_CELEBRATION_PULSE_INTERVAL
-                                end
+                                -- continue running
                         else
                                 dailyBarCelebration.active = false
                                 dailyBarCelebration.finished = true
-                                dailyBarCelebration.spawnTimer = 0
                                 dailyBarCelebration.time = DAILY_BAR_CELEBRATION_DURATION
                         end
                 end
         elseif dailyBarCelebration.active or dailyBarCelebration.finished then
                 resetDailyBarCelebration()
-        end
-
-        if dailyBarCelebration.active or dailyBarCelebration.finished then
-                for i = #dailyBarCelebration.sparkles, 1, -1 do
-                        local sparkle = dailyBarCelebration.sparkles[i]
-                        sparkle.life = sparkle.life + dt
-                        if sparkle.life >= sparkle.duration then
-                                table.remove(dailyBarCelebration.sparkles, i)
-                        end
-                end
-
-                for i = #dailyBarCelebration.pulses, 1, -1 do
-                        local pulse = dailyBarCelebration.pulses[i]
-                        pulse.time = pulse.time + dt
-                        if pulse.time >= pulse.duration then
-                                table.remove(dailyBarCelebration.pulses, i)
-                        end
-                end
         end
 end
 
@@ -494,15 +436,22 @@ function Menu:enter()
         t = 0
         UI.clearButtons()
 
-	Audio:playMusic("menu")
-	Screen:update()
-	Face:set("happy", 10)
+        Audio:playMusic("menu")
+        Screen:update()
+        Face:set("happy", 10)
 
         DailyProgress:load()
         dailyPanelCache = {}
 
         dailyChallenge = DailyChallenges:getDailyChallenge()
-        dailyChallengeAnim = 0
+        dailyChallengeAnimationKey = getDailyAnimationKey(dailyChallenge)
+
+        if dailyChallengeAnimationKey and dailyChallengeAnimationSeenKey == dailyChallengeAnimationKey then
+                dailyChallengeAnim = 1
+        else
+                dailyChallengeAnim = 0
+        end
+
         dailyChallengeAppearDelay = 0
         resetDailyBarCelebration()
         resetAnalogAxis()
@@ -576,8 +525,13 @@ function Menu:update(dt)
         Tooltip:update(dt, mx, my)
 
         if dailyChallenge then
-                if t >= dailyChallengeAppearDelay then
+                if dailyChallengeAnimationKey and dailyChallengeAnimationSeenKey == dailyChallengeAnimationKey then
+                        dailyChallengeAnim = 1
+                elseif t >= dailyChallengeAppearDelay then
                         dailyChallengeAnim = min(dailyChallengeAnim + dt * DAILY_PANEL_ANIM_SPEED, 1)
+                        if dailyChallengeAnim >= 1 and dailyChallengeAnimationKey then
+                                dailyChallengeAnimationSeenKey = dailyChallengeAnimationKey
+                        end
                 else
                         dailyChallengeAnim = 0
                 end
@@ -839,86 +793,44 @@ function Menu:draw()
 				UI.drawRoundedRect(textX, textY, fillWidth, barHeight, 8)
 			end
 
-                        local celebrationVisible = ratio >= 0.999 and (dailyBarCelebration.active or #dailyBarCelebration.sparkles > 0 or #dailyBarCelebration.pulses > 0)
+                        local celebrationVisible = ratio >= 0.999 and (dailyBarCelebration.active or dailyBarCelebration.finished)
                         if celebrationVisible then
                                 local timer = dailyBarCelebration.time or 0
                                 local fadeAlpha = 1
 
                                 if dailyBarCelebration.active then
-					local fadeStart = max(0, DAILY_BAR_CELEBRATION_DURATION - DAILY_BAR_CELEBRATION_FADE_WINDOW)
-					if timer > fadeStart then
-						local fadeProgress = (timer - fadeStart) / DAILY_BAR_CELEBRATION_FADE_WINDOW
+                                        local fadeStart = max(0, DAILY_BAR_CELEBRATION_DURATION - DAILY_BAR_CELEBRATION_FADE_WINDOW)
+                                        if timer > fadeStart then
+                                                local fadeProgress = (timer - fadeStart) / DAILY_BAR_CELEBRATION_FADE_WINDOW
                                                 fadeAlpha = max(0, min(1, 1 - fadeProgress))
                                         end
                                 else
                                         fadeAlpha = 0
                                 end
 
-                                local auraAlpha = 0.18 * fadeAlpha
+                                local glowPulse = 0.6 + 0.4 * sin(timer * 1.6)
+                                local auraAlpha = 0.2 * fadeAlpha * glowPulse
                                 if auraAlpha > 0 then
-                                        setColorWithAlpha({1, 0.83, 0.54, auraAlpha}, alpha)
+                                        setColorWithAlpha({1, 0.85, 0.6, auraAlpha}, alpha)
                                         UI.drawRoundedRect(textX - 6, textY - 6, barWidth + 12, barHeight + 12, 14)
-                                        setColorWithAlpha({1, 0.95, 0.8, auraAlpha * 0.6}, alpha)
+                                        setColorWithAlpha({1, 0.96, 0.84, auraAlpha * 0.8}, alpha)
                                         UI.drawRoundedRect(textX - 3, textY - 3, barWidth + 6, barHeight + 6, 10)
                                 end
 
-                                local shimmerWidth = max(barWidth * 0.3, barHeight)
-                                local shimmerProgress = (sin(timer * 2.2) * 0.5) + 0.5
-                                local shimmerX = textX + shimmerProgress * (barWidth - shimmerWidth)
-                                local shimmerAlpha = (0.35 + 0.25 * sin(timer * 3.1)) * fadeAlpha
+                                local sheenWidth = max(barWidth * 0.32, barHeight * 1.6)
+                                local shimmerPhase = (dailyBarCelebration.shimmerPhase or 0) % 1
+                                local shimmerX = textX - sheenWidth + shimmerPhase * (barWidth + sheenWidth * 2)
+                                local shimmerAlpha = (0.38 + 0.22 * sin(timer * 2.4)) * fadeAlpha
 
-				if shimmerAlpha > 0 then
-					setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
-					UI.drawRoundedRect(shimmerX, textY, shimmerWidth, barHeight, 8)
-				end
-
-                                for _, sparkle in ipairs(dailyBarCelebration.sparkles) do
-                                        local progress = min(1, sparkle.life / sparkle.duration)
-                                        local sparkleAlpha = (1 - progress) * alpha
-                                        if sparkleAlpha > 0 then
-                                                local sparkleX = textX + sparkle.x * barWidth
-                                                local baseY = textY + barHeight / 2
-                                                local offset = (0.5 - progress) * (barHeight + sparkle.lift)
-                                                local sparkleY = baseY + offset
-                                                local size = 2 + (1 - progress) * 3
-
-                                                love.graphics.setColor(1, 0.93, 0.74, sparkleAlpha)
-                                                love.graphics.setLineWidth(1.3)
-                                                love.graphics.line(sparkleX - size, sparkleY, sparkleX + size, sparkleY)
-                                                love.graphics.line(sparkleX, sparkleY - size, sparkleX, sparkleY + size)
-                                        end
+                                if shimmerAlpha > 0 then
+                                        setColorWithAlpha({1, 1, 1, shimmerAlpha}, alpha)
+                                        UI.drawRoundedRect(shimmerX, textY, sheenWidth, barHeight, 8)
                                 end
 
-                                if dailyBarCelebration.ribbonTime then
-                                        local ribbonAlpha = 0.35 * fadeAlpha
-                                        if ribbonAlpha > 0 then
-                                                local points = {}
-                                                local waveHeight = barHeight * 0.35
-                                                local segments = 16
-                                                for i = 0, segments - 1 do
-                                                        local tNormalized = i / (segments - 1)
-                                                        local px = textX + tNormalized * barWidth
-                                                        local py = textY + barHeight / 2 + sin(dailyBarCelebration.ribbonTime * 2.2 + i * 0.55) * waveHeight
-                                                        points[#points + 1] = px
-                                                        points[#points + 1] = py
-                                                end
-
-                                                love.graphics.setLineWidth(3)
-                                                setColorWithAlpha({1, 0.88, 0.64, ribbonAlpha}, alpha)
-                                                love.graphics.line(points)
-                                        end
-                                end
-
-                                for _, pulse in ipairs(dailyBarCelebration.pulses) do
-                                        local progress = min(1, pulse.time / pulse.duration)
-                                        local width = barWidth * (0.45 + progress * 0.65)
-                                        local pulseAlpha = (1 - progress) ^ 1.5 * pulse.strength * 0.45 * fadeAlpha
-                                        if pulseAlpha > 0.01 then
-                                                local pulseX = textX - (width - barWidth) / 2
-                                                setColorWithAlpha({1, 0.94, 0.76, pulseAlpha}, alpha)
-                                                love.graphics.setLineWidth(3.5 + progress * 3)
-                                                love.graphics.rectangle("line", pulseX, textY - 8, width, barHeight + 16, 12, 12)
-                                        end
+                                local glossAlpha = 0.16 * fadeAlpha
+                                if glossAlpha > 0 then
+                                        setColorWithAlpha({1, 1, 1, glossAlpha}, alpha)
+                                        love.graphics.rectangle("fill", textX, textY, barWidth, barHeight * 0.38, 8, 8)
                                 end
 
                                 love.graphics.setColor(1, 1, 1, 1)
