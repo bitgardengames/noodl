@@ -541,8 +541,8 @@ function Snake:consumeShield()
 end
 
 function Snake:resetModifiers()
-	self.speedMult    = 1
-	self.shields = 0
+        self.speedMult    = 1
+        self.shields = 0
 	self.extraGrowth  = 0
 	self.shieldFlashTimer = 0
 	self.stoneSkinSawGrace = 0
@@ -557,6 +557,8 @@ function Snake:resetModifiers()
         self.swiftFangs = nil
         self.zephyrCoils = nil
         self.momentumCoils = nil
+        self.serpentsReflex = nil
+        self.deliberateCoil = nil
         self.stoneSkinVisual = nil
         self.speedVisual = nil
         self.diffractionBarrier = nil
@@ -591,8 +593,63 @@ function Snake:setSwiftFangsStacks(count)
 		local data = self.swiftFangs
 		if (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01 then
 			self.swiftFangs = nil
-		end
-	end
+        end
+end
+
+function Snake:setSerpentsReflexStacks(count)
+        count = max(0, floor((count or 0) + 0.0001))
+
+        local state = self.serpentsReflex
+        local previous = state and (state.stacks or 0) or 0
+
+        if count > 0 then
+                if not state then
+                        state = {stacks = 0, intensity = 0, target = 0, time = 0, flash = 0}
+                        self.serpentsReflex = state
+                end
+
+                state.stacks = count
+                state.target = min(1, 0.28 + 0.12 * min(count, 4))
+                if count > previous then
+                        state.flash = min(1, (state.flash or 0) + 0.65)
+                        state.intensity = max(state.intensity or 0, 0.35)
+                end
+        elseif state then
+                state.stacks = 0
+                state.target = 0
+        end
+
+        if self.serpentsReflex then
+                local data = self.serpentsReflex
+                if (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01 and (data.flash or 0) <= 0.01 then
+                        self.serpentsReflex = nil
+                end
+        end
+end
+
+function Snake:setDeliberateCoilStacks(count)
+        count = max(0, floor((count or 0) + 0.0001))
+
+        local state = self.deliberateCoil
+        if not state and count <= 0 then
+                return
+        end
+
+        if not state then
+                state = {stacks = 0, intensity = 0, target = 0, time = 0}
+                self.deliberateCoil = state
+        end
+
+        state.stacks = count
+        if count > 0 then
+                state.target = min(1, 0.38 + 0.14 * min(count, 3))
+                if (state.intensity or 0) < 0.25 then
+                        state.intensity = max(state.intensity or 0, 0.25)
+                end
+        else
+                state.target = 0
+        end
+end
 end
 
 function Snake:setMomentumCoilsStacks(count)
@@ -1882,18 +1939,27 @@ local function collectUpgradeVisuals(self)
 		entry.duration = adrenaline.duration or 0
 	end
 
-	local speedVisual = self.speedVisual
-	if speedVisual and (((speedVisual.intensity or 0) > 0.01) or (speedVisual.target or 0) > 0) then
-		local entry = acquireEntry("speedArcs")
-		entry.intensity = speedVisual.intensity or 0
-		entry.ratio = speedVisual.ratio or 0
-		entry.time = speedVisual.time or 0
-	end
+        local speedVisual = self.speedVisual
+        if speedVisual and (((speedVisual.intensity or 0) > 0.01) or (speedVisual.target or 0) > 0) then
+                local entry = acquireEntry("speedArcs")
+                entry.intensity = speedVisual.intensity or 0
+                entry.ratio = speedVisual.ratio or 0
+                entry.time = speedVisual.time or 0
+        end
 
-	local swiftFangs = self.swiftFangs
-	if swiftFangs and (((swiftFangs.intensity or 0) > 0.01) or (swiftFangs.stacks or 0) > 0) then
-		local entry = acquireEntry("swiftFangs")
-		entry.stacks = swiftFangs.stacks or 0
+        local reflex = self.serpentsReflex
+        if reflex and (((reflex.intensity or 0) > 0.01) or (reflex.stacks or 0) > 0 or (reflex.flash or 0) > 0) then
+                local entry = acquireEntry("serpentsReflex")
+                entry.stacks = reflex.stacks or 0
+                entry.intensity = reflex.intensity or 0
+                entry.time = reflex.time or 0
+                entry.flash = reflex.flash or 0
+        end
+
+        local swiftFangs = self.swiftFangs
+        if swiftFangs and (((swiftFangs.intensity or 0) > 0.01) or (swiftFangs.stacks or 0) > 0) then
+                local entry = acquireEntry("swiftFangs")
+                entry.stacks = swiftFangs.stacks or 0
 		entry.intensity = swiftFangs.intensity or 0
 		entry.target = swiftFangs.target or 0
 		entry.speedRatio = swiftFangs.speedRatio or 1
@@ -1919,6 +1985,14 @@ local function collectUpgradeVisuals(self)
                 entry.intensity = momentum.intensity or 0
                 entry.target = momentum.target or 0
                 entry.time = momentum.time or 0
+        end
+
+        local deliberate = self.deliberateCoil
+        if deliberate and (((deliberate.intensity or 0) > 0.01) or (deliberate.stacks or 0) > 0) then
+                local entry = acquireEntry("deliberateCoil")
+                entry.stacks = deliberate.stacks or 0
+                entry.intensity = deliberate.intensity or 0
+                entry.time = deliberate.time or 0
         end
 
 	local timeDilation = self.timeDilation
@@ -2688,21 +2762,46 @@ function Snake:update(dt)
 		end
 	end
 
-	local stoneSkin = self.stoneSkinVisual
-	if stoneSkin then
-		stoneSkin.time = (stoneSkin.time or 0) + dt
-		local charges = self.stoneSkinSawGrace or 0
+        local stoneSkin = self.stoneSkinVisual
+        if stoneSkin then
+                stoneSkin.time = (stoneSkin.time or 0) + dt
+                local charges = self.stoneSkinSawGrace or 0
 		stoneSkin.charges = charges
 		local target = stoneSkin.target or (charges > 0 and min(1, 0.45 + 0.18 * min(charges, 4)) or 0)
 		stoneSkin.target = target
 		local blend = min(1, dt * 5.2)
 		local current = stoneSkin.intensity or 0
 		stoneSkin.intensity = current + (target - current) * blend
-		stoneSkin.flash = max(0, (stoneSkin.flash or 0) - dt * 2.6)
-		if charges <= 0 and stoneSkin.intensity <= 0.02 and stoneSkin.flash <= 0.02 then
-			self.stoneSkinVisual = nil
-		end
-	end
+                stoneSkin.flash = max(0, (stoneSkin.flash or 0) - dt * 2.6)
+                if charges <= 0 and stoneSkin.intensity <= 0.02 and stoneSkin.flash <= 0.02 then
+                        self.stoneSkinVisual = nil
+                end
+        end
+
+        local reflex = self.serpentsReflex
+        if reflex then
+                reflex.time = (reflex.time or 0) + dt
+                local target = reflex.target or 0
+                local blend = min(1, dt * 4.4)
+                local current = reflex.intensity or 0
+                reflex.intensity = current + (target - current) * blend
+                reflex.flash = max(0, (reflex.flash or 0) - dt * 3.2)
+                if (reflex.stacks or 0) <= 0 and reflex.intensity <= 0.02 and reflex.flash <= 0.02 then
+                        self.serpentsReflex = nil
+                end
+        end
+
+        local deliberate = self.deliberateCoil
+        if deliberate then
+                deliberate.time = (deliberate.time or 0) + dt
+                local target = deliberate.target or 0
+                local blend = min(1, dt * 3.6)
+                local current = deliberate.intensity or 0
+                deliberate.intensity = current + (target - current) * blend
+                if (deliberate.stacks or 0) <= 0 and deliberate.intensity <= 0.02 then
+                        self.deliberateCoil = nil
+                end
+        end
 
 	-- base speed with upgrades/modifiers
 	local head = trail[1]

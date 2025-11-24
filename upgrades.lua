@@ -1098,13 +1098,23 @@ pool = {
 		id = "serpents_reflex",
 		nameKey = "upgrades.serpents_reflex.name",
 		descKey = "upgrades.serpents_reflex.description",
-		rarity = "common",
-		tags = {"mobility"},
-		allowDuplicates = true,
-		onAcquire = function(state
-	)
-		Snake:addSpeedMultiplier(1.04
-	)
+                rarity = "common",
+                tags = {"mobility"},
+                allowDuplicates = true,
+                onAcquire = function(state
+        )
+                Snake:addSpeedMultiplier(1.04
+        )
+
+                if state then
+                state.counters = state.counters or {}
+                state.counters.serpentsReflexStacks = (state.counters.serpentsReflexStacks or 0) + 1
+                Snake:setSerpentsReflexStacks(state.counters.serpentsReflexStacks
+        )
+                else
+                Snake:setSerpentsReflexStacks((Snake.serpentsReflex and Snake.serpentsReflex.stacks or 0) + 1
+        )
+                end
 
                 local celebrationOptions = {
                 color = {0.98, 0.76, 0.36, 1},
@@ -1360,17 +1370,26 @@ pool = {
 		id = "deliberate_coil",
 		nameKey = "upgrades.deliberate_coil.name",
 		descKey = "upgrades.deliberate_coil.description",
-		rarity = "epic",
-		tags = {"speed", "risk"},
-		onAcquire = function(state
-	)
-		Snake:addSpeedMultiplier(0.85
-	)
-		state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
-		UI:adjustFruitGoal(1
-	)
-		Face:set("sad", 2.0
-	)
+                rarity = "epic",
+                tags = {"speed", "risk"},
+                onAcquire = function(state
+        )
+                Snake:addSpeedMultiplier(0.85
+        )
+                if state then
+                state.counters = state.counters or {}
+                state.counters.deliberateCoilStacks = (state.counters.deliberateCoilStacks or 0) + 1
+                Snake:setDeliberateCoilStacks(state.counters.deliberateCoilStacks
+        )
+                else
+                Snake:setDeliberateCoilStacks((Snake.deliberateCoil and Snake.deliberateCoil.stacks or 0) + 1
+        )
+                end
+                state.effects.fruitGoalDelta = (state.effects.fruitGoalDelta or 0) + 1
+                UI:adjustFruitGoal(1
+        )
+                Face:set("sad", 2.0
+        )
 		celebrateUpgrade(getUpgradeString("deliberate_coil", "name"), nil, {
 		color = {0.76, 0.56, 0.88, 1},
 		particleCount = 16,
@@ -3016,6 +3035,10 @@ function Upgrades:applyPersistentEffects(rebaseline)
         Snake:setSwiftFangsStacks(counters.swiftFangsStacks or 0)
 
         Snake:setMomentumCoilsStacks(counters.momentumCoilsStacks or 0)
+
+        Snake:setSerpentsReflexStacks(counters.serpentsReflexStacks or 0)
+
+        Snake:setDeliberateCoilStacks(counters.deliberateCoilStacks or 0)
 
         Snake:setPhoenixEchoCharges(counters.phoenixEchoCharges or 0)
 end

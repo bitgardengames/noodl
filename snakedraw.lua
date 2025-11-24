@@ -954,8 +954,102 @@ local function drawswiftFangsAura(hx, hy, SEGMENT_SIZE, data)
 end
 
 local function drawSpeedMotionArcs(trail, SEGMENT_SIZE, data)
-	-- Motion streaks intentionally disabled to remove speed lines.
-	return
+        -- Motion streaks intentionally disabled to remove speed lines.
+        return
+end
+
+local function drawSerpentsReflexAura(hx, hy, SEGMENT_SIZE, data)
+        if not data then return end
+
+        local stacks = data.stacks or 0
+        if stacks <= 0 then return end
+
+        local intensity = clamp01((data.intensity or 0) + 0.25 * min(1, stacks * 0.2))
+        local time = (data.time or 0) + Timer.getTime() * 0.6
+        local radius = SEGMENT_SIZE * (0.92 + 0.14 * min(stacks, 4))
+
+        drawSoftGlow(hx, hy, radius * 1.35, 1.0, 0.86, 0.38, 0.22 + 0.35 * intensity)
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("add")
+
+        local flash = data.flash or 0
+        if flash > 0 then
+                drawSoftGlow(hx, hy, radius * 1.1, 1.0, 0.92, 0.52, 0.25 + 0.4 * flash)
+        end
+
+        local bandCount = 3
+        for i = 1, bandCount do
+                local rotation = time * (1.6 + 0.22 * i) + (i - 1) * (pi * 2 / bandCount)
+                local sweep = pi * (0.32 + 0.06 * intensity)
+                local outer = radius * (0.86 + 0.08 * i)
+                local inner = radius * (0.54 + 0.06 * i)
+
+                love.graphics.setColor(1, 0.86, 0.46, 0.18 + 0.28 * intensity)
+                love.graphics.setLineWidth((2.2 + 0.5 * i) * (1 + 0.2 * intensity))
+                love.graphics.arc("line", "open", hx, hy, outer, rotation, rotation + sweep)
+
+                love.graphics.setColor(1, 0.76, 0.32, 0.12 + 0.22 * intensity)
+                love.graphics.setLineWidth(1.6 + 0.4 * i)
+                love.graphics.arc("line", "open", hx, hy, inner, rotation + pi * 0.35, rotation + pi * 0.35 + sweep * 0.85)
+        end
+
+        love.graphics.setColor(1, 0.92, 0.68, 0.16 + 0.24 * intensity)
+        love.graphics.setLineWidth(2.4)
+        local points = 8
+        local sparkleRadius = radius * 0.72
+        for i = 1, points do
+                local angle = time * 2.0 + i * (pi * 2 / points)
+                local sparkLength = sparkleRadius * (0.55 + 0.15 * sin(time * 3 + i))
+                love.graphics.line(
+                        hx + cos(angle) * sparkleRadius,
+                        hy + sin(angle) * sparkleRadius,
+                        hx + cos(angle) * (sparkleRadius + sparkLength * 0.3),
+                        hy + sin(angle) * (sparkleRadius + sparkLength * 0.3)
+                )
+        end
+
+        love.graphics.pop()
+end
+
+local function drawDeliberateCoilAura(hx, hy, SEGMENT_SIZE, data)
+        if not data then return end
+
+        local stacks = data.stacks or 0
+        if stacks <= 0 then return end
+
+        local intensity = clamp01((data.intensity or 0) + 0.2 * min(1, stacks * 0.25))
+        local time = (data.time or 0) + Timer.getTime() * 0.45
+        local radius = SEGMENT_SIZE * (1.05 + 0.16 * min(stacks, 3))
+
+        drawSoftGlow(hx, hy, radius * 1.25, 0.72, 0.56, 0.92, 0.16 + 0.32 * intensity)
+
+        love.graphics.push("all")
+        love.graphics.setBlendMode("add")
+
+        love.graphics.setColor(0.54, 0.34, 0.76, 0.14 + 0.28 * intensity)
+        love.graphics.setLineWidth(2.2 + 0.8 * intensity)
+        love.graphics.circle("line", hx, hy, radius * (0.95 + 0.08 * sin(time * 1.6)))
+
+        local bands = 4
+        for i = 1, bands do
+                local offset = (i - 1) / bands
+                local rotation = time * (1.1 + 0.15 * intensity) + offset * pi * 2
+                local sweep = pi * 0.22
+                local bandRadius = radius * (0.65 + 0.18 * offset)
+                love.graphics.setColor(0.64, 0.44, 0.9, 0.18 + 0.2 * intensity)
+                love.graphics.setLineWidth(3.0 - 0.4 * i + 1.4 * intensity)
+                love.graphics.arc("line", "open", hx, hy, bandRadius, rotation, rotation + sweep)
+        end
+
+        love.graphics.setBlendMode("alpha")
+        love.graphics.setColor(0.34, 0.22, 0.52, 0.24 + 0.3 * intensity)
+        love.graphics.circle("fill", hx, hy, radius * 0.55)
+        love.graphics.setColor(0.76, 0.64, 0.96, 0.12 + 0.24 * intensity)
+        love.graphics.setLineWidth(2.0)
+        love.graphics.circle("line", hx, hy, radius * 0.65)
+
+        love.graphics.pop()
 end
 
 local function drawDiffractionBarrierSunglasses(hx, hy, SEGMENT_SIZE, data)
@@ -1911,10 +2005,15 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
 		)
 			end
 
-			if upgradeVisuals and upgradeVisuals.adrenaline then
-			drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline
-		)
-			end
+                        if upgradeVisuals and upgradeVisuals.adrenaline then
+                        drawAdrenalineAura(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.adrenaline
+                )
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.serpentsReflex then
+                        drawSerpentsReflexAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.serpentsReflex
+                )
+                        end
 
                         if upgradeVisuals and upgradeVisuals.swiftFangs then
                         drawswiftFangsAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.swiftFangs
@@ -1931,15 +2030,20 @@ function SnakeDraw.run(trail, segmentCount, SEGMENT_SIZE, popTimer, getHead, shi
                 )
                         end
 
-			if upgradeVisuals and upgradeVisuals.dash then
-			drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash
-		)
-			end
+                        if upgradeVisuals and upgradeVisuals.dash then
+                        drawDashChargeHalo(trail, hx, hy, SEGMENT_SIZE, upgradeVisuals.dash
+                )
+                        end
 
-			if upgradeVisuals and upgradeVisuals.speedArcs then
-			drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs
-		)
-			end
+                        if upgradeVisuals and upgradeVisuals.deliberateCoil then
+                        drawDeliberateCoilAura(hx, hy, SEGMENT_SIZE, upgradeVisuals.deliberateCoil
+                )
+                        end
+
+                        if upgradeVisuals and upgradeVisuals.speedArcs then
+                        drawSpeedMotionArcs(trail, SEGMENT_SIZE, upgradeVisuals.speedArcs
+                )
+                        end
 
 			local faceScale = 1
 			local faceOptions = upgradeVisuals and upgradeVisuals.face or nil
