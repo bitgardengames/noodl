@@ -22,7 +22,7 @@ Darts.speedMult = 1.0
 local emitters = {}
 local stallTimer = 0
 
-local DEFAULT_INITIAL_COOLDOWN_BONUS = 1.5 -- Extra grace period after spawning before the first telegraph.
+local DEFAULT_INITIAL_COOLDOWN_BONUS = 0 -- Extra grace period after spawning before the first telegraph.
 
 local DEFAULT_TELEGRAPH_DURATION = 1.0
 local DEFAULT_COOLDOWN_MIN = 3.8
