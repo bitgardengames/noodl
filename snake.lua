@@ -35,6 +35,11 @@ local remove = table.remove
 local Snake = {}
 local sqrt = math.sqrt
 local max = math.max
+local CUT_INDEX = SnakeCollisions.CUT_INDEX or 1
+local CUT_X = SnakeCollisions.CUT_X or 2
+local CUT_Y = SnakeCollisions.CUT_Y or 3
+local CUT_DISTANCE = SnakeCollisions.CUT_DISTANCE or 4
+local CUT_CAUSE = SnakeCollisions.CUT_CAUSE or 5
 local EMPTY_TABLE = {}
 local spawnGluttonsWakeRock
 local crystallizeGluttonsWakeSegments
@@ -2633,14 +2638,14 @@ function Snake:handleSawBodyCut(context)
 		return false
 	end
 
-	local cause = context.cause or "saw"
+	local cause = context[CUT_CAUSE] or "saw"
 
 	local available = max(0, (segmentCount or 1) - 1)
 	if available <= 0 then
 		return false
 	end
 
-	local index = context.index or 2
+	local index = context[CUT_INDEX] or 2
 	if index <= 1 or index > #trail then
 		return false
 	end
@@ -2651,14 +2656,14 @@ function Snake:handleSawBodyCut(context)
 		return false
 	end
 
-	local cutX = context.cutX
-	local cutY = context.cutY
+	local cutX = context[CUT_X]
+	local cutY = context[CUT_Y]
 	if not (cutX and cutY) then
 		return false
 	end
 
 	local totalLength = (segmentCount or 1) * SEGMENT_SPACING
-	local cutDistance = max(0, context.cutDistance or 0)
+	local cutDistance = max(0, context[CUT_DISTANCE] or 0)
 	if cutDistance <= SEGMENT_SPACING then
 		return false
 	end
@@ -2708,12 +2713,12 @@ function Snake:handleSawBodyCut(context)
 		dirX = previousSegment.dirX or 0
 		dirY = previousSegment.dirY or 0
 	end
-        newTail.dirX = dirX
-        newTail.dirY = dirY
-        newTail.fruitMarker = nil
-        newTail.fruitMarkerX = nil
-        newTail.fruitMarkerY = nil
-        newTail.fruitScore = nil
+	newTail.dirX = dirX
+	newTail.dirY = dirY
+	newTail.fruitMarker = nil
+	newTail.fruitMarkerX = nil
+	newTail.fruitMarkerY = nil
+	newTail.fruitScore = nil
 
 	local severedTrail = {}
 	severedTrail[1] = copySegmentData(newTail)
