@@ -17,6 +17,11 @@ Render.STATE_CLIPPED_TRAIL_PROXY = STATE_CLIPPED_TRAIL_PROXY
 Render.STATE_CLIPPED_HEAD_X = STATE_CLIPPED_HEAD_X
 Render.STATE_CLIPPED_HEAD_Y = STATE_CLIPPED_HEAD_Y
 
+local PORTAL_DRAW_OPTIONS = {drawFace = true, portalAnimation = {}}
+local BASIC_DRAW_OPTIONS = {drawFace = true}
+local SEVERED_PALETTE_BUFFER = {body = {1, 1, 1, 1}, outline = {1, 1, 1, 1}}
+local SEVERED_DRAW_OPTIONS = {drawFace = false, paletteOverride = SEVERED_PALETTE_BUFFER, overlayEffect = nil, flatStartCap = true}
+
 function Render.newState()
         return {
                 [STATE_CLIPPED_TRAIL_BUFFER] = {},
@@ -73,11 +78,13 @@ local function clamp01(value)
         return max(0, min(1, value or 0))
 end
 
-local function scaleColorAlpha(color, scale)
+local function scaleColorAlpha(color, scale, target)
         local r = 1
         local g = 1
         local b = 1
         local a = 1
+
+        local destination = target or {}
 
         if type(color) == "table" then
                 r = color[1] or r
@@ -86,20 +93,26 @@ local function scaleColorAlpha(color, scale)
                 a = color[4] or a
         end
 
-        return {r, g, b, clamp01(a * scale)}
+        destination[1] = r
+        destination[2] = g
+        destination[3] = b
+        destination[4] = clamp01(a * scale)
+
+        return destination
 end
 
-local function buildSeveredPalette(fade)
+local function buildSeveredPalette(fade, target)
         local palette = SnakeCosmetics and SnakeCosmetics:getPaletteForSkin() or nil
         local bodyColor = palette and palette.body or (SnakeCosmetics and SnakeCosmetics.getBodyColor and SnakeCosmetics:getBodyColor())
         local outlineColor = palette and palette.outline or (SnakeCosmetics and SnakeCosmetics.getOutlineColor and SnakeCosmetics:getOutlineColor())
 
         local alpha = clamp01(fade or 1)
 
-        return {
-                body = scaleColorAlpha(bodyColor, alpha),
-                outline = scaleColorAlpha(outlineColor, alpha),
-        }
+        local destination = target or {}
+        destination.body = scaleColorAlpha(bodyColor, alpha, destination.body or {})
+        destination.outline = scaleColorAlpha(outlineColor, alpha, destination.outline or {})
+
+        return destination
 end
 
 local function getOwnerHead(owner)
@@ -146,12 +159,7 @@ local function drawSeveredPieces(state, params, upgradeVisuals)
                                 fade = clamp01(remaining / life)
                         end
 
-                        local drawOptions = {
-                                drawFace = false,
-                                paletteOverride = buildSeveredPalette(fade),
-                                overlayEffect = nil,
-                                flatStartCap = true,
-                        }
+                        SEVERED_DRAW_OPTIONS.paletteOverride = buildSeveredPalette(fade, SEVERED_PALETTE_BUFFER)
 
                         SnakeDraw.run(
                                 trailData,
@@ -164,7 +172,7 @@ local function drawSeveredPieces(state, params, upgradeVisuals)
                                 0,
                                 0,
                                 upgradeVisuals,
-                                drawOptions
+                                SEVERED_DRAW_OPTIONS
                         )
                 end
         end
@@ -347,22 +355,21 @@ function Render.draw(state, params)
 
         local drawOptions
         if params.portalAnimation then
-                drawOptions = {
-                        drawFace = shouldDrawFace,
-                        portalAnimation = {
-                                entryTrail = params.portalAnimation.entryTrail,
-                                exitTrail = params.portalAnimation.exitTrail,
-                                entryX = params.portalAnimation.entryX,
-                                entryY = params.portalAnimation.entryY,
-                                exitX = params.portalAnimation.exitX,
-                                exitY = params.portalAnimation.exitY,
-                                progress = params.portalAnimation.progress or 0,
-                                duration = params.portalAnimation.duration or 0.3,
-                                timer = params.portalAnimation.timer or 0,
-                                entryHole = params.portalAnimation.entryHole,
-                                exitHole = params.portalAnimation.exitHole,
-                        },
-                }
+                drawOptions = PORTAL_DRAW_OPTIONS
+                drawOptions.drawFace = shouldDrawFace
+
+                local portalAnimation = drawOptions.portalAnimation
+                portalAnimation.entryTrail = params.portalAnimation.entryTrail
+                portalAnimation.exitTrail = params.portalAnimation.exitTrail
+                portalAnimation.entryX = params.portalAnimation.entryX
+                portalAnimation.entryY = params.portalAnimation.entryY
+                portalAnimation.exitX = params.portalAnimation.exitX
+                portalAnimation.exitY = params.portalAnimation.exitY
+                portalAnimation.progress = params.portalAnimation.progress or 0
+                portalAnimation.duration = params.portalAnimation.duration or 0.3
+                portalAnimation.timer = params.portalAnimation.timer or 0
+                portalAnimation.entryHole = params.portalAnimation.entryHole
+                portalAnimation.exitHole = params.portalAnimation.exitHole
         else
                 drawOptions = shouldDrawFace
         end
@@ -374,7 +381,9 @@ function Render.draw(state, params)
 
         if tailHitFlash and tailHitFlash > 0 then
                 if type(drawOptions) ~= "table" then
-                        drawOptions = {drawFace = drawOptions ~= false}
+                        local drawFaceSetting = drawOptions
+                        drawOptions = BASIC_DRAW_OPTIONS
+                        drawOptions.drawFace = drawFaceSetting ~= false
                 else
                         if drawOptions.drawFace == nil then
                                 drawOptions.drawFace = true
@@ -383,6 +392,9 @@ function Render.draw(state, params)
 
                 drawOptions.tailHitFlash = tailHitFlash
                 drawOptions.tailHitFlashColor = params.tailHitFlashColor
+        elseif type(drawOptions) == "table" then
+                drawOptions.tailHitFlash = nil
+                drawOptions.tailHitFlashColor = nil
         end
 
         SnakeDraw.run(
