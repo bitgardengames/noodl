@@ -48,6 +48,8 @@ local EDGE_PROXIMITY_FACTOR = 0.765
 local BUTTON_STACK_OFFSET = 80
 local BUTTON_VERTICAL_SHIFT = 40
 local BUTTON_EXTRA_SPACING = 2
+local BUTTON_APPEAR_DURATION = 0.45
+local INLINE_BUTTON_GAP = 18
 local LOGO_VERTICAL_LIFT = 80
 local dailyPanelCache = {}
 local dailyChallengeAnimationKey = nil
@@ -66,6 +68,10 @@ local dailyBarCelebration = {
 }
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 local titleSaw = SawActor.new()
+local modeButtonsVisible = false
+local modeButtonsAppearTime = 0
+local JOURNEY_BUTTON_ID = "journeyMode"
+local CLASSIC_BUTTON_ID = "classicMode"
 
 local random = (love.math and love.math.random) or math.random
 
@@ -426,11 +432,28 @@ local function updateDailyBarCelebration(dt, shouldCelebrate)
 end
 
 local function prepareStartAction(action)
-	if type(action) ~= "string" then
-		return action
-	end
+        if type(action) ~= "string" then
+                return action
+        end
 
-	return action
+        if action == "start_modes" then
+                if not modeButtonsVisible then
+                        modeButtonsVisible = true
+                        modeButtonsAppearTime = t
+                        rebuildMenuButtons(modeButtonsAppearTime)
+                        focusButtonById(JOURNEY_BUTTON_ID)
+                else
+                        focusButtonById(JOURNEY_BUTTON_ID)
+                end
+
+                return
+        elseif action == "game_classic" then
+                return {state = "game", data = {mode = "classic"}}
+        elseif action == "game_journey" or action == "game" then
+                return {state = "game", data = {mode = "journey"}}
+        end
+
+        return action
 end
 
 local function handleAnalogAxis(axis, value)
@@ -483,8 +506,8 @@ local function setColorWithAlpha(color, alpha)
 end
 
 local function shouldCelebrateDailyChallenge()
-	if not dailyChallenge then
-		return false
+        if not dailyChallenge then
+                return false
 	end
 
 	local statusBar = dailyChallenge.statusBar
@@ -492,8 +515,128 @@ local function shouldCelebrateDailyChallenge()
 		return false
 	end
 
-	local ratio = max(0, min(statusBar.ratio or 0, 1))
-	return dailyChallenge.completed or ratio >= 0.999
+        local ratio = max(0, min(statusBar.ratio or 0, 1))
+        return dailyChallenge.completed or ratio >= 0.999
+end
+
+local function focusButtonById(targetId)
+        if not targetId then
+                return
+        end
+
+        for index, btn in ipairs(buttons) do
+                if btn.id == targetId then
+                        buttonList:setFocus(index)
+                        return
+                end
+        end
+end
+
+local function rebuildMenuButtons(modeAppearStart)
+        local sw, sh = Screen:get()
+        local centerX = sw / 2
+        local menuLayout = UI.getMenuLayout(sw, sh)
+        local buttonWidth = UI.spacing.buttonWidth
+        local buttonHeight = UI.spacing.buttonHeight
+
+        local rows = {
+                {type = "single", entry = {id = "menuButton1", key = "menu.start_game", action = "start_modes"}},
+        }
+
+        if modeButtonsVisible then
+                rows[#rows + 1] = {
+                        type = "inline",
+                        entries = {
+                                {id = JOURNEY_BUTTON_ID, key = "menu.journey_mode", action = {state = "game", data = {mode = "journey"}}, appearStart = modeAppearStart or modeButtonsAppearTime or 0},
+                                {id = CLASSIC_BUTTON_ID, key = "menu.classic_mode", action = {state = "game", data = {mode = "classic"}}, appearStart = modeAppearStart or modeButtonsAppearTime or 0},
+                        },
+                }
+        end
+
+        rows[#rows + 1] = {type = "single", entry = {id = "menuButton2", key = "menu.achievements", action = "achievementsmenu"}}
+        rows[#rows + 1] = {type = "single", entry = {id = "menuButton3", key = "menu.settings", action = "settings"}}
+        rows[#rows + 1] = {type = "single", entry = {id = "menuButton4", key = "menu.quit", action = "quit"}}
+
+        local effectiveSpacing = (UI.spacing.buttonSpacing or 0) + BUTTON_EXTRA_SPACING
+        local totalButtonHeight = #rows * buttonHeight + max(0, #rows - 1) * effectiveSpacing
+        local stackBase = (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
+        local footerGuard = menuLayout.footerSpacing or UI.spacing.sectionSpacing or 24
+        local lowerBound = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or sh * 0.12))) - footerGuard
+        local availableHeight = max(0, lowerBound - stackBase)
+        local startY = stackBase + max(0, (availableHeight - totalButtonHeight) * 0.5) + BUTTON_STACK_OFFSET + BUTTON_VERTICAL_SHIFT
+        local minStart = stackBase + BUTTON_STACK_OFFSET + BUTTON_VERTICAL_SHIFT
+        local maxStart = lowerBound - totalButtonHeight
+
+        if maxStart < minStart then
+                startY = maxStart
+        else
+                if startY > maxStart then
+                        startY = maxStart
+                end
+                if startY < minStart then
+                        startY = minStart
+                end
+        end
+
+        local defs = {}
+        local appearIndex = 0
+
+        for rowIndex, row in ipairs(rows) do
+                local y = startY + (rowIndex - 1) * (buttonHeight + effectiveSpacing)
+
+                if row.type == "inline" and row.entries then
+                        local gap = INLINE_BUTTON_GAP
+                        local inlineCount = #row.entries
+                        local inlineWidth = buttonWidth
+                        if inlineCount and inlineCount > 1 then
+                                inlineWidth = (buttonWidth - gap * (inlineCount - 1)) / inlineCount
+                        end
+
+                        local totalWidth = inlineWidth * inlineCount + gap * max(0, inlineCount - 1)
+                        local startX = centerX - totalWidth / 2
+
+                        for entryIndex, entry in ipairs(row.entries) do
+                                appearIndex = appearIndex + 1
+                                defs[#defs + 1] = {
+                                        id = entry.id or ("menuButton" .. appearIndex),
+                                        x = startX + (entryIndex - 1) * (inlineWidth + gap),
+                                        y = y,
+                                        w = inlineWidth,
+                                        h = buttonHeight,
+                                        labelKey = entry.key,
+                                        action = entry.action,
+                                        hovered = false,
+                                        scale = entry.scale or 0.94,
+                                        alpha = entry.alpha or 0,
+                                        offsetY = entry.offsetY or 55,
+                                        appearDelay = (appearIndex - 1) * 0.06,
+                                        appearStart = entry.appearStart or 0,
+                                }
+                        end
+                elseif row.entry then
+                        appearIndex = appearIndex + 1
+                        defs[#defs + 1] = {
+                                id = row.entry.id or ("menuButton" .. appearIndex),
+                                x = centerX - buttonWidth / 2,
+                                y = y,
+                                w = buttonWidth,
+                                h = buttonHeight,
+                                labelKey = row.entry.key,
+                                action = row.entry.action,
+                                hovered = false,
+                                scale = row.entry.scale or 0.94,
+                                alpha = row.entry.alpha or 0,
+                                offsetY = row.entry.offsetY or 55,
+                                appearDelay = (appearIndex - 1) * 0.06,
+                                appearStart = row.entry.appearStart or 0,
+                        }
+                end
+        end
+
+        buttons = buttonList:reset(defs)
+        local lastButtonDelay = (#buttons > 0 and (#buttons - 1) * 0.06) or 0
+        dailyChallengeAppearDelay = lastButtonDelay + BUTTON_APPEAR_DURATION + DAILY_PANEL_EXTRA_DELAY
+        updateButtonTexts(Localization:getRevision())
 end
 
 function Menu:enter()
@@ -521,65 +664,12 @@ function Menu:enter()
         initializeDailyBarAnimation(dailyChallenge)
         resetAnalogAxis()
 
-	MenuScene.prepareBackground(self:getMenuBackgroundOptions())
+        MenuScene.prepareBackground(self:getMenuBackgroundOptions())
 
-	local sw, sh = Screen:get()
-	local centerX = sw / 2
-	local menuLayout = UI.getMenuLayout(sw, sh)
+        modeButtonsVisible = false
+        modeButtonsAppearTime = 0
 
-	local labels = {
-		{key = "menu.start_game",   action = "game"},
-		{key = "menu.achievements", action = "achievementsmenu"},
-		{key = "menu.settings",     action = "settings"},
-		{key = "menu.quit",         action = "quit"},
-	}
-
-	local effectiveSpacing = (UI.spacing.buttonSpacing or 0) + BUTTON_EXTRA_SPACING
-	local totalButtonHeight = #labels * UI.spacing.buttonHeight + max(0, #labels - 1) * effectiveSpacing
-	local stackBase = (menuLayout.bodyTop or menuLayout.stackTop or (sh * 0.2))
-	local footerGuard = menuLayout.footerSpacing or UI.spacing.sectionSpacing or 24
-	local lowerBound = (menuLayout.bottomY or (sh - (menuLayout.marginBottom or sh * 0.12))) - footerGuard
-	local availableHeight = max(0, lowerBound - stackBase)
-	local startY = stackBase + max(0, (availableHeight - totalButtonHeight) * 0.5) + BUTTON_STACK_OFFSET + BUTTON_VERTICAL_SHIFT
-	local minStart = stackBase + BUTTON_STACK_OFFSET + BUTTON_VERTICAL_SHIFT
-	local maxStart = lowerBound - totalButtonHeight
-
-	if maxStart < minStart then
-		startY = maxStart
-	else
-		if startY > maxStart then
-			startY = maxStart
-		end
-		if startY < minStart then
-			startY = minStart
-		end
-	end
-
-        local defs = {}
-
-	for i, entry in ipairs(labels) do
-		local x = centerX - UI.spacing.buttonWidth / 2
-		local y = startY + (i - 1) * (UI.spacing.buttonHeight + effectiveSpacing)
-
-		defs[#defs + 1] = {
-			id = "menuButton" .. i,
-			x = x,
-			y = y,
-			w = UI.spacing.buttonWidth,
-			h = UI.spacing.buttonHeight,
-			labelKey = entry.key,
-                        action = entry.action,
-                        hovered = false,
-                        scale = 0.94,
-                        alpha = 0,
-                        offsetY = 55,
-                }
-        end
-
-        buttons = buttonList:reset(defs)
-        local lastButtonDelay = (#buttons > 0 and (#buttons - 1) * 0.06) or 0
-        dailyChallengeAppearDelay = lastButtonDelay + 0.45 + DAILY_PANEL_EXTRA_DELAY
-        updateButtonTexts(Localization:getRevision())
+        rebuildMenuButtons(0)
 end
 
 function Menu:update(dt)
@@ -621,9 +711,10 @@ function Menu:update(dt)
 		updateButtonTexts(currentRevision)
 	end
 
-	for i, btn in ipairs(buttons) do
-                local appearDelay = (i - 1) * 0.06
-                local linearAppear = (t - appearDelay) / 0.45
+        for i, btn in ipairs(buttons) do
+                local appearDelay = btn.appearDelay or ((i - 1) * 0.06)
+                local appearStart = btn.appearStart or 0
+                local linearAppear = (t - appearStart - appearDelay) / BUTTON_APPEAR_DURATION
                 local appearProgress = Easing.clamp01(linearAppear)
                 local easedAlpha = Easing.easeOutCubic(appearProgress)
                 local liftedProgress = Easing.easeOutBack(appearProgress)

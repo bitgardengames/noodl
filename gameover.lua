@@ -517,11 +517,11 @@ function GameOver:enter(data)
 		stats[key] = nil
 	end
 
-	stats.score = data.score or 0
-	stats.highScore = data.highScore or stats.score or 0
-	stats.apples = data.apples or 0
-	stats.timeAlive = (data.stats and data.stats.timeAlive) or 0
-	stats.tilesTravelled = (data.stats and data.stats.tilesTravelled) or 0
+        stats.score = data.score or 0
+        stats.highScore = data.highScore or stats.score or 0
+        stats.apples = data.apples or 0
+        stats.timeAlive = (data.stats and data.stats.timeAlive) or 0
+        stats.tilesTravelled = (data.stats and data.stats.tilesTravelled) or 0
 	stats.combosTriggered = (data.stats and data.stats.combosTriggered) or 0
 	stats.bestComboStreak = (data.stats and data.stats.bestComboStreak) or 0
 	stats.floorsCleared = (data.stats and data.stats.floorsCleared) or 0
@@ -533,15 +533,17 @@ function GameOver:enter(data)
 		self.isNewHighScore = (stats.score or 0) > 0 and (stats.score or 0) >= (stats.highScore or 0)
 	end
 
-	self.isVictory = not not data.won
-	self.deathCause = data.cause or "unknown"
-	self.deathMessage = data.endingMessage or pickDeathMessage(self.deathCause)
-	self.customTitle = data.storyTitle
+        self.isVictory = not not data.won
+        self.deathCause = data.cause or "unknown"
+        self.deathMessage = data.endingMessage or pickDeathMessage(self.deathCause)
+        self.customTitle = data.storyTitle
 
-	buttonDefs = {
-		{id = "playAgain", textKey = "gameover.play_again", action = "game"},
-		{id = "quitToMenu", textKey = "gameover.quit_to_menu", action = "menu"},
-	}
+        local restartAction = data.restartAction or {state = "game", data = {mode = data.mode or "journey"}}
+
+        buttonDefs = {
+                {id = "playAgain", textKey = "gameover.play_again", action = restartAction},
+                {id = "quitToMenu", textKey = "gameover.quit_to_menu", action = "menu"},
+        }
 
 	self._cachedWidth, self._cachedHeight = nil, nil
 	self.panelAnim = 0

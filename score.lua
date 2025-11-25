@@ -8,14 +8,14 @@ local insert = table.insert
 local Score = {}
 
 Achievements:registerStateProvider(function(state)
-	if type(state) == "table" then
-	state.snakeScore = Score.current or 0
-	end
-	end
-)
+        if type(state) == "table" then
+                state.snakeScore = Score.current or 0
+        end
+end)
 
 Score.current = 0
-Score.highscore = 0
+Score.highscores = {journey = 0, classic = 0}
+Score.mode = "journey"
 Score.saveFile = "scores.lua"
 Score.comboBonusMult = 1
 Score.comboBonusBase = 1
@@ -32,89 +32,136 @@ local function updateAchievementChecks(self)
 	)
 end
 
-function Score:load()
-	self.current = 0
-	self.highscore = 0
-	self.comboBonusBase = 1
-	self.comboBonusMult = 1
-	self.highScoreGlowTimer = 0
-	self.previousHighScore = 0
-	self.runHighScoreTriggered = false
-	self._pendingApples = 0
+local function normalizeMode(mode)
+        if mode == "classic" then
+                return "classic"
+        end
 
-	-- Load from file
-	if love.filesystem.getInfo(self.saveFile) then
-		local chunk = love.filesystem.load(self.saveFile)
-		local ok, saved = pcall(chunk)
-		if ok and type(saved) == "table" then
-			if type(saved.highscore) == "number" then
-				self.highscore = saved.highscore
-			else
-				local highest = 0
-				for _, value in pairs(saved) do
-					if type(value) == "number" and value > highest then
-						highest = value
-					end
-				end
-				self.highscore = highest
-			end
-		elseif ok and type(saved) == "number" then
-			self.highscore = saved
-		end
-	end
+        return "journey"
+end
 
-	-- Legacy compatibility
-	if love.filesystem.getInfo("highscore_snake.txt") then
-		local contents = love.filesystem.read("highscore_snake.txt")
-		local legacy = tonumber(contents)
-		if legacy then
-			if legacy > self.highscore then
-				self.highscore = legacy
-				self:save()
-			end
-			love.filesystem.remove("highscore_snake.txt")
-		end
-	end
+function Score:setMode(mode)
+        self.mode = normalizeMode(mode)
+        self.previousHighScore = self:getHighScore()
+end
+
+function Score:load(mode)
+        self.current = 0
+        self.highscores = self.highscores or {journey = 0, classic = 0}
+        self.comboBonusBase = 1
+        self.comboBonusMult = 1
+        self.highScoreGlowTimer = 0
+        self.previousHighScore = 0
+        self.runHighScoreTriggered = false
+        self._pendingApples = 0
+
+        self:setMode(mode or self.mode)
+
+        -- Load from file
+        if love.filesystem.getInfo(self.saveFile) then
+                local chunk = love.filesystem.load(self.saveFile)
+                local ok, saved = pcall(chunk)
+                if ok and type(saved) == "table" then
+                        if type(saved.highscore) == "number" then
+                                self.highscores.journey = saved.highscore
+                        end
+
+                        if type(saved.journey) == "number" then
+                                self.highscores.journey = saved.journey
+                        end
+
+                        if type(saved.classic) == "number" then
+                                self.highscores.classic = saved.classic
+                        end
+
+                        if saved.highscores and type(saved.highscores) == "table" then
+                                for key, value in pairs(saved.highscores) do
+                                        if type(value) == "number" then
+                                                self.highscores[key] = value
+                                        end
+                                end
+                        end
+
+                        if self.highscores.classic == 0 and self.highscores.journey == 0 then
+                                local highest = 0
+                                for _, value in pairs(saved) do
+                                        if type(value) == "number" and value > highest then
+                                                highest = value
+                                        end
+                                end
+                                self.highscores.journey = highest
+                        end
+                elseif ok and type(saved) == "number" then
+                        self.highscores.journey = saved
+                end
+        end
+
+        -- Legacy compatibility
+        if love.filesystem.getInfo("highscore_snake.txt") then
+                        local contents = love.filesystem.read("highscore_snake.txt")
+                        local legacy = tonumber(contents)
+                        if legacy then
+                                if legacy > (self.highscores.journey or 0) then
+                                        self.highscores.journey = legacy
+                                        self:save()
+                                end
+                                love.filesystem.remove("highscore_snake.txt")
+                        end
+        end
+
+        self.previousHighScore = self:getHighScore()
 end
 
 function Score:save()
-	local lines = {"return {\n"}
-	insert(lines, string.format("    highscore = %d,\n", max(0, self.highscore or 0)))
-	insert(lines, "}\n")
-	love.filesystem.write(self.saveFile, table.concat(lines))
+        local lines = {"return {\n"}
+        insert(lines, string.format("    journey = %d,\n", max(0, (self.highscores and self.highscores.journey) or 0)))
+        insert(lines, string.format("    classic = %d,\n", max(0, (self.highscores and self.highscores.classic) or 0)))
+        insert(lines, string.format("    highscore = %d,\n", max(0, (self.highscores and self.highscores.journey) or 0)))
+        insert(lines, "}\n")
+        love.filesystem.write(self.saveFile, table.concat(lines))
 end
 
 function Score:reset(mode)
-	if mode == nil then
-		-- Just reset the current score
-		self.current = 0
+        if mode == nil then
+                -- Just reset the current score
+                self.current = 0
 		self.comboBonusBase = 1
 		self.comboBonusMult = 1
 		self.highScoreGlowTimer = 0
 		self.runHighScoreTriggered = false
-		self.previousHighScore = self:getHighScore()
-		self._pendingApples = 0
-	elseif mode == "all" then
-		self.highscore = 0
-		self.previousHighScore = 0
-		self:save()
-		self._pendingApples = 0
-	end
+                self.previousHighScore = self:getHighScore()
+                self._pendingApples = 0
+        elseif mode == "all" then
+                self.highscores = {journey = 0, classic = 0}
+                self.previousHighScore = 0
+                self._pendingApples = 0
+                self:save()
+        end
 end
 
 function Score:get()
 	return self.current
 end
 
-function Score:getHighScore()
-	return self.highscore or 0
+function Score:getHighScore(mode)
+        mode = normalizeMode(mode or self.mode)
+        if not self.highscores then
+                self.highscores = {journey = 0, classic = 0}
+        end
+
+        return self.highscores[mode] or 0
 end
 
-function Score:setHighScore(score)
-	if score > (self.highscore or 0) then
-		self.highscore = score
-		self:save()
-	end
+function Score:setHighScore(score, mode)
+        mode = normalizeMode(mode or self.mode)
+        if not self.highscores then
+                self.highscores = {journey = 0, classic = 0}
+        end
+
+        if score > (self.highscores[mode] or 0) then
+                self.highscores[mode] = score
+                self:save()
+        end
 end
 
 function Score:increase(points)
@@ -185,13 +232,13 @@ local function finalizeRunResult(self, options)
 
 	PlayerStats:updateMax("snakeScore", self.current)
 
-	Achievements:checkAll({
-		bestScore = PlayerStats:get("snakeScore"),
-		snakeScore = self.current,
-		}
-	)
+        Achievements:checkAll({
+                bestScore = PlayerStats:get("snakeScore"),
+                snakeScore = self.current,
+                }
+        )
 
-	self:setHighScore(self.current)
+        self:setHighScore(self.current, self.mode)
 
 	local runFruit = SessionStats:get("fruitEaten") or 0
 	local lifetimeFruit = PlayerStats:get("totalFruitEaten") or 0
@@ -226,14 +273,14 @@ local function finalizeRunResult(self, options)
 		PlayerStats:updateMax("longestFloorClearTime", slowestFloor)
 	end
 
-	local result = {
-		score       = self.current,
-		highScore   = self:getHighScore(),
-		apples      = runFruit,
-		totalApples = lifetimeFruit,
-		stats = {
-			apples = runFruit,
-			timeAlive = runTime,
+        local result = {
+                score       = self.current,
+                highScore   = self:getHighScore(),
+                apples      = runFruit,
+                totalApples = lifetimeFruit,
+                stats = {
+                        apples = runFruit,
+                        timeAlive = runTime,
 			tilesTravelled = runTiles,
 			combosTriggered = runCombos,
 			floorsCleared = floorsCleared,
@@ -242,10 +289,13 @@ local function finalizeRunResult(self, options)
 			slowestFloor = slowestFloor,
 			bestComboStreak = bestComboStreak,
 			dragonfruit = dragonfruitEaten,
-		},
-		cause = cause,
-		won = won,
-	}
+                },
+                cause = cause,
+                won = won,
+                mode = self.mode,
+        }
+
+        result.restartAction = {state = "game", data = {mode = self.mode}}
 
 	if options.endingMessage then
 		result.endingMessage = options.endingMessage
