@@ -19,7 +19,6 @@ local SessionStats = require("sessionstats")
 local Score = require("score")
 local SnakeCosmetics = require("snakecosmetics")
 local SnakeTrail = require("snake_trail")
-local SnakeOccupancyHelper = require("snake_occupancy")
 local SnakeAbilities = require("snake_abilities")
 local FloatingText = require("floatingtext")
 local Face = require("face")
@@ -121,7 +120,7 @@ local newHeadSegmentsMax = 0
 
 local renderState = SnakeRender.newState()
 
-local occupancyState = SnakeOccupancyHelper.newState()
+local occupancyState = SnakeOccupancy.newState()
 local headCellBuffer = occupancyState.headCellBuffer
 local toCell
 
@@ -153,11 +152,11 @@ local collectSnakeSegmentCandidatesForCircle = SnakeOccupancy.collectSnakeSegmen
 segmentPoolState.removeSnakeBodySpatialEntry = removeSnakeBodySpatialEntry
 
 local function resetSnakeOccupancyGrid()
-        SnakeOccupancyHelper.resetGrid(occupancyState)
+SnakeOccupancy.resetGrid(occupancyState)
 end
 
 local function ensureOccupancyGrid()
-        return SnakeOccupancyHelper.ensureGrid(occupancyState)
+return SnakeOccupancy.ensureGrid(occupancyState)
 end
 
 function Snake:needsStencil()
@@ -385,18 +384,18 @@ toCell = function(x, y)
 	return col, row
 end
 
-SnakeOccupancyHelper.setToCell(occupancyState, toCell)
+SnakeOccupancy.setToCell(occupancyState, toCell)
 
 local function rebuildOccupancyFromTrail(headColOverride, headRowOverride)
-        SnakeOccupancyHelper.rebuildFromTrail(occupancyState, trail, headColOverride, headRowOverride)
+SnakeOccupancy.rebuildFromTrail(occupancyState, trail, headColOverride, headRowOverride)
 end
 
 local function applySnakeOccupancyDelta(headCells, headCellCount, overrideCol, overrideRow, tailMoved, tailAfterCol, tailAfterRow)
-        occupancyState.newHeadSegmentsMax = newHeadSegmentsMax
-        SnakeOccupancyHelper.applyDelta(
-                occupancyState,
-                trail,
-                headCellCount,
+occupancyState.newHeadSegmentsMax = newHeadSegmentsMax
+SnakeOccupancy.applyDelta(
+occupancyState,
+trail,
+headCellCount,
                 overrideCol,
                 overrideRow,
                 tailMoved,
