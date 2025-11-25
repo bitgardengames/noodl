@@ -260,11 +260,13 @@ function Game:invalidateTransitionTitleCache()
 end
 
 function Game:refreshTransitionTitleCanvas(data)
-	local floorData = data and (data.transitionFloorData or self.currentFloorData) or self.currentFloorData
-	if not floorData then
-		self:invalidateTransitionTitleCache()
-		return nil
-	end
+        local floorData = data and (data.transitionFloorData or self.currentFloorData) or self.currentFloorData
+        local hideTitle = data and data.transitionHideTitle
+
+        if not floorData then
+                self:invalidateTransitionTitleCache()
+                return nil
+        end
 
 	local promptText
 	if data and data.transitionAwaitInput then
@@ -290,9 +292,14 @@ function Game:refreshTransitionTitleCanvas(data)
 		self.transitionPromptCanvas = nil
 	end
 
-	local localeRevision = Localization:getRevision()
-	local floorName = getFloorString(floorData, "name")
-	local floorFlavor = getFloorString(floorData, "flavor")
+        local localeRevision = Localization:getRevision()
+        local floorName = getFloorString(floorData, "name")
+        local floorFlavor = getFloorString(floorData, "flavor")
+
+        if hideTitle then
+                floorName = ""
+                floorFlavor = nil
+        end
 
 	local cache = self.transitionTitleCache
 	if cache
@@ -302,9 +309,10 @@ function Game:refreshTransitionTitleCanvas(data)
 	and cache.width == width
 	and cache.height == height
 	and cache.promptCanvas == promptCanvas
-	and cache.localeRevision == localeRevision then
-		return cache
-	end
+        and cache.localeRevision == localeRevision
+        and cache.hideTitle == hideTitle then
+                return cache
+        end
 
 	local shadow = Theme.shadowColor or DEFAULT_SHADOW_COLOR
 	local shadowAlpha = shadow[4] or 0.5
@@ -353,15 +361,16 @@ function Game:refreshTransitionTitleCanvas(data)
 		love.graphics.pop()
 	end
 
-	cache = {
-		canvas = titleCanvas,
-		promptCanvas = promptCanvas,
-		floorData = floorData,
-		promptText = promptText,
-		width = width,
-		height = height,
-		localeRevision = localeRevision,
-	}
+        cache = {
+                canvas = titleCanvas,
+                promptCanvas = promptCanvas,
+                floorData = floorData,
+                promptText = promptText,
+                width = width,
+                height = height,
+                localeRevision = localeRevision,
+                hideTitle = hideTitle,
+        }
 
 	self.transitionTitleCache = cache
 
@@ -1090,14 +1099,17 @@ function Game:load(options)
 		Snake.adrenaline.suppressVisuals = nil
 	end
 
-	self:setupFloor(self.floor)
+        self:setupFloor(self.floor)
 
-	self.transition:startFloorIntro(2.8, {
-		transitionAdvance = false,
-		transitionAwaitInput = true,
-		transitionFloorData = Floors[self.floor] or Floors[1],
-		}
-	)
+        local hideIntroTitle = self.floor == 1
+
+        self.transition:startFloorIntro(2.8, {
+                transitionAdvance = false,
+                transitionAwaitInput = true,
+                transitionFloorData = Floors[self.floor] or Floors[1],
+                transitionHideTitle = hideIntroTitle,
+                }
+        )
 end
 
 function Game:reset()
@@ -1853,6 +1865,12 @@ function Game:setupFloor(floorNum)
         local setup = FloorSetup.prepare(floorNum, self.currentFloorData)
         local traitContext = setup.traitContext
         local spawnPlan = setup.spawnPlan
+
+        if self.mode == "classic" then
+                traitContext.saws = 0
+                spawnPlan.numSaws = 0
+                spawnPlan.emberSawCount = 0
+        end
 
         UI:setFruitGoal(traitContext.fruitGoal, {disableGoal = self.mode == "classic"})
 
