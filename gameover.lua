@@ -139,10 +139,10 @@ local function resetAnalogAxis()
 end
 
 local function handleAnalogAxis(axis, value)
-	local mapping = analogAxisMap[axis]
-	if not mapping then
-		return
-	end
+        local mapping = analogAxisMap[axis]
+        if not mapping then
+                return
+        end
 
 	local direction
 	if value >= ANALOG_DEADZONE then
@@ -179,14 +179,31 @@ local function getSectionSpacing()
 end
 
 local function getSectionInnerSpacing()
-	return (UI.scaled and UI.scaled(12, 8)) or 12
+        return (UI.scaled and UI.scaled(12, 8)) or 12
+end
+
+local function resolveModeFromData(data)
+        if not data then
+                return "journey"
+        end
+
+        if data.mode then
+                return data.mode
+        end
+
+        local restartData = data.restartAction and data.restartAction.data
+        if restartData and restartData.mode then
+                return restartData.mode
+        end
+
+        return "journey"
 end
 
 local function getButtonAnimationOffset(self)
-	local _, buttonHeight = getButtonMetrics()
-	local distance = (buttonHeight or 56) * 1.1
-	local progress = Easing.clamp01((self.buttonAnim or 0) / BUTTON_ANIM_DURATION)
-	local eased = Easing.easeOutCubic(progress)
+        local _, buttonHeight = getButtonMetrics()
+        local distance = (buttonHeight or 56) * 1.1
+        local progress = Easing.clamp01((self.buttonAnim or 0) / BUTTON_ANIM_DURATION)
+        local eased = Easing.easeOutCubic(progress)
 	return (1 - eased) * distance
 end
 
@@ -509,7 +526,7 @@ end
 
 function GameOver:enter(data)
         data = data or {}
-        local mode = data.mode or "journey"
+        local mode = resolveModeFromData(data)
         self.mode = mode
 
         UI.clearButtons()
