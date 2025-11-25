@@ -13,25 +13,37 @@ local CTX_GUARD_DISTANCE = 5
 local CTX_BODY_RADIUS = 6
 local CTX_CUT_EVENT = 7
 
+local CUT_INDEX = 1
+local CUT_X = 2
+local CUT_Y = 3
+local CUT_DISTANCE = 4
+local CUT_CAUSE = 5
+
+SnakeCollisions.CUT_INDEX = CUT_INDEX
+SnakeCollisions.CUT_X = CUT_X
+SnakeCollisions.CUT_Y = CUT_Y
+SnakeCollisions.CUT_DISTANCE = CUT_DISTANCE
+SnakeCollisions.CUT_CAUSE = CUT_CAUSE
+
 local function resetCollisionContext(context)
-        if not context then
-                return
-        end
+	if not context then
+		return
+	end
 
-        context[CTX_SNAKE] = nil
-        context[CTX_TRAIL] = nil
-        context[CTX_HEAD_X] = nil
-        context[CTX_HEAD_Y] = nil
-        context[CTX_GUARD_DISTANCE] = 0
-        context[CTX_BODY_RADIUS] = 0
+	context[CTX_SNAKE] = nil
+	context[CTX_TRAIL] = nil
+	context[CTX_HEAD_X] = nil
+	context[CTX_HEAD_Y] = nil
+	context[CTX_GUARD_DISTANCE] = 0
+	context[CTX_BODY_RADIUS] = 0
 
-        local cutEvent = context[CTX_CUT_EVENT]
-        if cutEvent then
-                cutEvent.index = nil
-                cutEvent.cutX = nil
-                cutEvent.cutY = nil
-                cutEvent.cutDistance = nil
-        end
+	local cutEvent = context[CTX_CUT_EVENT]
+	if cutEvent then
+		cutEvent[CUT_INDEX] = nil
+		cutEvent[CUT_X] = nil
+		cutEvent[CUT_Y] = nil
+		cutEvent[CUT_DISTANCE] = nil
+	end
 end
 
 local function prepareCollisionContext(context, snake, trail, guardDistance, bodyRadius)
@@ -69,19 +81,18 @@ function SnakeCollisions.new(deps)
         local Darts = deps.Darts
         local Saws = deps.Saws
 
-        local laserCollisionContext = {
-                [CTX_CUT_EVENT] = {cause = "laser"},
-        }
+	local laserCollisionContext = {
+		[CTX_CUT_EVENT] = {[CUT_CAUSE] = "laser"},
+	}
 
-        local dartCollisionContext = {
-                [CTX_CUT_EVENT] = {cause = "dart"},
-        }
+	local dartCollisionContext = {
+		[CTX_CUT_EVENT] = {[CUT_CAUSE] = "dart"},
+	}
 
-        local sawCollisionContext = {
-                [CTX_CUT_EVENT] = {},
-        }
-
-        local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidateIndices, candidateCount, candidateLookup, candidateGeneration)
+	local sawCollisionContext = {
+		[CTX_CUT_EVENT] = {[CUT_CAUSE] = "saw"},
+	}
+	local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidateIndices, candidateCount, candidateLookup, candidateGeneration)
                 local trailRef = context[CTX_TRAIL]
                 if not (trailRef and trailRef[1]) then
                         return nil
@@ -131,14 +142,14 @@ function SnakeCollisions.new(deps)
                                                 if intersects and t then
                                                         local along = travelled + segLen * t
                                                         if along > context[CTX_GUARD_DISTANCE] then
-                                                                local cutEvent = context[CTX_CUT_EVENT]
-                                                                cutEvent.index = index
-                                                                cutEvent.cutX = cutX
-                                                                cutEvent.cutY = cutY
-                                                                cutEvent.cutDistance = along
-                                                                return cutEvent
-                                                        end
-                                                end
+						local cutEvent = context[CTX_CUT_EVENT]
+						cutEvent[CUT_INDEX] = index
+						cutEvent[CUT_X] = cutX
+						cutEvent[CUT_Y] = cutY
+						cutEvent[CUT_DISTANCE] = along
+						return cutEvent
+					end
+				end
                                         end
                                 end
 
@@ -206,14 +217,14 @@ function SnakeCollisions.new(deps)
                                                         local along = travelled + segLen * (t or 0)
                                                         if along > context[CTX_GUARD_DISTANCE] and distSq <= combinedRadiusSq then
                                                                 if isSawCutPointExposed(saw, centerX, centerY, closestX, closestY) then
-                                                                        local cutEvent = context[CTX_CUT_EVENT]
-                                                                        cutEvent.index = index
-                                                                        cutEvent.cutX = closestX
-                                                                        cutEvent.cutY = closestY
-                                                                        cutEvent.cutDistance = along
-                                                                        return cutEvent
-                                                                end
-                                                        end
+						local cutEvent = context[CTX_CUT_EVENT]
+						cutEvent[CUT_INDEX] = index
+						cutEvent[CUT_X] = closestX
+						cutEvent[CUT_Y] = closestY
+						cutEvent[CUT_DISTANCE] = along
+						return cutEvent
+					end
+				end
                                                 end
                                         end
                                 end
