@@ -3,6 +3,7 @@ local Audio = require("audio")
 local Theme = require("theme")
 local MenuScene = require("menuscene")
 local UI = require("ui")
+local Score = require("score")
 local ButtonList = require("buttonlist")
 local Localization = require("localization")
 local Easing = require("easing")
@@ -507,23 +508,24 @@ function GameOver:updateButtonLayout()
 end
 
 function GameOver:enter(data)
-	data = data or {}
+        data = data or {}
+        local mode = data.mode or "journey"
 
-	UI.clearButtons()
-	ensureFonts()
-	resetAnalogAxis()
+        UI.clearButtons()
+        ensureFonts()
+        resetAnalogAxis()
 
-	for key in pairs(stats) do
-		stats[key] = nil
-	end
+        for key in pairs(stats) do
+                stats[key] = nil
+        end
 
         stats.score = data.score or 0
-        stats.highScore = data.highScore or stats.score or 0
+        stats.highScore = data.highScore or (Score.getHighScore and Score:getHighScore(mode)) or stats.score or 0
         stats.apples = data.apples or 0
         stats.timeAlive = (data.stats and data.stats.timeAlive) or 0
         stats.tilesTravelled = (data.stats and data.stats.tilesTravelled) or 0
-	stats.combosTriggered = (data.stats and data.stats.combosTriggered) or 0
-	stats.bestComboStreak = (data.stats and data.stats.bestComboStreak) or 0
+        stats.combosTriggered = (data.stats and data.stats.combosTriggered) or 0
+        stats.bestComboStreak = (data.stats and data.stats.bestComboStreak) or 0
 	stats.floorsCleared = (data.stats and data.stats.floorsCleared) or 0
 	stats.deepestFloor = (data.stats and data.stats.deepestFloor) or 0
 	stats.dragonfruit = (data.stats and data.stats.dragonfruit) or 0
@@ -538,7 +540,7 @@ function GameOver:enter(data)
         self.deathMessage = data.endingMessage or pickDeathMessage(self.deathCause)
         self.customTitle = data.storyTitle
 
-        local restartAction = data.restartAction or {state = "game", data = {mode = data.mode or "journey"}}
+        local restartAction = data.restartAction or {state = "game", data = {mode = mode}}
 
         buttonDefs = {
                 {id = "playAgain", textKey = "gameover.play_again", action = restartAction},
