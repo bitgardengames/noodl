@@ -605,14 +605,14 @@ local function isSelfCollisionAlongPath(startX, startY, endX, endY)
 		return false
 	end
 
-	local bodyCount = trail and #trail or 0
-	if bodyCount <= 3 then
-		return false
-	end
+        local bodyCount = trail and #trail or 0
+        if bodyCount <= 2 then
+                return false
+        end
 
-	local radiusSq = SELF_COLLISION_RADIUS_SQ
+        local radiusSq = SELF_COLLISION_RADIUS_SQ
 
-	for i = 3, bodyCount do
+        for i = 2, bodyCount do
 		local seg = trail[i]
 		local nextSeg = trail[i + 1]
 		local sx = seg and seg.drawX
