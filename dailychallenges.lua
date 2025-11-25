@@ -448,7 +448,7 @@ DailyChallenges.challenges = {
 		titleKey = "menu.daily.combos.title",
 		descriptionKey = "menu.daily.combos.description",
 		sessionStat = "combosTriggered",
-		goal = 8,
+		goal = 10,
 		progressKey = "menu.daily.combos.progress",
 	},
 	{
