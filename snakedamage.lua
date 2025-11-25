@@ -3,7 +3,7 @@ local Particles = require("particles")
 local FloatingText = require("floatingtext")
 local SnakeUpgrades = require("snakeupgrades")
 local SnakeUtils = require("snakeutils")
-local SnakeUpgradesState = require("snake_upgrades_state")
+local SnakeUpgradesState = require("snakeupgradesstate")
 
 local sqrt = math.sqrt
 
