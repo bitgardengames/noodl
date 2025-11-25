@@ -285,11 +285,15 @@ local german = {
 					name = "Tor des Versprechens",
 					flavor = "Am letzten Tor sichert Noodl die letzten Früchte und ringelt sich um die Ernte.",
 				},
-			},
-			game = {
-				floor_intro = {
-					prompt = "Drücke eine beliebige Taste, um abzusteigen",
-					heal_section_title = "Ebenenpause",
+                        },
+                        game = {
+                                classic_mode = {
+                                        intro_title = "Klassisch",
+                                        intro_flavor = "Spiele den endlosen Originallauf ohne Boden-Modifikatoren.",
+                                },
+                                floor_intro = {
+                                        prompt = "Drücke eine beliebige Taste, um abzusteigen",
+                                        heal_section_title = "Ebenenpause",
 					heal_note = "${amount} Schild(er) geschmiedet.",
 					shield_note = "${amount} Schild(er) geschmiedet.",
 				},
