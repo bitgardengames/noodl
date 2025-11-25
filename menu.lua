@@ -433,6 +433,19 @@ local function updateDailyBarCelebration(dt, shouldCelebrate)
         end
 end
 
+local function focusButtonById(targetId)
+        if not targetId then
+                return
+        end
+
+        for index, btn in ipairs(buttons) do
+                if btn.id == targetId then
+                        buttonList:setFocus(index)
+                        return
+                end
+        end
+end
+
 local function prepareStartAction(action)
         if type(action) ~= "string" then
                 return action
@@ -519,19 +532,6 @@ local function shouldCelebrateDailyChallenge()
 
         local ratio = max(0, min(statusBar.ratio or 0, 1))
         return dailyChallenge.completed or ratio >= 0.999
-end
-
-local function focusButtonById(targetId)
-        if not targetId then
-                return
-        end
-
-        for index, btn in ipairs(buttons) do
-                if btn.id == targetId then
-                        buttonList:setFocus(index)
-                        return
-                end
-        end
 end
 
 function rebuildMenuButtons(modeAppearStart)
