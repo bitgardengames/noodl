@@ -7,10 +7,22 @@ local min = math.min
 
 local Render = {}
 
+local STATE_CLIPPED_TRAIL_BUFFER = 1
+local STATE_CLIPPED_TRAIL_PROXY = 2
+local STATE_CLIPPED_HEAD_X = 3
+local STATE_CLIPPED_HEAD_Y = 4
+
+Render.STATE_CLIPPED_TRAIL_BUFFER = STATE_CLIPPED_TRAIL_BUFFER
+Render.STATE_CLIPPED_TRAIL_PROXY = STATE_CLIPPED_TRAIL_PROXY
+Render.STATE_CLIPPED_HEAD_X = STATE_CLIPPED_HEAD_X
+Render.STATE_CLIPPED_HEAD_Y = STATE_CLIPPED_HEAD_Y
+
 function Render.newState()
         return {
-                clippedTrailBuffer = {},
-                clippedTrailProxy = {drawX = 0, drawY = 0},
+                [STATE_CLIPPED_TRAIL_BUFFER] = {},
+                [STATE_CLIPPED_TRAIL_PROXY] = {drawX = 0, drawY = 0},
+                [STATE_CLIPPED_HEAD_X] = nil,
+                [STATE_CLIPPED_HEAD_Y] = nil,
         }
 end
 
@@ -38,8 +50,8 @@ local function drawStencilCircle(x, y, radius)
 end
 
 local function getClippedHeadPosition(state, clipCenterX, clipCenterY, clipRadius)
-        local clippedHeadX = state.clippedHeadX
-        local clippedHeadY = state.clippedHeadY
+        local clippedHeadX = state[STATE_CLIPPED_HEAD_X]
+        local clippedHeadY = state[STATE_CLIPPED_HEAD_Y]
 
         if not (clippedHeadX and clippedHeadY) then
                 return clippedHeadX, clippedHeadY
@@ -219,7 +231,7 @@ function Render.drawClipped(state, params)
                 if startIndex == 1 then
                         renderTrail = trail
                 else
-                        local trimmed = state.clippedTrailBuffer
+                        local trimmed = state[STATE_CLIPPED_TRAIL_BUFFER]
                         local trimmedLen = #trimmed
                         if trimmedLen > 0 then
                                 for i = trimmedLen, 1, -1 do
@@ -252,7 +264,7 @@ function Render.drawClipped(state, params)
                                 end
 
                                 if ix and iy then
-                                        local proxy = state.clippedTrailProxy
+                                        local proxy = state[STATE_CLIPPED_TRAIL_PROXY]
                                         proxy.drawX = ix
                                         proxy.drawY = iy
                                         proxy.x = nil
@@ -279,7 +291,7 @@ function Render.drawClipped(state, params)
         local hideDescendingBody = params.descendingHole and params.descendingHole.fullyConsumed
 
         if not hideDescendingBody then
-                state.clippedHeadX, state.clippedHeadY = headX, headY
+                state[STATE_CLIPPED_HEAD_X], state[STATE_CLIPPED_HEAD_Y] = headX, headY
                 SnakeDraw.run(
                         renderTrail,
                         params.segmentCount,
@@ -293,7 +305,7 @@ function Render.drawClipped(state, params)
                         upgradeVisuals,
                         shouldDrawFace
                 )
-                state.clippedHeadX, state.clippedHeadY = nil, nil
+                state[STATE_CLIPPED_HEAD_X], state[STATE_CLIPPED_HEAD_Y] = nil, nil
         end
 
         maybeDrawDescendingHole(params.descendingHole, hx, hy, clipRadius, hasStencil and not hideDescendingBody, params.drawDescendingIntoHole)

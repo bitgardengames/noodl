@@ -127,6 +127,7 @@ Snake.TIME_STATE_SCALE = TIME_STATE_SCALE
 Snake.TIME_STATE_FLOOR_CHARGES = TIME_STATE_FLOOR_CHARGES
 Snake.TIME_STATE_MAX_FLOOR_USES = TIME_STATE_MAX_FLOOR_USES
 
+local SEGMENT_POOL_REMOVER = SnakeTrail.REMOVER
 local segmentPoolState = SnakeTrail.newPoolState()
 
 local segmentSnapshot = {}
@@ -172,7 +173,7 @@ local syncSnakeTailSegment = SnakeOccupancy.syncSnakeTailSegment
 local collectSnakeSegmentCandidatesForRect = SnakeOccupancy.collectSnakeSegmentCandidatesForRect
 local collectSnakeSegmentCandidatesForCircle = SnakeOccupancy.collectSnakeSegmentCandidatesForCircle
 
-segmentPoolState.removeSnakeBodySpatialEntry = removeSnakeBodySpatialEntry
+segmentPoolState[SEGMENT_POOL_REMOVER] = removeSnakeBodySpatialEntry
 
 local function resetSnakeOccupancyGrid()
 SnakeOccupancy.resetGrid(occupancyState)
