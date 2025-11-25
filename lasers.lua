@@ -17,6 +17,7 @@ local sin = math.sin
 local Lasers = {}
 
 local emitters = {}
+local beamPool = {}
 local stallTimer = 0
 local cachedRockLookup = nil
 local cachedRevision = nil
@@ -59,12 +60,15 @@ local copyColorOptions = {
         alpha = nil,
 }
 
-local function copyColor(color, alpha)
+local function copyColor(color, alpha, target)
         local options = copyColorOptions
         options.default[4] = alpha or 1
         options.defaultAlpha = alpha
         options.alpha = alpha
-        return Color.copy(color, options)
+        options.target = target
+        local result = Color.copy(color, options)
+        options.target = nil
+        return result
 end
 
 local function clamp(value, minimum, maximum)
@@ -99,11 +103,15 @@ local function getRelativeLuminance(color)
 	return 0.2126 * r + 0.7152 * g + 0.0722 * b
 end
 
-local function getFirePalette(color)
-	local base = copyColor(color or DEFAULT_FIRE_COLOR)
-	local glow = copyColor(base, (base[4] or 1) * 0.65)
-	local core = copyColor(base, 0.95)
-	local rim = copyColor(base, 1.0)
+local function getFirePalette(color, target)
+        target = target or {}
+
+        local base = copyColor(color or DEFAULT_FIRE_COLOR, nil, target.base or {})
+        target.base = base
+
+        local glow = copyColor(base, (base[4] or 1) * 0.65, target.glow or {})
+        local core = copyColor(base, 0.95, target.core or {})
+        local rim = copyColor(base, 1.0, target.rim or {})
 
 	rim[1] = min(1, rim[1] * 1.1)
 	rim[2] = min(1, rim[2] * 0.7)
@@ -121,23 +129,41 @@ local function getFirePalette(color)
 		core[4] = clamp(core[4] + rimBoost * 0.2, 0, 1)
 	end
 
-	return {
-		glow = glow,
-		core = core,
-		rim = rim,
-	}
+        target.glow = glow
+        target.core = core
+        target.rim = rim
+
+        return target
 end
 
-local function clonePalette(palette)
-	if not palette then
-		return nil
-	end
+local function clonePalette(palette, target)
+        if not palette then
+                return nil
+        end
 
-	local copy = {}
-	if palette.glow then copy.glow = copyColor(palette.glow) end
-	if palette.core then copy.core = copyColor(palette.core) end
-	if palette.rim then copy.rim = copyColor(palette.rim) end
-	return copy
+        target = target or {}
+
+        if palette.glow then
+                target.glow = copyColor(palette.glow, nil, target.glow or {})
+        else
+                target.glow = nil
+        end
+
+        if palette.core then
+                target.core = copyColor(palette.core, nil, target.core or {})
+        else
+                target.core = nil
+        end
+
+        if palette.rim then
+                target.rim = copyColor(palette.rim, nil, target.rim or {})
+        else
+                target.rim = nil
+        end
+
+        target.base = nil
+
+        return target
 end
 
 local function ensureBasePalette(beam)
@@ -266,13 +292,55 @@ local function getEmitterColors()
 end
 
 local function releaseOccupancy(beam)
-	if not beam then
-		return
+        if not beam then
+                return
 	end
 
 	if beam.col and beam.row then
 		SnakeUtils.setOccupied(beam.col, beam.row, false)
-	end
+        end
+end
+
+local function acquireBeam()
+        local poolSize = #beamPool
+        if poolSize > 0 then
+                local beam = beamPool[poolSize]
+                beamPool[poolSize] = nil
+                return beam
+        end
+
+        return {}
+end
+
+local function wipePalette(palette)
+        if not palette then
+                return
+        end
+
+        palette.base = nil
+        palette.glow = nil
+        palette.core = nil
+        palette.rim = nil
+end
+
+local function resetBeam(beam)
+        if not beam then
+                return
+        end
+
+        local rect = beam.beamRect
+        if rect then
+                rect[1], rect[2], rect[3], rect[4] = nil, nil, nil, nil
+        end
+
+        wipePalette(beam.firePalette)
+        wipePalette(beam.baseFirePalette)
+
+        for key in pairs(beam) do
+                if key ~= "beamRect" and key ~= "firePalette" and key ~= "baseFirePalette" then
+                        beam[key] = nil
+                end
+        end
 end
 
 local function getFacingFromPosition(dir, col, row)
@@ -560,10 +628,12 @@ local function getRockLookup()
 end
 
 function Lasers:reset()
-	for _, beam in ipairs(emitters) do
-		releaseOccupancy(beam)
-	end
-	emitters = {}
+        for _, beam in ipairs(emitters) do
+                releaseOccupancy(beam)
+                resetBeam(beam)
+                beamPool[#beamPool + 1] = beam
+        end
+        emitters = {}
 
 	stallTimer = 0
 	cachedRockLookup = nil
@@ -582,37 +652,38 @@ function Lasers.invalidateThemeCache()
 end
 
 function Lasers:spawn(x, y, dir, options)
-	dir = dir or "horizontal"
-	options = options or {}
+        dir = dir or "horizontal"
+        options = options or {}
 
-	local col, row = Arena:getTileFromWorld(x, y)
-	local facing = options.facing
-	if facing == nil then
-		facing = getFacingFromPosition(dir, col, row)
-	end
+        local beam = acquireBeam()
+        resetBeam(beam)
+
+        local col, row = Arena:getTileFromWorld(x, y)
+        local facing = options.facing
+        if facing == nil then
+                facing = getFacingFromPosition(dir, col, row)
+        end
 
 	facing = (facing >= 0) and 1 or -1
 
-	local initialPalette = options.firePalette and clonePalette(options.firePalette) or getFirePalette(options.fireColor)
+        local initialPalette = options.firePalette and clonePalette(options.firePalette, beam.firePalette) or getFirePalette(options.fireColor, beam.firePalette)
 
-	local beam = {
-		x = x,
-		y = y,
-		col = col,
-		row = row,
-		dir = dir,
-		facing = facing,
-		beamThickness = options.beamThickness or DEFAULT_BEAM_THICKNESS,
-		firePalette = clonePalette(initialPalette) or getFirePalette(options.fireColor),
-		state = "cooldown",
-		flashTimer = 0,
-		burnAlpha = 0,
-		baseGlow = 0,
-		telegraphStrength = 0,
-		randomOffset = love.math.random() * pi * 2,
-	}
+        beam.x = x
+        beam.y = y
+        beam.col = col
+        beam.row = row
+        beam.dir = dir
+        beam.facing = facing
+        beam.beamThickness = options.beamThickness or DEFAULT_BEAM_THICKNESS
+        beam.firePalette = initialPalette
+        beam.state = "cooldown"
+        beam.flashTimer = 0
+        beam.burnAlpha = 0
+        beam.baseGlow = 0
+        beam.telegraphStrength = 0
+        beam.randomOffset = love.math.random() * pi * 2
 
-	beam.baseFirePalette = clonePalette(initialPalette)
+        beam.baseFirePalette = clonePalette(initialPalette, beam.baseFirePalette)
 
 	beam.baseFireDuration = max(0.2, options.fireDuration or DEFAULT_FIRE_DURATION)
 	beam.baseChargeDuration = max(0.25, options.chargeDuration or DEFAULT_CHARGE_DURATION)
