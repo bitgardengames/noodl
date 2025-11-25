@@ -6,6 +6,8 @@ local SnakeRender = require("snake_render")
 local SnakeUpgrades = require("snakeupgrades")
 local SnakeUpgradesState = require("snake_upgrades_state")
 local SnakeDamage = require("snake_damage")
+local SnakeLifecycle = require("snake_lifecycle")
+local SnakeCollisions = require("snake_collisions")
 local Rocks = require("rocks")
 local Saws = require("saws")
 local Lasers = require("lasers")
@@ -281,6 +283,23 @@ local SEGMENT_SIZE = SnakeUtils.SEGMENT_SIZE
 local SEGMENT_SPACING = SnakeUtils.SEGMENT_SPACING
 -- distance travelled since last grid snap (in world units)
 local moveProgress = 0
+
+local lifecycle = SnakeLifecycle.new({
+Arena = Arena,
+SEGMENT_SPACING = SEGMENT_SPACING,
+acquireSegment = acquireSegment,
+assignDirection = assignDirection,
+SnakeRender = SnakeRender,
+renderState = renderState,
+recycleTrail = recycleTrail,
+clearPortalAnimation = clearPortalAnimation,
+SnakeUtils = SnakeUtils,
+Rocks = Rocks,
+DIR_X = DIR_X,
+DIR_Y = DIR_Y,
+resetSnakeOccupancyGrid = resetSnakeOccupancyGrid,
+clearSnakeBodyOccupancy = clearSnakeBodyOccupancy,
+})
 local POP_DURATION = SnakeUtils.POP_DURATION
 local HAZARD_GRACE_DURATION = SnakeUpgrades.HAZARD_GRACE_DURATION -- brief invulnerability window after surviving certain hazards
 local TAIL_HIT_FLASH_DURATION = 0.18
@@ -1349,156 +1368,53 @@ end
 
 -- Build initial trail aligned to CELL CENTERS
 local function buildInitialTrail()
-	local t = {}
-	local midCol = floor(Arena.cols / 2)
-	local midRow = floor(Arena.rows / 2)
-	local startX, startY = Arena:getCenterOfTile(midCol, midRow)
-
-for i = 0, segmentCount - 1 do
-local cx = startX - i * SEGMENT_SPACING * direction[DIR_X]
-local cy = startY - i * SEGMENT_SPACING * direction[DIR_Y]
-local segment = acquireSegment()
-segment.drawX = cx
-segment.drawY = cy
-segment.dirX = direction[DIR_X]
-segment.dirY = direction[DIR_Y]
-t[#t + 1] = segment
+        local newTrail, length = lifecycle.buildInitialTrail(segmentCount, direction)
+        trailLength = length
+        return newTrail
 end
-	if #t > 0 then
-		t[1].lengthToPrev = 0
-	end
-	local total = 0
-	for i = 2, #t do
-		local prev = t[i - 1]
-		local curr = t[i]
-		if prev and curr then
-			local dx = (prev.drawX or 0) - (curr.drawX or 0)
-			local dy = (prev.drawY or 0) - (curr.drawY or 0)
-			local length = sqrt(dx * dx + dy * dy)
-			curr.lengthToPrev = length
-			total = total + length
-		end
-	end
-	trailLength = total
-	return t
+
+local function applyLoadResult(state)
+        screenW = state.screenW
+        screenH = state.screenH
+        segmentCount = state.segmentCount
+        popTimer = state.popTimer
+        moveProgress = state.moveProgress
+        isDead = state.isDead
+        trail = state.trail
+        trailLength = state.trailLength
+        descendingHole = state.descendingHole
+        severedPieces = state.severedPieces
+        portalAnimation = state.portalAnimation
+        cellKeyStride = state.cellKeyStride
 end
 
 function Snake:load(w, h)
-	screenW, screenH = w, h
-	assignDirection(direction, 1, 0)
-	assignDirection(pendingDir, 1, 0)
-	segmentCount = 1
-	popTimer = 0
-	moveProgress = 0
-        isDead = false
-        self.shieldFlashTimer = 0
-        self.hazardGraceTimer = 0
-        self.damageFlashTimer = 0
-        self.tailHitFlashTimer = 0
-        recycleTrail(trail)
-        trail = buildInitialTrail()
+        local state = lifecycle.load(self, {
+                w = w,
+                h = h,
+                direction = direction,
+                pendingDir = pendingDir,
+                trail = trail,
+                severedPieces = severedPieces,
+                portalAnimation = portalAnimation,
+                buildInitialTrail = buildInitialTrail,
+        })
+
+        applyLoadResult(state)
         syncTrailLength()
-        descendingHole = nil
-        SnakeRender.clearSeveredPieces(renderState, severedPieces, recycleTrail)
-        severedPieces = {}
-        clearPortalAnimation(portalAnimation)
-	portalAnimation = nil
-	local stride = (Arena and Arena.rows or 0) + 16
-	if stride <= 0 then
-		stride = 64
-	end
-	cellKeyStride = stride
-	rebuildOccupancyFromTrail()
+        rebuildOccupancyFromTrail()
 end
 
-local function getUpgradesModule()
-	return package.loaded["upgrades"]
-end
-
-isGluttonsWakeActive = function()
-	local Upgrades = getUpgradesModule()
-	if not (Upgrades and Upgrades.getEffect) then
-		return false
-	end
-
-	local effect = Upgrades:getEffect("gluttonsWake")
-	if effect == nil then
-		return false
-	end
-
-	if type(effect) == "boolean" then
-		return effect
-	end
-
-	if type(effect) == "number" then
-		return effect ~= 0
-	end
-
-	return not not effect
-end
-
-spawnGluttonsWakeRock = function(segment)
-	if not segment or not segment.fruitMarker then
-		return
-	end
-
-	local x = segment.fruitMarkerX or segment.drawX or segment.x
-	local y = segment.fruitMarkerY or segment.drawY or segment.y
-	if not (x and y) then
-		return
-	end
-
-	Rocks:spawn(x, y)
-	local col, row = Arena:getTileFromWorld(x, y)
-	if col and row then
-		SnakeUtils.setOccupied(col, row, true)
-	end
-end
-
-crystallizeGluttonsWakeSegments = function(buffer, startIndex, endIndex, upgradeActive)
-	if not buffer then
-		return
-	end
-
-	if upgradeActive == nil then
-		upgradeActive = isGluttonsWakeActive()
-	end
-
-	if not upgradeActive then
-		return
-	end
-
-	startIndex = startIndex or 1
-	endIndex = endIndex or #buffer
-	if endIndex > #buffer then
-		endIndex = #buffer
-	end
-
-	for i = startIndex, endIndex do
-		local segment = buffer[i]
-		if segment and segment.fruitMarker then
-			spawnGluttonsWakeRock(segment)
-		end
-	end
-end
+spawnGluttonsWakeRock = lifecycle.spawnGluttonsWakeRock
+crystallizeGluttonsWakeSegments = lifecycle.crystallizeGluttonsWakeSegments
+isGluttonsWakeActive = lifecycle.isGluttonsWakeActive
 
 function Snake:setDirection(name)
-if not isDead then
-local nd = SnakeUtils.calculateDirection(direction, name)
-if nd then
-assignDirection(pendingDir, nd[DIR_X], nd[DIR_Y])
-end
-end
+        lifecycle.setDirection(name, isDead, direction, pendingDir)
 end
 
 function Snake:setDead(state)
-	isDead = not not state
-	if isDead then
-		resetSnakeOccupancyGrid()
-		clearSnakeBodyOccupancy()
-	else
-		rebuildOccupancyFromTrail()
-	end
+        isDead = lifecycle.setDead(state, rebuildOccupancyFromTrail)
 end
 
 function Snake:getDirection()
@@ -2811,49 +2727,64 @@ local function getSawCenterPosition(saw)
 end
 
 local function isSawCutPointExposed(saw, sx, sy, px, py)
-	if not (saw and sx and sy and px and py) then
-		return true
-	end
+        if not (saw and sx and sy and px and py) then
+                return true
+        end
 
-	local tolerance = 1
-	local nx, ny
+        local tolerance = 1
+        local nx, ny
 
-	if saw.dir == "horizontal" then
-		local minX = saw.trackMinX
-		local maxX = saw.trackMaxX
-		if minX and maxX then
-			local lateralTolerance = tolerance
-			if px < minX - lateralTolerance or px > maxX + lateralTolerance then
-				return false
-			end
-		end
+        if saw.dir == "horizontal" then
+                local minX = saw.trackMinX
+                local maxX = saw.trackMaxX
+                if minX and maxX then
+                        local lateralTolerance = tolerance
+                        if px < minX - lateralTolerance or px > maxX + lateralTolerance then
+                                return false
+                        end
+                end
 
-		-- Horizontal saws sit in the floor and only the top half (negative Y)
-		-- should be able to slice the snake.
-		nx, ny = 0, -1
-	else
-		local minY = saw.trackMinY
-		local maxY = saw.trackMaxY
-		if minY and maxY then
-			local lateralTolerance = tolerance
-			if py < minY - lateralTolerance or py > maxY + lateralTolerance then
-				return false
-			end
-		end
+                -- Horizontal saws sit in the floor and only the top half (negative Y)
+                -- should be able to slice the snake.
+                nx, ny = 0, -1
+        else
+                local minY = saw.trackMinY
+                local maxY = saw.trackMaxY
+                if minY and maxY then
+                        local lateralTolerance = tolerance
+                        if py < minY - lateralTolerance or py > maxY + lateralTolerance then
+                                return false
+                        end
+                end
 
-		-- For vertical saws, the exposed side depends on which wall the blade
-		-- is mounted to. The sink direction indicates which side is hidden in
-		-- the track, so flip it to get the exposed normal.
-		local sinkDir = (saw.side == "left") and -1 or 1
-		nx, ny = -sinkDir, 0
-	end
+                -- For vertical saws, the exposed side depends on which wall the blade
+                -- is mounted to. The sink direction indicates which side is hidden in
+                -- the track, so flip it to get the exposed normal.
+                local sinkDir = (saw.side == "left") and -1 or 1
+                nx, ny = -sinkDir, 0
+        end
 
-	local dx = px - sx
-	local dy = py - sy
-	local projection = dx * nx + dy * ny
+        local dx = px - sx
+        local dy = py - sy
+        local projection = dx * nx + dy * ny
 
-	return projection >= -tolerance
+        return projection >= -tolerance
 end
+
+local collisionHandlers = SnakeCollisions.new({
+        SEGMENT_SPACING = SEGMENT_SPACING,
+        SEGMENT_SIZE = SEGMENT_SIZE,
+        collectSnakeSegmentCandidatesForRect = collectSnakeSegmentCandidatesForRect,
+        collectSnakeSegmentCandidatesForCircle = collectSnakeSegmentCandidatesForCircle,
+        segmentRectIntersection = segmentRectIntersection,
+        closestPointOnSegment = closestPointOnSegment,
+        isSawCutPointExposed = isSawCutPointExposed,
+        getSawCenterPosition = getSawCenterPosition,
+        isSawActive = isSawActive,
+        Lasers = Lasers,
+        Darts = Darts,
+        Saws = Saws,
+})
 
 local function addSeveredTrail(pieceTrail, segmentEstimate)
 	if not pieceTrail or #pieceTrail <= 1 then
@@ -3013,388 +2944,25 @@ function Snake:handleSawBodyCut(context)
 	return true
 end
 
-local laserCollisionContext = {
-	snake = nil,
-	trail = nil,
-	headX = nil,
-	headY = nil,
-	guardDistance = 0,
-	bodyRadius = 0,
-	cutEvent = {cause = "laser"},
-}
-
-local dartCollisionContext = {
-	snake = nil,
-	trail = nil,
-	headX = nil,
-	headY = nil,
-	guardDistance = 0,
-	bodyRadius = 0,
-	cutEvent = {cause = "dart"},
-}
-
-local sawCollisionContext = {
-	snake = nil,
-	trail = nil,
-	headX = nil,
-	headY = nil,
-	guardDistance = 0,
-	bodyRadius = 0,
-	cutEvent = {},
-}
-
-local function resetCollisionContext(context)
-	if not context then
-		return
-	end
-
-	context.snake = nil
-	context.trail = nil
-	context.headX = nil
-	context.headY = nil
-	context.guardDistance = 0
-	context.bodyRadius = 0
-
-	local cutEvent = context.cutEvent
-	if cutEvent then
-		cutEvent.index = nil
-		cutEvent.cutX = nil
-		cutEvent.cutY = nil
-		cutEvent.cutDistance = nil
-	end
-end
-
-local function evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidateIndices, candidateCount, candidateLookup, candidateGeneration)
-	local trailRef = context.trail
-	if not (trailRef and trailRef[1]) then
-		return nil
-	end
-
-	local headX = context.headX
-	local headY = context.headY
-	if not (headX and headY) then
-		return nil
-	end
-
-	if not candidateLookup then
-		candidateIndices, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
-	end
-
-	local useCandidateFilter = candidateLookup ~= nil
-	if useCandidateFilter and (not candidateIndices or (candidateCount or 0) == 0) then
-		return nil
-	end
-
-	local travelled = 0
-	local prevX, prevY = headX, headY
-
-	for index = 2, #trailRef do
-		local segment = trailRef[index]
-		local cx = segment and (segment.drawX or segment.x)
-		local cy = segment and (segment.drawY or segment.y)
-		if cx and cy then
-			local dx = cx - prevX
-			local dy = cy - prevY
-			local segLen = sqrt(dx * dx + dy * dy)
-
-			if segLen > 1e-6 then
-				local shouldTest = not useCandidateFilter or (candidateLookup[segment] == candidateGeneration)
-				if shouldTest then
-					local intersects, cutX, cutY, t = segmentRectIntersection(
-						prevX,
-						prevY,
-						cx,
-						cy,
-						expandedX,
-						expandedY,
-						expandedW,
-						expandedH
-					)
-
-					if intersects and t then
-						local along = travelled + segLen * t
-						if along > context.guardDistance then
-							local cutEvent = context.cutEvent
-							cutEvent.index = index
-							cutEvent.cutX = cutX
-							cutEvent.cutY = cutY
-							cutEvent.cutDistance = along
-							return cutEvent
-						end
-					end
-				end
-			end
-
-			travelled = travelled + segLen
-			prevX, prevY = cx, cy
-		end
-	end
-
-	return nil
-end
-
-local function evaluateTrailCircleCut(context, saw, centerX, centerY, combinedRadiusSq, candidateIndices, candidateCount, candidateLookup, candidateGeneration)
-	local trailRef = context.trail
-	if not (trailRef and trailRef[1]) then
-		return nil
-	end
-
-	local headX = context.headX
-	local headY = context.headY
-	if not (headX and headY) then
-		return nil
-	end
-
-	local radius = 0
-	if combinedRadiusSq and combinedRadiusSq > 0 then
-		radius = sqrt(combinedRadiusSq)
-	end
-
-	if not candidateLookup then
-		candidateIndices, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForCircle(centerX, centerY, radius)
-	end
-
-	local useCandidateFilter = candidateLookup ~= nil
-	if useCandidateFilter and (not candidateIndices or (candidateCount or 0) == 0) then
-		return nil
-	end
-
-	local travelled = 0
-	local prevX, prevY = headX, headY
-	local bodyRadius = context.bodyRadius or 0
-
-	for index = 2, #trailRef do
-		local segment = trailRef[index]
-		local cx = segment and (segment.drawX or segment.x)
-		local cy = segment and (segment.drawY or segment.y)
-		if cx and cy then
-			local dx = cx - prevX
-			local dy = cy - prevY
-			local segLen = sqrt(dx * dx + dy * dy)
-
-			if segLen > 1e-6 then
-				local shouldTest = not useCandidateFilter or (candidateLookup[segment] == candidateGeneration)
-				if shouldTest then
-					local candidate = true
-					if Saws and Saws.isCollisionCandidate then
-						local minX = min(prevX, cx) - bodyRadius
-						local minY = min(prevY, cy) - bodyRadius
-						local maxX = max(prevX, cx) + bodyRadius
-						local maxY = max(prevY, cy) + bodyRadius
-						candidate = Saws:isCollisionCandidate(saw, minX, minY, maxX - minX, maxY - minY)
-					end
-
-					if candidate then
-						local closestX, closestY, distSq, t = closestPointOnSegment(centerX, centerY, prevX, prevY, cx, cy)
-						local along = travelled + segLen * (t or 0)
-						if along > context.guardDistance and distSq <= combinedRadiusSq then
-							if isSawCutPointExposed(saw, centerX, centerY, closestX, closestY) then
-								local cutEvent = context.cutEvent
-								cutEvent.index = index
-								cutEvent.cutX = closestX
-								cutEvent.cutY = closestY
-								cutEvent.cutDistance = along
-								return cutEvent
-							end
-						end
-					end
-				end
-			end
-
-			travelled = travelled + segLen
-			prevX, prevY = cx, cy
-		end
-	end
-
-	return nil
-end
-
 function Snake:checkLaserBodyCollision()
-	if isDead then
-		return false
-	end
-
-	if not (trail and #trail > 2) then
-		return false
-	end
-
-	if not (Lasers and Lasers.getEmitterArray) then
-		return false
-	end
-
-	local emitters = Lasers:getEmitterArray()
-	local emitterCount = emitters and #emitters or 0
-	if emitterCount == 0 then
-		return false
-	end
-
-	local head = trail[1]
-	local headX = head and (head.drawX or head.x)
-	local headY = head and (head.drawY or head.y)
-	if not (headX and headY) then
-		return false
-	end
-
-	local context = laserCollisionContext
-	context.snake = self
-	context.trail = trail
-	context.headX = headX
-	context.headY = headY
-	context.guardDistance = SEGMENT_SPACING * 0.9
-	context.bodyRadius = SEGMENT_SIZE * 0.5
-
-	local bodyRadius = context.bodyRadius
-
-	for index = 1, emitterCount do
-		local beam = emitters[index]
-		if beam and beam.state == "firing" then
-			local rect = beam.beamRect
-			if rect then
-				local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
-				if rw and rh and rw > 0 and rh > 0 then
-					local expandedX = (rx or 0) - bodyRadius
-					local expandedY = (ry or 0) - bodyRadius
-					local expandedW = rw + bodyRadius * 2
-					local expandedH = rh + bodyRadius * 2
-
-					local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
-					local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateCount, candidateLookup, candidateGeneration)
-					if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
-						-- Leave the laser scorch effect but skip the usual hazard flash
-						-- response so the tail chop only highlights the snake itself.
-						beam.burnAlpha = 0.92
-						resetCollisionContext(context)
-						return true
-					end
-				end
-			end
-		end
-	end
-
-	resetCollisionContext(context)
-	return false
+	return collisionHandlers.checkLaserBodyCollision(self, {
+		isDead = isDead,
+		trail = trail,
+	})
 end
 
 function Snake:checkDartBodyCollision()
-	if isDead then
-		return false
-	end
-
-	if not (trail and #trail > 2) then
-		return false
-	end
-
-	if not (Darts and Darts.getEmitterArray) then
-		return false
-	end
-
-	local emitters = Darts:getEmitterArray()
-	local emitterCount = emitters and #emitters or 0
-	if emitterCount == 0 then
-		return false
-	end
-
-	local head = trail[1]
-	local headX = head and (head.drawX or head.x)
-	local headY = head and (head.drawY or head.y)
-	if not (headX and headY) then
-		return false
-	end
-
-	local context = dartCollisionContext
-	context.snake = self
-	context.trail = trail
-	context.headX = headX
-	context.headY = headY
-	context.guardDistance = SEGMENT_SPACING * 0.85
-	context.bodyRadius = SEGMENT_SIZE * 0.45
-
-	local bodyRadius = context.bodyRadius
-
-	for index = 1, emitterCount do
-		local emitter = emitters[index]
-		if emitter and emitter.state == "firing" then
-			local rect = emitter.shotRect
-			if rect then
-				local rx, ry, rw, rh = rect[1], rect[2], rect[3], rect[4]
-				if rw and rh and rw > 0 and rh > 0 then
-					local expandedX = (rx or 0) - bodyRadius
-					local expandedY = (ry or 0) - bodyRadius
-					local expandedW = rw + bodyRadius * 2
-					local expandedH = rh + bodyRadius * 2
-
-					local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(expandedX, expandedY, expandedW, expandedH)
-					local cutEvent = evaluateTrailRectCut(context, expandedX, expandedY, expandedW, expandedH, candidates, candidateCount, candidateLookup, candidateGeneration)
-					if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
-						-- Avoid triggering the dart emitter flash when only the tail is clipped.
-						resetCollisionContext(context)
-						return true
-					end
-				end
-			end
-		end
-	end
-
-	resetCollisionContext(context)
-	return false
+	return collisionHandlers.checkDartBodyCollision(self, {
+		isDead = isDead,
+		trail = trail,
+	})
 end
 
 function Snake:checkSawBodyCollision()
-	if isDead then
-		return false
-	end
-
-	if not (trail and #trail > 2) then
-		return false
-	end
-
-	if not (Saws and Saws.getAll) then
-		return false
-	end
-
-	local saws = Saws:getAll()
-	if not (saws and #saws > 0) then
-		return false
-	end
-
-	local head = trail[1]
-	local headX = head and (head.drawX or head.x)
-	local headY = head and (head.drawY or head.y)
-	if not (headX and headY) then
-		return false
-	end
-
-	local context = sawCollisionContext
-	context.snake = self
-	context.trail = trail
-	context.headX = headX
-	context.headY = headY
-	context.guardDistance = SEGMENT_SPACING * 0.9
-	context.bodyRadius = SEGMENT_SIZE * 0.5
-
-	local bodyRadius = context.bodyRadius
-
-	for i = 1, #saws do
-		local saw = saws[i]
-		if isSawActive(saw) then
-			local sx, sy = getSawCenterPosition(saw)
-			if sx and sy then
-				local sawRadius = (saw.collisionRadius or saw.radius or 0)
-				local combined = sawRadius + bodyRadius
-				if combined > 0 then
-					local candidates, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForCircle(sx, sy, combined)
-					local cutEvent = evaluateTrailCircleCut(context, saw, sx, sy, combined * combined, candidates, candidateCount, candidateLookup, candidateGeneration)
-					if cutEvent and context.snake:handleSawBodyCut(cutEvent) then
-						resetCollisionContext(context)
-						return true
-					end
-				end
-			end
-		end
-	end
-
-	resetCollisionContext(context)
-	return false
+	return collisionHandlers.checkSawBodyCollision(self, {
+		isDead = isDead,
+		trail = trail,
+	})
 end
 
 function Snake:markFruitSegment(fruitX, fruitY, fruitScore)
