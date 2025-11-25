@@ -290,6 +290,9 @@ local german = {
                                 classic_mode = {
                                         intro_title = "Klassisch",
                                         intro_flavor = "Spiele den endlosen Originallauf ohne Boden-Modifikatoren.",
+                                        score_label = "Punkte",
+                                        best_score_label = "Bestwert",
+                                        combo_label = "Kombo",
                                 },
                                 floor_intro = {
                                         prompt = "Drücke eine beliebige Taste, um abzusteigen",
