@@ -244,8 +244,13 @@ local function ensureFonts()
 	fontProgressLabel = UI.fonts.caption or fontProgressSmall
 end
 
-local function handleButtonAction(_, action)
-	return action
+local function handleButtonAction(self, action)
+        if type(action) == "table" and action.state == "game" then
+                action.data = action.data or {}
+                action.data.mode = action.data.mode or (self and self.mode)
+        end
+
+        return action
 end
 
 local function getHighlightStats(self, animProgress)
