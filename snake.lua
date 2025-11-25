@@ -23,6 +23,7 @@ local SnakeAbilities = require("snake_abilities")
 local FloatingText = require("floatingtext")
 local Face = require("face")
 local SnakeOccupancy = require("snakeoccupancy")
+local SnakePortal = require("snake_portal")
 
 local abs = math.abs
 local floor = math.floor
@@ -208,18 +209,7 @@ local function recycleTrail(buffer)
 end
 
 local function clearPortalAnimation(state)
-	if not state then
-		return
-	end
-
-	recycleTrail(state.entrySourceTrail)
-	recycleTrail(state.entryTrail)
-	recycleTrail(state.exitTrail)
-	state.entrySourceTrail = nil
-	state.entryTrail = nil
-	state.exitTrail = nil
-	state.entryHole = nil
-	state.exitHole = nil
+        SnakePortal.clearPortalAnimation(state, recycleTrail)
 end
 
 local function assignDirection(target, x, y)
@@ -642,24 +632,7 @@ local function copySegmentData(segment)
 end
 
 local function computeTrailLength(trailData)
-	if not trailData then
-		return 0
-	end
-
-	local total = 0
-	for i = 2, #trailData do
-		local prev = trailData[i - 1]
-		local curr = trailData[i]
-		local ax, ay = prev and prev.drawX, prev and prev.drawY
-		local bx, by = curr and curr.drawX, curr and curr.drawY
-		if ax and ay and bx and by then
-			local dx = bx - ax
-			local dy = by - ay
-			total = total + sqrt(dx * dx + dy * dy)
-		end
-	end
-
-	return total
+        return SnakePortal.computeTrailLength(trailData)
 end
 
 local function applyTrailLengthLimit(maxLen, gluttonsWakeActive)
@@ -763,143 +736,20 @@ local function applyTrailLengthLimit(maxLen, gluttonsWakeActive)
 end
 
 local function sliceTrailByLength(sourceTrail, maxLength, destination)
-	local result = destination or {}
-	local previousCount = #result
-	local count = 0
-
-	if not sourceTrail or #sourceTrail == 0 then
-		releaseSegmentRange(result, 1)
-		return result
-	end
-
-	if previousCount >= 1 then
-		local existing = result[1]
-		if existing then
-			releaseSegment(existing)
-		end
-	end
-	local first = copySegmentData(sourceTrail[1]) or acquireSegment()
-	count = 1
-	result[count] = first
-
-	if not (maxLength and maxLength > 0) then
-		releaseSegmentRange(result, count + 1)
-		return result
-	end
-
-	local accumulated = 0
-	for i = 2, #sourceTrail do
-		local prev = sourceTrail[i - 1]
-		local curr = sourceTrail[i]
-		local px, py = prev and prev.drawX, prev and prev.drawY
-		local cx, cy = curr and curr.drawX, curr and curr.drawY
-		if not (px and py and cx and cy) then
-			break
-		end
-
-		local dx = cx - px
-		local dy = cy - py
-		local segLen = sqrt(dx * dx + dy * dy)
-
-		if segLen <= 1e-6 then
-			count = count + 1
-			if count <= previousCount then
-				local existing = result[count]
-				if existing then
-					releaseSegment(existing)
-				end
-			end
-			result[count] = copySegmentData(curr)
-		else
-			if accumulated + segLen >= maxLength then
-				local remaining = maxLength - accumulated
-				local t = remaining / segLen
-				if t < 0 then
-					t = 0
-				elseif t > 1 then
-					t = 1
-				end
-				local x = px + dx * t
-				local y = py + dy * t
-				if count + 1 <= previousCount then
-					local existing = result[count + 1]
-					if existing then
-						releaseSegment(existing)
-					end
-				end
-				local segCopy = copySegmentData(curr) or acquireSegment()
-				segCopy.drawX = x
-				segCopy.drawY = y
-				count = count + 1
-				result[count] = segCopy
-				releaseSegmentRange(result, count + 1)
-				return result
-			end
-
-			accumulated = accumulated + segLen
-			count = count + 1
-			if count <= previousCount then
-				local existing = result[count]
-				if existing then
-					releaseSegment(existing)
-				end
-			end
-			result[count] = copySegmentData(curr)
-		end
-	end
-
-	releaseSegmentRange(result, count + 1)
-
-	return result
+        return SnakePortal.sliceTrailByLength(sourceTrail, maxLength, destination, {
+                acquireSegment = acquireSegment,
+                releaseSegment = releaseSegment,
+                releaseSegmentRange = releaseSegmentRange,
+                copySegmentData = copySegmentData,
+        })
 end
 
 local function cloneTailFromIndex(startIndex, entryX, entryY)
-	if not trail or #trail == 0 then
-		return {}
-	end
-
-	local index = max(1, min(startIndex or 1, #trail))
-	local clone = {}
-
-	for i = index, #trail do
-		local segCopy = copySegmentData(trail[i]) or {}
-		if i == index then
-			segCopy.drawX = entryX or segCopy.drawX
-			segCopy.drawY = entryY or segCopy.drawY
-		end
-		clone[#clone + 1] = segCopy
-	end
-
-	return clone
+        return SnakePortal.cloneTailFromIndex(trail, startIndex, entryX, entryY, copySegmentData)
 end
 
 local function findPortalEntryIndex(entryX, entryY)
-	if not trail or #trail == 0 then
-		return 1
-	end
-
-	local bestIndex = 1
-	local bestDist = huge
-
-	for i = 1, #trail - 1 do
-		local segA = trail[i]
-		local segB = trail[i + 1]
-		local ax, ay = segA and segA.drawX, segA and segA.drawY
-		local bx, by = segB and segB.drawX, segB and segB.drawY
-		if ax and ay and bx and by then
-			local _, _, distSq = closestPointOnSegment(entryX, entryY, ax, ay, bx, by)
-			if distSq < bestDist then
-				bestDist = distSq
-				bestIndex = i + 1
-			end
-		end
-	end
-
-	if bestIndex > #trail then
-		bestIndex = #trail
-	end
-
-	return bestIndex
+        return SnakePortal.findPortalEntryIndex(trail, entryX, entryY, closestPointOnSegment)
 end
 
 local function trimHoleSegments(hole)
@@ -2400,60 +2250,16 @@ shake = 0.28,
 	end
 
         if portalAnimation then
-                local state = portalAnimation
-                local duration = state.duration or 0.3
-                if not duration or duration <= 1e-4 then
-                        duration = 1e-4
-                end
-                state.duration = duration
-
-                local completed = SnakeRender.updatePortalAnimation(state, dt)
-
-                local totalLength = state.totalLength
-                if not totalLength or totalLength <= 0 then
-                        totalLength = computeTrailLength(state.entrySourceTrail)
-                        if totalLength <= 0 then
-                                totalLength = SEGMENT_SPACING
-                        end
-                        state.totalLength = totalLength
-                end
-
-                local entryLength = totalLength * (1 - (state.progress or 0))
-                local exitLength = totalLength * (state.progress or 0)
-
-                state.entryTrail = sliceTrailByLength(state.entrySourceTrail, entryLength, state.entryTrail)
-                state.exitTrail = sliceTrailByLength(trail, exitLength, state.exitTrail)
-
-                local entryHole = state.entryHole
-                if entryHole then
-                        entryHole.x = state.entryX
-                        entryHole.y = state.entryY
-                        entryHole.time = (entryHole.time or 0) + dt
-
-                        local entryOpen = entryHole.open or 0
-                        entryHole.closing = 1 - entryHole.visibility
-                        local baseRadius = entryHole.baseRadius or (SEGMENT_SIZE * 0.7)
-                        entryHole.radius = baseRadius * (0.55 + 0.65 * entryOpen)
-                        entryHole.spin = (entryHole.spin or 0) + dt * (2.4 + 2.1 * entryOpen)
-                        entryHole.pulse = (entryHole.pulse or 0) + dt
-                end
-
-                local exitHole = state.exitHole
-                if exitHole then
-                        exitHole.x = state.exitX
-                        exitHole.y = state.exitY
-                        exitHole.time = (exitHole.time or 0) + dt
-
-                        local exitOpen = exitHole.open or 0
-                        exitHole.closing = 1 - exitHole.visibility
-                        local baseRadius = exitHole.baseRadius or (SEGMENT_SIZE * 0.75)
-                        exitHole.radius = baseRadius * (0.5 + 0.6 * exitOpen)
-                        exitHole.spin = (exitHole.spin or 0) + dt * (2.0 + 2.2 * exitOpen)
-                        exitHole.pulse = (exitHole.pulse or 0) + dt
-                end
+                local completed = SnakePortal.updateAnimation(portalAnimation, trail, dt, {
+                        SEGMENT_SIZE = SEGMENT_SIZE,
+                        SEGMENT_SPACING = SEGMENT_SPACING,
+                        SnakeRender = SnakeRender,
+                        sliceTrailByLength = sliceTrailByLength,
+                        computeTrailLength = computeTrailLength,
+                        clearPortalAnimation = clearPortalAnimation,
+                })
 
                 if completed then
-                        clearPortalAnimation(state)
                         portalAnimation = nil
                 end
         end
