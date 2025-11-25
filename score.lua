@@ -54,6 +54,10 @@ function Score:setMode(mode)
         self.previousHighScore = self:getHighScore()
 end
 
+function Score:getMode()
+        return self.mode or "journey"
+end
+
 function Score:load(mode)
         self.current = 0
         self.highscores = self.highscores or {journey = 0, classic = 0}

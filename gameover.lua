@@ -183,17 +183,19 @@ local function getSectionInnerSpacing()
 end
 
 local function resolveModeFromData(data)
-        if not data then
-                return "journey"
+        if data then
+                if data.mode then
+                        return data.mode
+                end
+
+                local restartData = data.restartAction and data.restartAction.data
+                if restartData and restartData.mode then
+                        return restartData.mode
+                end
         end
 
-        if data.mode then
-                return data.mode
-        end
-
-        local restartData = data.restartAction and data.restartAction.data
-        if restartData and restartData.mode then
-                return restartData.mode
+        if Score and Score.getMode then
+                return Score:getMode()
         end
 
         return "journey"
