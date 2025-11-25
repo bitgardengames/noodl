@@ -2,24 +2,33 @@ local sqrt = math.sqrt
 
 local Trail = {}
 
+local POOL = 1
+local COUNT = 2
+local REMOVER = 3
+
+Trail.POOL = POOL
+Trail.COUNT = COUNT
+Trail.REMOVER = REMOVER
+
 function Trail.newPoolState()
         return {
-                pool = {},
-                count = 0,
-                removeSnakeBodySpatialEntry = nil,
+                [POOL] = {},
+                [COUNT] = 0,
+                [REMOVER] = nil,
         }
 end
 
 local function getRemover(poolState, override)
-        return override or poolState.removeSnakeBodySpatialEntry
+        return override or poolState[REMOVER]
 end
 
 function Trail.acquireSegment(poolState)
-        local count = poolState.count
+        local count = poolState[COUNT]
+        local pool = poolState[POOL]
         if count > 0 then
-                local segment = poolState.pool[count]
-                poolState.pool[count] = nil
-                poolState.count = count - 1
+                local segment = pool[count]
+                pool[count] = nil
+                poolState[COUNT] = count - 1
                 return segment
         end
 
@@ -53,9 +62,10 @@ function Trail.releaseSegment(poolState, removeSnakeBodySpatialEntry, segment)
         segment.cellCol = nil
         segment.cellRow = nil
 
-        local count = poolState.count + 1
-        poolState.count = count
-        poolState.pool[count] = segment
+        local pool = poolState[POOL]
+        local count = poolState[COUNT] + 1
+        poolState[COUNT] = count
+        pool[count] = segment
 end
 
 function Trail.releaseSegmentRange(poolState, buffer, startIndex, removeSnakeBodySpatialEntry)
