@@ -61,6 +61,14 @@ local easeOutExpo = Easing.easeOutExpo
 local currentGame
 local currentRenderState
 
+local function normalizeMode(mode)
+	if mode == "classic" then
+		return "classic"
+	end
+
+	return "journey"
+end
+
 local DEATH_HOLD_DURATION = 0.5
 local DEFAULT_SHADOW_COLOR = {0, 0, 0, 0.5}
 local DEFAULT_IMPACT_RIPPLE_COLOR = {1, 0.42, 0.32, 1}
@@ -1064,7 +1072,8 @@ end
 function Game:load(options)
         options = options or {}
 
-        self.mode = options.mode or "journey"
+        self.mode = normalizeMode(options.mode)
+        self.startMode = self.mode
 
         local requestedFloor = max(1, floor(options.startFloor or 1))
         if self.mode == "classic" then
@@ -1131,40 +1140,43 @@ function Game:load(options)
 end
 
 function Game:reset()
-	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-	Face:set("idle")
-	self.state = "playing"
-	self.floor = self.startFloor or 1
-	self.runTimer = 0
-	self.floorTimer = 0
-	self.pauseReturnState = nil
+        self.mode = normalizeMode(self.mode or self.startMode)
+        self.startMode = self.mode
 
-	self.developerGodMode = false
+        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+        Face:set("idle")
+        self.state = "playing"
+        self.floor = self.startFloor or 1
+        self.runTimer = 0
+        self.floorTimer = 0
+        self.pauseReturnState = nil
 
-	self.mouseCursorState = nil
+        self.developerGodMode = false
 
-	self.deathHoldTimer = nil
-	self.deathHoldDuration = nil
+        self.mouseCursorState = nil
 
-	self:invalidateTransitionTitleCache()
+        self.deathHoldTimer = nil
+        self.deathHoldDuration = nil
 
-	resetFeedbackState(self)
+        self:invalidateTransitionTitleCache()
 
-	self.Effects = createEffects()
+        resetFeedbackState(self)
 
-	self.hudIndicatorRefreshInterval = 1 / 30
-	self.hudIndicatorActiveRefreshInterval = 1 / 60
-	self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshInterval
+        self.Effects = createEffects()
 
-	if self.transition then
-		self.transition:reset()
-	end
+        self.hudIndicatorRefreshInterval = 1 / 30
+        self.hudIndicatorActiveRefreshInterval = 1 / 60
+        self.hudIndicatorRefreshTimer = self.hudIndicatorRefreshInterval
 
-	if self.input then
-		self.input:resetAxes()
-	end
+        if self.transition then
+                self.transition:reset()
+        end
 
-	Snake:setDeveloperGodMode(false)
+        if self.input then
+                self.input:resetAxes()
+        end
+
+        Snake:setDeveloperGodMode(false)
 end
 
 function Game:enter(data)
