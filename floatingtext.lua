@@ -222,13 +222,14 @@ local function resolveRiseDistance(defaults, duration, riseSpeed, options)
 end
 
 local function createInstance(overrides)
-	local defaults = resolveDefaults(overrides)
+        local defaults = resolveDefaults(overrides)
 
-	local instance = {
-		defaults = defaults,
-		entries = {},
-		entryPool = {},
-	}
+        local instance = {
+                defaults = defaults,
+                entries = {},
+                entryPool = {},
+                glowEntries = {},
+        }
 
 	return setmetatable(instance, FloatingText)
 end
@@ -457,10 +458,11 @@ function FloatingText:update(dt)
 end
 
 function FloatingText:draw()
-	local entries = self.entries
-	local defaultBlendMode, defaultAlphaMode = lg.getBlendMode()
-	local glowEntries = nil
-	local currentFont = nil
+        local entries = self.entries
+        local defaultBlendMode, defaultAlphaMode = lg.getBlendMode()
+        local glowEntries = self.glowEntries
+        local glowCount = 0
+        local currentFont = nil
 
 	for index = 1, #entries do
 		local entry = entries[index]
@@ -501,27 +503,35 @@ function FloatingText:draw()
 		lg.setColor(entry.color[1], entry.color[2], entry.color[3], alpha)
 		lg.print(entry.text, baseX, baseY, rotation, scale, scale, originX, originY)
 
-		if entry.glowAlpha and entry.glowAlpha > 0 and entry.glowColor then
-			glowEntries = glowEntries or {}
-			glowEntries[#glowEntries + 1] = {
-				entry = entry,
-				baseX = baseX,
-				baseY = baseY,
-				rotation = rotation,
-				scale = scale,
-				originX = originX,
-				originY = originY,
-				alpha = alpha,
-			}
-		end
-	end
+                if entry.glowAlpha and entry.glowAlpha > 0 and entry.glowColor then
+                        glowCount = glowCount + 1
+                        local glow = glowEntries[glowCount]
+                        if glow == nil then
+                                glow = {}
+                                glowEntries[glowCount] = glow
+                        end
 
-	if glowEntries then
-		lg.setBlendMode("add", "alphamultiply")
+                        glow.entry = entry
+                        glow.baseX = baseX
+                        glow.baseY = baseY
+                        glow.rotation = rotation
+                        glow.scale = scale
+                        glow.originX = originX
+                        glow.originY = originY
+                        glow.alpha = alpha
+                end
+        end
 
-		for index = 1, #glowEntries do
-			local glow = glowEntries[index]
-			local entry = glow.entry
+        for index = glowCount + 1, #glowEntries do
+                glowEntries[index] = nil
+        end
+
+        if glowCount > 0 then
+                lg.setBlendMode("add", "alphamultiply")
+
+                for index = 1, glowCount do
+                        local glow = glowEntries[index]
+                        local entry = glow.entry
                         local layers = entry.glowLayers or 1
                         local spread = entry.glowSpread or 0
                         for layer = 1, max(layers, 1) do
