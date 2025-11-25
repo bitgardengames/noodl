@@ -66,6 +66,8 @@ local dailyBarCelebration = {
         shimmerPhase = 0,
         finished = false,
 }
+local focusButtonById
+local rebuildMenuButtons
 local analogAxisDirections = {horizontal = nil, vertical = nil}
 local titleSaw = SawActor.new()
 local modeButtonsVisible = false
