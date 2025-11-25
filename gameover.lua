@@ -17,6 +17,14 @@ local GameOver = {isVictory = false}
 
 local buttonDefs = {}
 
+local function normalizeMode(mode)
+	if mode == "classic" then
+		return "classic"
+	end
+
+	return "journey"
+end
+
 local ANALOG_DEADZONE = 0.3
 local TEXT_SHADOW_OFFSET = 2
 local TITLE_SHADOW_OFFSET = 3
@@ -183,22 +191,22 @@ local function getSectionInnerSpacing()
 end
 
 local function resolveModeFromData(data)
-        if data then
-                if data.mode then
-                        return data.mode
-                end
+	if data then
+		if data.mode then
+			return normalizeMode(data.mode)
+		end
 
-                local restartData = data.restartAction and data.restartAction.data
-                if restartData and restartData.mode then
-                        return restartData.mode
-                end
-        end
+		local restartData = data.restartAction and data.restartAction.data
+		if restartData and restartData.mode then
+			return normalizeMode(restartData.mode)
+		end
+	end
 
-        if Score and Score.getMode then
-                return Score:getMode()
-        end
+	if Score and Score.getMode then
+		return normalizeMode(Score:getMode())
+	end
 
-        return "journey"
+	return "journey"
 end
 
 local function getButtonAnimationOffset(self)
@@ -249,7 +257,7 @@ end
 local function handleButtonAction(self, action)
         if type(action) == "table" and action.state == "game" then
                 action.data = action.data or {}
-                action.data.mode = action.data.mode or (self and self.mode)
+                action.data.mode = normalizeMode(action.data.mode or (self and self.mode))
         end
 
         return action
