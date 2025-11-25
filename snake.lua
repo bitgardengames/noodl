@@ -55,6 +55,23 @@ local CTX_SHAKE = MovementContext.SHAKE
 local CTX_DAMAGE = MovementContext.DAMAGE
 local CTX_INFLICTED_DAMAGE = MovementContext.INFLICTED_DAMAGE
 
+local selfCollisionContext = {}
+
+local function resetSelfCollisionContext()
+	selfCollisionContext[CTX_PUSH_X] = 0
+	selfCollisionContext[CTX_PUSH_Y] = 0
+	selfCollisionContext[CTX_SNAP_X] = nil
+	selfCollisionContext[CTX_SNAP_Y] = nil
+	selfCollisionContext[CTX_DIR_X] = nil
+	selfCollisionContext[CTX_DIR_Y] = nil
+	selfCollisionContext[CTX_GRACE] = nil
+	selfCollisionContext[CTX_SHAKE] = nil
+	selfCollisionContext[CTX_DAMAGE] = nil
+	selfCollisionContext[CTX_INFLICTED_DAMAGE] = nil
+
+	return selfCollisionContext
+end
+
 local function wipeTable(t)
 	if not t then
 		return
@@ -2234,16 +2251,17 @@ segment.dirY = direction[DIR_Y]
 							segmentStartX, segmentStartY = targetX, targetY
 							break
 						else
-local pushX = -(direction[DIR_X] or 0) * SEGMENT_SPACING
-local pushY = -(direction[DIR_Y] or 0) * SEGMENT_SPACING
-local context = {
-pushX = pushX,
-pushY = pushY,
-dirX = -(direction[DIR_X] or 0),
-dirY = -(direction[DIR_Y] or 0),
-grace = HAZARD_GRACE_DURATION * 2,
-shake = 0.28,
-}
+							local pushX = -(direction[DIR_X] or 0) * SEGMENT_SPACING
+							local pushY = -(direction[DIR_Y] or 0) * SEGMENT_SPACING
+							local inverseDirX = -(direction[DIR_X] or 0)
+							local inverseDirY = -(direction[DIR_Y] or 0)
+							local context = resetSelfCollisionContext()
+							context[CTX_PUSH_X] = pushX
+							context[CTX_PUSH_Y] = pushY
+							context[CTX_DIR_X] = inverseDirX
+							context[CTX_DIR_Y] = inverseDirY
+							context[CTX_GRACE] = HAZARD_GRACE_DURATION * 2
+							context[CTX_SHAKE] = 0.28
 							return false, "self", context
 						end
 					end
