@@ -40,6 +40,15 @@ local function normalizeMode(mode)
         return "journey"
 end
 
+local function normalizeHighScoresTable(tbl)
+        tbl = tbl or {}
+
+        return {
+                journey = tonumber(tbl.journey) or 0,
+                classic = tonumber(tbl.classic) or 0,
+        }
+end
+
 function Score:setMode(mode)
         self.mode = normalizeMode(mode)
         self.previousHighScore = self:getHighScore()
@@ -62,37 +71,33 @@ function Score:load(mode)
                 local chunk = love.filesystem.load(self.saveFile)
                 local ok, saved = pcall(chunk)
                 if ok and type(saved) == "table" then
+                        local loadedHighScores = normalizeHighScoresTable(saved.highscores)
+
                         if type(saved.highscore) == "number" then
-                                self.highscores.journey = saved.highscore
+                                loadedHighScores.journey = saved.highscore
                         end
 
                         if type(saved.journey) == "number" then
-                                self.highscores.journey = saved.journey
+                                loadedHighScores.journey = saved.journey
                         end
 
                         if type(saved.classic) == "number" then
-                                self.highscores.classic = saved.classic
+                                loadedHighScores.classic = saved.classic
                         end
 
-                        if saved.highscores and type(saved.highscores) == "table" then
-                                for key, value in pairs(saved.highscores) do
-                                        if type(value) == "number" then
-                                                self.highscores[key] = value
-                                        end
-                                end
-                        end
-
-                        if self.highscores.classic == 0 and self.highscores.journey == 0 then
+                        if loadedHighScores.classic == 0 and loadedHighScores.journey == 0 then
                                 local highest = 0
                                 for _, value in pairs(saved) do
                                         if type(value) == "number" and value > highest then
                                                 highest = value
                                         end
                                 end
-                                self.highscores.journey = highest
+                                loadedHighScores.journey = highest
                         end
+
+                        self.highscores = loadedHighScores
                 elseif ok and type(saved) == "number" then
-                        self.highscores.journey = saved
+                        self.highscores = {journey = saved, classic = 0}
                 end
         end
 
@@ -113,10 +118,18 @@ function Score:load(mode)
 end
 
 function Score:save()
+        local scores = normalizeHighScoresTable(self.highscores)
+
         local lines = {"return {\n"}
-        insert(lines, string.format("    journey = %d,\n", max(0, (self.highscores and self.highscores.journey) or 0)))
-        insert(lines, string.format("    classic = %d,\n", max(0, (self.highscores and self.highscores.classic) or 0)))
-        insert(lines, string.format("    highscore = %d,\n", max(0, (self.highscores and self.highscores.journey) or 0)))
+        insert(lines, "    highscores = {\n")
+        insert(lines, string.format("        journey = %d,\n", max(0, scores.journey)))
+        insert(lines, string.format("        classic = %d,\n", max(0, scores.classic)))
+        insert(lines, "    },\n")
+
+        -- Legacy duplicates for backward compatibility
+        insert(lines, string.format("    journey = %d,\n", max(0, scores.journey)))
+        insert(lines, string.format("    classic = %d,\n", max(0, scores.classic)))
+        insert(lines, string.format("    highscore = %d,\n", max(0, scores.journey)))
         insert(lines, "}\n")
         love.filesystem.write(self.saveFile, table.concat(lines))
 end

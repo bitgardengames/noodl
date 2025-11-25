@@ -510,6 +510,7 @@ end
 function GameOver:enter(data)
         data = data or {}
         local mode = data.mode or "journey"
+        self.mode = mode
 
         UI.clearButtons()
         ensureFonts()
@@ -520,7 +521,7 @@ function GameOver:enter(data)
         end
 
         stats.score = data.score or 0
-        stats.highScore = data.highScore or (Score.getHighScore and Score:getHighScore(mode)) or stats.score or 0
+        stats.highScore = data.highScore or (Score.getHighScore and Score:getHighScore(self.mode)) or stats.score or 0
         stats.apples = data.apples or 0
         stats.timeAlive = (data.stats and data.stats.timeAlive) or 0
         stats.tilesTravelled = (data.stats and data.stats.tilesTravelled) or 0
@@ -540,7 +541,12 @@ function GameOver:enter(data)
         self.deathMessage = data.endingMessage or pickDeathMessage(self.deathCause)
         self.customTitle = data.storyTitle
 
-        local restartAction = data.restartAction or {state = "game", data = {mode = mode}}
+        local restartAction = data.restartAction or {state = "game", data = {mode = self.mode}}
+
+        if type(restartAction) == "table" then
+                restartAction.data = restartAction.data or {}
+                restartAction.data.mode = restartAction.data.mode or self.mode
+        end
 
         buttonDefs = {
                 {id = "playAgain", textKey = "gameover.play_again", action = restartAction},
