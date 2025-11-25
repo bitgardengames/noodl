@@ -534,7 +534,7 @@ local function focusButtonById(targetId)
         end
 end
 
-local function rebuildMenuButtons(modeAppearStart)
+function rebuildMenuButtons(modeAppearStart)
         local sw, sh = Screen:get()
         local centerX = sw / 2
         local menuLayout = UI.getMenuLayout(sw, sh)
