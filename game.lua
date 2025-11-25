@@ -1093,9 +1093,11 @@ function Game:load(options)
         Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
 
         Score:load(self.mode)
+        UI:setGameMode(self.mode)
+        UI:resetScoreDisplay(Score:get())
         Upgrades:beginRun()
         GameUtils:prepareGame(self.screenWidth, self.screenHeight)
-	Face:set("idle")
+        Face:set("idle")
 
 	self.transition = TransitionManager.new(self)
 	self.input = GameInput.new(self, self.transition)
@@ -1115,10 +1117,9 @@ function Game:load(options)
 		Snake.adrenaline.active = false
 		Snake.adrenaline.suppressVisuals = nil
 	end
-
         self:setupFloor(self.floor)
 
-        local hideIntroTitle = self.floor == 1
+        local hideIntroTitle = self.floor == 1 and self.mode ~= "classic" and self.mode ~= "journey"
 
         self.transition:startFloorIntro(2.8, {
                 transitionAdvance = false,
@@ -1183,11 +1184,12 @@ function Game:enter(data)
 end
 
 function Game:leave()
-	self:releaseMouseVisibility()
+        self:releaseMouseVisibility()
 
-	Snake:resetModifiers()
+        Snake:resetModifiers()
 
-	UI:setUpgradeIndicators(nil)
+        UI:setUpgradeIndicators(nil)
+        UI:setGameMode(nil)
 end
 
 function Game:beginDeath()

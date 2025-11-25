@@ -5,6 +5,7 @@ local Easing = require("easing")
 local Timer = require("timer")
 local RenderLayers = require("renderlayers")
 local Color = require("color")
+local Score = require("score")
 
 local abs = math.abs
 local floor = math.floor
@@ -40,16 +41,26 @@ UI.goalReachedAnim = 0
 UI.goalCelebrated = false
 
 UI.combo = {
-	count = 0,
-	timer = 0,
-	duration = 0,
-	pop = 0,
-	textAlpha = 0,
-	textTarget = 0,
-	textFadeSpeed = 14,
-	shakeTimer = 0,
-	shakeDuration = 0.35,
-	shakeMagnitude = 0,
+        count = 0,
+        timer = 0,
+        duration = 0,
+        pop = 0,
+        textAlpha = 0,
+        textTarget = 0,
+        textFadeSpeed = 14,
+        shakeTimer = 0,
+        shakeDuration = 0.35,
+        shakeMagnitude = 0,
+}
+
+UI.score = {
+        visible = false,
+        target = 0,
+        display = 0,
+        lastValue = 0,
+        pop = 0,
+        delta = 0,
+        deltaTimer = 0,
 }
 
 UI.shields = {
@@ -258,12 +269,17 @@ local function lerp(a, b, t)
 end
 
 local function approachExp(current, target, dt, speed)
-	if speed <= 0 or dt <= 0 then
-		return target
-	end
+        if speed <= 0 or dt <= 0 then
+                return target
+        end
 
-	local factor = 1 - math.exp(-speed * dt)
-	return current + (target - current) * factor
+        local factor = 1 - math.exp(-speed * dt)
+        return current + (target - current) * factor
+end
+
+local function formatScoreValue(value)
+        if not value then return "0" end
+        return tostring(floor(value + 0.5))
 end
 
 local function calculateShadowPadding(defaultStrokeWidth, overrideStrokeWidth)
@@ -1347,23 +1363,100 @@ function UI:removeFruit(count)
 end
 
 function UI:celebrateGoal()
-	self.goalReachedAnim = 0
-	self.goalCelebrated = true
-	Audio:playSound("goal_reached")
-	for index, socket in ipairs(self.fruitSockets) do
-		if socket.state ~= "removing" then
-			socket.bounceTimer = nil
-			socket.pendingCelebration = true
-			socket.celebrationDelay = (index - 1) * 0.05
-			socket.celebrationGlow = nil
-		end
-	end
+        self.goalReachedAnim = 0
+        self.goalCelebrated = true
+        Audio:playSound("goal_reached")
+        for index, socket in ipairs(self.fruitSockets) do
+                if socket.state ~= "removing" then
+                        socket.bounceTimer = nil
+                        socket.pendingCelebration = true
+                        socket.celebrationDelay = (index - 1) * 0.05
+                        socket.celebrationGlow = nil
+                end
+        end
+end
+
+function UI:setGameMode(mode)
+        self.mode = mode
+        self.score.visible = mode == "classic"
+
+        if not self.score.visible then
+                self:resetScoreDisplay()
+        end
+end
+
+function UI:resetScoreDisplay(value)
+        local score = self.score
+        if not score then return end
+
+        local target = value
+        if target == nil and Score and Score.get then
+                target = Score:get()
+        end
+
+        target = target or 0
+        score.target = target
+        score.display = target
+        score.lastValue = target
+        score.delta = 0
+        score.deltaTimer = 0
+        score.pop = 0
+end
+
+local function updateScoreDisplay(self, dt)
+        local score = self.score
+        if not score then return end
+
+        local target = (Score and Score.get and Score:get()) or 0
+
+        if not score.visible then
+                score.target = target
+                score.display = target
+                score.lastValue = target
+                score.delta = 0
+                score.deltaTimer = 0
+                score.pop = 0
+                return
+        end
+
+        score.target = target
+
+        if score.lastValue == nil then
+                score.lastValue = target
+        end
+
+        if score.lastValue ~= target then
+                local delta = target - score.lastValue
+                if delta ~= 0 then
+                        score.delta = delta
+                        score.deltaTimer = 0.9
+                        if delta > 0 then
+                                score.pop = 1.0
+                        end
+                end
+                score.lastValue = target
+        end
+
+        score.display = score.display or target
+        local smoothing = dt and dt > 0 and min(dt * 8, 1) or 1
+        score.display = score.display + (target - score.display) * smoothing
+
+        if score.pop and score.pop > 0 then
+                score.pop = max(0, score.pop - dt * 2.4)
+        end
+
+        if score.deltaTimer and score.deltaTimer > 0 then
+                score.deltaTimer = max(0, score.deltaTimer - dt)
+                if score.deltaTimer == 0 then
+                        score.delta = 0
+                end
+        end
 end
 
 function UI:update(dt)
-	for _, button in ipairs(UI._buttonList) do
-		local hoverTarget = button.hoverTarget or 0
-		local focusTarget = button.focused and 1 or 0
+        for _, button in ipairs(UI._buttonList) do
+                local hoverTarget = button.hoverTarget or 0
+                local focusTarget = button.focused and 1 or 0
 		button.anim = approachExp(button.anim or 0, button.pressed and 1 or 0, dt, 18)
 		if hoverTarget > 0 then
 			button.hoverAnim = approachExp(button.hoverAnim or 0, hoverTarget, dt, 12)
@@ -1385,12 +1478,14 @@ function UI:update(dt)
 			button.popProgress = approachExp(button.popProgress or 0, 0, dt, 10)
 		end
 
-		button.hoverTarget = 0
-	end
+                button.hoverTarget = 0
+        end
 
-	-- update fruit socket animations
-	for i = #self.fruitSockets, 1, -1 do
-		local socket = self.fruitSockets[i]
+        updateScoreDisplay(self, dt)
+
+        -- update fruit socket animations
+        for i = #self.fruitSockets, 1, -1 do
+local socket = self.fruitSockets[i]
 		local removeSocket = false
 
 		socket.anim = socket.anim or 0
@@ -1739,17 +1834,132 @@ local function lerp(a, b, t)
 end
 
 local function lerpColor(a, b, t)
-	return {
-		lerp(a[1], b[1], t),
-		lerp(a[2], b[2], t),
-		lerp(a[3], b[3], t),
-		lerp(a[4] or 1, b[4] or 1, t),
-	}
+        return {
+                lerp(a[1], b[1], t),
+                lerp(a[2], b[2], t),
+                lerp(a[3], b[3], t),
+                lerp(a[4] or 1, b[4] or 1, t),
+        }
+end
+
+local function getLocalizedOrFallback(key, fallback)
+        local value = Localization:get(key)
+        if value and value ~= key then
+                return value
+        end
+
+        return fallback
+end
+
+local function drawClassicScore(self)
+        local scoreState = self.score
+        if not (scoreState and scoreState.visible) then
+                return
+        end
+
+        local padding = UI.spacing.panelPadding or 20
+        local margin = UI.spacing.margin or 24
+        local labelFont = UI.fonts.caption or UI.fonts.prompt or love.graphics.getFont()
+        local valueFont = UI.fonts.display or love.graphics.getFont()
+        local detailFont = UI.fonts.button or love.graphics.getFont()
+
+        local scoreLabel = getLocalizedOrFallback("game.classic_mode.score_label", "Score")
+        local bestLabel = getLocalizedOrFallback("game.classic_mode.best_score_label", "Best")
+        local comboLabel = getLocalizedOrFallback("game.classic_mode.combo_label", "Combo")
+
+        local currentScore = formatScoreValue(scoreState.display or 0)
+        local highScore = (Score and Score.getHighScore and Score:getHighScore("classic")) or 0
+        local deltaAlpha = clamp01((scoreState.deltaTimer or 0) / 0.9)
+
+        local details = {}
+        if scoreState.delta and scoreState.delta ~= 0 and deltaAlpha > 0 then
+                local deltaText = ((scoreState.delta > 0) and "+" or "") .. formatScoreValue(scoreState.delta)
+                local deltaColor = scoreState.delta > 0 and {0.82, 1, 0.78, 1} or {1, 0.72, 0.62, 1}
+                insert(details, {text = deltaText, color = deltaColor, alpha = deltaAlpha})
+        end
+
+        local combo = self.combo
+        if combo and combo.count and combo.count >= 2 and (combo.timer or 0) > 0 then
+                local comboText = comboLabel .. " x" .. tostring(combo.count)
+                local accent = Theme.highlightColor or {1, 1, 1, 1}
+                insert(details, {text = comboText, color = accent, alpha = 1})
+        end
+
+        insert(details, {
+                text = bestLabel .. ": " .. formatScoreValue(highScore),
+                color = UI.colors.subtleText or Theme.textColor,
+                alpha = 1,
+        })
+
+        local maxWidth = labelFont:getWidth(scoreLabel)
+        maxWidth = max(maxWidth, valueFont:getWidth(currentScore))
+        for _, line in ipairs(details) do
+                maxWidth = max(maxWidth, detailFont:getWidth(line.text or ""))
+        end
+
+        local detailHeight = (#details > 0) and (#details * (detailFont:getHeight() + 2) + 4) or 0
+        local width = max(220, maxWidth + padding * 2)
+        local height = padding * 2 + labelFont:getHeight() + valueFont:getHeight() + detailHeight
+
+        local x = margin
+        local y = margin
+        local centerX = x + width * 0.5
+        local centerY = y + height * 0.5
+        local popScale = 1 + (scoreState.pop or 0) * 0.1
+        local glow = (Score and Score.getHighScoreGlowStrength and Score:getHighScoreGlowStrength()) or 0
+        local borderColor = UI.colors.border or {0, 0, 0, 1}
+        if (scoreState.target or 0) >= highScore and highScore > 0 then
+                local accent = Theme.highlightColor or {1, 1, 1, 1}
+                borderColor = {
+                        lerp(borderColor[1], accent[1], 0.35 + glow * 0.2),
+                        lerp(borderColor[2], accent[2], 0.35 + glow * 0.2),
+                        lerp(borderColor[3], accent[3], 0.35 + glow * 0.2),
+                        borderColor[4] or 1,
+                }
+        end
+
+        love.graphics.push("all")
+        love.graphics.translate(centerX, centerY)
+        love.graphics.scale(popScale, popScale)
+        love.graphics.translate(-centerX, -centerY)
+
+        love.graphics.setColor(0, 0, 0, 0.35)
+        love.graphics.rectangle("fill", x + 4, y + 6, width, height, 16, 16)
+
+        local panelColor = Theme.panelColor or {0, 0, 0, 0.8}
+        love.graphics.setColor(panelColor[1] or 0, panelColor[2] or 0, panelColor[3] or 0, 0.9 + glow * 0.08)
+        love.graphics.rectangle("fill", x, y, width, height, 16, 16)
+
+        love.graphics.setColor(borderColor)
+        love.graphics.setLineWidth(3)
+        love.graphics.rectangle("line", x, y, width, height, 16, 16)
+
+        local labelY = y + padding
+        local scoreY = labelY + labelFont:getHeight() - 2
+        love.graphics.setFont(labelFont)
+        love.graphics.setColor(UI.colors.subtleText or Theme.textColor)
+        love.graphics.print(scoreLabel, x + padding, labelY)
+
+        love.graphics.setFont(valueFont)
+        love.graphics.setColor(Theme.textColor)
+        love.graphics.print(currentScore, x + padding, scoreY)
+
+        local detailY = y + padding + labelFont:getHeight() + valueFont:getHeight() + 4
+        love.graphics.setFont(detailFont)
+        for _, line in ipairs(details) do
+                local color = line.color or Theme.textColor
+                local alpha = line.alpha or 1
+                love.graphics.setColor(color[1] or 1, color[2] or 1, color[3] or 1, (color[4] or 1) * alpha)
+                love.graphics.printf(line.text or "", x + padding, detailY, width - padding * 2, "left")
+                detailY = detailY + detailFont:getHeight() + 2
+        end
+
+        love.graphics.pop()
 end
 
 local comboBarColors = {
-	{0.95, 0.2, 0.15, 0.95},
-	{1.0, 0.55, 0.0, 0.95},
+        {0.95, 0.2, 0.15, 0.95},
+        {1.0, 0.55, 0.0, 0.95},
 	{0.95, 0.85, 0.0, 0.95},
 	{0.05, 0.85, 0.3, 0.95},
 }
@@ -2620,10 +2830,11 @@ function UI:drawFruitSockets()
 end
 
 function UI:draw()
-	self:refreshCursor()
-	-- draw socket grid
-	self:drawFruitSockets()
-	self:drawUpgradeIndicators()
+        self:refreshCursor()
+        drawClassicScore(self)
+        -- draw socket grid
+        self:drawFruitSockets()
+        self:drawUpgradeIndicators()
 	drawComboIndicator(self)
 end
 

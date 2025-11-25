@@ -290,6 +290,9 @@ local english = {
                         classic_mode = {
                                 intro_title = "Classic Mode",
                                 intro_flavor = "Play the original endless run without floor modifiers.",
+                                score_label = "Score",
+                                best_score_label = "Best",
+                                combo_label = "Combo",
                         },
                         floor_intro = {
                                 prompt = "Press any key to descend",
