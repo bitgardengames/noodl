@@ -85,6 +85,7 @@ local function getFloorString(floorData, field)
 
 	return ""
 end
+
 local DEFAULT_SURGE_RIPPLE_COLOR = {1, 0.9, 0.55, 1}
 local TAIL_CHOP_FEEDBACK_COLOR = {0.98, 0.22, 0.24, 1}
 
@@ -288,15 +289,31 @@ function Game:refreshTransitionTitleCanvas(data)
 			promptCanvas:setFilter("linear", "linear")
 			self.transitionPromptCanvas = promptCanvas
 		end
-	else
+		else
 		self.transitionPromptCanvas = nil
 	end
 
-        local localeRevision = Localization:getRevision()
-        local floorName = getFloorString(floorData, "name")
-        local floorFlavor = getFloorString(floorData, "flavor")
+	local localeRevision = Localization:getRevision()
+	local floorName = getFloorString(floorData, "name")
+	local floorFlavor = getFloorString(floorData, "flavor")
 
-        if hideTitle then
+	if self.mode == "classic" then
+		local classicName = Localization:get("game.classic_mode.intro_title")
+		if classicName and classicName ~= "game.classic_mode.intro_title" then
+			floorName = classicName
+		else
+			floorName = "Classic Mode"
+		end
+
+		local classicFlavor = Localization:get("game.classic_mode.intro_flavor")
+		if classicFlavor and classicFlavor ~= "game.classic_mode.intro_flavor" then
+			floorFlavor = classicFlavor
+		else
+			floorFlavor = nil
+		end
+	end
+
+	if hideTitle then
                 floorName = ""
                 floorFlavor = nil
         end

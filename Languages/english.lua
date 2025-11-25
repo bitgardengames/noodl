@@ -285,11 +285,15 @@ local english = {
 				name = "Promise Gate",
 				flavor = "At the final gate, Noodl secures the last fruit and coils around the harvest.",
 			},
-		},
-		game = {
-			floor_intro = {
-				prompt = "Press any key to descend",
-				heal_section_title = "Floor Rest",
+                },
+                game = {
+                        classic_mode = {
+                                intro_title = "Classic Mode",
+                                intro_flavor = "Play the original endless run without floor modifiers.",
+                        },
+                        floor_intro = {
+                                prompt = "Press any key to descend",
+                                heal_section_title = "Floor Rest",
 				heal_note = "Forged ${amount} shield(s).",
 				shield_note = "Forged ${amount} shield(s).",
 			},
