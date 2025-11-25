@@ -1212,10 +1212,14 @@ function UI:reset()
 	self.shields.lastDirection = 0
 end
 
-function UI:setFruitGoal(required)
-	self.fruitRequired = required
-	self.fruitCollected = 0
-	self.fruitSockets = {} -- clear collected fruit sockets each floor
+function UI:setFruitGoal(required, options)
+        options = options or {}
+        self.goalDisabled = options.disableGoal or false
+        self.fruitRequired = self.goalDisabled and 0 or (required or 0)
+        self.fruitCollected = 0
+        self.goalCelebrated = false
+        self.goalReachedAnim = 0
+        self.fruitSockets = {} -- clear collected fruit sockets each floor
 end
 
 function UI:adjustFruitGoal(delta)
@@ -1237,18 +1241,27 @@ end
 
 
 function UI:isGoalReached()
-	if self.fruitCollected >= self.fruitRequired then
-		if not self.goalCelebrated then
-			self:celebrateGoal()
+        if self.goalDisabled then
+                return false
+        end
+
+        if self.fruitCollected >= self.fruitRequired then
+                if not self.goalCelebrated then
+                        self:celebrateGoal()
 		end
 		return true
 	end
 end
 
 function UI:addFruit(fruitType)
-	self.fruitCollected = min(self.fruitCollected + 1, self.fruitRequired)
-	local fruit = fruitType or {name = "Apple", color = {1, 0, 0}}
-	insert(self.fruitSockets, {
+        if self.goalDisabled then
+                self.fruitCollected = (self.fruitCollected or 0) + 1
+                return
+        end
+
+        self.fruitCollected = min(self.fruitCollected + 1, self.fruitRequired)
+        local fruit = fruitType or {name = "Apple", color = {1, 0, 0}}
+        insert(self.fruitSockets, {
 		type = fruit,
 		anim = 0,
 		state = "appearing",
@@ -1263,12 +1276,19 @@ function UI:addFruit(fruitType)
 end
 
 function UI:removeFruit(count)
-	count = floor(count or 0)
-	if count <= 0 then
-		return 0
-	end
+        count = floor(count or 0)
+        if count <= 0 then
+                return 0
+        end
 
-	local removed = 0
+        if self.goalDisabled then
+                local available = max(0, self.fruitCollected or 0)
+                local removed = min(available, count)
+                self.fruitCollected = available - removed
+                return removed
+        end
+
+        local removed = 0
 	local removalStagger = 0
 	self.fruitCollected = max(0, self.fruitCollected or 0)
 

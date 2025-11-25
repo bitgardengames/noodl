@@ -1036,12 +1036,17 @@ local function drawAdrenalineGlow(self)
 end
 
 function Game:load(options)
-	options = options or {}
+        options = options or {}
 
-	local requestedFloor = max(1, floor(options.startFloor or 1))
-	local totalFloors = #Floors
-	if totalFloors > 0 then
-		requestedFloor = min(requestedFloor, totalFloors)
+        self.mode = options.mode or "journey"
+
+        local requestedFloor = max(1, floor(options.startFloor or 1))
+        if self.mode == "classic" then
+                requestedFloor = 1
+        end
+        local totalFloors = #Floors
+        if totalFloors > 0 then
+                requestedFloor = min(requestedFloor, totalFloors)
 	end
 
 	self.state = "playing"
@@ -1055,15 +1060,15 @@ function Game:load(options)
 
 	self.mouseCursorState = nil
 
-	self:invalidateTransitionTitleCache()
+        self:invalidateTransitionTitleCache()
 
-	Screen:update()
-	updateScreenDimensions(self, Screen:get())
-	Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
+        Screen:update()
+        updateScreenDimensions(self, Screen:get())
+        Arena:updateScreenBounds(self.screenWidth, self.screenHeight)
 
-	Score:load()
-	Upgrades:beginRun()
-	GameUtils:prepareGame(self.screenWidth, self.screenHeight)
+        Score:load(self.mode)
+        Upgrades:beginRun()
+        GameUtils:prepareGame(self.screenWidth, self.screenHeight)
 	Face:set("idle")
 
 	self.transition = TransitionManager.new(self)
@@ -1849,7 +1854,7 @@ function Game:setupFloor(floorNum)
         local traitContext = setup.traitContext
         local spawnPlan = setup.spawnPlan
 
-        UI:setFruitGoal(traitContext.fruitGoal)
+        UI:setFruitGoal(traitContext.fruitGoal, {disableGoal = self.mode == "classic"})
 
         self.transitionNotes = nil
 
