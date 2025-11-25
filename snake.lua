@@ -2240,35 +2240,34 @@ segment.dirY = direction[DIR_Y]
 						segmentStartX, segmentStartY = targetX, targetY
 						goto continue
 					end
-					local gridOccupied = SnakeUtils and SnakeUtils.isOccupied and SnakeUtils.isOccupied(headCol, headRow)
-					if gridOccupied then
-						if not isSelfCollisionAlongPath(segmentStartX, segmentStartY, targetX, targetY) then
-							segmentStartX, segmentStartY = targetX, targetY
-							goto continue
-						end
-						if self:consumeShield() then
-							self:onShieldConsumed(hx, hy, "self")
-							self:beginHazardGrace()
-							segmentStartX, segmentStartY = targetX, targetY
-							break
-						else
-							local pushX = -(direction[DIR_X] or 0) * SEGMENT_SPACING
-							local pushY = -(direction[DIR_Y] or 0) * SEGMENT_SPACING
-							local inverseDirX = -(direction[DIR_X] or 0)
-							local inverseDirY = -(direction[DIR_Y] or 0)
-							local context = resetSelfCollisionContext()
-							context[CTX_PUSH_X] = pushX
-							context[CTX_PUSH_Y] = pushY
-							context[CTX_DIR_X] = inverseDirX
-							context[CTX_DIR_Y] = inverseDirY
-							context[CTX_GRACE] = HAZARD_GRACE_DURATION * 2
-							context[CTX_SHAKE] = 0.28
-							return false, "self", context
-						end
+
+					if not isSelfCollisionAlongPath(segmentStartX, segmentStartY, targetX, targetY) then
+						segmentStartX, segmentStartY = targetX, targetY
+						goto continue
+					end
+
+					if self:consumeShield() then
+						self:onShieldConsumed(hx, hy, "self")
+						self:beginHazardGrace()
+						segmentStartX, segmentStartY = targetX, targetY
+						break
+					else
+						local pushX = -(direction[DIR_X] or 0) * SEGMENT_SPACING
+						local pushY = -(direction[DIR_Y] or 0) * SEGMENT_SPACING
+						local inverseDirX = -(direction[DIR_X] or 0)
+						local inverseDirY = -(direction[DIR_Y] or 0)
+						local context = resetSelfCollisionContext()
+						context[CTX_PUSH_X] = pushX
+						context[CTX_PUSH_Y] = pushY
+						context[CTX_DIR_X] = inverseDirX
+						context[CTX_DIR_Y] = inverseDirY
+						context[CTX_GRACE] = HAZARD_GRACE_DURATION * 2
+						context[CTX_SHAKE] = 0.28
+						return false, "self", context
 					end
 				end
-				segmentStartX, segmentStartY = targetX, targetY
-				::continue::
+segmentStartX, segmentStartY = targetX, targetY
+::continue::
 			end
 		end
 	end
