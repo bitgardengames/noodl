@@ -640,12 +640,11 @@ local function computeLayout(sw, sh)
 	layout.panelPaddingY = BASE_PANEL_PADDING_Y
 
 	local panelPaddingY = layout.panelPaddingY
-	local summaryInsetX = max(28, panelPaddingX)
-	layout.summaryInsetX = summaryInsetX
+        local summaryInsetX = max(28, panelPaddingX)
+        layout.summaryInsetX = summaryInsetX
 
-	local summaryVerticalPadding = max(SUMMARY_PANEL_TOP_PADDING_MIN, panelPaddingY * 0.25)
-	local summaryTopPadding = summaryVerticalPadding * 0.35   -- was 0.5
-	local summaryBottomPadding = max(12, summaryVerticalPadding * 0.35)
+        local summaryTopPadding = max(SUMMARY_PANEL_TOP_PADDING_MIN, panelPaddingY * 0.25)
+        local summaryBottomPadding = max(SUMMARY_PANEL_BOTTOM_PADDING_MIN, panelPaddingY * 0.3)
 
 	local summaryPanel = {
 		x = panelX,
@@ -656,16 +655,14 @@ local function computeLayout(sw, sh)
 	}
 
 	local progressHeight = SUMMARY_PROGRESS_BAR_HEIGHT
-	local summaryLineHeight = UI.fonts.achieve:getHeight()
-	local summaryProgressSpacing = SUMMARY_SPACING_TEXT_PROGRESS
+        local summaryLineHeight = UI.fonts.achieve:getHeight()
+        local summaryProgressSpacing = SUMMARY_SPACING_TEXT_PROGRESS
 
 	layout.summaryLineHeight = summaryLineHeight
 	layout.summaryProgressHeight = progressHeight
 
-	local summaryContentHeight = summaryLineHeight + summaryProgressSpacing + progressHeight
-	local summaryHeight = summaryTopPadding + summaryContentHeight + summaryBottomPadding
-
-	summaryPanel.height = summaryHeight
+        local summaryContentHeight = summaryLineHeight + summaryProgressSpacing + progressHeight
+        summaryPanel.height = summaryTopPadding + summaryContentHeight + summaryBottomPadding
 	layout.summaryPanel = summaryPanel
 
         layout.summaryTextX = panelX + summaryInsetX
