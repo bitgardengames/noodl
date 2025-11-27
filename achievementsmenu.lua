@@ -668,11 +668,10 @@ local function computeLayout(sw, sh)
 	summaryPanel.height = summaryHeight
 	layout.summaryPanel = summaryPanel
 
-	local summaryTextOffset = 8
-	layout.summaryTextX = panelX + summaryInsetX
-	layout.summaryTextWidth = layout.panelWidth - summaryInsetX * 2
-	layout.summaryTextY = summaryPanel.y + summaryTopPadding + summaryTextOffset
-	layout.summaryProgressY = layout.summaryTextY + summaryLineHeight + summaryProgressSpacing
+        layout.summaryTextX = panelX + summaryInsetX
+        layout.summaryTextWidth = layout.panelWidth - summaryInsetX * 2
+        layout.summaryTextY = summaryPanel.y + summaryTopPadding
+        layout.summaryProgressY = layout.summaryTextY + summaryLineHeight + summaryProgressSpacing
 
 	local highlightInsetX = max(SUMMARY_HIGHLIGHT_INSET, summaryInsetX * 0.6)
 	local highlightInsetY = max(SUMMARY_HIGHLIGHT_INSET, min(summaryTopPadding, summaryBottomPadding) * 0.75)
