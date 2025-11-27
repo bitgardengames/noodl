@@ -29,7 +29,7 @@ local displayBlocks = {}
 local achievementRewardText = {}
 
 local START_Y = 180
-local SUMMARY_SPACING_TEXT_PROGRESS = 32
+local SUMMARY_SPACING_TEXT_PROGRESS = 6
 local SUMMARY_PROGRESS_BAR_HEIGHT = 12
 local SUMMARY_PANEL_TOP_PADDING_MIN = 12
 local SUMMARY_PANEL_BOTTOM_PADDING_MIN = 24
@@ -643,9 +643,9 @@ local function computeLayout(sw, sh)
 	local summaryInsetX = max(28, panelPaddingX)
 	layout.summaryInsetX = summaryInsetX
 
-	local summaryVerticalPadding = max(SUMMARY_PANEL_TOP_PADDING_MIN, panelPaddingY * 0.35)
-	local summaryTopPadding = summaryVerticalPadding
-	local summaryBottomPadding = max(SUMMARY_PANEL_BOTTOM_PADDING_MIN, summaryVerticalPadding)
+	local summaryVerticalPadding = max(SUMMARY_PANEL_TOP_PADDING_MIN, panelPaddingY * 0.25)
+	local summaryTopPadding = summaryVerticalPadding * 0.35   -- was 0.5
+	local summaryBottomPadding = max(12, summaryVerticalPadding * 0.35)
 
 	local summaryPanel = {
 		x = panelX,
@@ -668,9 +668,10 @@ local function computeLayout(sw, sh)
 	summaryPanel.height = summaryHeight
 	layout.summaryPanel = summaryPanel
 
+	local summaryTextOffset = 8
 	layout.summaryTextX = panelX + summaryInsetX
 	layout.summaryTextWidth = layout.panelWidth - summaryInsetX * 2
-	layout.summaryTextY = summaryPanel.y + summaryTopPadding
+	layout.summaryTextY = summaryPanel.y + summaryTopPadding + summaryTextOffset
 	layout.summaryProgressY = layout.summaryTextY + summaryLineHeight + summaryProgressSpacing
 
 	local highlightInsetX = max(SUMMARY_HIGHLIGHT_INSET, summaryInsetX * 0.6)
@@ -1089,6 +1090,11 @@ function AchievementsMenu:draw()
 	setColor(darkenColor(panelColor, 0.4))
 	love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth, summaryProgressHeight, 6, 6)
 
+	-- outline
+	love.graphics.setColor(0, 0, 0, 1)
+	love.graphics.setLineWidth(3)
+	love.graphics.rectangle("line", summaryTextX, progressBarY, summaryTextWidth, summaryProgressHeight, 6, 6)
+
 	if (totals.completion or 0) > 0 then
 		setColor(progressColor)
 		love.graphics.rectangle("fill", summaryTextX, progressBarY, summaryTextWidth * clamp01(totals.completion), summaryProgressHeight, 6, 6)
@@ -1163,16 +1169,11 @@ function AchievementsMenu:draw()
 
 			if icon then
 				local iconX, iconY = x + 16, cardY + 18
-				local scaleX = 56 / icon:getWidth()
-				local scaleY = 56 / icon:getHeight()
+				local scaleX = 64 / icon:getWidth()
+				local scaleY = 64 / icon:getHeight()
 				local tint = unlocked and 1 or 0.55
 				love.graphics.setColor(tint, tint, tint, 1)
 				love.graphics.draw(icon, iconX, iconY, 0, scaleX, scaleY)
-
-				local iconBorder = hiddenLocked and darkenColor(borderTint, 0.35) or borderTint
-				setColor(iconBorder)
-				love.graphics.setLineWidth(2)
-				love.graphics.rectangle("line", iconX - 2, iconY - 2, 60, 60, 8)
 			end
 
 			local textX = x + 96
@@ -1214,10 +1215,16 @@ function AchievementsMenu:draw()
 				local ratio = Achievements:getProgressRatio(ach)
 
 				if ratio > 0 then
-					-- Draw background + fill
+					-- progress bar outline
+					love.graphics.setColor(0, 0, 0, 1)
+					love.graphics.setLineWidth(4)
+					love.graphics.rectangle("line", barX, barY, barW, barH, 6, 6)
+
+					-- background
 					setColor(darkenColor(cardBase, 0.45))
 					love.graphics.rectangle("fill", barX, barY, barW, barH, 6)
 
+					-- progress fill
 					setColor(progressColor)
 					love.graphics.rectangle("fill", barX, barY, barW * ratio, barH, 6)
 
