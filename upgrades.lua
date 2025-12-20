@@ -27,14 +27,6 @@ local DASH_STATE_DURATION = Snake.DASH_STATE_DURATION
 local DASH_STATE_COOLDOWN_TIMER = Snake.DASH_STATE_COOLDOWN_TIMER
 local DASH_STATE_COOLDOWN = Snake.DASH_STATE_COOLDOWN
 
-local TIME_STATE_ACTIVE = Snake.TIME_STATE_ACTIVE
-local TIME_STATE_TIMER = Snake.TIME_STATE_TIMER
-local TIME_STATE_DURATION = Snake.TIME_STATE_DURATION
-local TIME_STATE_COOLDOWN_TIMER = Snake.TIME_STATE_COOLDOWN_TIMER
-local TIME_STATE_COOLDOWN = Snake.TIME_STATE_COOLDOWN
-local TIME_STATE_FLOOR_CHARGES = Snake.TIME_STATE_FLOOR_CHARGES
-local TIME_STATE_MAX_FLOOR_USES = Snake.TIME_STATE_MAX_FLOOR_USES
-
 local SHOP_RARITY_RANK = {
         common = 1,
         uncommon = 2,
@@ -66,8 +58,6 @@ end
 local function getUpgradeDescriptionReplacements(upgradeId)
 	if upgradeId == "thunder_dash" then
 		return GamepadAliases:getActionPromptReplacements("dash")
-	elseif upgradeId == "temporal_anchor" then
-		return GamepadAliases:getActionPromptReplacements("slow")
 	end
 
 	return nil
@@ -259,18 +249,6 @@ local function captureHUDDynamicState(state)
                 snapshot.dashCooldown = dashState[DASH_STATE_COOLDOWN] or 0
         end
 
-        local timeState = Snake.getTimeDilationState and Snake:getTimeDilationState() or nil
-        snapshot.timePresent = timeState ~= nil
-        if timeState then
-                snapshot.timeActive = timeState[TIME_STATE_ACTIVE] or false
-                snapshot.timeTimer = timeState[TIME_STATE_TIMER] or 0
-                snapshot.timeDuration = timeState[TIME_STATE_DURATION] or 0
-                snapshot.timeCooldownTimer = timeState[TIME_STATE_COOLDOWN_TIMER] or 0
-                snapshot.timeCooldown = timeState[TIME_STATE_COOLDOWN] or 0
-                snapshot.timeFloorCharges = timeState[TIME_STATE_FLOOR_CHARGES] or 0
-                snapshot.timeMaxFloorUses = timeState[TIME_STATE_MAX_FLOOR_USES] or 0
-        end
-
 	return snapshot
 end
 
@@ -357,8 +335,6 @@ function RunState:notify(event, data)
 end
 
 local BOUNTIFUL_HARVEST_FRUIT_TARGET = 20
-local CHRONO_WARD_DEFAULT_DURATION = 0.85
-local CHRONO_WARD_DEFAULT_SCALE = 0.45
 local CIRCUIT_BREAKER_STALL_DURATION = 1
 local SUBDUCTION_ARRAY_SINK_DURATION = 1.6
 local SUBDUCTION_ARRAY_VISUAL_LIMIT = 3
@@ -432,14 +408,6 @@ local function getSegmentPosition(fraction)
 	end
 
 	return Snake:getHead()
-end
-
-local function triggerChronoWard(state, data)
-	local effects = state and state.effects or {}
-	local duration = effects.chronoWardDuration or CHRONO_WARD_DEFAULT_DURATION
-	local scale = effects.chronoWardScale or CHRONO_WARD_DEFAULT_SCALE
-
-	Snake:triggerChronoWard(duration, scale)
 end
 
 local function applySegmentPosition(options, fraction)
@@ -2378,99 +2346,6 @@ pool = {
 		},
 		}),
 	register({
-		id = "chrono_ward",
-		nameKey = "upgrades.chrono_ward.name",
-		descKey = "upgrades.chrono_ward.description",
-		rarity = "rare",
-		tags = {"defense", "utility"},
-		allowDuplicates = false,
-		onAcquire = function(state
-	)
-		state.effects = state.effects or {}
-		state.effects.chronoWardDuration = CHRONO_WARD_DEFAULT_DURATION
-		state.effects.chronoWardScale = CHRONO_WARD_DEFAULT_SCALE
-
-		local celebrationOptions = {
-		color = {0.62, 0.86, 1.0, 1},
-		particleCount = 16,
-		particleSpeed = 110,
-		particleLife = 0.42,
-		textOffset = 52,
-		textScale = 1.12,
-		visual = {
-		badge = "shield",
-		outerRadius = 56,
-		innerRadius = 16,
-		ringCount = 3,
-		life = 0.7,
-		glowAlpha = 0.26,
-		haloAlpha = 0.18,
-		},
-		}
-		applySegmentPosition(celebrationOptions, 0.36
-	)
-		celebrateUpgrade(getUpgradeString("chrono_ward", "name"), nil, celebrationOptions
-	)
-		end,
-		handlers = {
-		shieldConsumed = function(data, state
-	)
-		triggerChronoWard(state, data
-	)
-		end,
-		},
-		}),
-	register({
-		id = "temporal_anchor",
-		nameKey = "upgrades.temporal_anchor.name",
-		descKey = "upgrades.temporal_anchor.description",
-		rarity = "rare",
-		tags = {"utility", "defense"},
-		allowDuplicates = false,
-		onAcquire = function(state
-	)
-		local ability = state.effects.timeSlow or {}
-		ability.duration = ability.duration or 1.6
-		ability.cooldown = ability.cooldown or 8
-		ability.timeScale = ability.timeScale or 0.35
-		ability.source = ability.source or "temporal_anchor"
-		state.effects.timeSlow = ability
-
-		if not state.counters.temporalAnchorHandlerRegistered then
-		state.counters.temporalAnchorHandlerRegistered = true
-                Upgrades:addEventHandler("timeDilationActivated", function(data
-        )
-                local label = getUpgradeString("temporal_anchor", "activation_text"
-        )
-                celebrateUpgrade(label, data, {
-                color = {0.62, 0.84, 1.0, 1},
-                particleCount = 26,
-                particleSpeed = 120,
-                particleLife = 0.5,
-                particleSize = 5,
-                particleSpread = pi * 2,
-                particleSpeedVariance = 70,
-                textOffset = 60,
-                textScale = 1.12,
-                visual = {
-                variant = "temporal_anchor",
-                showBase = false,
-                life = 0.78,
-                innerRadius = 12,
-                outerRadius = 60,
-                addBlend = true,
-                color = {0.62, 0.84, 1.0, 1},
-                variantSecondaryColor = {0.34, 0.74, 1.0, 0.9},
-                variantTertiaryColor = {0.9, 0.96, 1.0, 0.72},
-                },
-                }
-        )
-                end
-        )
-                end
-		end,
-		}),
-	register({
 		id = "momentum_coils",
 		nameKey = "upgrades.momentum_coils.name",
 		descKey = "upgrades.momentum_coils.description",
@@ -2763,61 +2638,6 @@ function Upgrades:getHUDIndicators()
 		)
 	end
 
-        local timeState = Snake.getTimeDilationState and Snake:getTimeDilationState()
-        if timeState then
-                local label = Localization:get("upgrades.temporal_anchor.name")
-                local accent = {0.62, 0.84, 1.0, 1}
-                local status
-                local charge
-                local chargeLabel
-                local showBar = false
-
-                local chargesRemaining = timeState[TIME_STATE_FLOOR_CHARGES]
-                local maxUses = timeState[TIME_STATE_MAX_FLOOR_USES]
-
-                if timeState[TIME_STATE_ACTIVE] and timeState[TIME_STATE_DURATION] > 0 then
-                        local remaining = max(timeState[TIME_STATE_TIMER] or 0, 0)
-                        charge = clamp(remaining / timeState[TIME_STATE_DURATION], 0, 1)
-                        chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remaining)})
-                        status = hudStatus("active")
-                        showBar = true
-                else
-                        if maxUses and chargesRemaining ~= nil and chargesRemaining <= 0 then
-                                charge = 0
-                                status = hudStatus("depleted")
-                                chargeLabel = nil
-                                showBar = false
-                        else
-                                local cooldown = timeState[TIME_STATE_COOLDOWN] or 0
-                                local remainingCooldown = max(timeState[TIME_STATE_COOLDOWN_TIMER] or 0, 0)
-                                if cooldown > 0 and remainingCooldown > 0 then
-                                        local progress = 1 - clamp(remainingCooldown / cooldown, 0, 1)
-                                        charge = progress
-                                        chargeLabel = hudText("seconds", {seconds = string.format("%.1f", remainingCooldown)})
-                                        status = hudStatus("charging")
-					showBar = true
-				else
-					charge = 1
-					status = hudStatus("ready")
-				end
-			end
-		end
-
-		insert(indicators, {
-			id = "temporal_anchor",
-			label = label,
-			hideLabel = true,
-			accentColor = accent,
-			stackCount = nil,
-			charge = charge,
-			chargeLabel = chargeLabel,
-			status = status,
-			icon = "hourglass",
-			showBar = showBar,
-			}
-		)
-	end
-
 	local phoenixCharges = 0
 	if state.counters then
 		phoenixCharges = state.counters.phoenixEchoCharges or 0
@@ -3073,46 +2893,6 @@ function Upgrades:applyPersistentEffects(rebaseline)
 		end
 	else
 		Snake.dash = nil
-	end
-
-	if effects.timeSlow then
-		Snake.timeDilation = Snake.timeDilation or {}
-		local ability = Snake.timeDilation
-		local firstSetup = not ability.configured
-		ability.duration = effects.timeSlow.duration or ability.duration or 0
-		ability.cooldown = effects.timeSlow.cooldown or ability.cooldown or 0
-		ability.timeScale = effects.timeSlow.timeScale or ability.timeScale or 1
-		ability.configured = true
-		ability.timer = ability.timer or 0
-		ability.cooldownTimer = ability.cooldownTimer or 0
-		ability.active = ability.active or false
-		if firstSetup then
-			ability.active = false
-			ability.timer = 0
-			ability.cooldownTimer = 0
-		else
-			if rebaseline then
-				ability.active = false
-				ability.timer = 0
-				ability.cooldownTimer = 0
-			elseif ability.cooldown and ability.cooldown > 0 then
-				ability.cooldownTimer = min(ability.cooldownTimer or 0, ability.cooldown)
-			else
-				ability.cooldownTimer = 0
-			end
-		end
-
-		ability.maxFloorUses = 1
-		if firstSetup or rebaseline then
-			ability.floorCharges = ability.maxFloorUses
-		elseif ability.floorCharges == nil then
-			ability.floorCharges = ability.maxFloorUses
-		else
-			local maxUses = ability.maxFloorUses or ability.floorCharges
-			ability.floorCharges = max(0, min(ability.floorCharges, maxUses))
-		end
-	else
-		Snake.timeDilation = nil
 	end
 
         Snake:setEventHorizonActive(effects.wallPortal and true or false)

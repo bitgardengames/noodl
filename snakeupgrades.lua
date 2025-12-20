@@ -6,30 +6,6 @@ local SnakeUpgrades = {}
 
 SnakeUpgrades.HAZARD_GRACE_DURATION = 0.12 -- brief invulnerability window after surviving certain hazards
 
-function SnakeUpgrades.resolveTimeDilationScale(primary, secondary)
-        local scale = 1
-
-        if primary and primary.active then
-                local primaryScale = primary.timeScale or 1
-                if not (primaryScale and primaryScale > 0) then
-                        primaryScale = 0.05
-                end
-                scale = primaryScale
-        end
-
-        if secondary and secondary.active then
-                local secondaryScale = secondary.timeScale or 1
-                if not (secondaryScale and secondaryScale > 0) then
-                        secondaryScale = 0.05
-                end
-                if secondaryScale < scale then
-                        scale = secondaryScale
-                end
-        end
-
-        return scale
-end
-
 function SnakeUpgrades.setDiffractionBarrierActive(snake, active)
         if active then
                 local state = snake.diffractionBarrier

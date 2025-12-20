@@ -83,7 +83,6 @@ UpgradeHelpers.defaultEffects = {
 	shopMinimumRarity = nil,
 	wallPortal = false,
 	dash = nil,
-	timeSlow = nil,
 	gluttonsWake = false,
 	diffractionBarrier = false,
 }
