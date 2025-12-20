@@ -2737,13 +2737,6 @@ function Upgrades:tryFloorReplay(game, cause)
 	state.counters.phoenixEchoUsed = (state.counters.phoenixEchoUsed or 0) + 1
 	state.counters.phoenixEchoLastCause = cause
 
-	game.transitionPhase = nil
-	game.transitionTimer = 0
-	game.transitionDuration = 0
-	game.shopCloseRequested = nil
-	game.transitionResumePhase = nil
-	game.transitionResumeFadeDuration = nil
-
 	local restored = false
 	Snake:resetPosition()
 	restored = true
