@@ -345,16 +345,6 @@ local TREMOR_BLOOM_SLIDE_DURATION = 0.28
 local TREMOR_BLOOM_SAW_NUDGE_AMOUNT = 0.22
 local TREMOR_BLOOM_COLOR = {0.76, 0.64, 1.0, 1}
 
-local function grantShields(amount)
-	amount = max(0, floor((amount or 0) + 0.0001))
-	if amount <= 0 then
-		return 0
-	end
-
-	Snake:addShields(amount)
-	return amount
-end
-
 local function boostComboTimer(amount)
 	if not amount or amount <= 0 then
 		return

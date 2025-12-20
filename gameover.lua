@@ -51,20 +51,6 @@ local function getBackgroundColor()
 	return (UI.colors and UI.colors.background) or Theme.bgColor
 end
 
-local function withAlpha(color, alpha)
-	alpha = alpha or 1
-	if not color then
-		return {1, 1, 1, alpha}
-	end
-
-	return {
-		color[1] or 1,
-		color[2] or 1,
-		color[3] or 1,
-		(color[4] or 1) * alpha,
-	}
-end
-
 local function formatTime(seconds)
 	if not seconds or seconds <= 0 then
 		return "0:00"

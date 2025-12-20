@@ -158,10 +158,6 @@ local function resetSnakeOccupancyGrid()
 SnakeOccupancy.resetGrid(occupancyState)
 end
 
-local function ensureOccupancyGrid()
-return SnakeOccupancy.ensureGrid(occupancyState)
-end
-
 function Snake:needsStencil()
 	local hole = descendingHole
 	if hole then

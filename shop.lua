@@ -6,7 +6,6 @@ local Audio = require("audio")
 local Theme = require("theme")
 local Floors = require("floors")
 local Timer = require("timer")
-local Color = require("color")
 local abs = math.abs
 local ceil = math.ceil
 local cos = math.cos
@@ -939,16 +938,6 @@ rarityStyles = {
 	},
 }
 
-local function clamp01(value)
-	if value < 0 then
-		return 0
-	elseif value > 1 then
-		return 1
-	end
-
-	return value
-end
-
 local function wrap01(value)
 	value = value - floor(value)
 	if value < 0 then
@@ -959,15 +948,6 @@ end
 
 local function lerp(a, b, t)
 	return a + (b - a) * t
-end
-
-local function scaleColor(color, factor, alphaFactor)
-	local scale = factor or 1
-	return Color.scale(color, scale, {
-		default = Color.white,
-		alphaFactor = alphaFactor or scale,
-		}
-	)
 end
 
 local function formatColorKey(color)
