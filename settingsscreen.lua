@@ -487,7 +487,6 @@ function SettingsScreen:enter()
 	local sw, sh = Screen:get()
 	local menuLayout = UI.getMenuLayout(sw, sh)
 	local headerY = UI.getHeaderY(sw, sh)
-	local centerX = sw / 2
 
 	resetAnalogAxis()
 

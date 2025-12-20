@@ -13,7 +13,6 @@ local PlayerStats = require("playerstats")
 local UpgradeHelpers = require("upgradehelpers")
 local GamepadAliases = require("gamepadaliases")
 local DataSchemas = require("dataschemas")
-local UpgradeVisuals = require("upgradevisuals")
 
 local floor = math.floor
 local max = math.max
