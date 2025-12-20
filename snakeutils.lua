@@ -41,16 +41,6 @@ end
 SnakeUtils.getSegmentPosition = getSegmentPosition
 SnakeUtils.getSegmentDirection = getSegmentDirection
 
-local function wipeTable(t)
-        if not t then
-                return
-        end
-
-        for key in pairs(t) do
-                t[key] = nil
-        end
-end
-
 local function fillColumn(column, rows)
 	for row = 1, rows do
 		column[row] = false

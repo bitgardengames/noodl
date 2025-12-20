@@ -98,10 +98,6 @@ local function scaleColor(color, factor, alphaFactor, target)
 	)
 end
 
-local function lerp(a, b, t)
-	return a + (b - a) * t
-end
-
 local function getEmitterColors()
 	local body = Theme.dartBaseColor or BASE_EMITTER_COLOR
 	local accent = Theme.dartAccentColor or BASE_ACCENT_COLOR
