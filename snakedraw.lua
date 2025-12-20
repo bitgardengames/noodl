@@ -1250,7 +1250,6 @@ local function drawEventHorizonSheath(trail, SEGMENT_SIZE, data)
 			local progress = (i - 1) / max(segmentCount - 1, 1)
 			local fade = 1 - progress * 0.65
 			local radius = SEGMENT_SIZE * (0.7 + 0.28 * intensity + 0.16 * fade)
-			local swirl = spin * 1.3 + time * 0.6 + progress * pi * 1.2
 
 			love.graphics.setColor(0.04, 0.08, 0.16, (0.18 + 0.22 * intensity) * fade)
 			love.graphics.circle("fill", px, py, radius * 1.05)

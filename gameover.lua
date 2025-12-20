@@ -104,8 +104,6 @@ local fontScore
 local fontScoreValue
 local fontSmall
 local fontMessage
-local fontBadge
-local fontProgressTitle
 local fontProgressValue
 local fontProgressSmall
 local fontProgressLabel

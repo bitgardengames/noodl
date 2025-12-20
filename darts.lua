@@ -4,7 +4,6 @@ local SnakeUtils = require("snakeutils")
 local Rocks = require("rocks")
 local Particles = require("particles")
 local Audio = require("audio")
-local Timer = require("timer")
 local Color = require("color")
 
 local max = math.max
@@ -50,7 +49,6 @@ local DART_BODY_COLOR = {0.70, 0.68, 0.60, 1.0}
 local DART_TIP_COLOR = {0.82, 0.86, 0.90, 1.0}
 local DART_TAIL_COLOR = {0.42, 0.68, 0.64, 1.0}
 
-local scaleColorScratch = {0, 0, 0, 0}
 local impactColorScratch = {0, 0, 0, 0}
 local insetColorScratch = {0, 0, 0, 0}
 
@@ -744,7 +742,6 @@ local function drawEmitter(emitter)
 	)
 
 	-- MAIN HOUSING
-	local housingAlpha = clamp01((bodyColor[4] or 1) + flash * 0.1)
 	love.graphics.setColor(bodyColor)
 	love.graphics.rectangle("fill", baseX, baseY, tileSize, tileSize, RADIUS, RADIUS)
 

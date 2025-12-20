@@ -1,7 +1,6 @@
 local Arena = require("arena")
 local MovementContext = require("movementcontext")
 local SnakeUtils = require("snakeutils")
-local SnakeDraw = require("snakedraw")
 local SnakeRender = require("snakerender")
 local SnakeUpgrades = require("snakeupgrades")
 local SnakeUpgradesState = require("snakeupgradesstate")
@@ -20,7 +19,6 @@ local Score = require("score")
 local SnakeCosmetics = require("snakecosmetics")
 local SnakeTrail = require("snaketrail")
 local SnakeAbilities = require("snakeabilities")
-local FloatingText = require("floatingtext")
 local Face = require("face")
 local SnakeOccupancy = require("snakeoccupancy")
 local SnakePortal = require("snakeportal")
@@ -161,7 +159,6 @@ local recordSnakeOccupiedCell = SnakeOccupancy.recordSnakeOccupiedCell
 local getSnakeTailCell = SnakeOccupancy.getSnakeTailCell
 local popSnakeTailCell = SnakeOccupancy.popSnakeTailCell
 local getSnakeHeadCell = SnakeOccupancy.getSnakeHeadCell
-local moduleResetSnakeOccupancyGrid = SnakeOccupancy.resetSnakeOccupancyGrid
 local addSnakeBodyOccupancy = SnakeOccupancy.addSnakeBodyOccupancy
 local removeSnakeBodyOccupancy = SnakeOccupancy.removeSnakeBodyOccupancy
 local isCellOccupiedBySnakeBody = SnakeOccupancy.isCellOccupiedBySnakeBody
@@ -258,34 +255,6 @@ local LOSE_SEGMENTS_BURST_OPTIONS = {
 	drag = 3.1,
 	gravity = 220,
 	fadeTo = 0,
-}
-
-local SHIELD_BREAK_PARTICLE_OPTIONS = {
-	count = 16,
-	speed = 1,
-	speedVariance = 90,
-	life = 0.48,
-	size = 5,
-	color = {1, 0.46, 0.32, 1},
-	spread = pi * 2,
-	angleJitter = pi,
-	drag = 3.2,
-	gravity = 280,
-	fadeTo = 0.05,
-}
-
-local SHIELD_BLOOD_PARTICLE_OPTIONS = {
-	dirX = 0,
-	dirY = -1,
-	spread = pi * 0.65,
-	count = 10,
-	dropletCount = 6,
-	speed = 210,
-	speedVariance = 80,
-	life = 0.5,
-	size = 3.6,
-	gravity = 340,
-	fadeTo = 0.06,
 }
 
 local SEVERED_TAIL_LIFE = 0.9

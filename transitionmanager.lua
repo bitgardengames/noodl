@@ -317,7 +317,7 @@ function TransitionManager:handleShopInput(methodName, ...)
 	end
 
 	if methodName == "gamepadpressed" or methodName == "joystickpressed" then
-		local _, button = ...
+		local button = select(2, ...)
 		if button == "start" and game and game.enterPause then
 			game:enterPause()
 			return true

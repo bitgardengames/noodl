@@ -146,21 +146,6 @@ local function easeOutQuad(t)
 	return 1 - inv * inv
 end
 
-local THEME_TINTS = {
-	botanical   = {0.28, 0.42, 0.24, 1},
-	cavern      = {0.26, 0.3, 0.46, 1},
-	oceanic     = {0.2, 0.36, 0.52, 1},
-	machine     = {0.42, 0.34, 0.24, 1},
-	arctic      = {0.34, 0.5, 0.64, 1},
-	desert      = {0.5, 0.4, 0.22, 1},
-	laboratory  = {0.42, 0.38, 0.56, 1},
-	urban       = {0.3, 0.36, 0.44, 1},
-}
-
-local VARIANT_TINTS = {
-	fungal = {0.34, 0.28, 0.5, 1},
-}
-
 local function hashColor(color)
 	if not color then
 		return 0
