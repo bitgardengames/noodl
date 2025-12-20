@@ -92,6 +92,7 @@ function App:forwardEvent(eventName, ...)
 end
 
 function App:update(dt)
+	dt = math.min(dt, 1/30) -- never simulate more than ~33ms
 	Screen:update(dt)
 	Steam.update()
 	local action = GameState:update(dt)
