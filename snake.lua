@@ -107,24 +107,6 @@ Snake.DASH_STATE_DURATION = DASH_STATE_DURATION
 Snake.DASH_STATE_COOLDOWN = DASH_STATE_COOLDOWN
 Snake.DASH_STATE_COOLDOWN_TIMER = DASH_STATE_COOLDOWN_TIMER
 
-local TIME_STATE_ACTIVE = SnakeAbilities.TIME_STATE_ACTIVE
-local TIME_STATE_TIMER = SnakeAbilities.TIME_STATE_TIMER
-local TIME_STATE_DURATION = SnakeAbilities.TIME_STATE_DURATION
-local TIME_STATE_COOLDOWN = SnakeAbilities.TIME_STATE_COOLDOWN
-local TIME_STATE_COOLDOWN_TIMER = SnakeAbilities.TIME_STATE_COOLDOWN_TIMER
-local TIME_STATE_SCALE = SnakeAbilities.TIME_STATE_SCALE
-local TIME_STATE_FLOOR_CHARGES = SnakeAbilities.TIME_STATE_FLOOR_CHARGES
-local TIME_STATE_MAX_FLOOR_USES = SnakeAbilities.TIME_STATE_MAX_FLOOR_USES
-
-Snake.TIME_STATE_ACTIVE = TIME_STATE_ACTIVE
-Snake.TIME_STATE_TIMER = TIME_STATE_TIMER
-Snake.TIME_STATE_DURATION = TIME_STATE_DURATION
-Snake.TIME_STATE_COOLDOWN = TIME_STATE_COOLDOWN
-Snake.TIME_STATE_COOLDOWN_TIMER = TIME_STATE_COOLDOWN_TIMER
-Snake.TIME_STATE_SCALE = TIME_STATE_SCALE
-Snake.TIME_STATE_FLOOR_CHARGES = TIME_STATE_FLOOR_CHARGES
-Snake.TIME_STATE_MAX_FLOOR_USES = TIME_STATE_MAX_FLOOR_USES
-
 local SEGMENT_POOL_REMOVER = SnakeTrail.REMOVER
 local segmentPoolState = SnakeTrail.newPoolState()
 
@@ -298,13 +280,10 @@ Snake.shieldFlashTimer = 0
 Snake.tailHitFlashTimer = 0
 Snake.stoneSkinSawGrace = 0
 Snake.dash = nil
-Snake.timeDilation = nil
-Snake.chronoWard = nil
 Snake.hazardGraceTimer = 0
 Snake.phoenixEcho = nil
 Snake.eventHorizon = nil
 Snake.stormchaser = nil
-Snake.temporalAnchor = nil
 Snake.swiftFangs = nil
 
 -- getters / mutators (safe API for upgrades)
@@ -1104,39 +1083,12 @@ local function collectUpgradeVisuals(self)
                 entry.time = momentum.time or 0
         end
 
-        local deliberate = self.deliberateCoil
-        if deliberate and (((deliberate.intensity or 0) > 0.01) or (deliberate.stacks or 0) > 0) then
-                local entry = acquireEntry("deliberateCoil")
-                entry.stacks = deliberate.stacks or 0
-                entry.intensity = deliberate.intensity or 0
-                entry.time = deliberate.time or 0
-        end
-
-	local timeDilation = self.timeDilation
-	if timeDilation then
-		local entry = acquireEntry("timeDilation")
-		entry.active = timeDilation.active or false
-		entry.timer = timeDilation.timer or 0
-		entry.duration = timeDilation.duration or 0
-		entry.cooldown = timeDilation.cooldown or 0
-		entry.cooldownTimer = timeDilation.cooldownTimer or 0
-	end
-
-	local chronoWard = self.chronoWard
-	if chronoWard and (((chronoWard.intensity or 0) > 1e-3) or chronoWard.active) then
-		local entry = acquireEntry("chronoWard")
-		entry.active = chronoWard.active or false
-		entry.intensity = chronoWard.intensity or 0
-		entry.time = chronoWard.time or 0
-	end
-
-	local temporalAnchor = self.temporalAnchor
-	if temporalAnchor and (((temporalAnchor.intensity or 0) > 1e-3) or (temporalAnchor.target or 0) > 0) then
-		local entry = acquireEntry("temporalAnchor")
-		entry.intensity = temporalAnchor.intensity or 0
-		entry.ready = temporalAnchor.ready or 0
-		entry.active = temporalAnchor.active or false
-		entry.time = temporalAnchor.time or 0
+	local deliberate = self.deliberateCoil
+	if deliberate and (((deliberate.intensity or 0) > 0.01) or (deliberate.stacks or 0) > 0) then
+		local entry = acquireEntry("deliberateCoil")
+		entry.stacks = deliberate.stacks or 0
+		entry.intensity = deliberate.intensity or 0
+		entry.time = deliberate.time or 0
 	end
 
 	local dash = self.dash
@@ -1767,88 +1719,6 @@ function Snake:update(dt)
 		end
 	end
 
-	if self.timeDilation then
-		if self.timeDilation.cooldownTimer and self.timeDilation.cooldownTimer > 0 then
-			self.timeDilation.cooldownTimer = max(0, (self.timeDilation.cooldownTimer or 0) - dt)
-		end
-
-		if self.timeDilation.active then
-			self.timeDilation.timer = (self.timeDilation.timer or 0) - dt
-			if self.timeDilation.timer <= 0 then
-				self.timeDilation.active = false
-				self.timeDilation.timer = 0
-			end
-		end
-	end
-
-	if self.chronoWard then
-		local ward = self.chronoWard
-		ward.time = (ward.time or 0) + dt
-
-		if ward.active then
-			ward.timer = (ward.timer or 0) - dt
-			if ward.timer <= 0 then
-				ward.active = false
-				ward.timer = 0
-			end
-		end
-
-		local target = ward.active and 1 or 0
-		ward.target = target
-		local blend = min(1, dt * 6.0)
-		local currentIntensity = ward.intensity or 0
-		ward.intensity = currentIntensity + (target - currentIntensity) * blend
-
-		if not ward.active and (ward.intensity or 0) <= 0.01 then
-			self.chronoWard = nil
-		end
-	end
-
-	local dilation = self.timeDilation
-	if dilation and dilation.source == "temporal_anchor" then
-		local state = self.temporalAnchor
-		if not state then
-			state = {intensity = 0, target = 0, ready = 0, time = 0}
-			self.temporalAnchor = state
-		end
-		state.time = (state.time or 0) + dt
-		state.active = dilation.active or false
-		local cooldown = dilation.cooldown or 0
-		local cooldownTimer = dilation.cooldownTimer or 0
-		local readiness
-		if dilation.active then
-			readiness = 1
-		elseif cooldown and cooldown > 0 then
-			readiness = 1 - min(1, cooldownTimer / cooldown)
-		else
-			readiness = (cooldownTimer <= 0) and 1 or 0
-		end
-		state.ready = max(0, min(1, readiness))
-		if dilation.active then
-			state.target = 1
-		else
-			state.target = max(0.2, 0.3 + state.ready * 0.5)
-		end
-	elseif self.temporalAnchor then
-		local state = self.temporalAnchor
-		state.time = (state.time or 0) + dt
-		state.active = false
-		state.ready = 0
-		state.target = 0
-	end
-
-	if self.temporalAnchor then
-		local state = self.temporalAnchor
-		local intensity = state.intensity or 0
-		local target = state.target or 0
-		local blend = min(1, dt * 5.0)
-		intensity = intensity + (target - intensity) * blend
-		state.intensity = intensity
-		if intensity < 0.01 and target <= 0 then
-			self.temporalAnchor = nil
-		end
-	end
-
 	hole = descendingHole
 	if hole and head then
 		local dx = hole.x - head.drawX
@@ -2310,22 +2180,6 @@ end
 
 function Snake:onDashBreakRock(x, y)
         return SnakeAbilities.onDashBreakRock(self, x, y)
-end
-
-function Snake:activateTimeDilation()
-        return SnakeAbilities.activateTimeDilation(self)
-end
-
-function Snake:triggerChronoWard(duration, scale)
-        return SnakeAbilities.triggerChronoWard(self, duration, scale)
-end
-
-function Snake:getTimeDilationState()
-        return SnakeAbilities.getTimeDilationState(self)
-end
-
-function Snake:getTimeScale()
-        return SnakeAbilities.getTimeScale(self)
 end
 
 function Snake:grow()

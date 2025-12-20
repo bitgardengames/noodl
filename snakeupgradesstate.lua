@@ -52,13 +52,11 @@ function UpgradesState.resetModifiers(state)
         state.shieldFlashTimer = 0
         state.stoneSkinSawGrace = 0
         state.dash = nil
-        state.timeDilation = nil
         state.adrenaline = nil
         state.hazardGraceTimer = 0
         state.phoenixEcho = nil
         state.eventHorizon = nil
         state.stormchaser = nil
-        state.temporalAnchor = nil
         state.swiftFangs = nil
         state.zephyrCoils = nil
         state.momentumCoils = nil

@@ -864,16 +864,7 @@ local function resolveMouseVisibilityTarget(self)
 end
 
 local function updateWorldTimeScale()
-	local scale = 1
-
-	if Snake and Snake.getTimeScale then
-		local snakeScale = Snake:getTimeScale()
-		if snakeScale and snakeScale > 0 then
-			scale = snakeScale
-		end
-	end
-
-	Game.worldTimeScale = scale
+	Game.worldTimeScale = 1
 end
 
 function Game:releaseMouseVisibility()

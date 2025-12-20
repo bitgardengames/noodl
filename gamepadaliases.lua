@@ -70,7 +70,6 @@ GamepadAliases.layouts = {
 
 GamepadAliases.actionButtons = {
 	dash = {face = "a", shoulder = "rightshoulder", trigger = "righttrigger"},
-	slow = {face = "x", shoulder = "leftshoulder", trigger = "lefttrigger"},
 }
 
 local DETECTION_ORDER = {"playstation", "xbox"}

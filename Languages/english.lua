@@ -431,15 +431,6 @@ local english = {
 				description = "Dashing shatters the nearest rock and stalls saws for 0.6s.",
 				activation_text = "Sparkstep!",
 			},
-			chrono_ward = {
-				name = "Chrono Ward",
-				description = "Each time a shield is consumed, time slows briefly so you can thread through danger and plan your next move.",
-			},
-			temporal_anchor = {
-				name = "Temporal Anchor",
-				description = "Press Shift (or ${slow_face}/${slow_shoulder}) to briefly slow time, reducing all movement to 35% speed.",
-				activation_text = "Time Slow!",
-			},
 			momentum_coils = {
 				name = "Momentum Coils",
 				description = "Move 15% faster.",

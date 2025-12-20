@@ -431,15 +431,6 @@ local german = {
 					description = "Dashes zerschmettern den nächstgelegenen Felsen und halten Sägen für 0,6 Sekunden an.",
 					activation_text = "Funkentritt!",
 				},
-				chrono_ward = {
-					name = "Chrono-Schild",
-					description = "Jedes Mal, wenn ein Schild verbraucht wird, verlangsamt sich kurz die Zeit, damit du durch die Gefahr hindurchfädeln und deinen nächsten Zug planen kannst.",
-				},
-				temporal_anchor = {
-					name = "Zeitanker",
-					description = "Drücke Shift (oder ${slow_face}/${slow_shoulder}), um die Zeit kurz zu verlangsamen und alle Bewegungen auf 35% zu reduzieren.",
-					activation_text = "Zeitlupe!",
-				},
 				momentum_coils = {
 					name = "Momentum-Spulen",
 					description = "Bewege dich 15% schneller.",
