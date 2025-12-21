@@ -165,9 +165,17 @@ for _, eventName in ipairs(forwardedEvents) do
 	App[eventName] = createEventForwarder(eventName)
 end
 
-function App:joystickadded(joystick)
+local function noteJoystickAndForward(self, eventName, joystick, ...)
 	GamepadAliases:noteJoystick(joystick)
-	return self:forwardEvent("joystickadded", joystick)
+	return self:forwardEvent(eventName, joystick, ...)
+end
+
+local function forwardNormalizedButton(self, eventName, joystick, button)
+	return noteJoystickAndForward(self, eventName, joystick, GamepadAliases:normalizeButton(button))
+end
+
+function App:joystickadded(joystick)
+	return noteJoystickAndForward(self, "joystickadded", joystick)
 end
 
 function App:joystickremoved(joystick)
@@ -176,37 +184,27 @@ function App:joystickremoved(joystick)
 end
 
 function App:joystickpressed(joystick, button)
-	GamepadAliases:noteJoystick(joystick)
-	local normalized = GamepadAliases:normalizeButton(button)
-	return self:forwardEvent("joystickpressed", joystick, normalized)
+	return forwardNormalizedButton(self, "joystickpressed", joystick, button)
 end
 
 function App:joystickreleased(joystick, button)
-	GamepadAliases:noteJoystick(joystick)
-	local normalized = GamepadAliases:normalizeButton(button)
-	return self:forwardEvent("joystickreleased", joystick, normalized)
+	return forwardNormalizedButton(self, "joystickreleased", joystick, button)
 end
 
 function App:joystickaxis(joystick, axis, value)
-	GamepadAliases:noteJoystick(joystick)
-	return self:forwardEvent("joystickaxis", joystick, axis, value)
+	return noteJoystickAndForward(self, "joystickaxis", joystick, axis, value)
 end
 
 function App:gamepadpressed(joystick, button)
-	GamepadAliases:noteJoystick(joystick)
-	local normalized = GamepadAliases:normalizeButton(button)
-	return self:forwardEvent("gamepadpressed", joystick, normalized)
+	return forwardNormalizedButton(self, "gamepadpressed", joystick, button)
 end
 
 function App:gamepadreleased(joystick, button)
-	GamepadAliases:noteJoystick(joystick)
-	local normalized = GamepadAliases:normalizeButton(button)
-	return self:forwardEvent("gamepadreleased", joystick, normalized)
+	return forwardNormalizedButton(self, "gamepadreleased", joystick, button)
 end
 
 function App:gamepadaxis(joystick, axis, value)
-	GamepadAliases:noteJoystick(joystick)
-	return self:forwardEvent("gamepadaxis", joystick, axis, value)
+	return noteJoystickAndForward(self, "gamepadaxis", joystick, axis, value)
 end
 
 return App
