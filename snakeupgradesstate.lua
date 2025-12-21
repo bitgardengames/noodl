@@ -72,67 +72,98 @@ local function normalizeStacks(count)
         return max(0, floor((count or 0) + 0.0001))
 end
 
-function UpgradesState.setSwiftFangsStacks(state, count)
+local STACK_DEFAULTS = {stacks = 0, intensity = 0, target = 0, time = 0, flash = 0}
+
+local function acquireStackState(state, key, defaults)
+        local stackState = state[key]
+        if not stackState then
+                stackState = {}
+                for k, v in pairs(STACK_DEFAULTS) do
+                        stackState[k] = v
+                end
+                if defaults then
+                        for k, v in pairs(defaults) do
+                                stackState[k] = v
+                        end
+                end
+                state[key] = stackState
+        end
+        return stackState
+end
+
+local function updateStackedEffect(state, key, count, options)
         count = normalizeStacks(count)
-        local existing = state.swiftFangs
+        local existing = state[key]
         local previous = existing and (existing.stacks or 0) or 0
 
+        if count <= 0 and not existing then
+                return
+        end
+
         if count > 0 then
-                if not existing then
-                        existing = {intensity = 0, baseTarget = 0, time = 0, stacks = 0, flash = 0}
-                        state.swiftFangs = existing
+                existing = acquireStackState(state, key, options.defaults)
+                existing.stacks = count
+
+                local scaledStacks = min(count, options.stackCap or count)
+                local target = min(options.targetCap or 1, options.base + options.step * scaledStacks)
+                existing.target = target
+                if options.targetField then
+                        existing[options.targetField] = target
                 end
 
-                existing.stacks = count
-                existing.baseTarget = min(0.65, 0.32 + 0.11 * min(count, 4))
-                existing.target = existing.baseTarget
                 if count > previous then
-                        existing.intensity = max(existing.intensity or 0, 0.55)
-                        existing.flash = min(1, (existing.flash or 0) + 0.7)
+                        if options.minIntensity then
+                                existing.intensity = max(existing.intensity or 0, options.minIntensity)
+                        end
+                        if options.flashIncrease then
+                                existing.flash = min(1, (existing.flash or 0) + options.flashIncrease)
+                        end
                 end
         elseif existing then
                 existing.stacks = 0
-                existing.baseTarget = 0
                 existing.target = 0
+                if options.targetField then
+                        existing[options.targetField] = 0
+                end
         end
 
-        if state.swiftFangs then
-                local data = state.swiftFangs
-                if (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01 then
-                        state.swiftFangs = nil
-                end
+        local data = state[key]
+        if not data then
+                return
+        end
+
+        local shouldRemove = (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01
+        if options.checkFlashForCleanup then
+                shouldRemove = shouldRemove and (data.flash or 0) <= 0.01
+        end
+
+        if shouldRemove then
+                state[key] = nil
         end
 end
 
+function UpgradesState.setSwiftFangsStacks(state, count)
+        updateStackedEffect(state, "swiftFangs", count, {
+                base = 0.32,
+                step = 0.11,
+                stackCap = 4,
+                targetCap = 0.65,
+                targetField = "baseTarget",
+                minIntensity = 0.55,
+                flashIncrease = 0.7,
+                defaults = {baseTarget = 0},
+        })
+end
+
 function UpgradesState.setSerpentsReflexStacks(state, count)
-        count = normalizeStacks(count)
-
-        local existing = state.serpentsReflex
-        local previous = existing and (existing.stacks or 0) or 0
-
-        if count > 0 then
-                if not existing then
-                        existing = {stacks = 0, intensity = 0, target = 0, time = 0, flash = 0}
-                        state.serpentsReflex = existing
-                end
-
-                existing.stacks = count
-                existing.target = min(1, 0.28 + 0.12 * min(count, 4))
-                if count > previous then
-                        existing.flash = min(1, (existing.flash or 0) + 0.65)
-                        existing.intensity = max(existing.intensity or 0, 0.35)
-                end
-        elseif existing then
-                existing.stacks = 0
-                existing.target = 0
-        end
-
-        if state.serpentsReflex then
-                local data = state.serpentsReflex
-                if (data.stacks or 0) <= 0 and (data.intensity or 0) <= 0.01 and (data.flash or 0) <= 0.01 then
-                        state.serpentsReflex = nil
-                end
-        end
+        updateStackedEffect(state, "serpentsReflex", count, {
+                base = 0.28,
+                step = 0.12,
+                stackCap = 4,
+                minIntensity = 0.35,
+                flashIncrease = 0.65,
+                checkFlashForCleanup = true,
+        })
 end
 
 local function ensureStackState(state, key)
