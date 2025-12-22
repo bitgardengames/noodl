@@ -1,5 +1,6 @@
 local floor = math.floor
 local max = math.max
+local Serialization = require("serialize")
 
 local DailyProgress = {
 	_loaded = false,
@@ -29,56 +30,6 @@ local function cloneTable(source)
 	end
 
 	return copy
-end
-
-local function serialize(value, indent)
-	indent = indent or 0
-	local valueType = type(value)
-
-	if valueType == "number" then
-		return tostring(value)
-	elseif valueType == "boolean" then
-		return value and "true" or "false"
-	elseif valueType == "string" then
-		return string.format("%q", value)
-	elseif valueType == "table" then
-		local keys = {}
-		for key in pairs(value) do
-			keys[#keys + 1] = key
-		end
-		table.sort(keys, function(a, b)
-			if type(a) == "number" and type(b) == "number" then
-			return a < b
-			end
-			return tostring(a) < tostring(b
-		)
-			end
-		)
-
-		local childIndent = indent + 4
-		local parts = {"{\n"}
-		for i = 1, #keys do
-			local key = keys[i]
-			local formattedKey
-			if type(key) == "string" and key:match("^[%a_][%w_]*$") then
-				-- plain identifier: totals = { ... }
-				formattedKey = key .. " = "
-			elseif type(key) == "number" then
-				-- numeric index: [1037124] = { ... }
-				formattedKey = string.format("[%d] = ", key)
-			else
-				-- everything else as a quoted string key
-				formattedKey = string.format("[%q] = ", key)
-			end
-
-			parts[#parts + 1] = string.rep(" ", childIndent) .. formattedKey .. serialize(value[key], childIndent) .. ",\n"
-		end
-
-		parts[#parts + 1] = string.rep(" ", indent) .. "}"
-		return table.concat(parts)
-	end
-
-	return "nil"
 end
 
 local function defaultData()
@@ -120,12 +71,9 @@ end
 function DailyProgress:load()
 	self._loaded = true
 	if love.filesystem.getInfo(saveFile) then
-		local success, chunk = pcall(love.filesystem.load, saveFile)
-		if success and chunk then
-			local ok, saved = pcall(chunk)
-			if ok and type(saved) == "table" then
-				self.data = cloneTable(saved)
-			end
+		local saved = Serialization.loadTable(saveFile)
+		if type(saved) == "table" then
+			self.data = cloneTable(saved)
 		end
 	end
 
@@ -142,8 +90,7 @@ end
 
 function DailyProgress:save()
 	self:_ensureData()
-	local content = "return " .. serialize(self.data, 0) .. "\n"
-	love.filesystem.write(saveFile, content)
+	Serialization.saveTable(saveFile, self.data, {sortKeys = true})
 end
 
 function DailyProgress:_getDayEntry(dayValue, create)
