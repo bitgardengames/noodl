@@ -942,7 +942,6 @@ function Arena:drawBackdrop(sw, sh)
 	return true
 end
 
--- Draws the playfield with a solid fill + simple border
 function Arena:drawBackground()
 	local ax, ay, aw, ah = self:getBounds()
 
@@ -962,7 +961,6 @@ function Arena:drawBackground()
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
--- Draws border
 function Arena:drawBorder()
 	local ax, ay, aw, ah = self:getBounds()
 	local thickness    = 20 -- border thickness
@@ -1282,7 +1280,6 @@ function Arena:drawBorder()
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
--- Spawn an exit at a random valid tile
 function Arena:spawnExit()
 	if self.exit then return end
 
@@ -1477,7 +1474,6 @@ function Arena:update(dt)
 	self.exit.time = (self.exit.time or 0) + dt
 end
 
--- Reset/clear exit when moving to next floor
 function Arena:resetExit()
 	if self.exit then
 		local SnakeUtils = getModule("snakeutils")
@@ -1490,7 +1486,6 @@ function Arena:resetExit()
 	self._exitDrawRequested = false
 end
 
--- Check if snake head collides with the exit
 function Arena:checkExitCollision(snakeX, snakeY)
 	if not self.exit then return false end
 	local dx, dy = snakeX - self.exit.x, snakeY - self.exit.y
@@ -1499,7 +1494,6 @@ function Arena:checkExitCollision(snakeX, snakeY)
 	return distSq <= (r * r)
 end
 
--- Queue exit draw for later in the overlay pass
 function Arena:drawExit()
 	if not self.exit then return end
 
@@ -1535,7 +1529,6 @@ local function drawExitVisuals(exit, eased, time)
 	love.graphics.setLineWidth(1)
 end
 
--- Draw the exit visuals during the overlay pass when requested
 function Arena:drawQueuedExit()
 	if not (self._exitDrawRequested and self.exit) then
 		self._exitDrawRequested = false

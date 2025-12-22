@@ -85,7 +85,6 @@ function Death:update(dt)
 	end
 end
 
--- call this before drawing game elements
 function Death:applyShake()
 	if Settings.screenShake == false then
 		return
