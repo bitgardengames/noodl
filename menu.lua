@@ -409,24 +409,22 @@ end
 
 local function updateDailyBarCelebration(dt, shouldCelebrate)
         if shouldCelebrate then
-                if not dailyBarCelebration.active and not dailyBarCelebration.finished then
-                        dailyBarCelebration.active = true
-                        dailyBarCelebration.time = 0
-                        dailyBarCelebration.shimmerPhase = 0
-                end
+				if not dailyBarCelebration.active and not dailyBarCelebration.finished then
+						dailyBarCelebration.active = true
+						dailyBarCelebration.time = 0
+						dailyBarCelebration.shimmerPhase = 0
+				end
 
-                if dailyBarCelebration.active then
-                        dailyBarCelebration.time = dailyBarCelebration.time + dt
-                        dailyBarCelebration.shimmerPhase = (dailyBarCelebration.shimmerPhase or 0) + dt * DAILY_BAR_CELEBRATION_SHIMMER_SPEED
+				if dailyBarCelebration.active then
+						dailyBarCelebration.time = dailyBarCelebration.time + dt
+						dailyBarCelebration.shimmerPhase = (dailyBarCelebration.shimmerPhase or 0) + dt * DAILY_BAR_CELEBRATION_SHIMMER_SPEED
 
-                        if dailyBarCelebration.time < DAILY_BAR_CELEBRATION_DURATION then
-                                -- continue running
-                        else
-                                dailyBarCelebration.active = false
-                                dailyBarCelebration.finished = true
-                                dailyBarCelebration.time = DAILY_BAR_CELEBRATION_DURATION
-                        end
-                end
+						if dailyBarCelebration.time >= DAILY_BAR_CELEBRATION_DURATION then
+								dailyBarCelebration.active = false
+								dailyBarCelebration.finished = true
+								dailyBarCelebration.time = DAILY_BAR_CELEBRATION_DURATION
+						end
+				end
         elseif dailyBarCelebration.active or dailyBarCelebration.finished then
                 resetDailyBarCelebration()
         end

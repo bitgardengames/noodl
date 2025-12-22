@@ -282,7 +282,6 @@ registerDrawer("blank", function()
 	end
 )
 
--- xx
 registerDrawer("shocked", function()
 	local crossSize = EYE_RADIUS * currentEyeScale * 1.6
 	local crossLineWidth = EYE_RADIUS * currentEyeScale
