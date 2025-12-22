@@ -1,7 +1,6 @@
 local DataSchemas = require("dataschemas")
 local DailyProgress = require("dailyprogress")
-
-local insert = table.insert
+local Serialization = require("serialize")
 
 local PlayerStats = {}
 
@@ -56,12 +55,9 @@ end
 
 function PlayerStats:load()
 	if love.filesystem.getInfo(saveFile) then
-		local success, chunk = pcall(love.filesystem.load, saveFile)
-		if success and chunk then
-			local ok, saved = pcall(chunk)
-			if ok and type(saved) == "table" then
-				self.data = saved
-			end
+		local saved = Serialization.loadTable(saveFile)
+		if type(saved) == "table" then
+			self.data = saved
 		end
 	end
 
@@ -72,22 +68,15 @@ function PlayerStats:load()
 end
 
 function PlayerStats:save()
-	local lines = {"return {\n"}
-
-	for k, v in pairs(self.data) do
-		local vType = type(v)
-		if vType == "number" then
-			insert(lines, string.format("    [%q] = %s,\n", k, tostring(v)))
-		elseif vType == "string" then
-			insert(lines, string.format("    [%q] = %q,\n", k, v))
-		elseif vType == "boolean" then
-			insert(lines, string.format("    [%q] = %s,\n", k, tostring(v)))
+	local snapshot = {}
+	for key, value in pairs(self.data) do
+		local valueType = type(value)
+		if valueType == "number" or valueType == "string" or valueType == "boolean" then
+			snapshot[key] = value
 		end
-		-- Skip nested tables or unsupported types
 	end
 
-	insert(lines, "}\n")
-	love.filesystem.write(saveFile, table.concat(lines))
+	Serialization.saveTable(saveFile, snapshot, {sortKeys = true})
 end
 
 function PlayerStats:add(stat, amount)

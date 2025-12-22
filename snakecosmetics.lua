@@ -1,4 +1,5 @@
 local Theme = require("theme")
+local Serialization = require("serialize")
 
 local insert = table.insert
 
@@ -75,57 +76,6 @@ local function mergeTables(target, source)
 	return target
 end
 
-local function isArray(tbl)
-	if type(tbl) ~= "table" then
-		return false
-	end
-
-	local count = 0
-	for key in pairs(tbl) do
-		if type(key) ~= "number" then
-			return false
-		end
-		count = count + 1
-	end
-
-	return count == #tbl
-end
-
-local function serialize(value, indent)
-	indent = indent or 0
-	local valueType = type(value)
-
-	if valueType == "number" or valueType == "boolean" then
-		return tostring(value)
-	elseif valueType == "string" then
-		return string.format("%q", value)
-	elseif valueType == "table" then
-		local spacing = string.rep(" ", indent)
-		local lines = {"{\n"}
-		local nextIndent = indent + 4
-		local entryIndent = string.rep(" ", nextIndent)
-		if isArray(value) then
-			for index, val in ipairs(value) do
-				insert(lines, string.format("%s[%d] = %s,\n", entryIndent, index, serialize(val, nextIndent)))
-			end
-		else
-			for key, val in pairs(value) do
-				local keyRepr
-				if type(key) == "string" then
-					keyRepr = string.format("[\"%s\"]", key)
-				else
-					keyRepr = string.format("[%s]", tostring(key))
-				end
-				insert(lines, string.format("%s%s = %s,\n", entryIndent, keyRepr, serialize(val, nextIndent)))
-			end
-		end
-		insert(lines, string.format("%s}", spacing))
-		return table.concat(lines)
-	end
-
-	return "nil"
-end
-
 function SnakeCosmetics:_buildIndex()
 	if self._indexBuilt then
 		return
@@ -155,14 +105,9 @@ function SnakeCosmetics:_ensureLoaded()
 
 	self.state = copyTable(DEFAULT_STATE)
 
-	if love.filesystem.getInfo(SAVE_FILE) then
-		local ok, chunk = pcall(love.filesystem.load, SAVE_FILE)
-		if ok and chunk then
-			local success, data = pcall(chunk)
-			if success and type(data) == "table" then
-				self.state = mergeTables(copyTable(DEFAULT_STATE), data)
-			end
-		end
+	local loadedState = Serialization.loadTable(SAVE_FILE)
+	if type(loadedState) == "table" then
+		self.state = mergeTables(copyTable(DEFAULT_STATE), loadedState)
 	end
 
 	self:_validateSelection()
@@ -189,12 +134,12 @@ function SnakeCosmetics:_save()
 		return
 	end
 
-	local snapshot = {
-		selectedSkin = self.state.selectedSkin,
-	}
+	local snapshot = {selectedSkin = self.state.selectedSkin}
 
-	local serialized = "return " .. serialize(snapshot, 0) .. "\n"
-	love.filesystem.write(SAVE_FILE, serialized)
+	Serialization.saveTable(SAVE_FILE, snapshot, {
+		quoteKeys = true,
+		sortKeys = true,
+	})
 end
 
 function SnakeCosmetics:load(context)
