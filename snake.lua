@@ -539,7 +539,7 @@ local function segmentRectIntersection(ax, ay, bx, by, rx, ry, rw, rh)
 	return false
 end
 
-local function isSelfCollisionAlongPath(startX, startY, endX, endY)
+local function isSelfCollisionAlongPath(startX, startY, endX, endY, candidateLookup, candidateGeneration)
 	if not (startX and startY and endX and endY) then
 		return false
 	end
@@ -553,16 +553,19 @@ local function isSelfCollisionAlongPath(startX, startY, endX, endY)
 
         for i = 2, bodyCount do
 		local seg = trail[i]
-		local nextSeg = trail[i + 1]
-		local sx = seg and seg.drawX
-		local sy = seg and seg.drawY
-		local ex = nextSeg and nextSeg.drawX or sx
-		local ey = nextSeg and nextSeg.drawY or sy
+		local shouldTest = not candidateLookup or (candidateLookup[seg] == candidateGeneration)
+		if shouldTest then
+			local nextSeg = trail[i + 1]
+			local sx = seg and seg.drawX
+			local sy = seg and seg.drawY
+			local ex = nextSeg and nextSeg.drawX or sx
+			local ey = nextSeg and nextSeg.drawY or sy
 
-		if sx and sy and ex and ey then
-			local distSq = segmentDistanceSq(startX, startY, endX, endY, sx, sy, ex, ey)
-			if distSq <= radiusSq then
-				return true
+			if sx and sy and ex and ey then
+				local distSq = segmentDistanceSq(startX, startY, endX, endY, sx, sy, ex, ey)
+				if distSq <= radiusSq then
+					return true
+				end
 			end
 		end
 	end
@@ -2065,13 +2068,29 @@ segment.dirY = direction[DIR_Y]
 					end
 				end
 
-				if not tailVacated and isCellOccupiedBySnakeBody(headCol, headRow) then
+				local rectMinX = min(segmentStartX, targetX)
+				local rectMaxX = max(segmentStartX, targetX)
+				local rectMinY = min(segmentStartY, targetY)
+				local rectMaxY = max(segmentStartY, targetY)
+				local rectW = (rectMaxX - rectMinX) + SELF_COLLISION_RADIUS * 2
+				local rectH = (rectMaxY - rectMinY) + SELF_COLLISION_RADIUS * 2
+				local _, candidateCount, candidateLookup, candidateGeneration = collectSnakeSegmentCandidatesForRect(
+					rectMinX - SELF_COLLISION_RADIUS,
+					rectMinY - SELF_COLLISION_RADIUS,
+					rectW,
+					rectH
+				)
+
+				local hasBodyOccupancy = isCellOccupiedBySnakeBody(headCol, headRow)
+				local hasCandidates = (candidateLookup == nil) or ((candidateCount or 0) > 0)
+
+				if not tailVacated and (hasBodyOccupancy or hasCandidates) then
 					if wasRecentlyVacated(headCol, headRow) then
 						segmentStartX, segmentStartY = targetX, targetY
 						goto continue
 					end
 
-					if not isSelfCollisionAlongPath(segmentStartX, segmentStartY, targetX, targetY) then
+					if not isSelfCollisionAlongPath(segmentStartX, segmentStartY, targetX, targetY, candidateLookup, candidateGeneration) then
 						segmentStartX, segmentStartY = targetX, targetY
 						goto continue
 					end
