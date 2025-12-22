@@ -34,7 +34,6 @@ local SOUND_DEFINITIONS = {
 	intro = "Assets/Sounds/intro.mp3",
 }
 
---MP3 files will often NOT loop seamlessly. You will notice a very short gap when the song loops. This is due to the nature of the MP3 file format and is often difficult to overcome. I highly recommend using these songs as OGG files.
 local MUSIC_DEFINITIONS = {
 	menu = "Assets/Music/Menu4.ogg",
 	game = "Assets/Music/Game2.ogg",

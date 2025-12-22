@@ -148,7 +148,6 @@ function generateFloorPlan()
 	}
 end
 
--- Now you can call FloorPlan.getBaselinePlan(os.time()) for fresh chaos, or FloorPlan.getBaselinePlan(12345) for deterministic daily-seeded runs.
 function FloorPlan.getBaselinePlan(seed)
 	if seed then love.math.setRandomSeed(seed) end
 	BASELINE_PLAN = generateFloorPlan()
