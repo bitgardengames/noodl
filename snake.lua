@@ -305,11 +305,6 @@ function Snake:onDamageTaken(cause, info)
         SnakeDamage.onDamageTaken(self, cause, info, direction)
 end
 
--- >>> Small integration note:
--- Inside your snake:update(dt) where you compute movement, replace any hard-coded speed use with:
--- local speed = Snake:getSpeed()
--- and then use `speed` for position updates. This gives upgrades an immediate effect.
-
 toCell = function(x, y)
 	if not (x and y) then
 		return nil, nil

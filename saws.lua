@@ -863,7 +863,6 @@ local function removeSaw(target)
 	end
 end
 
--- Easing similar to Rocks
 -- Spawn a saw on a track
 function Saws:spawn(x, y, radius, teeth, dir, side, options)
 	local slot = getOrCreateSlot(x, y, dir)
