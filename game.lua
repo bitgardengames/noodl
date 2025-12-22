@@ -1037,9 +1037,6 @@ local STATE_UPDATERS = {
 local function drawAdrenalineGlow(self)
 	local glowStrength = Score:getHighScoreGlowStrength()
 
-	-- Previously the adrenaline effect would brighten the entire screen while active.
-	-- This felt distracting, so the screen glow is now reserved for the high score glow
-	-- and is no longer affected by adrenaline.
 	if glowStrength <= 0 then return end
 
 	local time = Timer.getTime()
@@ -1255,7 +1252,6 @@ function Game:startDescending(holeX, holeY, holeRadius)
 	Audio:playSound("exit_enter")
 end
 
--- start a floor transition
 function Game:startFloorTransition(advance, skipFade)
 	Snake:finishDescending()
 	self.transition:startFloorTransition(advance, skipFade)
@@ -1417,8 +1413,6 @@ function Game:updateGameplay(dt)
 	if moveResult == "scored" then
 		local fruitX, fruitY = Fruit:getDrawPosition()
 		FruitEvents.handleConsumption(fruitX, fruitY)
-
-		--self:triggerScreenShake(0.02)
 
 		local goalReached = UI:isGoalReached()
 		if goalReached then
