@@ -1094,8 +1094,6 @@ function SettingsScreen:draw()
 					shadowOffsetY = 1,
 					}
 				)
-
-				-- Decorative line removed for cleaner section headers
 			end
 
 		elseif opt.type == "cycle" and opt.setting then
