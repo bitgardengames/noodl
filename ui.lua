@@ -1865,25 +1865,11 @@ local function drawClassicScore(self)
 
         local scoreLabel = getLocalizedOrFallback("game.classic_mode.score_label", "Score")
         local bestLabel = getLocalizedOrFallback("game.classic_mode.best_score_label", "Best")
-        local comboLabel = getLocalizedOrFallback("game.classic_mode.combo_label", "Combo")
 
         local currentScore = formatScoreValue(scoreState.display or 0)
         local highScore = (Score and Score.getHighScore and Score:getHighScore("classic")) or 0
-        local deltaAlpha = clamp01((scoreState.deltaTimer or 0) / 0.9)
 
         local details = {}
-        if scoreState.delta and scoreState.delta ~= 0 and deltaAlpha > 0 then
-                local deltaText = ((scoreState.delta > 0) and "+" or "") .. formatScoreValue(scoreState.delta)
-                local deltaColor = scoreState.delta > 0 and {0.82, 1, 0.78, 1} or {1, 0.72, 0.62, 1}
-                insert(details, {text = deltaText, color = deltaColor, alpha = deltaAlpha})
-        end
-
-        local combo = self.combo
-        if combo and combo.count and combo.count >= 2 and (combo.timer or 0) > 0 then
-                local comboText = comboLabel .. " x" .. tostring(combo.count)
-                local accent = Theme.highlightColor or {1, 1, 1, 1}
-                insert(details, {text = comboText, color = accent, alpha = 1})
-        end
 
         insert(details, {
                 text = bestLabel .. ": " .. formatScoreValue(highScore),
