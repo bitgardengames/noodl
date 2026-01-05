@@ -550,9 +550,17 @@ local function isSelfCollisionAlongPath(startX, startY, endX, endY, candidateLoo
         end
 
         local radiusSq = SELF_COLLISION_RADIUS_SQ
+        local minHeadDistance = SEGMENT_SPACING * 1.25
+        local distanceFromHead = 0
 
         for i = 2, bodyCount do
 		local seg = trail[i]
+		local segLen = seg and seg.lengthToPrev or 0
+		distanceFromHead = distanceFromHead + segLen
+		if distanceFromHead < minHeadDistance then
+			goto continue
+		end
+
 		local shouldTest = not candidateLookup or (candidateLookup[seg] == candidateGeneration)
 		if shouldTest then
 			local nextSeg = trail[i + 1]
@@ -568,6 +576,7 @@ local function isSelfCollisionAlongPath(startX, startY, endX, endY, candidateLoo
 				end
 			end
 		end
+::continue::
 	end
 
 	return false
