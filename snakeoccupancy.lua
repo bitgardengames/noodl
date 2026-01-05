@@ -485,6 +485,10 @@ local function syncSegmentSpatialEntry(trail, segmentIndex)
 			return false
 		end
 
+		if prevCol == col and prevRow == row then
+			return true
+		end
+
 		if not hasSnakeBodySpatialEntry(col, row, segment) then
 			SnakeOccupancy.addSnakeBodySpatialEntry(col, row, segment)
 		end
