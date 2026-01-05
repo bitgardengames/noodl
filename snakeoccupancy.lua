@@ -30,6 +30,7 @@ local snakeBodyOccupancy = {}
 local snakeBodySpatialIndexMaxIndex = 0
 local snakeBodySpatialIndex = {}
 local snakeBodySpatialIndexAvailable = false
+local snakeBodySpatialEntryCount = 0
 
 local segmentCandidateBuffer = {}
 local segmentCandidateLookup = {}
@@ -136,17 +137,6 @@ local function getGridIndex(col, row)
         return (col - 1) * occupancyRows + row
 end
 
-local function hasSpatialEntries()
-        local limit = max(snakeBodySpatialIndexMaxIndex, occupancyCols * occupancyRows)
-        for i = 1, limit do
-                if snakeBodySpatialIndex[i] then
-                        return true
-                end
-        end
-
-        return false
-end
-
 function SnakeOccupancy.clearSnakeBodySpatialIndex()
         local limit = max(snakeBodySpatialIndexMaxIndex, occupancyCols * occupancyRows)
         for i = 1, limit do
@@ -159,6 +149,7 @@ function SnakeOccupancy.clearSnakeBodySpatialIndex()
 
         snakeBodySpatialIndexMaxIndex = 0
         snakeBodySpatialIndexAvailable = false
+        snakeBodySpatialEntryCount = 0
 end
 
 function SnakeOccupancy.clearSnakeBodyOccupancy()
@@ -368,6 +359,7 @@ function SnakeOccupancy.addSnakeBodySpatialEntry(col, row, segment)
         bucket[#bucket + 1] = segment
         snakeBodySpatialIndexMaxIndex = max(snakeBodySpatialIndexMaxIndex, index)
         snakeBodySpatialIndexAvailable = true
+        snakeBodySpatialEntryCount = snakeBodySpatialEntryCount + 1
 end
 
 local function hasSnakeBodySpatialEntry(col, row, segment)
@@ -409,10 +401,12 @@ function SnakeOccupancy.removeSnakeBodySpatialEntry(col, row, segment)
                 return
         end
 
+        local removed = false
 	for i = #bucket, 1, -1 do
 		if bucket[i] == segment then
 			bucket[i] = bucket[#bucket]
 			bucket[#bucket] = nil
+                        removed = true
 			break
 		end
 	end
@@ -421,8 +415,12 @@ function SnakeOccupancy.removeSnakeBodySpatialEntry(col, row, segment)
                 snakeBodySpatialIndex[index] = nil
         end
 
-        if snakeBodySpatialIndexAvailable and not hasSpatialEntries() then
-                snakeBodySpatialIndexAvailable = false
+        if removed then
+                snakeBodySpatialEntryCount = snakeBodySpatialEntryCount - 1
+                if snakeBodySpatialEntryCount <= 0 then
+                        snakeBodySpatialEntryCount = 0
+                        snakeBodySpatialIndexAvailable = false
+                end
         end
 end
 
@@ -452,7 +450,7 @@ function SnakeOccupancy.rebuildSnakeBodySpatialIndex(trail)
 		end
 	end
 
-        snakeBodySpatialIndexAvailable = hasSpatialEntries()
+        snakeBodySpatialIndexAvailable = snakeBodySpatialEntryCount > 0
 end
 
 local function syncSegmentSpatialEntry(trail, segmentIndex)
